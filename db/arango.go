@@ -144,7 +144,7 @@ func (d *DatabaseImpl) GetDocuments(collection string, query string, bindVars ma
 		log.Panic("Invalid collection", zap.String("collection", collection))
 		return nil, errors.New("Invalid collection")
 	}
-	cursor, err := col.ArangoSearchQuery(context.Background(), query, bindVars)
+	cursor, err := col.Database().CreateArangoSearchView(context.Background(), query, bindVars)
 	if err != nil {
 		log.Panic("Failed to query documents", zap.Error(err))
 		return nil, err
