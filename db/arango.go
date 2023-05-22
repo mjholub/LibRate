@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"librerym/utils" // FIXME: make a separate logger package
+	"codeberg.org/mjh/LibRate/utils"
 
 	driver "github.com/arangodb/go-driver"
 
@@ -27,15 +27,13 @@ type Database interface {
 	DeleteDocument(collection string, key string) (driver.DocumentMeta, error)
 }
 
-type DatabaseImpl struct {
-}
+type DatabaseImpl struct{}
 
 func (d *DatabaseImpl) Init() error {
 	log := utils.NewLogger()
 	conn, err := http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{"http://localhost:8529"},
 	})
-
 	if err != nil {
 		log.Panic("Failed to connect to database", zap.Error(err))
 		return err

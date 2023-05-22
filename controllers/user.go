@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 // GetUser retrieves user information based on the user ID

@@ -1,4 +1,4 @@
-module librerym
+module codeberg.org/mjh/LibRate
 
 go 1.20
 

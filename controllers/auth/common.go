@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 func isEmail(email string) bool {

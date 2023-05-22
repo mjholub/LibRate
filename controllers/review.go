@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 // GetReviews retrieves reviews for a specific media item based on the media ID

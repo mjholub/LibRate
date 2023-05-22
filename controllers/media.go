@@ -9,7 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 // GetMedia retrieves media information based on the media ID

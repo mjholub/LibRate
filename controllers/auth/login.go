@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 
 	"github.com/gofiber/fiber/v2"
 )

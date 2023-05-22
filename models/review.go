@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"librerym/cfg"
+	"codeberg.org/mjh/LibRate/cfg"
 
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"

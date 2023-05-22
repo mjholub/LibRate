@@ -10,7 +10,7 @@ import (
 	"github.com/gofrs/uuid"
 	validator "github.com/wagslane/go-password-validator"
 
-	"librerym/models"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 func Register(c *fiber.Ctx) error {

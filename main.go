@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"librerym/cfg"
-	"librerym/utils"
+	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
