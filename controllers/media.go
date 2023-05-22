@@ -61,7 +61,7 @@ func PostRating(c *fiber.Ctx) error {
 func GetRecommendations(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(c.Params("id"))
 
-	recommendedMedia, err := recommendations.GetUserRecommendations(userID)
+	recommendedMedia, err := recommendations.GetMemberRecommendations(userID)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get recommendations",

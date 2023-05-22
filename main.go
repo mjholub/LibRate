@@ -1,10 +1,14 @@
 package main
 
 import (
+	"net/http"
+	"path/filepath"
+
 	"librerym/cfg"
 	"librerym/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
 func main() {
@@ -12,8 +16,15 @@ func main() {
 	log.Info("Starting server...")
 	app := fiber.New()
 	cfg.LoadConfig()
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendFile("./fe/public/index.html")
-	})
+
+	staticPath, err := filepath.Abs("./fe/public")
+	if err != nil {
+		log.Sugar().Fatalf("Error loading static path: %s", err)
+	}
+
+	app.Use("/", filesystem.New(filesystem.Config{
+		Root:   http.Dir(staticPath),
+		Browse: true,
+	}))
 	app.Listen(":3000")
 }
