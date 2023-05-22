@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/recommendation"
 )
 
 // GetMedia retrieves media information based on the media ID
@@ -61,7 +62,7 @@ func PostRating(c *fiber.Ctx) error {
 func GetRecommendations(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(c.Params("id"))
 
-	recommendedMedia, err := recommendations.GetMemberRecommendations(userID)
+	recommendedMedia, err := recommendation.GetMemberRecommendations(userID)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get recommendations",
