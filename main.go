@@ -15,5 +15,8 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Listen(":3000")
+	err := app.Listen(":3000")
+	if err != nil {
+		panic(err)
+	}
 }
