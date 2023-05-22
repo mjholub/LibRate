@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofrs/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	validator "github.com/wagslane/go-password-validator"
 
 	"codeberg.org/mjh/LibRate/models"
 )
 
+// Register handles the creation of a new user
 func Register(c *fiber.Ctx) error {
 	var (
 		input   models.RegisterInput

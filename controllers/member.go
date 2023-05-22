@@ -1,31 +1,32 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+
 	"codeberg.org/mjh/LibRate/models"
 )
 
-// GetUser retrieves user information based on the user ID
-func GetUser(c *fiber.Ctx) error {
-	userID, _ := strconv.Atoi(c.Params("id"))
-
-	user, err := models.GetUserByID(userID)
+// GetMember retrieves user information based on the user ID
+func GetMember(c *fiber.Ctx) error {
+	ms := models.NewMemberStorer()
+	member, err := ms.Load(context.TODO(), c.Params("id"))
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "User not found",
+			"error": "Member not found",
 		})
 	}
 
-	return c.JSON(user)
+	return c.JSON(member)
 }
 
-// CreateUser handles the creation of a new user
-func CreateUser(c *fiber.Ctx) error {
-	var input models.UserInput
+// CreateMember handles the creation of a new user
+func CreateMember(c *fiber.Ctx) error {
+	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -33,25 +34,27 @@ func CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user := models.User{
-		Username: input.Username,
-		Email:    input.Email,
+	m := models.Member{
+		MemberName: input.MemberName,
+		Email:      input.Email,
 	}
 
-	err = models.SaveUser(&user)
+	ms := models.NewMemberStorer()
+
+	err = ms.Save(context.TODO(), &m)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create user",
 		})
 	}
 
-	return c.JSON(user)
+	return c.JSON(m)
 }
 
-func UpdateUser(c *fiber.Ctx) error {
+func UpdateMember(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(c.Params("id"))
 
-	var input models.UserInput
+	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -59,7 +62,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	err = models.UpdateUser(userID, &input)
+	err = models.UpdateMember(userID, &input)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to update user",
@@ -67,15 +70,16 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "User updated successfully",
+		"message": "Member updated successfully",
 	})
 }
 
-// DeleteUser handles the deletion of a user
-func DeleteUser(c *fiber.Ctx) error {
-	userID, _ := strconv.Atoi(c.Params("id"))
+// DeleteMember handles the deletion of a user
+func DeleteMember(c *fiber.Ctx) error {
+	// TODO: implement
 
-	err := models.DeleteUser(userID)
+	ms := models.NewMemberStorer()
+	err := ms.Delete(context.Background(), c.Params("id"))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to delete user",
@@ -83,6 +87,6 @@ func DeleteUser(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "User deleted successfully",
+		"message": "Member deleted successfully",
 	})
 }
