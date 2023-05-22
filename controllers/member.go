@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -52,8 +51,6 @@ func CreateMember(c *fiber.Ctx) error {
 }
 
 func UpdateMember(c *fiber.Ctx) error {
-	userID, _ := strconv.Atoi(c.Params("id"))
-
 	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
@@ -62,7 +59,7 @@ func UpdateMember(c *fiber.Ctx) error {
 		})
 	}
 
-	err = models.UpdateMember(userID, &input)
+	_, err = models.UpdateMember(input)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to update user",
