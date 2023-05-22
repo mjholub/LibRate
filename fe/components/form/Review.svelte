@@ -8,19 +8,39 @@
   let reviewText = "";
   let wordCount = 0;
   let ratingScale = 10; // Default rating scale
+  let mediaID = 0; // updated on fetch
 
   onMount(async () => {
     // TODO: Replace this with actual fetching of user preference
     ratingScale = await fetchUserRatingPreference();
+    let response = await fetch("/api/reviews/${mediaID}");
+    let review = await response.json();
   });
 
-  const submitReview = () => {
-    if (wordCount < 100) {
-      alert("Review must be at least 100 words!");
+  const submitReview = async () => {
+    if (wordCount < 20) {
+      alert("Review must be at least 20 words!");
       return;
     }
 
-    // TODO: Submit review logic here...
+    let memberID = 1; // Replace with actual member ID
+    let response = await fetch("/api/reviews", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        MemberID: memberID,
+        MediaID: 1, // Replace with the actual media ID
+        ReviewText: reviewText,
+      }),
+    });
+
+    if (response.ok) {
+      alert("Review submitted successfully!");
+    } else {
+      alert("Failed to submit review.");
+    }
   };
 
   const handleReviewChange = (event) => {
@@ -74,7 +94,7 @@
   </label>
 
   <label>
-    Review (min 100 words)
+    Review (min 20 words)
     <textarea bind:value={reviewText} on:input={handleReviewChange} required />
   </label>
 
