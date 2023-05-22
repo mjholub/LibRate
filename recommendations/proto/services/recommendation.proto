@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package recommendation;
+
+service RecommendationService {
+  rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse);
+}
+
+message GetRecommendationsRequest {
+  int32 memberId = 1;
+}
+
+message GetRecommendationsResponse {
+  repeated Media media = 1;
+}
+
+message Media {
+  int32 id = 1;
+  string media_type = 2;
+  string title = 3;
+  repeated string genres = 4;
+  int32 year = 5;
+  repeated string people = 6;
+  repeated string influences = 7;
+  repeated string countries = 8;
+  repeated string languages = 9;
+  int32 length = 10;
+}

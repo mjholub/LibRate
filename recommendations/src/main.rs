@@ -6,7 +6,10 @@ use crate::media::{Media, generate_feature_vectors};
 
 mod media;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let addr = "0.0.0.0:50051".parse().unwrap();
+    let rec_svc = LibRateRecSvc::default();
     let media_data_file = File::open("media_data.csv")?;
     let media_data_reader = BufReader::new(media_data_file);
 
@@ -15,6 +18,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect::<Result<Vec<Media>, csv::Error>>()?;
 
     let (feature_vectors, id_list, unique_genres) = generate_feature_vectors(&media_list);
+
+    Server::builder()
+        .add_service(RecommendationServiceServer::new(rec_svc))
+        .serve(addr)
+        .await?;
 
     println!("Feature vectors shape: {:?}", feature_vectors.dim());
     println!("Media IDs: {:?}", id_list);
