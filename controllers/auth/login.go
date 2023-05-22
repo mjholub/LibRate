@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
@@ -26,18 +26,6 @@ func Login(c *fiber.Ctx) error {
 	cleaned.Email = input.Email
 	cleaned = *cleanInput(&cleaned)
 
-	memberStorer := models.NewMemberStorer()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	errChan := make(chan error, 1)
-	defer close(errChan)
-	defer func() {
-		if err := context.DeadlineExceeded; err != nil {
-			errChan <- fmt.Errorf("context deadline exceeded")
-			cancel()
-		}
-	}()
-
 	if cleaned.Email == "" && cleaned.MemberName != "" {
 		lookupTarget = cleaned.MemberName
 	} else if cleaned.Email != "" && cleaned.MemberName == "" {
@@ -46,17 +34,39 @@ func Login(c *fiber.Ctx) error {
 		lookupTarget = cleaned.MemberName
 	}
 
-	member, err := memberStorer.Load(ctx, lookupTarget)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal server error",
-		})
-	}
+	memberStorer := models.NewMemberStorer()
 
-	if !checkArgonPassword(member.PassHash, input.Password) {
-		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Invalid email or password",
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	statusChan := make(chan error, 1)
+
+	go func() {
+		defer close(statusChan)
+
+		member, err := memberStorer.Load(ctx, lookupTarget)
+		if err != nil {
+			statusChan <- err
+			return
+		}
+
+		if !checkArgonPassword(member.PassHash, input.Password) {
+			statusChan <- errors.New("invalid email or password")
+			return
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return c.Status(http.StatusRequestTimeout).JSON(fiber.Map{
+			"message": "Request timeout",
 		})
+	case err := <-statusChan:
+		if err != nil {
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{

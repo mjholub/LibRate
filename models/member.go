@@ -85,7 +85,7 @@ func (ms *MemberStorer) Load(ctx context.Context, key string) (member *Member, e
 	_ = members
 	// FIXME: remove or find use
 
-	query := fmt.Sprintf("FOR u IN members FILTER u._key == '%d' RETURN u", id)
+	query := fmt.Sprintf("FOR u IN members FILTER u._key == '%s' RETURN u", key)
 	cursor, err := db.Query(ctx, query, nil)
 	if err != nil {
 		return nil, err
