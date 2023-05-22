@@ -1,18 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-	<meta charset='utf-8'>
-	<meta name='viewport' content='width=device-width,initial-scale=1'>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <script>
+    import Auth from './components/form/Auth.svelte';
+    import Search from './components/utility/Search.svelte';
+    import Feed from './components/media/reviewList.svelte';
+    import {onMount} from 'svelte';
+  </script>
 
-	<title>Svelte app</title>
+  <title>LibRate</title>
+  <style>
+    .app {
+      display: flex;
+      justify-content: space-between;
+    }
 
-	<link rel='icon' type='image/png' href='/favicon.png'>
-	<link rel='stylesheet' href='/global.css'>
-	<link rel='stylesheet' href='/build/bundle.css'>
+    .left,
+    .right {
+      width: 30%;
+    }
 
-	<script defer src='/build/bundle.js'></script>
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #fff;
+      padding: 10px 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+  </style>
+
+  <div class="navbar">
+    <Search />
+  </div>
+
+  <div class="app">
+    <div class="left">
+      <Feed />
+    </div>
+    <div class="right">
+      <Auth />
+    </div>
+  </div>
+
+  <link rel='icon' type='image/png' href='/favicon.png'>
+  <link rel='stylesheet' href='/global.css'>
+  <link rel='stylesheet' href='/build/bundle.css'>
+
+  <script defer src='/build/bundle.js'></script>
 </head>
 
 <body>
 </body>
+
 </html>
