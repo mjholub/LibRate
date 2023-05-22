@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package recommendation;
+option go_package = "codeberg.orb/mjh/LibRate/recommendation";
 
 service RecommendationService {
   rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse);
