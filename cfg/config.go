@@ -5,8 +5,9 @@ import (
 )
 
 type Config struct {
-	ArangoDB ArangoDBConfig
-	Fiber    FiberConfig
+	ArangoDB    ArangoDBConfig
+	Fiber       FiberConfig
+	SiginingKey string
 }
 
 type ArangoDBConfig struct {
@@ -35,5 +36,6 @@ func LoadConfig() Config {
 			Host: os.Getenv("FIBER_HOST"),
 			Port: os.Getenv("FIBER_PORT"),
 		},
+		SiginingKey: os.Getenv("SIGNING_KEY"),
 	}
 }

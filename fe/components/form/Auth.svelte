@@ -7,11 +7,22 @@
   let passwordStrength = "";
   let errorMessage = "";
 
-  const checkEntropy = async () => {
-    const response = await fetch(`/api/password-entropy?password=${password}`);
+  const checkEntropy = async (password) => {
+    const response = await patch(`/api/password-entropy?password=${password}`);
     const data = await response.json();
     passwordStrength = data.entropy;
   };
+
+  // reactive statement to watch `password`
+  $: if (password) {
+    checkEntropy(password)
+      .then((entropy) => {
+        passwordStrength = entropy;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
 
   const register = async () => {
     if (password !== confirmPassword) {
@@ -29,7 +40,12 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        MemberName: email_or_username,
+        Email: email_or_username,
+        Password: password,
+        PasswordConfirm: confirmPassword,
+      }),
     });
 
     if (response.ok) {
