@@ -1,4 +1,4 @@
-module codeberg.org/mjh/LibRate/recommendation
+module codeberg.org/mjh/LibRate/recommendation/go
 
 go 1.20
 
