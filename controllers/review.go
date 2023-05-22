@@ -1,31 +1,33 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+
 	"codeberg.org/mjh/LibRate/models"
 )
 
-// GetReviews retrieves reviews for a specific media item based on the media ID
-func GetReviews(c *fiber.Ctx) error {
-	mediaID, _ := strconv.Atoi(c.Params("id"))
+// GetRatings retrieves reviews for a specific media item based on the media ID
+func GetRatings(c *fiber.Ctx) error {
+	rStorage := models.NewRatingStorage()
 
-	reviews, err := models.GetReviewsByMediaID(mediaID)
+	reviews, err := rStorage.Get(context.Background(), c.Params("id"))
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "Reviews not found",
+			"error": "Ratings not found",
 		})
 	}
 
 	return c.JSON(reviews)
 }
 
-// PostReview handles the submission of a user's review for a specific media item
-func PostReview(c *fiber.Ctx) error {
-	var input models.ReviewInput
+// PostRating handles the submission of a user's review for a specific media item
+func PostRating(c *fiber.Ctx) error {
+	var input models.RatingInput
+	rs := models.NewRatingStorage()
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -33,13 +35,13 @@ func PostReview(c *fiber.Ctx) error {
 		})
 	}
 
-	review := models.Review{
-		UserID:     input.UserID,
-		MediaID:    input.MediaID,
-		ReviewText: input.ReviewText,
+	review := models.Rating{
+		UserID:  input.UserID,
+		MediaID: input.MediaID,
+		Comment: input.Comment,
 	}
 
-	err = models.SaveReview(&review)
+	err = rs.SaveRating(&review)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to save review",
@@ -49,16 +51,15 @@ func PostReview(c *fiber.Ctx) error {
 	return c.JSON(review)
 }
 
-// GetPinnedReviews returns pinned reviews for a user profile
-func GetPinnedReviews(c *fiber.Ctx) error {
-	userID, _ := strconv.Atoi(c.Params("id"))
-
-	pinnedReviews, err := models.GetPinnedReviewsByUserID(userID)
+// GetPinnedRatings returns pinned reviews for a user profile
+func GetPinnedRatings(c *fiber.Ctx) error {
+	rs := models.NewRatingStorage()
+	pinnedRatings, err := rs.GetPinned(context.TODO())
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get pinned reviews",
 		})
 	}
 
-	return c.JSON(pinnedReviews)
+	return c.JSON(pinnedRatings)
 }

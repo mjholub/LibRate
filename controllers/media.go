@@ -2,15 +2,15 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
+	"codeberg.org/mjh/LibRate/internal/client"
 	"codeberg.org/mjh/LibRate/models"
-	"codeberg.org/mjh/LibRate/recommendation"
+	services "codeberg.org/mjh/LibRate/recommendation/go/services"
 )
 
 // GetMedia retrieves media information based on the media ID
@@ -31,38 +31,29 @@ func GetMedia(c *fiber.Ctx) error {
 	return c.JSON(media)
 }
 
-// PostRating handles the submission of a user's rating for a specific media item
-func PostRating(c *fiber.Ctx) error {
-	var input models.RatingInput
-	rStorage := models.NewRatingStorage()
-	err := json.Unmarshal(c.Body(), &input)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
-	}
-
-	rating := models.Rating{
-		UserID:   input.UserID,
-		MediaID:  input.MediaID,
-		NumStars: input.NumStars,
-	}
-
-	err = rStorage.SaveRating(&rating)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to save rating",
-		})
-	}
-
-	return c.JSON(rating)
-}
-
 // GetRecommendations returns media recommendations for a user based on collaborative filtering
 func GetRecommendations(c *fiber.Ctx) error {
-	userID, _ := strconv.Atoi(c.Params("id"))
+	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid member ID",
+		})
+	}
+	memberID := int32(mID)
 
-	recommendedMedia, err := recommendation.GetMemberRecommendations(userID)
+	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to connect to recommendation service",
+		})
+	}
+	defer conn.Close()
+
+	s := services.NewRecommendationServiceClient(conn)
+
+	recommendedMedia, err := s.GetRecommendations(context.Background(), &services.GetRecommendationsRequest{
+		MemberId: memberID,
+	})
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get recommendations",

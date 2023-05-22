@@ -124,3 +124,57 @@ func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, err
 
 	return &rating, nil
 }
+
+func (rs *RatingStorage) GetPinned(ctx context.Context) ([]*Rating, error) {
+	var ratings []*Rating
+
+	config := cfg.LoadConfig()
+	dbConf := config.ArangoDB
+
+	conn, err := http.NewConnection(http.ConnectionConfig{
+		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := driver.NewClient(driver.ClientConfig{
+		Connection:     conn,
+		Authentication: driver.BasicAuthentication(dbConf.User, dbConf.Password),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := client.Database(ctx, dbConf.Database)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: This is a hack to get around the fact that the collection is not created
+	_, err = db.Collection(ctx, "ratings")
+	if err != nil {
+		return nil, err
+	}
+
+	query := "FOR r IN ratings FILTER r.pinned == true RETURN r"
+	cursor, err := db.Query(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close()
+
+	for {
+		var rating Rating
+		_, err := cursor.ReadDocument(ctx, &rating)
+		if driver.IsNoMoreDocuments(err) {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+
+		ratings = append(ratings, &rating)
+	}
+
+	return ratings, nil
+}
