@@ -32,9 +32,9 @@ import (
 	"codeberg.org/mjh/librerym/internal/log"
 	"codeberg.org/mjh/librerym/internal/uris"
 	"codeberg.org/mjh/librerym/internal/util"
-	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
 )
 
 /*
