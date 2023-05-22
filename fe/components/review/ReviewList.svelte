@@ -1,5 +1,5 @@
 <script>
-  import ReviewForm from "./ReviewForm.svelte";
+  import ReviewForm from "../form/Review.svelte";
   import ReviewCard from "./ReviewCard.svelte";
 
   export let reviews = [];
