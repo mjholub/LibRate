@@ -44,7 +44,6 @@
     {/each}
   </ul>
 </div>
-// FIXME: add graceful noscript degradation
 
 <style>
   .search-bar {
