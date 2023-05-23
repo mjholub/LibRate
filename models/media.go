@@ -1,12 +1,14 @@
 package models
 
 import (
+	"context"
 	"time"
 )
 
 type Film struct {
-	Cast Cast
-	Year uint32 `json:"year"`
+	Title string `json:"title"`
+	Cast  Cast
+	Year  uint32 `json:"year"`
 }
 
 type Cast struct {
@@ -35,4 +37,38 @@ type Genre struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Keywords    []string `json:"keywords"`
+}
+
+type MediaStorer interface {
+	Get(ctx context.Context, key string, kind interface{}) (any, error)
+	GetAll() ([]*interface{}, error)
+	Add(ctx context.Context, key, value interface{}, objType interface{}) error
+	Update(ctx context.Context, key, value interface{}, objType interface{}) error
+	Delete(ctx context.Context, key interface{}, objType interface{}) error
+}
+
+type MediaStorage struct{}
+
+func NewMediaStorage() *MediaStorage {
+	return &MediaStorage{}
+}
+
+func (ms *MediaStorage) Get(ctx context.Context, key string, kind interface{}) (any, error) {
+	return nil, nil
+}
+
+func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
+	return nil, nil
+}
+
+func (ms *MediaStorage) Add(ctx context.Context, key, value interface{}, objType interface{}) error {
+	return nil
+}
+
+func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objType interface{}) error {
+	return nil
+}
+
+func (ms *MediaStorage) Delete(ctx context.Context, key interface{}, objType interface{}) error {
+	return nil
 }

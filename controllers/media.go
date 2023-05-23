@@ -62,3 +62,68 @@ func GetRecommendations(c *fiber.Ctx) error {
 
 	return c.JSON(recommendedMedia)
 }
+
+func AddMedia(c *fiber.Ctx) error {
+	mstor := models.NewMediaStorage()
+	var media any
+
+	if err := c.BodyParser(&media); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Cannot parse JSON",
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	value := media.(map[string]interface{})
+	// unmarshal the JSON payload into a struct
+	switch value["type"] {
+	case "film":
+		film := models.Film{
+			Title: value["title"].(string),
+			Year:  value["year"].(int),
+			Cast:  value["cast"].([]string),
+		}
+		media = film
+	case "album":
+		album := models.Album{
+			Name:        value["name"].(string),
+			Artists:     value["artists"].([]string),
+			ReleaseDate: value["releaseDate"].(time.Time),
+			Genres:      value["genres"].([]string),
+			Keywords:    value["keywords"].([]string),
+			Duration:    value["duration"].(time.Duration),
+			Tracks:      value["tracks"].([]string),
+		}
+		media = album
+	case "genre":
+		genre := models.Genre{
+			Name:        value["name"].(string),
+			Description: value["description"].(string),
+			Keywords:    value["keywords"].([]string),
+		}
+		media = genre
+	case "track":
+		track := models.Track{
+			Name:     value["name"].(string),
+			Artists:  value["artists"].([]models.Person),
+			Duration: value["duration"].(time.Duration),
+			Lyrics:   value["lyrics"].(string),
+		}
+		media = track
+	default:
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid media type",
+		})
+	}
+
+	err := mstor.Add(ctx, &media)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to add media",
+		})
+	}
+
+	return c.JSON(media)
+}
