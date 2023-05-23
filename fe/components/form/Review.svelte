@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
 
+  export let albums = [];
   let favoriteTrack = "";
   let trackRatings = "";
   let castRatings = "";
@@ -63,8 +64,6 @@
   };
 
   (async () => {
-    let albums = [];
-
     await Promise.all(
       albums.map(async (album) => {
         const response = await fetch(`/api/albums/${album.id}`);
