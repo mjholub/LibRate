@@ -52,6 +52,27 @@
     // Fetch user preference logic here...
     return Promise.resolve(10);
   };
+
+  // TODO: check if this works
+  const isVideoWork = async () => {
+    let response = await fetch("/api/media/${mediaID}");
+    let media = await response.json();
+    return (
+      media.Type === "Film" || media.Type === "TV" || media.Type === "Anime"
+    );
+  };
+
+  (async () => {
+    let albums = [];
+
+    await Promise.all(
+      albums.map(async (album) => {
+        const response = await fetch(`/api/albums/${album.id}`);
+        const albumData = await response.json();
+        albums.push(albumData);
+      })
+    );
+  })();
 </script>
 
 <form on:submit|preventDefault={submitReview}>
