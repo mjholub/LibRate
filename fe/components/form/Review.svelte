@@ -55,10 +55,12 @@
 </script>
 
 <form on:submit|preventDefault={submitReview}>
-  <label>
-    Favorite track
-    <input type="text" bind:value={favoriteTrack} required />
-  </label>
+  <select bind:value={favoriteTrack}>
+    <option value="">Select a favorite track</option>
+    {#each albums as album}
+      <option value={album.track}>{album.track}</option>
+    {/each}
+  </select>
 
   <label>
     Track ratings
@@ -71,31 +73,38 @@
     />
   </label>
 
-  <label>
-    Cast ratings
-    <input
-      type="number"
-      bind:value={castRatings}
-      min="1"
-      max={ratingScale}
-      required
-    />
-  </label>
+  {#if isVideoWork}
+    <label>
+      Cast ratings
+      <input
+        type="number"
+        bind:value={castRatings}
+        min="1"
+        max={ratingScale}
+        placeholder="Cast ratings"
+        required
+      />
+    </label>
+  {/if}
 
   <label>
-    Theme votes
     <input
       type="number"
       bind:value={themeVotes}
       min="0"
       max={ratingScale}
+      placeholder="Theme votes"
       required
     />
   </label>
 
   <label>
-    Review (min 20 words)
-    <textarea bind:value={reviewText} on:input={handleReviewChange} required />
+    <textarea
+      bind:value={reviewText}
+      on:input={handleReviewChange}
+      placeholder="Review (min 20 words)"
+      required
+    />
   </label>
 
   <div>Word count: {wordCount}</div>
