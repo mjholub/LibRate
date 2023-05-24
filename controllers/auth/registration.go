@@ -119,9 +119,9 @@ func createMember(input *models.RegisterInput) (*models.Member, error) {
 }
 
 func saveMember(member *models.Member) error {
-	memberStorer := models.NewMemberStorer()
+	memberStorage := models.NewMemberStorage()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return memberStorer.Save(ctx, member)
+	return memberStorage.Save(ctx, member)
 }

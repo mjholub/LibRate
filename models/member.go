@@ -2,12 +2,14 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
-	driver "github.com/arangodb/go-driver"
-	"github.com/arangodb/go-driver/http"
+	"codeberg.org/mjh/LibRate/internal/client"
+
+	"github.com/dgraph-io/dgo/v230"
+	"github.com/dgraph-io/dgo/v230/protos/api"
 )
 
 type Member struct {
@@ -40,142 +42,92 @@ type RegLoginInput interface {
 	RegisterInput | LoginInput
 }
 
-// MemberStorer implements the authboss.ServerStorer interface
-type MemberStorer struct{}
-
-func NewMemberStorer() *MemberStorer {
-	return &MemberStorer{}
+type MemberStorer interface {
+	Load(ctx context.Context, key string) (*Member, error)
+	Save(ctx context.Context, member *Member) error
 }
 
-// GetMemberByID retrieves a member by ID from the ArangoDB database
-func (ms *MemberStorer) Load(ctx context.Context, key string) (member *Member, err error) {
-	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{"http://localhost:8529"},
-	})
+// MemberStorage implements the MemberStorer interface
+type MemberStorage struct {
+	client *dgo.Dgraph
+}
+
+func NewMemberStorage() (*MemberStorage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	conn, err := client.ConnectToService(ctx, "localhost", "9080")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to connect to Dgraph: %v\n", err)
 	}
+	dgraphClient := dgo.NewDgraphClient(api.NewDgraphClient(conn))
 
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection:     conn,
-		Authentication: driver.BasicAuthentication("root", ""),
-	})
-	if err != nil {
-		return nil, err
-	}
+	return &MemberStorage{
+		client: dgraphClient,
+	}, nil
+}
 
-	db, err := client.Database(ctx, "your_database_name")
-	if err != nil {
-		return nil, err
-	}
-
-	members, err := db.Collection(ctx, "members")
-	if err != nil {
-		return nil, err
-	}
-	_ = members
-	// FIXME: remove or find use
-
-	query := fmt.Sprintf("FOR u IN members FILTER u._key == '%s' RETURN u", key)
-	cursor, err := db.Query(ctx, query, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer cursor.Close()
-
-	if cursor.HasMore() {
-		_, err := cursor.ReadDocument(ctx, &member)
-		if err != nil {
-			return nil, err
+func (s *MemberStorage) Load(ctx context.Context, key string) (*Member, error) {
+	query := fmt.Sprintf(`{
+		member(func: eq(_key, "%s")) {
+			_key
+			passhash
+			membername
+			email
+			regdate
 		}
-	} else {
-		return nil, fmt.Errorf("member not found")
+	}`, key)
+
+	resp, err := s.client.NewTxn().Query(ctx, query)
+	if err != nil {
+		return nil, err
 	}
 
-	return member, nil
+	var result struct {
+		Member []*Member `json:"member"`
+	}
+
+	if err := json.Unmarshal(resp.Json, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result.Member) == 0 {
+		return nil, fmt.Errorf("member with key %s not found", key)
+	}
+
+	return result.Member[0], nil
 }
 
-// SaveMember saves a new member to the ArangoDB database
-func (ms *MemberStorer) Save(ctx context.Context, member *Member) error {
-	// connect and auth to ArangoDB, get database and collection
-	auth, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{"http://localhost:8529"},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to connect to ArangoDB: %w", err)
-	}
+func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
+	txn := s.client.NewTxn()
 
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection: auth,
+	_, err := txn.Mutate(ctx, &api.Mutation{
+		CommitNow: true,
+		SetJson:   member,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	db, err := client.Database(ctx, os.Getenv("ARANGO_DB_NAME"))
-	if err != nil {
-		return fmt.Errorf("failed to get database: %w", err)
-	}
-
-	members, err := db.Collection(ctx, "members")
-	if err != nil {
-		return fmt.Errorf("failed to get collection: %w", err)
-	}
-
-	// insert member into Collection
-	meta, err := members.CreateDocument(ctx, member)
-	if err != nil {
-		return fmt.Errorf("failed to create member: %w", err)
-	}
-
-	member.UUID = meta.Key
-
-	return nil
+	return err
 }
 
-// UpdateMember updates a member in the ArangoDB Database
-func UpdateMember(input MemberInput) (*Member, error) {
-	// connect and auth to ArandoDB, get database and collection
-	auth, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{"http://localhost:8529"},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to ArangoDB: %w", err)
-	}
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection: auth,
+// Update updates a member in the Dgraph Database
+func (s *MemberStorage) Update(ctx context.Context, member *Member) error {
+	txn := s.client.NewTxn()
+
+	_, err := txn.Mutate(ctx, &api.Mutation{
+		CommitNow: true,
+		SetJson:   member,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	db, err := client.Database(ctx, os.Getenv("ARANGO_DB_NAME"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get database: %w", err)
-	}
-
-	members, err := db.Collection(ctx, "members")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get collection: %w", err)
-	}
-
-	// update member in collection
-	// FIXME: update member
-	meta, err := members.UpdateDocument(ctx, input.MemberName, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update member: %w", err)
-	}
-
-	member := Member{
-		UUID:       meta.Key,
-		MemberName: input.MemberName,
-		Email:      input.Email,
-	}
-
-	return &member, nil
+	return err
 }
 
-func (ms *MemberStorer) Delete(ctx context.Context, key string) error {
-	return nil
+// Delete deletes a member from the Dgraph Database
+func (s *MemberStorage) Delete(ctx context.Context, member *Member) error {
+	txn := s.client.NewTxn()
+
+	_, err := txn.Mutate(ctx, &api.Mutation{
+		CommitNow:  true,
+		DeleteJson: member,
+	})
+
+	return err
 }
