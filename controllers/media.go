@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -78,23 +79,26 @@ func AddMedia(c *fiber.Ctx) error {
 
 	value := media.(map[string]interface{})
 	// unmarshal the JSON payload into a struct
-	switch value["type"] {
+	switch value["type"].(string) {
 	case "film":
 		film := models.Film{
 			Title: value["title"].(string),
 			Year:  value["year"].(int),
-			Cast:  value["cast"].([]string),
+			Cast: models.Cast{
+				Actors:    value["actors"].([]models.Person),
+				Directors: value["directors"].([]models.Person),
+			},
 		}
 		media = film
 	case "album":
 		album := models.Album{
 			Name:        value["name"].(string),
-			Artists:     value["artists"].([]string),
+			Artists:     value["artists"].([]models.Person),
 			ReleaseDate: value["releaseDate"].(time.Time),
 			Genres:      value["genres"].([]string),
 			Keywords:    value["keywords"].([]string),
 			Duration:    value["duration"].(time.Duration),
-			Tracks:      value["tracks"].([]string),
+			Tracks:      value["tracks"].([]models.Track),
 		}
 		media = album
 	case "genre":
@@ -118,7 +122,7 @@ func AddMedia(c *fiber.Ctx) error {
 		})
 	}
 
-	err := mstor.Add(ctx, &media)
+	err := mstor.Add(ctx, &media, reflect.TypeOf(media))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to add media",

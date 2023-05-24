@@ -8,7 +8,7 @@ import (
 type Film struct {
 	Title string `json:"title"`
 	Cast  Cast
-	Year  uint32 `json:"year"`
+	Year  int `json:"year"`
 }
 
 type Cast struct {
@@ -61,7 +61,7 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, key, value interface{}, objType interface{}) error {
+func (ms *MediaStorage) Add(ctx context.Context, media interface{}, objType interface{}) error {
 	return nil
 }
 

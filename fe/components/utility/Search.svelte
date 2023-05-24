@@ -47,7 +47,7 @@
 
 <style>
   .search-bar {
-    margin-bottom: 1em;
+    margin-bottom: 0.8em;
   }
 
   .search-results {

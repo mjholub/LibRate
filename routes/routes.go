@@ -26,7 +26,7 @@ func Setup(app *fiber.App) {
 	}))
 
 	app.Get("/api/reviews/:id", controllers.GetRatings)
-	app.Patch("/api/password-entropy", middleware.Protected(), auth.ValidatePassword())
+	app.Get("/api/password-entropy", middleware.Protected(), auth.ValidatePassword())
 	app.Post("/api/reviews", controllers.PostRating)
 	app.Post("/api/login", auth.Login)
 	app.Post("/api/register", auth.Register)
