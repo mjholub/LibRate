@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models"
 
 	"github.com/gofiber/fiber/v2"
@@ -34,7 +35,14 @@ func Login(c *fiber.Ctx) error {
 		lookupTarget = cleaned.MemberName
 	}
 
-	memberStorer := models.NewMemberStorer()
+	conf := cfg.LoadDgraph()
+
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to connect to database",
+		})
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -44,7 +52,7 @@ func Login(c *fiber.Ctx) error {
 	go func() {
 		defer close(statusChan)
 
-		member, err := memberStorer.Load(ctx, lookupTarget)
+		member, err := ms.Load(ctx, lookupTarget)
 		if err != nil {
 			statusChan <- err
 			return

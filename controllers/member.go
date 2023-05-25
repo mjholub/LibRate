@@ -4,18 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models"
 )
 
 // GetMember retrieves user information based on the user ID
 func GetMember(c *fiber.Ctx) error {
-	ms := models.NewMemberStorer()
+	conf := cfg.LoadDgraph()
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialize member storage",
+		})
+	}
 	member, err := ms.Load(context.TODO(), c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"error": "Member not found",
 		})
 	}
@@ -38,7 +46,13 @@ func CreateMember(c *fiber.Ctx) error {
 		Email:      input.Email,
 	}
 
-	ms := models.NewMemberStorer()
+	conf := cfg.LoadDgraph()
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialize member storage",
+		})
+	}
 
 	err = ms.Save(context.TODO(), &m)
 	if err != nil {
@@ -59,7 +73,23 @@ func UpdateMember(c *fiber.Ctx) error {
 		})
 	}
 
-	_, err = models.UpdateMember(input)
+	conf := cfg.LoadDgraph()
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to connect to database",
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	member, err := ms.Load(ctx, input.Email)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Member not found",
+		})
+	}
+	err = ms.Update(ctx, member)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to update user",
@@ -73,10 +103,28 @@ func UpdateMember(c *fiber.Ctx) error {
 
 // DeleteMember handles the deletion of a user
 func DeleteMember(c *fiber.Ctx) error {
-	// TODO: implement
+	var input models.MemberInput
+	err := json.Unmarshal(c.Body(), &input)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid input",
+		})
+	}
 
-	ms := models.NewMemberStorer()
-	err := ms.Delete(context.Background(), c.Params("id"))
+	conf := cfg.LoadDgraph()
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to connect to database",
+		})
+	}
+	member, err := ms.Load(context.Background(), input.Email)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": "Failed to load member",
+		})
+	}
+	err = ms.Delete(context.Background(), member)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to delete user",

@@ -10,6 +10,7 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	validator "github.com/wagslane/go-password-validator"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models"
 )
 
@@ -119,9 +120,14 @@ func createMember(input *models.RegisterInput) (*models.Member, error) {
 }
 
 func saveMember(member *models.Member) error {
-	memberStorage := models.NewMemberStorage()
+	conf := cfg.LoadDgraph()
+
+	ms, err := models.NewMemberStorage(*conf)
+	if err != nil {
+		return fmt.Errorf("failed to create member storage: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return memberStorage.Save(ctx, member)
+	return ms.Save(ctx, member)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/internal/client"
 
 	"github.com/dgraph-io/dgo/v230"
@@ -52,12 +53,12 @@ type MemberStorage struct {
 	client *dgo.Dgraph
 }
 
-func NewMemberStorage() (*MemberStorage, error) {
+func NewMemberStorage(conf cfg.DgraphConfig) (*MemberStorage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	conn, err := client.ConnectToService(ctx, "localhost", "9080")
+	conn, err := client.ConnectToService(ctx, conf.Host, conf.GRPCPort)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to Dgraph: %v\n", err)
+		return nil, fmt.Errorf("failed to connect to Dgraph: %v", err)
 	}
 	dgraphClient := dgo.NewDgraphClient(api.NewDgraphClient(conn))
 
@@ -100,9 +101,14 @@ func (s *MemberStorage) Load(ctx context.Context, key string) (*Member, error) {
 func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
 	txn := s.client.NewTxn()
 
-	_, err := txn.Mutate(ctx, &api.Mutation{
+	memberJSON, err := json.Marshal(member)
+	if err != nil {
+		return fmt.Errorf("failed to marshal member: %v", err)
+	}
+
+	_, err = txn.Mutate(ctx, &api.Mutation{
 		CommitNow: true,
-		SetJson:   member,
+		SetJson:   memberJSON,
 	})
 
 	return err
@@ -112,9 +118,14 @@ func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
 func (s *MemberStorage) Update(ctx context.Context, member *Member) error {
 	txn := s.client.NewTxn()
 
-	_, err := txn.Mutate(ctx, &api.Mutation{
+	memberJSON, err := json.Marshal(member)
+	if err != nil {
+		return fmt.Errorf("failed to marshal member: %v", err)
+	}
+
+	_, err = txn.Mutate(ctx, &api.Mutation{
 		CommitNow: true,
-		SetJson:   member,
+		SetJson:   memberJSON,
 	})
 
 	return err
@@ -124,9 +135,14 @@ func (s *MemberStorage) Update(ctx context.Context, member *Member) error {
 func (s *MemberStorage) Delete(ctx context.Context, member *Member) error {
 	txn := s.client.NewTxn()
 
-	_, err := txn.Mutate(ctx, &api.Mutation{
+	memberJSON, err := json.Marshal(member)
+	if err != nil {
+		return fmt.Errorf("failed to marshal member: %v", err)
+	}
+
+	_, err = txn.Mutate(ctx, &api.Mutation{
 		CommitNow:  true,
-		DeleteJson: member,
+		DeleteJson: memberJSON,
 	})
 
 	return err
