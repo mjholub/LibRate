@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/internal/client"
 
@@ -53,18 +55,23 @@ type MemberStorage struct {
 	client *dgo.Dgraph
 }
 
-func NewMemberStorage(conf cfg.DgraphConfig) (*MemberStorage, error) {
+func NewMemberStorage(conf cfg.DgraphConfig) (*MemberStorage, *grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	conn, err := client.ConnectToService(ctx, conf.Host, conf.GRPCPort)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Dgraph: %v", err)
+		return nil, nil, fmt.Errorf("failed to connect to Dgraph: %v", err)
 	}
 	dgraphClient := dgo.NewDgraphClient(api.NewDgraphClient(conn))
+	if dgraphClient == nil {
+		return nil, nil, fmt.Errorf("failed to create Dgraph client")
+	}
 
 	return &MemberStorage{
-		client: dgraphClient,
-	}, nil
+			client: dgraphClient,
+		},
+		conn,
+		nil
 }
 
 func (s *MemberStorage) Load(ctx context.Context, key string) (*Member, error) {

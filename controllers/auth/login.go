@@ -37,7 +37,8 @@ func Login(c *fiber.Ctx) error {
 
 	conf := cfg.LoadDgraph()
 
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to connect to database",

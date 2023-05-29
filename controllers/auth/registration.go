@@ -122,7 +122,8 @@ func createMember(input *models.RegisterInput) (*models.Member, error) {
 func saveMember(member *models.Member) error {
 	conf := cfg.LoadDgraph()
 
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return fmt.Errorf("failed to create member storage: %w", err)
 	}
