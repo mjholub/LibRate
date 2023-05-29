@@ -18,6 +18,7 @@ require (
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/avast/retry-go/v4 v4.3.4 // indirect
 	github.com/dgraph-io/dgo/v230 v230.0.1 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect
 	github.com/gofiber/jwt/v2 v2.2.7 // indirect
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect
@@ -32,6 +33,7 @@ require (
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rs/zerolog v1.29.1 // indirect
 	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect
 	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect

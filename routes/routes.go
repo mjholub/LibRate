@@ -9,15 +9,15 @@ import (
 
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
+	"codeberg.org/mjh/LibRate/internal/logging"
 	"codeberg.org/mjh/LibRate/middleware"
-	"codeberg.org/mjh/LibRate/utils"
 )
 
 func Setup(app *fiber.App) {
-	log := utils.NewLogger()
+	lrlog := logging.Init()
 	staticPath, err := filepath.Abs("./fe/public")
 	if err != nil {
-		log.Sugar().Fatalf("Error loading static path: %s", err)
+		lrlog.Error().Err(err).Msg("Failed to get absolute path for static files")
 	}
 
 	app.Use("/", filesystem.New(filesystem.Config{
