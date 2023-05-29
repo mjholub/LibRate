@@ -15,7 +15,8 @@ import (
 // GetMember retrieves user information based on the user ID
 func GetMember(c *fiber.Ctx) error {
 	conf := cfg.LoadDgraph()
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize member storage",
@@ -47,7 +48,8 @@ func CreateMember(c *fiber.Ctx) error {
 	}
 
 	conf := cfg.LoadDgraph()
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize member storage",
@@ -74,7 +76,8 @@ func UpdateMember(c *fiber.Ctx) error {
 	}
 
 	conf := cfg.LoadDgraph()
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to connect to database",
@@ -112,7 +115,8 @@ func DeleteMember(c *fiber.Ctx) error {
 	}
 
 	conf := cfg.LoadDgraph()
-	ms, err := models.NewMemberStorage(*conf)
+	ms, conn, err := models.NewMemberStorage(*conf)
+	defer conn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to connect to database",

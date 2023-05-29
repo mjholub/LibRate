@@ -8,6 +8,7 @@ import (
 	retry "github.com/avast/retry-go/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/encoding/gzip"
 )
 
 func ConnectToService(ctx context.Context, name, port string) (*grpc.ClientConn, error) {
@@ -22,7 +23,11 @@ func ConnectToService(ctx context.Context, name, port string) (*grpc.ClientConn,
 	default:
 		err = retry.Do(
 			func() error {
-				conn, err = grpc.Dial(name+":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				dialOpts := append([]grpc.DialOption{},
+					grpc.WithTransportCredentials(insecure.NewCredentials()),
+					grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)),
+				)
+				conn, err = grpc.DialContext(ctx, fmt.Sprintf("%s:%s", name, port), dialOpts...)
 				if err != nil {
 					return fmt.Errorf("failed to connect to %s: %v", name, err)
 				}
