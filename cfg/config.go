@@ -25,9 +25,14 @@ type FiberConfig struct {
 }
 
 type DgraphConfig struct {
-	Host     string
-	GRPCPort string
-	HTTPPort string
+	Host           string
+	GRPCPort       string
+	HTTPPort       string
+	AlphaBadger    string
+	AlphaBlockRate string
+	AlphaTrace     string
+	AlphaTLS       string
+	AlphaSecurity  string
 }
 
 func LoadConfig() Config {
@@ -53,21 +58,63 @@ func LoadConfig() Config {
 }
 
 func LoadDgraph() *DgraphConfig {
-	dghost := os.Getenv("DGRAPH_HOST")
-	if dghost == "" {
-		dghost = "0.0.0.0"
+	var (
+		dghost        string
+		dgport        string
+		dghttp        string
+		dgAlphaBadger string
+		dgAlphaBRate  string
+		dgAlphaTrace  string
+		dgAlphaTLS    string
+		dgAlphaSec    string
+	)
+
+	envChan := make(chan string, 1)
+	defer close(envChan)
+
+	getEnvOrDefault := func(envVar, defaultValue string) string {
+		value := os.Getenv(envVar)
+		if value == "" {
+			os.Setenv(envVar, defaultValue)
+			value = defaultValue
+		}
+		envChan <- value
+		return value
 	}
-	dgport := os.Getenv("DGRAPH_GRPC_PORT")
-	if dgport == "" {
-		dgport = "5080"
-	}
-	dghttp := os.Getenv("DGRAPH_HTTP_PORT")
-	if dghttp == "" {
-		dghttp = "6080"
-	}
+	go func() {
+		dghost = getEnvOrDefault("DGRAPH_HOST", "0.0.0.0")
+		dgport = getEnvOrDefault("DGRAPH_GRPC_PORT", "5080")
+		dghttp = getEnvOrDefault("DGRAPH_HTTP_PORT", "6080")
+		dgAlphaBadger = getEnvOrDefault("DGRAPH_ALPHA_BADGER", "compression=zstd;cache_size=1G;cache_ttl=1h;max_table_size=1G;level_size=128MB")
+		dgAlphaBRate = getEnvOrDefault("DGRAPH_ALPHA_BLOCK_RATE", "20")
+		dgAlphaTrace = getEnvOrDefault("DGRAPH_ALPHA_TRACE", "prometheus=localhost:9090")
+		dgAlphaTLS = getEnvOrDefault("DGRAPH_ALPHA_TLS", "false")
+		dgAlphaSec = getEnvOrDefault("DGRAPH_ALPHA_SECURITY", `whitelist=
+		10.0.0.0/8,
+		172.0.0.0/8,
+		192.168.0.0/16,
+		`+dghost+`
+		`)
+	}()
+
+	// Retrieve the values from the channel
+	dghost = <-envChan
+	dgport = <-envChan
+	dghttp = <-envChan
+	dgAlphaBadger = <-envChan
+	dgAlphaBRate = <-envChan
+	dgAlphaTrace = <-envChan
+	dgAlphaTLS = <-envChan
+	dgAlphaSec = <-envChan
+
 	return &DgraphConfig{
-		Host:     dghost,
-		GRPCPort: dgport,
-		HTTPPort: dghttp,
+		Host:           dghost,
+		GRPCPort:       dgport,
+		HTTPPort:       dghttp,
+		AlphaBadger:    dgAlphaBadger,
+		AlphaBlockRate: dgAlphaBRate,
+		AlphaTrace:     dgAlphaTrace,
+		AlphaTLS:       dgAlphaTLS,
+		AlphaSecurity:  dgAlphaSec,
 	}
 }
