@@ -2,27 +2,54 @@ package cfg
 
 import (
 	"os"
+	"strings"
+
+	"codeberg.org/mjh/LibRate/cfg/parser"
+	"codeberg.org/mjh/LibRate/internal/logging"
+
+	config "github.com/gookit/config/v2"
+	"github.com/samber/lo"
 )
 
+// nolint:gochecknoglobals
+var log = logging.Init()
+
 func LoadConfig() Config {
+	configRaw, err := parser.Parse("config.yml")
+	if err != nil {
+		log.Panic().Err(err).Msgf("error parsing config: %s", err.Error())
+	}
+	log.Info().Msgf("got config: %v", configRaw)
+
+	keys := lo.Keys[string, interface{}](configRaw)
+	dbKeys := lo.Map(keys, func(key string, index int) bool {
+		return strings.Contains(key, "database")
+	})
+
+	dbConfig := &DBConfig{}
+	dbConf := lo.ForEach(dbKeys, func(key string, index int) {
+		config.MapStruct(dbKeys[index], dbConfig)
+	})
+
+	envChan := make(chan string, 1)
+	defer close(envChan)
+	getEnvOrDefault := func(envVar, defaultValue string) string {
+		value := os.Getenv(envVar)
+		if value == "" {
+			os.Setenv(envVar, defaultValue)
+			value = defaultValue
+		}
+		envChan <- value
+		return value
+	}
+
+	if err != nil {
+		log.Panic().Err(err).Msgf("error parsing config: %s", err.Error())
+	}
 	return Config{
-		ArangoDB: ArangoDBConfig{
-			Host:     os.Getenv("ARANGODB_HOST"),
-			Port:     os.Getenv("ARANGODB_PORT"),
-			User:     os.Getenv("ARANGODB_USER"),
-			Password: os.Getenv("ARANGODB_PASSWORD"),
-			Database: os.Getenv("ARANGODB_DATABASE"),
-		},
-		Fiber: FiberConfig{
-			Host: os.Getenv("FIBER_HOST"),
-			Port: os.Getenv("FIBER_PORT"),
-		},
+
 		SiginingKey: os.Getenv("SIGNING_KEY"),
-		Dgraph: DgraphConfig{
-			Host:     os.Getenv("DGRAPH_HOST"),
-			GRPCPort: os.Getenv("DGRAPH_GRPC_PORT"),
-			HTTPPort: os.Getenv("DGRAPH_HTTP_PORT"),
-		},
+		DBPass:      os.Getenv("DB_PASS"),
 	}
 }
 
