@@ -1,21 +1,21 @@
 package parser
 
 import (
-	"fmt"
-	"os"
-
-	yaml "gopkg.in/yaml.v3"
+	config "github.com/gookit/config/v2"
+	yaml "github.com/gookit/config/v2/yaml"
 )
 
 func Parse(filename string) (kv map[string]interface{}, err error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+	config.WithOptions(config.ParseEnv) // optional: enable environment variable parsing
+	config.AddDriver(yaml.Driver)       // add YAML driver
+
+	// load from file
+	if err := config.LoadFiles(filename); err != nil {
+		return kv, err
 	}
 
-	err = yaml.Unmarshal(data, &kv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	if err := config.Scan(&kv); err != nil {
+		return kv, err
 	}
 
 	return kv, nil
