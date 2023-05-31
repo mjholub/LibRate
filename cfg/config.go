@@ -2,9 +2,11 @@ package cfg
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"codeberg.org/mjh/LibRate/cfg/parser"
+	"codeberg.org/mjh/LibRate/internal/clitools"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
 	config "github.com/gookit/config/v2"
@@ -15,41 +17,110 @@ import (
 var log = logging.Init()
 
 func LoadConfig() Config {
-	configRaw, err := parser.Parse("config.yml")
+  cfhome, e := os.UserConfigDir() 
+	home, e := os.UserHomeDir()
+	if e != nil {
+		log.Panic().Err(e).Msgf("error getting user home dir: %s", e.Error())
+	}
+
+	configFile := lo.os.Getenv("CONFIG_FILE")
+	tryConfig := func(filename string) string {
+		for i := range *configLocations {
+			if os.FileExists(filename) {
+				return filename
+			}
+	}
+	configRaw, err := lo.
 	if err != nil {
 		log.Panic().Err(err).Msgf("error parsing config: %s", err.Error())
 	}
 	log.Info().Msgf("got config: %v", configRaw)
+	
+	config.
 
-	keys := lo.Keys[string, interface{}](configRaw)
-	dbKeys := lo.Map(keys, func(key string, index int) bool {
-		return strings.Contains(key, "database")
+}
+
+func tryLocations() []string {
+	configLocations := []string{
+		"config",
+		"config/config",
+		"/etc/librate/config",
+		"/var/lib/librate/config",
+		"/opt/librate/config",
+		"/usr/local/librate/config",
+		home + "/.config/librate/config",
+		cfhome + "/.local/share/librate/config",
+	}
+	configExtensions := []string{
+		".yml",
+		".yaml",
+	"",
+	}
+	// use FlatMap and Map to create a list of all possible config file locations
+configLocations = lo.FlatMap(configLocations, func(s string) []string {
+		return lo.Map(configExtensions, func(s2 string) string {
+			return s + s2
+		})
 	})
+	return configLocations
+}
 
-	dbConfig := &DBConfig{}
-	dbConf := lo.ForEach(dbKeys, func(key string, index int) {
-		config.MapStruct(dbKeys[index], dbConfig)
-	})
-
-	envChan := make(chan string, 1)
-	defer close(envChan)
-	getEnvOrDefault := func(envVar, defaultValue string) string {
-		value := os.Getenv(envVar)
-		if value == "" {
-			os.Setenv(envVar, defaultValue)
-			value = defaultValue
+func lookForExisting(configLocations []string) string {
+		if configFileEnv := os.Getenv("CONFIG_FILE"); configFileEnv != "" && os.FileExists(configFileEnv) {
+			return configFileEnv
 		}
-		envChan <- value
-		return value
+	for i := range configLocations {
+		if os.FileExists(configLocations[i]) {
+			return configLocations[i]
+		}
 	}
+	return ""
+}
 
+func tryGettingConfig(tryPaths string) (string, error) {
+	if existing := lookForExisting(tryPaths); existing != "" {
+		return existing, nil
+	}
+	customPath, err := clitools.AskPath("config", defaultConfigPath, tryPaths)
 	if err != nil {
-		log.Panic().Err(err).Msgf("error parsing config: %s", err.Error())
+		return defaultConfigPath, err
 	}
-	return Config{
 
-		SiginingKey: os.Getenv("SIGNING_KEY"),
-		DBPass:      os.Getenv("DB_PASS"),
+	return customPath, nil
+}
+
+func getDefaultConfigPath() (string, error) {
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("error getting user config dir: %w", err)
+	}
+	defaultConfigPath := filepath.Join(confDir, "librate", "config.yaml")
+	return defaultConfigPath, nil
+}
+
+	// TODO: also create .env file in the same dir with CONFIG_FILE set to the path to make looking
+	// up the config file faster in the future
+func writeConfig(configPath string, c Config) error {
+	locs := tryLocations()
+	configPath, err := tryGettingConfig(locs)	
+	if err != nil {
+		return err
+	}
+	if configPath == "" {
+		return fmt.Errorf("no config file found")
+	}
+	yaml, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("error marshalling config: %w", err)
+	}
+	configDir := filepath.Dir(configPath)
+	err = os.MkdirAll(configDir, 0755)
+	if err != nil {
+		return fmt.Errorf("error creating config dir: %w", err)
+	}
+	err = os.WriteFile(configPath, yaml, 0640)
+	if err != nil {
+		return fmt.Errorf("error writing config file: %w", err)
 	}
 }
 

@@ -4,4 +4,5 @@ database:
   - engine: "postgres"
     host: "localhost"
     port: 5432
-    database: "librerym_dev" 
+    database: "librerym_dev"
+    user: "postgres"
