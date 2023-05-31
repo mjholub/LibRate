@@ -31,8 +31,8 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/mjh/LibRate/models"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -266,57 +266,59 @@ func ExtractSummary(i WithSummary) string {
 	return ""
 }
 
-func ExtractFields(i WithAttachment) []*gtsmodel.Field {
-	attachmentProp := i.GetActivityStreamsAttachment()
-	if attachmentProp == nil {
-		// Nothing to do.
-		return nil
-	}
-
-	l := attachmentProp.Len()
-	if l == 0 {
-		// Nothing to do.
-		return nil
-	}
-
-	fields := make([]*gtsmodel.Field, 0, l)
-	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
-		if !iter.IsSchemaPropertyValue() {
-			continue
+func ExtractFields(i WithAttachment) {
+	/*
+		attachmentProp := i.GetActivityStreamsAttachment()
+		if attachmentProp == nil {
+			// Nothing to do.
+			return nil
 		}
 
-		propertyValue := iter.GetSchemaPropertyValue()
-		if propertyValue == nil {
-			continue
+		l := attachmentProp.Len()
+		if l == 0 {
+			// Nothing to do.
+			return nil
 		}
 
-		nameProp := propertyValue.GetActivityStreamsName()
-		if nameProp == nil || nameProp.Len() != 1 {
-			continue
+		fields := make([]*models.Field, 0, l)
+		for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+			if !iter.IsSchemaPropertyValue() {
+				continue
+			}
+
+			propertyValue := iter.GetSchemaPropertyValue()
+			if propertyValue == nil {
+				continue
+			}
+
+			nameProp := propertyValue.GetActivityStreamsName()
+			if nameProp == nil || nameProp.Len() != 1 {
+				continue
+			}
+
+			name := nameProp.At(0).GetXMLSchemaString()
+			if name == "" {
+				continue
+			}
+
+			valueProp := propertyValue.GetSchemaValue()
+			if valueProp == nil || !valueProp.IsXMLSchemaString() {
+				continue
+			}
+
+			value := valueProp.Get()
+			if value == "" {
+				continue
+			}
+
+			fields = append(fields, &models.Field{
+				Name:  name,
+				Value: value,
+			})
 		}
 
-		name := nameProp.At(0).GetXMLSchemaString()
-		if name == "" {
-			continue
-		}
-
-		valueProp := propertyValue.GetSchemaValue()
-		if valueProp == nil || !valueProp.IsXMLSchemaString() {
-			continue
-		}
-
-		value := valueProp.Get()
-		if value == "" {
-			continue
-		}
-
-		fields = append(fields, &gtsmodel.Field{
-			Name:  name,
-			Value: value,
-		})
-	}
-
-	return fields
+		return fields
+	*/
 }
 
 // ExtractDiscoverable extracts the Discoverable boolean of an interface.
@@ -422,8 +424,8 @@ func ExtractContent(i WithContent) string {
 }
 
 // ExtractAttachment returns a gts model of an attachment from an attachmentable interface.
-func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
-	attachment := &gtsmodel.MediaAttachment{}
+func ExtractAttachment(i Attachmentable) (*model.MediaAttachment, error) {
+	attachment := &models.MediaAttachment{}
 
 	attachmentURL, err := ExtractURL(i)
 	if err != nil {
@@ -435,12 +437,12 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	if mediaType != nil {
 		attachment.File.ContentType = mediaType.Get()
 	}
-	attachment.Type = gtsmodel.FileTypeImage
+	attachment.Type = models.FileTypeImage
 
 	attachment.Description = ExtractName(i)
 	attachment.Blurhash = ExtractBlurhash(i)
 
-	attachment.Processing = gtsmodel.ProcessingStatusReceived
+	attachment.ProcessingState = models.ProcessingStatusReceived
 
 	return attachment, nil
 }
@@ -454,8 +456,8 @@ func ExtractBlurhash(i WithBlurhash) string {
 }
 
 // ExtractHashtags returns a slice of tags on the interface.
-func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
-	tags := []*gtsmodel.Tag{}
+func ExtractHashtags(i WithTag) ([]*models.Tag, error) {
+	tags := []*models.Tag{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
 		return tags, nil
@@ -485,9 +487,9 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 	return tags, nil
 }
 
-// ExtractHashtag returns a gtsmodel tag from a hashtaggable.
-func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
-	tag := &gtsmodel.Tag{}
+// ExtractHashtag returns a models tag from a hashtaggable.
+func ExtractHashtag(i Hashtaggable) (*models.Tag, error) {
+	tag := &models.Tag{}
 
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
@@ -506,9 +508,9 @@ func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 }
 
 // ExtractEmojis returns a slice of emojis on the interface.
-func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
-	emojis := []*gtsmodel.Emoji{}
-	emojiMap := make(map[string]*gtsmodel.Emoji)
+func ExtractEmojis(i WithTag) ([]*models.Emoji, error) {
+	emojis := []*models.Emoji{}
+	emojiMap := make(map[string]*models.Emoji)
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
 		return emojis, nil
@@ -542,8 +544,8 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 }
 
 // ExtractEmoji ...
-func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
-	emoji := &gtsmodel.Emoji{}
+func ExtractEmoji(i Emojiable) (*models.Emoji, error) {
+	emoji := &models.Emoji{}
 
 	idProp := i.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -580,9 +582,9 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	return emoji, nil
 }
 
-// ExtractMentions extracts a slice of gtsmodel Mentions from a WithTag interface.
-func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
-	mentions := []*gtsmodel.Mention{}
+// ExtractMentions extracts a slice of models Mentions from a WithTag interface.
+func ExtractMentions(i WithTag) ([]*models.Mention, error) {
+	mentions := []*models.Mention{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
 		return mentions, nil
@@ -613,8 +615,8 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 }
 
 // ExtractMention extracts a gts model mention from a Mentionable.
-func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
-	mention := &gtsmodel.Mention{}
+func ExtractMention(i Mentionable) (*models.Mention, error) {
+	mention := &models.Mention{}
 
 	mentionString := ExtractName(i)
 	if mentionString == "" {
@@ -681,12 +683,12 @@ func ExtractObjects(i WithObject) ([]*url.URL, error) {
 	return urls, nil
 }
 
-// ExtractVisibility extracts the gtsmodel.Visibility of a given addressable with a To and CC property.
+// ExtractVisibility extracts the models.Visibility of a given addressable with a To and CC property.
 //
 // ActorFollowersURI is needed to check whether the visibility is FollowersOnly or not. The passed-in value
 // should just be the string value representation of the followers URI of the actor who created the activity,
 // eg https://example.org/users/whoever/followers.
-func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmodel.Visibility, error) {
+func ExtractVisibility(addressable Addressable, actorFollowersURI string) (models.Visibility, error) {
 	to, err := ExtractTos(addressable)
 	if err != nil {
 		return "", fmt.Errorf("deriveVisibility: error extracting TO values: %s", err)
@@ -702,22 +704,22 @@ func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmo
 	}
 
 	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
-	visibility := gtsmodel.VisibilityDirect
+	visibility := models.VisibilityDirect
 
 	// if it's got followers in TO and it's not also CC'ed to public, it's followers only
 	if isFollowers(to, actorFollowersURI) {
-		visibility = gtsmodel.VisibilityFollowersOnly
+		visibility = models.VisibilityFollowersOnly
 	}
 
 	// if it's CC'ed to public, it's unlocked
 	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
 	if isPublic(cc) {
-		visibility = gtsmodel.VisibilityUnlocked
+		visibility = models.VisibilityUnlocked
 	}
 
 	// if it's To public, it's just straight up public
 	if isPublic(to) {
-		visibility = gtsmodel.VisibilityPublic
+		visibility = models.VisibilityPublic
 	}
 
 	return visibility, nil

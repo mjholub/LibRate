@@ -39,6 +39,28 @@ type Genre struct {
 	Keywords    []string `json:"keywords"`
 }
 
+type MediaAttachment struct {
+	ID 				int `sqlx:"id, primarykey, autoincrement, notnull"`
+	Name 			string `sql:"type:varchar(100);not null"`
+	RemoteURL 		string `sql:"type:varchar(100);not null"`
+	Type 			FileType `sql:"filetype:varchar(100);not null"`
+	FileMeta FileMeta `sql:"filemeta:varchar(100);not null"`
+	CreatedAt 		time.Time `sql:"type:timestamp;not null"`
+	UpdatedAt 		time.Time `sql:"type:timestamp;not null"`
+	Blurhash 		string `sql:"type:varchar(100);not null"`
+	ProcessingState ProcessingState `sql:"type:varchar(100);not null"`
+	// see https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/gtsmodel/mediaattachment.go
+}
+
+type FileMeta struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+type (
+	FileType, ProcessingState string
+)
+
 type MediaStorer interface {
 	Get(ctx context.Context, key string, kind interface{}) (any, error)
 	GetAll() ([]*interface{}, error)

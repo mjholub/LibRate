@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
 )
 
 // ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.

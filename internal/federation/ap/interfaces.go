@@ -17,7 +17,7 @@
 
 package ap
 
-import "github.com/superseriousbusiness/activity/streams/vocab"
+import "github.com/go-fed/activity/streams/vocab"
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // This interface is fulfilled by: Person, Application, Organization, Service, and Group

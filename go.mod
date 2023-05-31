@@ -20,6 +20,7 @@ require (
 	github.com/dgraph-io/dgo/v230 v230.0.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect
+	github.com/go-fed/activity v1.0.0 // indirect
 	github.com/gofiber/jwt/v2 v2.2.7 // indirect
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

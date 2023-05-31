@@ -18,8 +18,8 @@
 package ap
 
 import (
+	"github.com/go-fed/activity/streams"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
 )
 
 /*

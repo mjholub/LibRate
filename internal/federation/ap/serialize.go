@@ -20,8 +20,8 @@ package ap
 import (
 	"fmt"
 
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
 )
 
 // Serialize is a custom serializer for ActivityStreams types.
