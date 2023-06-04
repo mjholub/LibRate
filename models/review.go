@@ -44,8 +44,8 @@ func NewRatingStorage() *RatingStorage {
 func (rs *RatingStorage) SaveRating(rating *Rating) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	config := cfg.LoadConfig()
-	dbConf := config.ArangoDB
+	config, err := cfg.LoadConfig()
+	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
@@ -84,8 +84,11 @@ func (rs *RatingStorage) SaveRating(rating *Rating) error {
 func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, error) {
 	var rating Rating
 
-	config := cfg.LoadConfig()
-	dbConf := config.ArangoDB
+	config, err := cfg.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
@@ -128,8 +131,11 @@ func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, err
 func (rs *RatingStorage) GetPinned(ctx context.Context) ([]*Rating, error) {
 	var ratings []*Rating
 
-	config := cfg.LoadConfig()
-	dbConf := config.ArangoDB
+	config, err := cfg.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},

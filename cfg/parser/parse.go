@@ -1,8 +1,8 @@
 package parser
 
 import (
-	config "github.com/gookit/config/v2"
-	yaml "github.com/gookit/config/v2/yaml"
+	"github.com/gookit/config/v2"
+	"github.com/gookit/config/v2/yaml"
 )
 
 func Parse(filename string) (kv map[string]interface{}, err error) {
@@ -14,9 +14,7 @@ func Parse(filename string) (kv map[string]interface{}, err error) {
 		return kv, err
 	}
 
-	if err := config.Scan(&kv); err != nil {
-		return kv, err
-	}
+	kv = config.Data()
 
 	return kv, nil
 }

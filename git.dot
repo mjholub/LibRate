@@ -1,0 +1,144 @@
+"63acc5a" [label="63acc5a
+test(cfg): initial loading test
+ (HEAD -> dev, tag: 0.1.13, origin/dev)", shape=box]; "9bbea17" -> "63acc5a";
+"9bbea17" [label="9bbea17
+reafactor(database): add Postgres, move type decs
+", shape=box]; "55cc831" -> "9bbea17";
+"55cc831" [label="55cc831
+refactor(config): Dgraph loading
+ (tag: 0.1.12)", shape=box]; "1043e89" -> "55cc831";
+"1043e89" [label="1043e89
+feat(DB): further gRPC improvements
+ (tag: 0.1.11)", shape=box]; "64bd1c8" -> "1043e89";
+"64bd1c8" [label="64bd1c8
+feat(logging): deprecate zap
+", shape=box]; "e64ebc8" -> "64bd1c8";
+"e64ebc8" [label="e64ebc8
+feat(DB): additional gRPC connection opts
+", shape=box]; "d3d8cbd" -> "e64ebc8";
+"d3d8cbd" [label="d3d8cbd
+fix(accounts): registrations improvements
+", shape=box]; "9441c5b" -> "d3d8cbd";
+"9441c5b" [label="9441c5b
+WIP(db): switch to Dgraph
+", shape=box]; "af46b49" -> "9441c5b";
+"af46b49" [label="af46b49
+feat(auth): password entropy checks working
+ (tag: 0.1.10)", shape=box]; "bb1714e" -> "af46b49";
+"bb1714e" [label="bb1714e
+fix(reviews): undefined albums array
+ (tag: 0.1.8)", shape=box]; "4ac71ec" -> "bb1714e";
+"4ac71ec" [label="4ac71ec
+WIP(reviews): frontend logic
+ (tag: 0.1.7)", shape=box]; "478919c" -> "4ac71ec";
+"478919c" [label="478919c
+WIP: media CRUD
+ (tag: 0.1.6)", shape=box]; "608058a" -> "478919c";
+"608058a" [label="608058a
+WIP: reviews refactor
+", shape=box]; "c253d79" -> "608058a";
+"c253d79" [label="c253d79
+fix(FE app): auth box top padding
+ (tag: 0.1.5)", shape=box]; "5980ac6" -> "c253d79";
+"5980ac6" [label="5980ac6
+chore: bump version
+ (tag: 0.1.4)", shape=box]; "91a0190" -> "5980ac6";
+"91a0190" [label="91a0190
+WIP(members): fix errors in controllers
+", shape=box]; "56b9f31" -> "91a0190";
+"56b9f31" [label="56b9f31
+refactor: remove old TODOS
+", shape=box]; "cfa9cca" -> "56b9f31";
+"cfa9cca" [label="cfa9cca
+feat(gRPC): add client interface
+", shape=box]; "6bc742b" -> "cfa9cca";
+"6bc742b" [label="6bc742b
+chore: handle errors in main
+", shape=box]; "55b25b6" -> "6bc742b";
+"55b25b6" [label="55b25b6
+WIP(reviews): add GetPinned method
+", shape=box]; "2e78f68" -> "55b25b6";
+"2e78f68" [label="2e78f68
+WIP(members): registration, pass entropy checks
+", shape=box]; "ddf0011" -> "2e78f68";
+"ddf0011" [label="ddf0011
+fix(gRPC): dir naming
+ (tag: 0.1.3)", shape=box]; "616fe10" -> "ddf0011";
+"616fe10" [label="616fe10
+chore: go.mod for gRPC recommendations
+ (tag: 0.1.2)", shape=box]; "eb7bb1a" -> "616fe10";
+"eb7bb1a" [label="eb7bb1a
+chore: fix import in controllers/media.go
+ (tag: 0.1.1)", shape=box]; "573a23d" -> "eb7bb1a";
+"573a23d" [label="573a23d
+chore: rename files for member controllers
+", shape=box]; "0ea793a" -> "573a23d";
+"0ea793a" [label="0ea793a
+WIP(reviews): frontend setup
+", shape=box]; "798c21a" -> "0ea793a";
+"798c21a" [label="798c21a
+chore(deps): add uuid
+", shape=box]; "69dfba8" -> "798c21a";
+"69dfba8" [label="69dfba8
+refactor: delegte routes setup
+", shape=box]; "9138598" -> "69dfba8";
+"9138598" [label="9138598
+fix(models): syntax errors
+", shape=box]; "4f6ef55" -> "9138598";
+"4f6ef55" [label="4f6ef55
+feat(recs): add recommendation proto generated files
+", shape=box]; "49b806a" -> "4f6ef55";
+"49b806a" [label="49b806a
+refactor: rename to LibRate
+", shape=box]; "80c2f85" -> "49b806a";
+"80c2f85" [label="80c2f85
+fix(middleware): main.go static paths
+", shape=box]; "72cef40" -> "80c2f85";
+"72cef40" [label="72cef40
+fix(fe): review component imports
+", shape=box]; "b9050bc" -> "72cef40";
+"b9050bc" [label="b9050bc
+fix(FE): search handler
+", shape=box]; "9edb750" -> "b9050bc";
+"9edb750" [label="9edb750
+WIP(recommendations): protobuf prototype
+", shape=box]; "9583e35" -> "9edb750";
+"9583e35" [label="9583e35
+chore(federation): copy AP implementation from GTS
+", shape=box]; "557df82" -> "9583e35";
+"557df82" [label="557df82
+WIP(frontend): rm placeholders
+", shape=box]; "60973a9" -> "557df82";
+"60973a9" [label="60973a9
+WIP: reviews
+", shape=box]; "458316e" -> "60973a9";
+"458316e" [label="458316e
+refactor(login): improve context handling
+", shape=box]; "31aa114" -> "458316e";
+"31aa114" [label="31aa114
+feat(auth): set up logins and registrations
+", shape=box]; "b71a79b" -> "31aa114";
+"b71a79b" [label="b71a79b
+WIP(federation): add protocol from GoToSocial
+", shape=box]; "fee4ed5" -> "b71a79b";
+"fee4ed5" [label="fee4ed5
+WIP: bootstrap more FE components
+", shape=box]; "858f58e" -> "fee4ed5";
+"858f58e" [label="858f58e
+chore: bootstrap frontend, add auth form
+ (origin/main, origin/HEAD, main)", shape=box]; "426c168" -> "858f58e";
+"426c168" [label="426c168
+chore: add license
+", shape=box]; "15f8981" -> "426c168";
+"15f8981" [label="15f8981
+WIP: add models for people
+", shape=box]; "7bd0020" -> "15f8981";
+"7bd0020" [label="7bd0020
+WIP(recs): init preprocessing
+", shape=box]; "a487b8a" -> "7bd0020";
+"a487b8a" [label="a487b8a
+WIP(config, server): initial setup
+", shape=box]; "8c83254" -> "a487b8a";
+"8c83254" [label="8c83254
+Initial commit
+", shape=box]; "" -> "8c83254";

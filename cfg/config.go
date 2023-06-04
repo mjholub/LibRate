@@ -1,14 +1,16 @@
 package cfg
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"gopkg.in/yaml.v3"
+
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/clitools"
 	"codeberg.org/mjh/LibRate/internal/logging"
-	"gopkg.in/yaml.v3"
 
 	config "github.com/gookit/config/v2"
 	"github.com/imdario/mergo"
@@ -48,7 +50,8 @@ func LoadConfig() (Config, error) {
 	log.Info().Msgf("got config: %v", configRaw)
 
 	conf := Config{}
-	conf = config.MapStructure(configRaw, conf).(Config)
+	configStr := createKVPairs(configRaw)
+	_ = config.MapStruct(configStr, conf) // WARN: unsure if this is correct
 
 	if err := mergo.Merge(&conf, readDefaults()); err != nil {
 		return conf, err
@@ -76,6 +79,19 @@ func readDefaults() Config {
 }
 
 func tryLocations() []string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Panic().Err(err).Msgf("error getting user home dir: %s", err.Error())
+	}
+	cfhome, err := os.UserConfigDir()
+	if err != nil || cfhome == "" {
+		if _, err := os.Stat(filepath.Join(home, ".config")); err == nil {
+			cfhome = filepath.Join(home, ".config")
+		} else {
+			log.Panic().Err(err).Msgf("error getting user config dir: %s", err.Error())
+		}
+	}
+
 	configLocations := []string{
 		"config",
 		"config/config",
@@ -92,8 +108,8 @@ func tryLocations() []string {
 		"",
 	}
 	// use FlatMap and Map to create a list of all possible config file locations
-	configLocations = lo.FlatMap(configLocations, func(s string) []string {
-		return lo.Map(configExtensions, func(s2 string) string {
+	configLocations = lo.FlatMap(configLocations, func(s string, _ int) []string {
+		return lo.Map(configExtensions, func(s2 string, _ int) string {
 			return s + s2
 		})
 	})
@@ -148,14 +164,15 @@ func writeConfig(configPath string, c Config) error {
 		return fmt.Errorf("error marshalling config: %w", err)
 	}
 	configDir := filepath.Dir(configPath)
-	err = os.MkdirAll(configDir, 0755)
+	err = os.MkdirAll(configDir, 0o755)
 	if err != nil {
 		return fmt.Errorf("error creating config dir: %w", err)
 	}
-	err = os.WriteFile(configPath, yaml, 0640)
+	err = os.WriteFile(configPath, yaml, 0o640)
 	if err != nil {
 		return fmt.Errorf("error writing config file: %w", err)
 	}
+	return nil
 }
 
 func LoadDgraph() *DgraphConfig {
@@ -218,4 +235,12 @@ func LoadDgraph() *DgraphConfig {
 		AlphaTLS:       dgAlphaTLS,
 		AlphaSecurity:  dgAlphaSec,
 	}
+}
+
+func createKVPairs(m map[string]interface{}) string {
+	b := new(bytes.Buffer)
+	for key, value := range m {
+		fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
+	}
+	return b.String()
 }

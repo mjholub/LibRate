@@ -9,7 +9,13 @@ import (
 
 // Protected protect routes
 func Protected() fiber.Handler {
-	conf := cfg.LoadConfig()
+	conf, err := cfg.LoadConfig()
+	if err != nil {
+		return func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusInternalServerError).
+				JSON(fiber.Map{"status": "error", "message": "Internal Server Error", "data": nil})
+		}
+	}
 	return jwtware.New(jwtware.Config{
 		SigningKey:   []byte(conf.SiginingKey),
 		ErrorHandler: jwtError,

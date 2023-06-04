@@ -1,3 +1,4 @@
+// TODO: verify if this file is needed
 package cfg
 
 import (
@@ -11,7 +12,7 @@ import (
 func ReadPostgres() (*DBConfig, error) {
 	var (
 		host     string
-		port     uint8
+		port     uint16
 		user     string
 		password string
 		database string
@@ -30,7 +31,7 @@ func ReadPostgres() (*DBConfig, error) {
 	}
 	go func() {
 		host = getEnvOrDefault("POSTGRES_HOST", "localhost")
-		port, err := strconv.ParseUint(getEnvOrDefault("POSTGRES_PORT", "5432"), 10, 8)
+		_, err := strconv.ParseUint(getEnvOrDefault("POSTGRES_PORT", "5432"), 10, 8)
 		if err != nil {
 			panic(err)
 		}
