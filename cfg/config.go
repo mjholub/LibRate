@@ -15,52 +15,69 @@ import (
 	config "github.com/gookit/config/v2"
 	"github.com/imdario/mergo"
 	"github.com/samber/lo"
+	"github.com/samber/mo"
 )
 
 // nolint:gochecknoglobals
 var log = logging.Init()
 
-func LoadConfig() (Config, error) {
+func LoadConfig() mo.Result[Config, error] {
 	// TODO: parallelize looping over config locations
 	// i.e. use some queue to send the config locations to a goroutine pool
 	// and return the first config location that is found
-	locs := tryLocations()
-	loc := lookForExisting(locs)
-	if loc == "" {
-		userSpecifiedLoc, err := tryGettingConfig(locs)
-		if err != nil {
-			// FIXME: remove deep exits?
-			log.Panic().Err(err).Msgf("error getting config: %s", err.Error())
-		}
-		if lookForExisting([]string{userSpecifiedLoc}) == "" {
-			err := writeConfig(userSpecifiedLoc, Config{})
+	return mo.Try(func() Config {
+		locs := tryLocations()
+		loc := lookForExisting(locs)
+		if loc == "" {
+			userSpecifiedLoc, err := tryGettingConfig(locs)
 			if err != nil {
-				log.Panic().Err(err).Msgf("error writing config: %s", err.Error())
+				panic(fmt.Errorf("failed to get config: %w", err))
 			}
-			log.Info().Msgf("wrote config to %s", userSpecifiedLoc)
+			if lookForExisting([]string{userSpecifiedLoc}) == "" {
+				err := writeConfig(userSpecifiedLoc, Config{})
+				if err != nil {
+					panic(fmt.Errorf("failed to write config: %w", err))
+				}
+			}
+			loc = userSpecifiedLoc
 		}
-		// use the user-specified config location if it exists
-		loc = userSpecifiedLoc
-	}
-	log.Info().Msgf("using config file %s", loc)
-	configRaw, err := parser.Parse(loc)
-	if err != nil {
-		log.Panic().Err(err).Msgf("error parsing config: %s", err.Error())
-	}
-	log.Info().Msgf("got config: %v", configRaw)
+		configRaw, err := parser.Parse(loc)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse config: %w", err))
+		}
+		log.Info().Msgf("got config: %v", configRaw)
 
-	conf := Config{}
-	configStr := createKVPairs(configRaw)
-	_ = config.MapStruct(configStr, conf) // WARN: unsure if this is correct
+		// preallocate default config
+		conf := Config{
+			DBConfig: DBConfig{
+				Engine:   "postgres",
+				Host:     "localhost",
+				Port:     uint16(5432),
+				Database: "librate",
+				User:     "postgres",
+				Password: "postgres",
+				SSL:      "disable",
+			},
+			Fiber: FiberConfig{
+				Host: "localhost",
+				Port: "3000",
+			},
+			SiginingKey: "",
+			DBPass:      "postgres",
+		}
 
-	if err := mergo.Merge(&conf, readDefaults()); err != nil {
-		return conf, err
-	}
+		configStr := createKVPairs(configRaw)
+		_ = config.MapStruct(configStr, conf) // WARN: unsure if this is correct
 
-	return conf, nil
+		if err := mergo.Merge(&conf, ReadDefaults()); err != nil {
+			return conf
+		}
+
+		return conf
+	}).OrPanic()
 }
 
-func readDefaults() Config {
+func ReadDefaults() Config {
 	return Config{
 		DBConfig: DBConfig{
 			Engine:   "postgres",
@@ -69,6 +86,7 @@ func readDefaults() Config {
 			Database: "librerym",
 			User:     "postgres",
 			Password: "postgres",
+			SSL:      "disable",
 		},
 		Fiber: FiberConfig{
 			Host: "localhost",

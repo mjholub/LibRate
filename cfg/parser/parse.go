@@ -6,8 +6,8 @@ import (
 )
 
 func Parse(filename string) (kv map[string]interface{}, err error) {
-	config.WithOptions(config.ParseEnv) // optional: enable environment variable parsing
-	config.AddDriver(yaml.Driver)       // add YAML driver
+	_ = config.NewWithOptions("conf", config.ParseEnv)
+	config.AddDriver(yaml.Driver) // add YAML driver
 
 	// load from file
 	if err := config.LoadFiles(filename); err != nil {

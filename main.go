@@ -1,20 +1,31 @@
 package main
 
 import (
+	"flag"
+
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
+	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
 )
 
 func main() {
+	init := flag.Bool("init", false, "Initialize database")
+	flag.Parse()
+	log := logging.Init()
+	if *init {
+		if err := db.InitDB(); err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Database initialized")
+	}
 	app := fiber.New()
 	app.Use(logger.New())
 	conf, err := cfg.LoadConfig()
-	log := logging.Init()
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to load config")
 	}

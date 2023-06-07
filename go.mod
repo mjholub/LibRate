@@ -7,7 +7,6 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/arangodb/go-driver v1.5.2
 	github.com/avast/retry-go/v4 v4.3.4
-	github.com/dgraph-io/dgo/v230 v230.0.1
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/gofiber/jwt/v2 v2.2.7
 	github.com/gofrs/uuid/v5 v5.0.0
@@ -17,6 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.29.1
 	github.com/samber/lo v1.38.1
+	github.com/samber/mo v1.8.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.7.0
 	google.golang.org/grpc v1.55.0
@@ -28,7 +28,6 @@ require (
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/goccy/go-yaml v1.10.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect

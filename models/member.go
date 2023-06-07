@@ -2,17 +2,9 @@ package models
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"time"
 
-	"google.golang.org/grpc"
-
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/internal/client"
-
-	"github.com/dgraph-io/dgo/v230"
-	"github.com/dgraph-io/dgo/v230/protos/api"
+	"github.com/jmoiron/sqlx"
 )
 
 type Member struct {
@@ -46,111 +38,53 @@ type RegLoginInput interface {
 }
 
 type MemberStorer interface {
-	Load(ctx context.Context, key string) (*Member, error)
 	Save(ctx context.Context, member *Member) error
+	Read(ctx context.Context, member *Member) error
+	Update(ctx context.Context, member *Member) error
+	Delete(ctx context.Context, member *Member) error
 }
 
-// MemberStorage implements the MemberStorer interface
 type MemberStorage struct {
-	client *dgo.Dgraph
+	client *sqlx.DB
 }
 
-func NewMemberStorage(conf cfg.DgraphConfig) (*MemberStorage, *grpc.ClientConn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	conn, err := client.ConnectToService(ctx, conf.Host, conf.GRPCPort)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to connect to Dgraph: %v", err)
-	}
-	dgraphClient := dgo.NewDgraphClient(api.NewDgraphClient(conn))
-	if dgraphClient == nil {
-		return nil, nil, fmt.Errorf("failed to create Dgraph client")
-	}
-
-	return &MemberStorage{
-			client: dgraphClient,
-		},
-		conn,
-		nil
-}
-
-func (s *MemberStorage) Load(ctx context.Context, key string) (*Member, error) {
-	query := fmt.Sprintf(`{
-		member(func: eq(_key, "%s")) {
-			_key
-			passhash
-			membername
-			email
-			regdate
-		}
-	}`, key)
-
-	resp, err := s.client.NewTxn().Query(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	var result struct {
-		Member []*Member `json:"member"`
-	}
-
-	if err := json.Unmarshal(resp.Json, &result); err != nil {
-		return nil, err
-	}
-
-	if len(result.Member) == 0 {
-		return nil, fmt.Errorf("member with key %s not found", key)
-	}
-
-	return result.Member[0], nil
+func NewMemberStorage(client *sqlx.DB) *MemberStorage {
+	return &MemberStorage{client: client}
 }
 
 func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
-	txn := s.client.NewTxn()
-
-	memberJSON, err := json.Marshal(member)
+	query := `INSERT INTO members (field1, field2, ...) VALUES (:field1, :field2, ...)`
+	_, err := s.client.NamedExecContext(ctx, query, member)
 	if err != nil {
-		return fmt.Errorf("failed to marshal member: %v", err)
+		return fmt.Errorf("failed to save member: %v", err)
 	}
-
-	_, err = txn.Mutate(ctx, &api.Mutation{
-		CommitNow: true,
-		SetJson:   memberJSON,
-	})
-
-	return err
+	return nil
 }
 
-// Update updates a member in the Dgraph Database
 func (s *MemberStorage) Update(ctx context.Context, member *Member) error {
-	txn := s.client.NewTxn()
-
-	memberJSON, err := json.Marshal(member)
+	query := `UPDATE members SET field1 = :field1, field2 = :field2, ... WHERE id = :id`
+	_, err := s.client.NamedExecContext(ctx, query, member)
 	if err != nil {
-		return fmt.Errorf("failed to marshal member: %v", err)
+		return fmt.Errorf("failed to update member: %v", err)
 	}
-
-	_, err = txn.Mutate(ctx, &api.Mutation{
-		CommitNow: true,
-		SetJson:   memberJSON,
-	})
-
-	return err
+	return nil
 }
 
-// Delete deletes a member from the Dgraph Database
 func (s *MemberStorage) Delete(ctx context.Context, member *Member) error {
-	txn := s.client.NewTxn()
-
-	memberJSON, err := json.Marshal(member)
+	query := `DELETE FROM members WHERE id = :id`
+	_, err := s.client.NamedExecContext(ctx, query, member)
 	if err != nil {
-		return fmt.Errorf("failed to marshal member: %v", err)
+		return fmt.Errorf("failed to delete member: %v", err)
 	}
+	return nil
+}
 
-	_, err = txn.Mutate(ctx, &api.Mutation{
-		CommitNow:  true,
-		DeleteJson: memberJSON,
-	})
-
-	return err
+func (s *MemberStorage) Read(ctx context.Context, keyName, key string) (*Member, error) {
+	query := `SELECT * FROM members WHERE ` + keyName + ` = ?`
+	member := &Member{}
+	err := s.client.GetContext(ctx, member, query, key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read member: %v", err)
+	}
+	return member, nil
 }

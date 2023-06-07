@@ -1,0 +1,119 @@
+# Akin to eslint-disable,  a //nolint comment will disable the linter for the following line. 
+# Integrate this with your IDE:
+# https://golangci-lint.run/usage/integrations/
+# or just the revive linter:
+# https://github.com/mgechev/revive#text-editors
+# in command line you can run `golangci-lint run`. Shell completion is supported.
+run:
+  concurrency: 8
+  timeout: 4m
+  skip-dirs:
+    - recommendation
+  modules-download-mode: mod
+  tests: false
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+#enabled by default are: errcheck, gosimple, govet, ineffassign, staticcheck, typecheck, unused
+linters:
+  enable:
+    # general 
+    - gocritic # https://github.com/go-critic/go-critic
+    - revive # NOTE: might be worth considering disabling this or gocritic
+    - musttag # enforce field tags in (un)marshaled structs
+    #bugs
+    - dupl # WARN: can cause false positives. Finds code clones.
+    - exportloopref # checks for pointers to enclosing loop variables. More details: https://github.com/kyoh86/exportloopref
+    - gosec
+    - reassign # prevent shadowing of variables
+    # style
+    - dogsled # checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
+    - decorder # check declaration order of types, consts, vars and funcs. Default: types>consts>vars>funcs
+    - gochecknoglobals # see https://github.com/leighmcculloch/gochecknoglobals for rationale and default blacklist
+    - goconst
+    - interfacebloat
+    - usestdlibvars
+    # complexity
+    - funlen # NOTE: might need to be disabled to stick to DRY and the rule of three
+    - gocognit # compute and check the cognitive complexity of functions
+    - gocyclo # https://en.wikipedia.org/wiki/Cyclomatic_complexity
+    - nilnil # enforce use of sentinel errors when returning nil. https://github.com/Antonboom/nilnil
+    # performance
+    - prealloc #find slice declarations that could potentially be preallocated
+    - bodyclose #checks whether HTTP response body is closed successfully
+  disable: 
+    - typecheck # duplicates capabilities of standard gopls
+linters-settings:
+  funlen:
+    lines: 75 # default is 60
+  dogsled:
+    max-blank-identifiers: 3 # default is 2
+  dupl:
+    threshold: 160 # default is 150
+  gocyclo:
+   min-complexity: 15 # default is 30, golangci-lint recommends 10-20 
+  gocognit:
+    min-complexity: 15 # default is 30, golangci-lint recommends 10-20
+  gocritic:
+    # Which checks should be enabled; can't be combined with 'disabled-checks'.
+    # See https://go-critic.github.io/overview#checks-overview.
+    # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`.
+    # By default, list of stable checks is used.
+    enabled-tags:
+      - diagnostic
+      - performance
+    disabled-checks:
+      - unnamedResult
+      - whyNoLint
+  interfacebloat:
+    max: 12 # default is 10
+  revive:
+    #NOTE: this is vital to controlling the likelihood of false positives
+    confidence: 0.7 # default is 0.8
+    rules:
+      - name: blank-imports
+        disabled: true # already handled by dogsled
+      - name: context-as-argument
+        severity: warning
+        disabled: false
+      - name: error-strings # https://github.com/golang/go/wiki/CodeReviewComments#error-strings
+        severity: warning
+        disabled: false
+      - name: exported # exported functions should have comments. https://go.dev/doc/effective_go#commentary
+        severity: warning
+        disabled: false
+        arguments: ["checkPrivateReceivers","sayRepetitiveInsteadOfStutters"]
+      - name: if-return
+        disabled: true
+      - name: increment-decrement # i++ instead of i += 1
+        severity: warning
+        disabled: false
+      - name: unconditional-recursion # NOTE: important - prevents stack overflow
+        severity: warning
+        disabled: false
+      - name: range
+        disabled: true # already handled by gocritic
+      - name: receiver-naming # (f *Foo) instead of (xyz *Foo)
+        severity: warning
+        disabled: false
+      - name: indent-error-flow
+        disabled: true # already handled by gocritic
+      - name: line-length-limit # very convenient when using splits
+        severity: warning
+        disabled: false
+        arguments: [140]
+      - name: unused-parameter
+        severity: warning
+        disabled: false
+      - name: deep-exit # e.g. log.Fatal() or os.Exit() outside of main() or init()
+        severity: warning
+        disabled: false
+      - name: datarace
+        severity: warning
+        disabled: false
+      - name: defer # NOTE: might also be handled by gocritic
+        severity: warning
+        disabled: false
