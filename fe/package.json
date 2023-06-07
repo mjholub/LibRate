@@ -1,9 +1,10 @@
 {
-  "name": "svelte-app",
-  "version": "1.0.0",
+  "name": "LibRate",
+  "version": "0.1.15",
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "rm -rf public/build/*",
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear"

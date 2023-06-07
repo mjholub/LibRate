@@ -1,30 +1,53 @@
 <script>
-	export let name;
+  import ReviewList from "../components/review/ReviewList.svelte";
+  import Auth from "../components/form/Auth.svelte";
+  import Search from "../components/utility/Search.svelte";
+  import { onMount } from "svelte";
+
+  let reviews = [];
 </script>
 
-<main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
-</main>
+<div class="navbar">
+  <Search />
+</div>
+
+<div class="app">
+  <div class="left">
+    <ReviewList {reviews} />
+  </div>
+  <div class="right">
+    <Auth />
+  </div>
+</div>
 
 <style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
+  .app {
+    display: flex;
+    justify-content: space-between;
+    background-color: #333;
+    color: #fff;
+    padding-top: 40px;
+  }
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+  .left,
+  .right {
+    padding-top: 45px;
+    width: 30%;
+  }
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+  .navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(64, 64, 64, 0.2);
+    z-index: 1000;
+  }
+
+  :global(body) {
+    background-color: #333;
+    color: #fff;
+  }
 </style>

@@ -1,0 +1,8 @@
+fiber_host: "localhost"
+fiber_port: 3000
+database:
+  - engine: "postgres"
+    host: "localhost"
+    port: 5432
+    database: "librerym_dev"
+    user: "postgres"
