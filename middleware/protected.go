@@ -9,7 +9,7 @@ import (
 
 // Protected protect routes
 func Protected() fiber.Handler {
-	conf, err := cfg.LoadConfig()
+	conf, err := cfg.LoadConfig().Get()
 	if err != nil {
 		return func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).

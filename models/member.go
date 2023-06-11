@@ -18,23 +18,7 @@ type Member struct {
 type MemberInput struct {
 	MemberName string `json:"membername"`
 	Email      string `json:"email"`
-}
-
-type RegisterInput struct {
-	Email           string `json:"email"`
-	MemberName      string `json:"membername"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"passwordconfirm"`
-}
-
-type LoginInput struct {
-	Email      string `json:"email"`
-	MemberName string `json:"membername"`
 	Password   string `json:"password"`
-}
-
-type RegLoginInput interface {
-	RegisterInput | LoginInput
 }
 
 type MemberStorer interface {

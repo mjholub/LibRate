@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
 
+  let isRegistration = true;
   let email_or_username = "";
   let password = "";
   let confirmPassword = "";
@@ -24,8 +25,9 @@
       });
   }
 
-  const register = async () => {
-    if (password !== confirmPassword) {
+  const register = async (event) => {
+    event.preventDefault(); // prevent page reload on submit
+    if (isRegistration && password !== confirmPassword) {
       errorMessage = "Passwords do not match";
       return;
     }
@@ -64,6 +66,7 @@
   // end of response.ok branch
 
   $: password && checkEntropy();
+  $: isEmail = email_or_username.includes("@");
 </script>
 
 <form on:submit|preventDefault={register}>
@@ -73,13 +76,23 @@
   <label for="password">Password:</label>
   <input id="password" bind:value={password} type="password" required />
 
-  <label for="confirmPassword">Confirm Password:</label>
-  <input
-    id="confirmPassword"
-    bind:value={confirmPassword}
-    type="password"
-    required
-  />
+  {#if isRegistration}
+    <label for="confirmPassword">Confirm Password:</label>
+    <input
+      id="confirmPassword"
+      bind:value={confirmPassword}
+      type="password"
+      required
+    />
+
+    {#if isEmail}
+      <label for="email">Email:</label>
+      <input id="email" bind:value={email_or_username} required />
+    {:else}
+      <label for="username">Username:</label>
+      <input id="username" bind:value={email_or_username} required />
+    {/if}
+  {/if}
 
   <p>Password strength: {passwordStrength} bits</p>
 

@@ -15,9 +15,9 @@ import (
 
 // GetMember retrieves user information based on the user ID
 func GetMember(c *fiber.Ctx) error {
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults()).Unwrap()
+	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(conf)
+	dbConn, err := db.Connect(&conf)
 	ms := models.NewMemberStorage(dbConn)
 	defer dbConn.Close()
 	if err != nil {
@@ -25,7 +25,7 @@ func GetMember(c *fiber.Ctx) error {
 			"error": "Failed to initialize member storage",
 		})
 	}
-	member, err := ms.Read(context.TODO(), c.Params("id"))
+	member, err := ms.Read(context.TODO(), c.Params("id"), c.Params("id"))
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"error": "Member not found",
@@ -33,42 +33,6 @@ func GetMember(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(member)
-}
-
-// CreateMember handles the creation of a new user
-func CreateMember(c *fiber.Ctx) error {
-	var input models.MemberInput
-	err := json.Unmarshal(c.Body(), &input)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
-	}
-
-	m := models.Member{
-		MemberName: input.MemberName,
-		Email:      input.Email,
-	}
-
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults()).Unwrap()
-	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(conf)
-	ms := models.NewMemberStorage(dbConn)
-	defer dbConn.Close()
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize member storage",
-		})
-	}
-
-	err = ms.Save(context.TODO(), &m)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create user",
-		})
-	}
-
-	return c.JSON(m)
 }
 
 func UpdateMember(c *fiber.Ctx) error {
@@ -80,16 +44,16 @@ func UpdateMember(c *fiber.Ctx) error {
 		})
 	}
 
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults()).Unwrap()
+	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(conf)
+	dbConn, err := db.Connect(&conf)
 	ms := models.NewMemberStorage(dbConn)
-	defer dbConn.Close()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize member storage",
 		})
 	}
+	defer dbConn.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -121,9 +85,9 @@ func DeleteMember(c *fiber.Ctx) error {
 		})
 	}
 
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults()).Unwrap()
+	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(conf)
+	dbConn, err := db.Connect(&conf)
 	ms := models.NewMemberStorage(dbConn)
 	defer dbConn.Close()
 	if err != nil {

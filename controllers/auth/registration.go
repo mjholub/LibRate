@@ -11,19 +11,26 @@ import (
 	validator "github.com/wagslane/go-password-validator"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/models"
 )
 
 // Register handles the creation of a new user
 func Register(c *fiber.Ctx) error {
-	input, err := parseInput(c)
+	input, err := parseInput("register", c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	validatedInput, err := input.Validate()
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
 
-	member, err := createMember(&input)
+	member, err := createMember(validatedInput)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
@@ -50,24 +57,29 @@ func checkPasswordEntropy(password string) error {
 	return nil
 }
 
-func parseInput(c *fiber.Ctx) (models.RegisterInput, error) {
-	var input models.RegisterInput
+func (r RegisterInput) Validate() (*models.MemberInput, error) {
+	if r.Email == "" && r.MemberName == "" {
+		return nil, fmt.Errorf("email or membername required")
+	}
 
-	err := c.BodyParser(&input)
+	if r.Password == "" {
+		return nil, fmt.Errorf("password required")
+	}
+
+	if r.Password != r.PasswordConfirm {
+		return nil, fmt.Errorf("passwords do not match")
+	}
+
+	err := checkPasswordEntropy(r.Password)
 	if err != nil {
-		return input, fmt.Errorf("invalid registration request")
+		return nil, err
 	}
 
-	if input.Password != input.PasswordConfirm {
-		return input, fmt.Errorf("passwords do not match")
-	}
-
-	err = checkPasswordEntropy(input.Password)
-	if err != nil {
-		return input, err
-	}
-
-	return input, nil
+	return &models.MemberInput{
+		Email:      r.Email,
+		MemberName: r.MemberName,
+		Password:   r.Password,
+	}, nil
 }
 
 func ValidatePassword() fiber.Handler {
@@ -97,11 +109,8 @@ func ValidatePassword() fiber.Handler {
 	}
 }
 
-func createMember(input *models.RegisterInput) (*models.Member, error) {
-	var inClean models.MemberInput
-	input.MemberName = inClean.MemberName
-	input.Email = inClean.Email
-	in := cleanInput(&inClean)
+func createMember(input *models.MemberInput) (*models.Member, error) {
+	in := cleanInput(input)
 
 	passhash, err := hashWithArgon(input.Password)
 	if err != nil {
@@ -120,13 +129,13 @@ func createMember(input *models.RegisterInput) (*models.Member, error) {
 }
 
 func saveMember(member *models.Member) error {
-	conf := cfg.LoadDgraph()
-
-	ms, conn, err := models.NewMemberStorage(*conf)
-	defer conn.Close()
+	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+	dbConn, err := db.Connect(&conf)
 	if err != nil {
-		return fmt.Errorf("failed to create member storage: %w", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
+	defer dbConn.Close()
+	ms := models.NewMemberStorage(dbConn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

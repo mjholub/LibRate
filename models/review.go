@@ -44,7 +44,7 @@ func NewRatingStorage() *RatingStorage {
 func (rs *RatingStorage) SaveRating(rating *Rating) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	config, err := cfg.LoadConfig()
+	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
@@ -84,10 +84,7 @@ func (rs *RatingStorage) SaveRating(rating *Rating) error {
 func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, error) {
 	var rating Rating
 
-	config, err := cfg.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
+	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
@@ -131,10 +128,7 @@ func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, err
 func (rs *RatingStorage) GetPinned(ctx context.Context) ([]*Rating, error) {
 	var ratings []*Rating
 
-	config, err := cfg.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
+	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{

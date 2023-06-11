@@ -25,9 +25,11 @@ func main() {
 	}
 	app := fiber.New()
 	app.Use(logger.New())
-	conf, err := cfg.LoadConfig()
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to load config")
+
+	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+	if cfg.LoadConfig().IsError() {
+		err := cfg.LoadConfig().Error()
+		log.Warn().Msgf("failed to load config, using defaults: %v", err)
 	}
 	// CORS
 	app.Use("/api", func(c *fiber.Ctx) error {
@@ -39,7 +41,7 @@ func main() {
 
 	routes.Setup(app)
 
-	err = app.Listen(":3000")
+	err := app.Listen(":3000")
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen on port 3000")
 	}
