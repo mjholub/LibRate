@@ -1,6 +1,6 @@
 {
   "name": "LibRate",
-  "version": "0.2.4-alpha22",
+  "version": "0.2.5-alpha23",
   "private": true,
   "type": "module",
   "scripts": {
