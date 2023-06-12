@@ -21,11 +21,11 @@ import (
 // nolint:gochecknoglobals
 var log = logging.Init()
 
-func LoadConfig() mo.Result[Config, error] {
+func LoadConfig() mo.Result[Config] {
 	// TODO: parallelize looping over config locations
 	// i.e. use some queue to send the config locations to a goroutine pool
 	// and return the first config location that is found
-	return mo.Try(func() Config {
+	return mo.Try(func() (Config, error) {
 		locs := tryLocations()
 		loc := lookForExisting(locs)
 		if loc == "" {
@@ -70,11 +70,11 @@ func LoadConfig() mo.Result[Config, error] {
 		_ = config.MapStruct(configStr, conf) // WARN: unsure if this is correct
 
 		if err := mergo.Merge(&conf, ReadDefaults()); err != nil {
-			return conf
+			return conf, fmt.Errorf("failed to merge config structs: %w", err)
 		}
 
-		return conf
-	}).OrPanic()
+		return conf, nil
+	})
 }
 
 func ReadDefaults() Config {

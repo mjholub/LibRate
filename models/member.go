@@ -8,33 +8,17 @@ import (
 )
 
 type Member struct {
-	UUID         string `json:"_key,omitempty"`
-	PassHash     string `json:"passhash"`
-	MemberName   string `json:"membername"`
-	Email        string `json:"email"`
-	RegTimestamp int64  `json:"regdate"`
+	UUID         string `json:"_key,omitempty" db:"uuid"`
+	PassHash     string `json:"passhash" db:"passhash"`
+	MemberName   string `json:"membername" db:"nick"`
+	Email        string `json:"email" db:"email"`
+	RegTimestamp int64  `json:"regdate" db:"reg_timestamp"`
 }
 
 type MemberInput struct {
 	MemberName string `json:"membername"`
 	Email      string `json:"email"`
-}
-
-type RegisterInput struct {
-	Email           string `json:"email"`
-	MemberName      string `json:"membername"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"passwordconfirm"`
-}
-
-type LoginInput struct {
-	Email      string `json:"email"`
-	MemberName string `json:"membername"`
 	Password   string `json:"password"`
-}
-
-type RegLoginInput interface {
-	RegisterInput | LoginInput
 }
 
 type MemberStorer interface {
@@ -53,8 +37,29 @@ func NewMemberStorage(client *sqlx.DB) *MemberStorage {
 }
 
 func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
-	query := `INSERT INTO members (field1, field2, ...) VALUES (:field1, :field2, ...)`
-	_, err := s.client.NamedExecContext(ctx, query, member)
+	query := `INSERT INTO members (uuid, passhash, nick, email, reg_timestamp) 
+	VALUES (:uuid, :passhash, :nick, :email, to_timestamp(:reg_timestamp))`
+	stmt, err := s.client.PrepareNamedContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	params := struct {
+		UUID         string  `db:"uuid"`
+		PassHash     string  `db:"passhash"`
+		MemberName   string  `db:"nick"`
+		Email        string  `db:"email"`
+		RegTimestamp float64 `db:"reg_timestamp"`
+	}{
+		UUID:         member.UUID,
+		PassHash:     member.PassHash,
+		MemberName:   member.MemberName,
+		Email:        member.Email,
+		RegTimestamp: float64(member.RegTimestamp),
+	}
+
+	_, err = stmt.ExecContext(ctx, params)
 	if err != nil {
 		return fmt.Errorf("failed to save member: %v", err)
 	}

@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v2"
 
@@ -9,12 +11,15 @@ import (
 
 // Protected protect routes
 func Protected() fiber.Handler {
-	conf, err := cfg.LoadConfig()
+	conf, err := cfg.LoadConfig().Get()
 	if err != nil {
 		return func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).
 				JSON(fiber.Map{"status": "error", "message": "Internal Server Error", "data": nil})
 		}
+	}
+	if os.Getenv("FIBER_ENV") == "dev" {
+		conf.SiginingKey = "dev"
 	}
 	return jwtware.New(jwtware.Config{
 		SigningKey:   []byte(conf.SiginingKey),

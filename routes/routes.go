@@ -10,7 +10,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/internal/logging"
-	"codeberg.org/mjh/LibRate/middleware"
+	// "codeberg.org/mjh/LibRate/middleware"
 )
 
 func Setup(app *fiber.App) {
@@ -26,7 +26,7 @@ func Setup(app *fiber.App) {
 	}))
 
 	app.Get("/api/reviews/:id", controllers.GetRatings)
-	app.Get("/api/password-entropy", middleware.Protected(), auth.ValidatePassword())
+	app.Post("/api/password-entropy", auth.ValidatePassword())
 	app.Post("/api/reviews", controllers.PostRating)
 	app.Post("/api/login", auth.Login)
 	app.Post("/api/register", auth.Register)
