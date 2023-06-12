@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
 
-  let isRegistration = true;
+  let isRegistration = false;
   let email_or_username = "";
   let password = "";
   let confirmPassword = "";
@@ -9,30 +9,28 @@
   let errorMessage = "";
 
   const checkEntropy = async (password) => {
-    const response = await fetch(`/api/password-entropy?password=${password}`);
+    const response = await fetch(`/api/password-entropy`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password }),
+    });
     const data = await response.json();
-    passwordStrength = data.entropy;
+    passwordStrength = data.message;
   };
 
-  // reactive statement to watch `password`
-  $: if (password) {
-    checkEntropy(password)
-      .then((entropy) => {
-        passwordStrength = entropy;
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  }
+  $: password && checkEntropy(password);
 
   const register = async (event) => {
-    event.preventDefault(); // prevent page reload on submit
+    event.preventDefault();
+
     if (isRegistration && password !== confirmPassword) {
       errorMessage = "Passwords do not match";
       return;
     }
 
-    if (passwordStrength < 60) {
+    if (passwordStrength !== "Password is strong enough") {
       errorMessage = "Password is not strong enough";
       return;
     }
@@ -43,34 +41,52 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        MemberName: email_or_username,
-        Email: email_or_username,
+        MemberName: email_or_username.includes("@") ? "" : email_or_username,
+        Email: email_or_username.includes("@") ? email_or_username : "",
         Password: password,
-        PasswordConfirm: confirmPassword,
       }),
     });
 
-    if (response.ok) {
-      // auto login the new user and render a confirmation prompt top bar
-      const { token } = await response.json();
-      if (token) {
-        localStorage.setItem("token", token);
-        window.location = "/";
-      }
-    } else {
-      const { message } = await response.json();
-      errorMessage = message;
-    }
-    // end of token validation branch
-  };
-  // end of response.ok branch
+    const data = await response.json();
 
-  $: password && checkEntropy();
-  $: isEmail = email_or_username.includes("@");
+    if (response.ok) {
+      const { token } = data;
+      localStorage.setItem("token", token);
+      window.location = "/";
+    } else {
+      errorMessage = data.message;
+    }
+  };
+
+  const login = async (event) => {
+    event.preventDefault();
+
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        MemberName: email_or_username.includes("@") ? "" : email_or_username,
+        Email: email_or_username.includes("@") ? email_or_username : "",
+        Password: password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      const { token } = data;
+      localStorage.setItem("token", token);
+      window.location = "/";
+    } else {
+      errorMessage = data.message;
+    }
+  };
 </script>
 
-<form on:submit|preventDefault={register}>
-  <label for="email">Email or username:</label>
+<form on:submit|preventDefault={isRegistration ? register : login}>
+  <label for="email_or_username">Email or username:</label>
   <input id="email_or_username" bind:value={email_or_username} required />
 
   <label for="password">Password:</label>
@@ -84,23 +100,25 @@
       type="password"
       required
     />
-
-    {#if isEmail}
-      <label for="email">Email:</label>
-      <input id="email" bind:value={email_or_username} required />
-    {:else}
-      <label for="username">Username:</label>
-      <input id="username" bind:value={email_or_username} required />
-    {/if}
   {/if}
 
-  <p>Password strength: {passwordStrength} bits</p>
+  <p>Password strength: {passwordStrength}</p>
 
   {#if errorMessage}
     <p style="color: red;">{errorMessage}</p>
   {/if}
 
-  <button type="submit">Sign Up</button>
+  {#if !isRegistration}
+    <button type="submit">Sign In</button>
+    <button type="button" on:click={() => (isRegistration = true)}
+      >Sign Up</button
+    >
+  {:else}
+    <button type="submit">Sign Up</button>
+    <button type="button" on:click={() => (isRegistration = false)}
+      >Sign In</button
+    >
+  {/if}
 </form>
 
 <style>
@@ -108,7 +126,6 @@
   button {
     font-family: inherit;
     font-size: inherit;
-    -webkit-padding: 0.4em 0;
     padding: 0.4em;
     margin: 0 0 0.5em 0;
     box-sizing: border-box;
