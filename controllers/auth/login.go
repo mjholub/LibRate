@@ -87,7 +87,7 @@ func Login(c *fiber.Ctx) error {
 	member, err := getMemberData(lookupField, lookupTarget)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to connect to database",
+			"message": "Failed to connect to database: %s" + err.Error(),
 		})
 	}
 
