@@ -4,8 +4,9 @@
   let isRegistration = false;
   let email_or_username = "";
   let password = "";
+  let showPassword = false;
   let confirmPassword = "";
-  let passwordStrength = "";
+  let passwordStrength = 0;
   let errorMessage = "";
 
   const checkEntropy = async (password) => {
@@ -90,7 +91,29 @@
   <input id="email_or_username" bind:value={email_or_username} required />
 
   <label for="password">Password:</label>
-  <input id="password" bind:value={password} type="password" required />
+  <input
+    id="password"
+    bind:value={password}
+    type="password"
+    required
+    class={!showPassword ? "" : "hidden"}
+  />
+
+  <input
+    id="textPassword"
+    bind:value={password}
+    type="text"
+    required
+    class={showPassword ? "" : "hidden"}
+  />
+
+  <button
+    class="show-password"
+    type="button"
+    on:click={() => (showPassword = !showPassword)}
+  >
+    {showPassword ? "Hide" : "Show"} password
+  </button>
 
   {#if isRegistration}
     <label for="confirmPassword">Confirm Password:</label>
@@ -102,7 +125,7 @@
     />
   {/if}
 
-  <p>Password strength: {passwordStrength}</p>
+  <p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
 
   {#if errorMessage}
     <p style="color: red;">{errorMessage}</p>
@@ -131,5 +154,11 @@
     box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 4px;
+  }
+
+  .show-password {
+    margin-left: 0.5em;
+    position: relative;
+    border: none;
   }
 </style>

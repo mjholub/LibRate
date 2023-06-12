@@ -49,12 +49,8 @@ func Register(c *fiber.Ctx) error {
 	})
 }
 
-func checkPasswordEntropy(password string) error {
-	if err := validator.Validate(password, 60.0); err != nil {
-		return fmt.Errorf("password entropy too low")
-	}
-
-	return nil
+func checkPasswordEntropy(password string) (entropy float64, err error) {
+	return validator.GetEntropy(password), validator.Validate(password, 60.0)
 }
 
 func (r RegisterInput) Validate() (*models.MemberInput, error) {
@@ -70,7 +66,7 @@ func (r RegisterInput) Validate() (*models.MemberInput, error) {
 		return nil, fmt.Errorf("passwords do not match")
 	}
 
-	err := checkPasswordEntropy(r.Password)
+	_, err := checkPasswordEntropy(r.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +91,10 @@ func ValidatePassword() fiber.Handler {
 		}
 
 		// Validate the password
-		err := checkPasswordEntropy(input.Password)
+		entropy, err := checkPasswordEntropy(input.Password)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Password entropy too low",
+				"message": "password too weak: want entropy > 60, got " + fmt.Sprintf("%f", entropy),
 			})
 		}
 
