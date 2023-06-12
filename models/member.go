@@ -38,7 +38,7 @@ func NewMemberStorage(client *sqlx.DB) *MemberStorage {
 
 func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
 	query := `INSERT INTO members (uuid, passhash, nick, email, reg_timestamp) 
-            VALUES (uuid_generate_v4(), :passhash, :nick, :email, :reg_timestamp)`
+	VALUES (:uuid, :passhash, :nick, :email, to_timestamp(:reg_timestamp))`
 	stmt, err := s.client.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %v", err)
@@ -46,15 +46,17 @@ func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
 	defer stmt.Close()
 
 	params := struct {
-		PassHash     string `db:"passhash"`
-		MemberName   string `db:"nick"`
-		Email        string `db:"email"`
-		RegTimestamp int64  `db:"reg_timestamp"`
+		UUID         string  `db:"uuid"`
+		PassHash     string  `db:"passhash"`
+		MemberName   string  `db:"nick"`
+		Email        string  `db:"email"`
+		RegTimestamp float64 `db:"reg_timestamp"`
 	}{
+		UUID:         member.UUID,
 		PassHash:     member.PassHash,
 		MemberName:   member.MemberName,
 		Email:        member.Email,
-		RegTimestamp: member.RegTimestamp,
+		RegTimestamp: float64(member.RegTimestamp),
 	}
 
 	_, err = stmt.ExecContext(ctx, params)

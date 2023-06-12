@@ -64,6 +64,7 @@ func InitDB() error {
 			passhash VARCHAR(255) NOT NULL,
 			reg_timestamp TIMESTAMP DEFAULT NOW() NOT NULL 
 		);
+		CREATE EXTENSION IF NOT EXISTS pgcrypto;
 	`)
 	if err != nil {
 		return err
