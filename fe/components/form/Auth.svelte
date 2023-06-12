@@ -5,7 +5,7 @@
   let email_or_username = "";
   let password = "";
   let showPassword = false;
-  let confirmPassword = "";
+  let passwordConfirm = "";
   let passwordStrength = 0;
   let errorMessage = "";
 
@@ -30,7 +30,7 @@
   const register = async (event) => {
     event.preventDefault();
 
-    if (isRegistration && password !== confirmPassword) {
+    if (isRegistration && password !== passwordConfirm) {
       errorMessage = "Passwords do not match";
       return;
     }
@@ -49,6 +49,7 @@
         MemberName: email_or_username.includes("@") ? "" : email_or_username,
         Email: email_or_username.includes("@") ? email_or_username : "",
         Password: password,
+        PasswordConfirm: passwordConfirm,
       }),
     });
 
@@ -128,10 +129,10 @@
   </div>
 
   {#if isRegistration}
-    <label for="confirmPassword">Confirm Password:</label>
+    <label for="passwordConfirm">Confirm Password:</label>
     <input
-      id="confirmPassword"
-      bind:value={confirmPassword}
+      id="passwordConfirm"
+      bind:value={passwordConfirm}
       type="password"
       required
     />

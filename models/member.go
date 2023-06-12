@@ -8,11 +8,11 @@ import (
 )
 
 type Member struct {
-	UUID         string `json:"_key,omitempty"`
-	PassHash     string `json:"passhash"`
-	MemberName   string `json:"membername"`
-	Email        string `json:"email"`
-	RegTimestamp int64  `json:"regdate"`
+	UUID         string `json:"_key,omitempty" db:"uuid"`
+	PassHash     string `json:"passhash" db:"passhash"`
+	MemberName   string `json:"membername" db:"nick"`
+	Email        string `json:"email" db:"email"`
+	RegTimestamp int64  `json:"regdate" db:"reg_timestamp"`
 }
 
 type MemberInput struct {
@@ -37,8 +37,27 @@ func NewMemberStorage(client *sqlx.DB) *MemberStorage {
 }
 
 func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
-	query := `INSERT INTO members (field1, field2, ...) VALUES (:field1, :field2, ...)`
-	_, err := s.client.NamedExecContext(ctx, query, member)
+	query := `INSERT INTO members (uuid, passhash, nick, email, reg_timestamp) 
+            VALUES (uuid_generate_v4(), :passhash, :nick, :email, :reg_timestamp)`
+	stmt, err := s.client.PrepareNamedContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	params := struct {
+		PassHash     string `db:"passhash"`
+		MemberName   string `db:"nick"`
+		Email        string `db:"email"`
+		RegTimestamp int64  `db:"reg_timestamp"`
+	}{
+		PassHash:     member.PassHash,
+		MemberName:   member.MemberName,
+		Email:        member.Email,
+		RegTimestamp: member.RegTimestamp,
+	}
+
+	_, err = stmt.ExecContext(ctx, params)
 	if err != nil {
 		return fmt.Errorf("failed to save member: %v", err)
 	}

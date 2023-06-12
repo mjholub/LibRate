@@ -15,7 +15,7 @@ type RegisterInput struct {
 	Email           string `json:"email"`
 	MemberName      string `json:"membername"`
 	Password        string `json:"password"`
-	PasswordConfirm string `json:"passwordconfirm"`
+	PasswordConfirm string `json:"passwordConfirm"`
 }
 
 type LoginInput struct {
