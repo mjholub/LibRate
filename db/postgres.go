@@ -67,8 +67,66 @@ func InitDB() error {
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
 	`)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create members table: %w", err)
 	}
-
+	// TODO: use foreign keys to link media to artists and
+	// create a graph-like structure
+	_, err = db.Exec(`
+		CREATE SCHEMA IF NOT EXISTS media;`,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create media schema: %w", err)
+	}
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS media.albums (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			arists VARCHAR(255) NOT NULL,
+			release_date TIMESTAMP NOT NULL,
+			genres VARCHAR(255) NOT NULL,
+			keywords VARCHAR(255) NOT NULL,
+			duration INTERVAL NOT NULL,
+			tracks VARCHAR(255) NOT NULL,
+			languages VARCHAR(255) NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS media.tracks (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			artists ARRAY NOT NULL,
+			album VARCHAR(255) NOT NULL,
+			duration INTERVAL NOT NULL,
+			languages ARRAY NOT NULL,
+			lyrics TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS media.films (
+			id SERIAL PRIMARY KEY,
+			title VARCHAR(255) NOT NULL,
+			cast ARRAY NOT NULL, 
+);
+		CREATE TABLE IF NOT EXISTS media.tv_shows (
+			id SERIAL PRIMARY KEY,
+			title VARCHAR(255) NOT NULL,
+			cast ARRAY NOT NULL,
+			seasons ARRAY NOT NULL,	
+		);
+		CREATE TABLE IF NOT EXISTS media.books (
+			id SERIAL PRIMARY KEY,
+			title VARCHAR(255) NOT NULL,
+			authors ARRAY NOT NULL,
+			publisher VARCHAR(255) NOT NULL,
+			publication_date TIMESTAMP NOT NULL,
+			genres ARRAY NOT NULL,
+			keywords ARRAY NOT NULL,
+			languages ARRAY NOT NULL,
+			pages INTEGER NOT NULL,
+			ISBN VARCHAR(255) NOT NULL,
+			ASIN VARCHAR(255) NOT NULL,
+			cover TEXT NOT NULL,
+			summary TEXT NOT NULL
+		);
+		`)
+	if err != nil {
+		return fmt.Errorf("failed to create media tables: %w", err)
+	}
 	return nil
 }
