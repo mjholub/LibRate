@@ -10,14 +10,17 @@ import (
 func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 	// TODO: use foreign keys to link media to artists and
 	// create a graph-like structure
-	defer connection.Close()
-	_, err = connection.ExecContext(ctx, `
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		_, err = connection.ExecContext(ctx, `
 		CREATE SCHEMA IF NOT EXISTS media;`,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create media schema: %w", err)
-	}
-	_, err = connection.ExecContext(ctx, `
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create media schema: %w", err)
+		}
+		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.albums (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -67,7 +70,9 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 			summary TEXT,
 		);
 		`)
-	if err != nil {
-		return fmt.Errorf("failed to create media tables: %w", err)
+		if err != nil {
+			return fmt.Errorf("failed to create media tables: %w", err)
+		}
+		return nil
 	}
 }

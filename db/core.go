@@ -56,24 +56,16 @@ func InitDB() error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS public.members (
-			id SERIAL PRIMARY KEY,
-			uuid UUID NOT NULL,
-			nick VARCHAR(255) NOT NULL,
-			email VARCHAR(255) NOT NULL,
-			passhash VARCHAR(255) NOT NULL,
-			reg_timestamp TIMESTAMP DEFAULT NOW() NOT NULL 
-		);
-		CREATE EXTENSION IF NOT EXISTS pgcrypto;
-	`)
-	if err != nil {
-		return fmt.Errorf("failed to create members table: %w", err)
-	}
-	ctx := context.TODO()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
 	err = bootstrap.Media(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create media tables: %w", err)
+	}
+	err = bootstrap.Members(ctx, db)
+	if err != nil {
+		return fmt.Errorf("failed to create members tables: %w", err)
 	}
 
 	return nil
