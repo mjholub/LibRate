@@ -9,6 +9,14 @@ type Film struct {
 	Year  int `json:"year"`
 }
 
+func (f Film) GetID() int {
+	return f.ID
+}
+
+func (f Film) IsMedia() bool {
+	return true
+}
+
 type TVShow struct {
 	ID      int      `json:"id" db:"id"`
 	Title   string   `json:"title" db:"title"`

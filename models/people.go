@@ -1,6 +1,27 @@
 package models
 
-import "github.com/samber/mo"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/samber/lo"
+)
+
+type Entity interface {
+	GetID() int
+}
+
+func (p Person) GetID() int {
+	return p.ID
+}
+
+func (g Group) GetID() int {
+	return g.ID
+}
+
+func (s Studio) GetID() int {
+	return s.ID
+}
 
 type Person struct {
 	ID         int      `json:"id" db:"id"`
@@ -15,14 +36,14 @@ type Person struct {
 	Death      string   `json:"death,omitempty" db:"death"`
 	Website    string   `json:"website,omitempty" db:"website"`
 	Photos     []string `json:"photos,omitempty" db:"photos"`
-	Hometown   string   `json:"hometown,omitempty" db:"hometown"`
-	Residence  string   `json:"residence,omitempty" db:"residence"`
-	MemberOf   []Group  `json:"member_of,omitempty" db:"member_of"`
+	Hometown   Place    `json:"hometown,omitempty" db:"hometown"`
+	Residence  Place    `json:"residence,omitempty" db:"residence"`
 }
 
 type Group struct {
 	ID        int      `json:"id" db:"id"`
 	UUID      string   `json:"uuid" db:"uuid"`
+	Locations []Place  `json:"locations,omitempty" db:"locations"`
 	Name      string   `json:"name" db:"name"`
 	Active    bool     `json:"active" db:"active"`
 	Formed    string   `json:"formed,omitempty" db:"formed"`
@@ -37,16 +58,36 @@ type Group struct {
 	Kind      string   `json:"kind,omitempty" db:"kind"` // Orchestra, Choir, Ensemble, Collective, etc.
 }
 
+// FIXME: find a better workaround for go's shitty immutability support
+var (
+	GroupKinds = []string{
+		"Orchestra",
+		"Choir",
+		"Ensemble",
+		"Collective",
+		"Band",
+		"Troupe",
+		"Other",
+	}
+)
+
+func (g Group) Validate() error {
+	if lo.Contains(GroupKinds, g.Kind) {
+		return nil
+	}
+	return fmt.Errorf("invalid group kind: %s, must be one of %s", g.Kind, strings.Join(GroupKinds, ", "))
+}
+
 type Studio struct {
-	ID           int                                   `json:"id" db:"id"`
-	UUID         string                                `json:"uuid" db:"uuid"`
-	Name         string                                `json:"name" db:"name"`
-	Active       bool                                  `json:"active" db:"active"`
-	City         string                                `json:"city,omitempty" db:"city"`
-	Artists      []Person                              `json:"artists,omitempty" db:"artists"`
-	Works        mo.Either4[Book, Film, TVShow, Album] `json:"works,omitempty" db:"works"`
-	IsFilm       bool                                  `json:"is_film" db:"is_film"`
-	IsMusic      bool                                  `json:"is_music" db:"is_music"`
-	IsTV         bool                                  `json:"is_tv" db:"is_tv"`
-	IsPublishing bool                                  `json:"is_publishing" db:"is_publishing"`
+	ID           int      `json:"id" db:"id"`
+	UUID         string   `json:"uuid" db:"uuid"`
+	Name         string   `json:"name" db:"name"`
+	Active       bool     `json:"active" db:"active"`
+	City         string   `json:"city,omitempty" db:"city"`
+	Artists      []Person `json:"artists,omitempty" db:"artists"`
+	Works        Media    `json:"works,omitempty" db:"works"`
+	IsFilm       bool     `json:"is_film" db:"is_film"`
+	IsMusic      bool     `json:"is_music" db:"is_music"`
+	IsTV         bool     `json:"is_tv" db:"is_tv"`
+	IsPublishing bool     `json:"is_publishing" db:"is_publishing"`
 }

@@ -9,7 +9,7 @@ import (
 type Album struct {
 	ID          int                          `json:"id" db:"id"`
 	Name        string                       `json:"name" db:"name"`
-	Artists     mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
+	AlbumArtists     mo.Either[[]Person, []Group] `json:"album_artists" db:"album_artists"`
 	ReleaseDate time.Time                    `json:"release_date" db:"release_date"`
 	Genres      []Genre                      `json:"genres,omitempty" db:"genres"`
 	Studio      Studio                       `json:"studio,omitempty" db:"studio"`
@@ -22,7 +22,6 @@ type Album struct {
 type Track struct {
 	ID        int                          `json:"id" db:"id"`
 	Name      string                       `json:"name" db:"name"`
-	Album     Album                        `json:"album" db:"album"`
 	Artists   mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
 	Duration  time.Duration                `json:"duration" db:"duration"`
 	Lyrics    string                       `json:"lyrics,omitempty" db:"lyrics"`

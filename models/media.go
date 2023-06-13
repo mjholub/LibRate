@@ -5,6 +5,26 @@ import (
 	"time"
 )
 
+type Media interface {
+	IsMedia() bool // dummy placeholder so that we can have somewhat idiomatic parametric polymorphism
+}
+
+func (b Book) IsMedia() bool {
+	return true
+}
+
+func (a Album) IsMedia() bool {
+	return true
+}
+
+func (t Track) IsMedia() bool {
+	return true
+}
+
+func (g Genre) IsMedia() bool {
+	return false
+}
+
 type Book struct {
 	ID              int       `json:"id" db:"id"`
 	Title           string    `json:"title" db:"title"`
@@ -24,11 +44,11 @@ type Book struct {
 type Genre struct {
 	ID          int      `json:"id" db:"id"`
 	Name        string   `json:"name"`
-	DescShort   string   `json:"desc_short", db:"desc_short"`
-	DescLong    string   `json:"desc_long", db:"desc_long"`
-	Keywords    []string `json:"keywords", db:"keywords"`
-	ParentGenre *Genre   `json:"parent_genre, omitempty", db:"parent_genre"`
-	Children    []Genre  `json:"children, omitempty", db:"children"`
+	DescShort   string   `json:"desc_short" db:"desc_short"`
+	DescLong    string   `json:"desc_long" db:"desc_long"`
+	Keywords    []string `json:"keywords" db:"keywords"`
+	ParentGenre *Genre   `json:"parent_genre omitempty" db:"parent_genre"`
+	Children    []Genre  `json:"children omitempty" db:"children"`
 }
 
 type MediaStorer interface {
@@ -53,7 +73,7 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, media interface{}, objType interface{}) error {
+func (ms *MediaStorage) Add(ctx context.Context, media Media) error {
 	return nil
 }
 

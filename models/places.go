@@ -1,8 +1,9 @@
 package models
 
 type Place struct {
-	Name    string  `json:"name"`
-	Lat     float64 `json:"lat"`
-	Lng     float64 `json:"lng"`
-	country string  `json:"country"`
+	ID      int     `json:"id" db:"id"`
+	Name    string  `json:"name" db:"name"`
+	Lat     float64 `json:"lat" db:"lat"`
+	Lng     float64 `json:"lng" db:"lng"`
+	Country string  `json:"country" db:"country"`
 }
