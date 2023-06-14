@@ -12,21 +12,23 @@ import (
 )
 
 type RatingInput struct {
-	NumStars    int    `json:"numstars"`
-	Comment     string `json:"comment", omitempty`
-	Topic       string `json:"topic", omitempty`
-	Attribution string `json:"attribution", omitempty`
-	UserID      int    `json:"userid"`
-	MediaID     int    `json:"mediaid"`
+	// TODO: allow for setting dynamic rating scales
+	NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
+	Comment     string `json:"comment,omitempty" db:"comment"`
+	Topic       string `json:"topic,omitempty" db:"topic"`
+	Attribution string `json:"attribution,omitempty" db:"attribution"`
+	UserID      uint32 `json:"userid" db:"user_id"`
+	MediaID     uint   `json:"mediaid" db:"media_id"`
 }
 
 type Rating struct {
-	NumStars    int    `json:"numstars"`
-	Comment     string `json:"comment", omitempty`
-	Topic       string `json:"topic", omitempty`
-	Attribution string `json:"attribution", omitempty`
-	UserID      int    `json:"userid"`
-	MediaID     int    `json:"mediaid"`
+	UUID        string `json:"_key" db:"uuid,pk"`
+	NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+	Comment     string `json:"comment,omitempty" db:"comment"`
+	Topic       string `json:"topic,omitempty" db:"topic"`
+	Attribution string `json:"attribution,omitempty" db:"attribution"`
+	UserID      uint32 `json:"userid" db:"user_id"`
+	MediaID     uint   `json:"mediaid" db:"media_id"`
 }
 
 type RatingStorer interface {
@@ -48,7 +50,7 @@ func (rs *RatingStorage) SaveRating(rating *Rating) error {
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
+		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
 	})
 	if err != nil {
 		return err
@@ -88,7 +90,7 @@ func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, err
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
+		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
 	})
 	if err != nil {
 		return nil, err
@@ -132,7 +134,7 @@ func (rs *RatingStorage) GetPinned(ctx context.Context) ([]*Rating, error) {
 	dbConf := config.DBConfig
 
 	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%s", dbConf.Host, dbConf.Port)},
+		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
 	})
 	if err != nil {
 		return nil, err
