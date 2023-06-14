@@ -65,7 +65,7 @@ func GetRecommendations(c *fiber.Ctx) error {
 
 func AddMedia(c *fiber.Ctx) error {
 	mstor := models.NewMediaStorage()
-	var media models.Media
+	var media models.MediaService // NOTE: this is a hack to get around the fact that we can't use an interface as a parameter to c.BodyParser
 
 	mediaType := c.Params("type")
 	switch mediaType {
