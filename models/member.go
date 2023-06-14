@@ -8,6 +8,7 @@ import (
 )
 
 type Member struct {
+	ID           int    `json:"id" db:"id"`
 	UUID         string `json:"_key,omitempty" db:"uuid"`
 	PassHash     string `json:"passhash" db:"passhash"`
 	MemberName   string `json:"membername" db:"nick"`
@@ -85,7 +86,7 @@ func (s *MemberStorage) Delete(ctx context.Context, member *Member) error {
 }
 
 func (s *MemberStorage) Read(ctx context.Context, keyName, key string) (*Member, error) {
-	query := `SELECT * FROM members WHERE ` + keyName + ` = ?`
+	query := `SELECT * FROM members WHERE ` + keyName + ` = $1`
 	member := &Member{}
 	err := s.client.GetContext(ctx, member, query, key)
 	if err != nil {

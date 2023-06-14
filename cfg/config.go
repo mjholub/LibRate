@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 
@@ -14,6 +15,7 @@ import (
 
 	config "github.com/gookit/config/v2"
 	"github.com/imdario/mergo"
+	"github.com/reactivex/rxgo/v2"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
@@ -22,28 +24,25 @@ import (
 var log = logging.Init()
 
 func LoadConfig() mo.Result[Config] {
-	// TODO: parallelize looping over config locations
-	// i.e. use some queue to send the config locations to a goroutine pool
-	// and return the first config location that is found
 	return mo.Try(func() (Config, error) {
 		locs := tryLocations()
 		loc := lookForExisting(locs)
 		if loc == "" {
 			userSpecifiedLoc, err := tryGettingConfig(locs)
 			if err != nil {
-				panic(fmt.Errorf("failed to get config: %w", err))
+				return Config{}, fmt.Errorf("failed to get config: %w", err)
 			}
 			if lookForExisting([]string{userSpecifiedLoc}) == "" {
-				err := writeConfig(userSpecifiedLoc, Config{})
+				err := writeConfig(userSpecifiedLoc, &Config{})
 				if err != nil {
-					panic(fmt.Errorf("failed to write config: %w", err))
+					return Config{}, fmt.Errorf("failed to write config: %w", err)
 				}
 			}
 			loc = userSpecifiedLoc
 		}
 		configRaw, err := parser.Parse(loc)
 		if err != nil {
-			panic(fmt.Errorf("failed to parse config: %w", err))
+			return Config{}, fmt.Errorf("failed to parse config: %w", err)
 		}
 		log.Info().Msgf("got config: %v", configRaw)
 
@@ -135,18 +134,47 @@ func tryLocations() []string {
 }
 
 func lookForExisting(configLocations []string) string {
+	// create a channel to emit the file pahts
+	fpChan := make(chan rxgo.Item)
+
+	// WaitGroup to ensure all checks are done before closing fpChan
+	var wg sync.WaitGroup
+
 	if configFileEnv := os.Getenv("CONFIG_FILE"); configFileEnv != "" {
-		if _, err := os.Stat(configFileEnv); err == nil {
-			return configFileEnv
-		}
-		return "" // WARN: is this a correct branch?
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := os.Stat(configFileEnv); err == nil {
+				fpChan <- rxgo.Of(configFileEnv)
+			}
+		}()
 	}
+
 	for i := range configLocations {
-		if _, err := os.Stat(configLocations[i]); err == nil {
-			return configLocations[i]
-		}
+		wg.Add(1)
+		path := configLocations[i]
+		go func(i int) {
+			defer wg.Done()
+			if _, err := os.Stat(configLocations[i]); err == nil {
+				fpChan <- rxgo.Of(path)
+			}
+		}(i)
 	}
-	return ""
+
+	go func() {
+		wg.Wait()
+		close(fpChan)
+	}()
+
+	// create an observable from the channel
+	fpObs := rxgo.FromChannel(fpChan)
+
+	item, err := fpObs.First().Get()
+	if err != nil {
+		return "" // no config file found
+	}
+	// return the first config file found
+	return item.V.(string)
 }
 
 func tryGettingConfig(tryPaths []string) (string, error) {
@@ -173,7 +201,7 @@ func getDefaultConfigPath() (string, error) {
 
 // TODO: also create .env file in the same dir with CONFIG_FILE set to the path to make looking
 // up the config file faster in the future
-func writeConfig(configPath string, c Config) error {
+func writeConfig(configPath string, c *Config) error {
 	if configPath == "" {
 		return fmt.Errorf("no config file specified")
 	}
@@ -191,68 +219,6 @@ func writeConfig(configPath string, c Config) error {
 		return fmt.Errorf("error writing config file: %w", err)
 	}
 	return nil
-}
-
-func LoadDgraph() *DgraphConfig {
-	var (
-		dghost        string
-		dgport        string
-		dghttp        string
-		dgAlphaBadger string
-		dgAlphaBRate  string
-		dgAlphaTrace  string
-		dgAlphaTLS    string
-		dgAlphaSec    string
-	)
-
-	envChan := make(chan string, 1)
-	defer close(envChan)
-
-	getEnvOrDefault := func(envVar, defaultValue string) string {
-		value := os.Getenv(envVar)
-		if value == "" {
-			os.Setenv(envVar, defaultValue)
-			value = defaultValue
-		}
-		envChan <- value
-		return value
-	}
-	go func() {
-		dghost = getEnvOrDefault("DGRAPH_HOST", "0.0.0.0")
-		dgport = getEnvOrDefault("DGRAPH_GRPC_PORT", "5080")
-		dghttp = getEnvOrDefault("DGRAPH_HTTP_PORT", "6080")
-		dgAlphaBadger = getEnvOrDefault("DGRAPH_ALPHA_BADGER", "compression=zstd;cache_size=1G;cache_ttl=1h;max_table_size=1G;level_size=128MB")
-		dgAlphaBRate = getEnvOrDefault("DGRAPH_ALPHA_BLOCK_RATE", "20")
-		dgAlphaTrace = getEnvOrDefault("DGRAPH_ALPHA_TRACE", "prometheus=localhost:9090")
-		dgAlphaTLS = getEnvOrDefault("DGRAPH_ALPHA_TLS", "false")
-		dgAlphaSec = getEnvOrDefault("DGRAPH_ALPHA_SECURITY", `whitelist=
-		10.0.0.0/8,
-		172.0.0.0/8,
-		192.168.0.0/16,
-		`+dghost+`
-		`)
-	}()
-
-	// Retrieve the values from the channel
-	dghost = <-envChan
-	dgport = <-envChan
-	dghttp = <-envChan
-	dgAlphaBadger = <-envChan
-	dgAlphaBRate = <-envChan
-	dgAlphaTrace = <-envChan
-	dgAlphaTLS = <-envChan
-	dgAlphaSec = <-envChan
-
-	return &DgraphConfig{
-		Host:           dghost,
-		GRPCPort:       dgport,
-		HTTPPort:       dghttp,
-		AlphaBadger:    dgAlphaBadger,
-		AlphaBlockRate: dgAlphaBRate,
-		AlphaTrace:     dgAlphaTrace,
-		AlphaTLS:       dgAlphaTLS,
-		AlphaSecurity:  dgAlphaSec,
-	}
 }
 
 func createKVPairs(m map[string]interface{}) string {

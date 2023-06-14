@@ -1,7 +1,9 @@
 package models
 
+type LangID int
+
 const (
-	English = iota
+	English LangID = iota
 	Spanish
 	French
 	German

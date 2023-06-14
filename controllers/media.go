@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -66,54 +65,40 @@ func GetRecommendations(c *fiber.Ctx) error {
 
 func AddMedia(c *fiber.Ctx) error {
 	mstor := models.NewMediaStorage()
-	var media any
+	var media models.Media
 
-	if err := c.BodyParser(&media); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
-		})
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	value := media.(map[string]interface{})
-	// unmarshal the JSON payload into a struct
-	switch value["type"].(string) {
+	mediaType := c.Params("type")
+	switch mediaType {
 	case "film":
-		film := models.Film{
-			Title: value["title"].(string),
-			Year:  value["year"].(int),
-			Cast: models.Cast{
-				Actors:    value["actors"].([]models.Person),
-				Directors: value["directors"].([]models.Person),
-			},
+		var film models.Film
+		if err := c.BodyParser(&film); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON",
+			})
 		}
 		media = film
 	case "album":
-		album := models.Album{
-			Name:        value["name"].(string),
-			Artists:     value["artists"].([]models.Person),
-			ReleaseDate: value["releaseDate"].(time.Time),
-			Genres:      value["genres"].([]string),
-			Keywords:    value["keywords"].([]string),
-			Duration:    value["duration"].(time.Duration),
-			Tracks:      value["tracks"].([]models.Track),
+		var album models.Album
+		if err := c.BodyParser(&album); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON",
+			})
 		}
 		media = album
 	case "genre":
-		genre := models.Genre{
-			Name:        value["name"].(string),
-			Description: value["description"].(string),
-			Keywords:    value["keywords"].([]string),
+		var genre models.Genre
+		if err := c.BodyParser(&genre); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON",
+			})
 		}
 		media = genre
 	case "track":
-		track := models.Track{
-			Name:     value["name"].(string),
-			Artists:  value["artists"].([]models.Person),
-			Duration: value["duration"].(time.Duration),
-			Lyrics:   value["lyrics"].(string),
+		var track models.Track
+		if err := c.BodyParser(&track); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON",
+			})
 		}
 		media = track
 	default:
@@ -122,7 +107,10 @@ func AddMedia(c *fiber.Ctx) error {
 		})
 	}
 
-	err := mstor.Add(ctx, &media, reflect.TypeOf(media))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := mstor.Add(ctx, media)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to add media",
