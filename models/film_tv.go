@@ -4,9 +4,9 @@ import "time"
 
 type Film struct {
 	ID    int    `json:"id" db:"id"`
-	Title string `json:"title"`
-	Cast  Cast
-	Year  int `json:"year"`
+	Title string `json:"title" db:"title"`
+	Cast  Cast   `json:"cast" db:"cast"`
+	Year  int    `json:"year" db:"year"`
 }
 
 func (f Film) GetID() int {
