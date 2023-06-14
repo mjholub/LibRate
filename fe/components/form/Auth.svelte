@@ -3,6 +3,8 @@
 
   let isRegistration = false;
   let email_or_username = "";
+  let email = "";
+  let nickname = "";
   let password = "";
   let showPassword = false;
   let passwordConfirm = "";
@@ -27,6 +29,15 @@
 
   $: password && checkEntropy(password);
 
+  // helper function to trigger moving either email or nickname to a dedicated field
+  const startRegistration = () => {
+    isRegistration = true;
+    email_or_username = email_or_username.includes("@")
+      ? ""
+      : email_or_username;
+    email = email_or_username.includes("@") ? email_or_username : "";
+  };
+
   const register = async (event) => {
     event.preventDefault();
 
@@ -46,8 +57,8 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        MemberName: email_or_username.includes("@") ? "" : email_or_username,
-        Email: email_or_username.includes("@") ? email_or_username : "",
+        MemberName: nickname,
+        Email: email,
         Password: password,
         PasswordConfirm: passwordConfirm,
       }),
@@ -92,8 +103,10 @@
 </script>
 
 <form on:submit|preventDefault={isRegistration ? register : login}>
-  <label for="email_or_username">Email or username:</label>
+  <label for="email_or_username">Email or nickname:</label>
   <input id="email_or_username" bind:value={email_or_username} required />
+  <label for="nickname">Nickname:</label>
+  <input id="nickname" bind:value={nickname} required />
 
   <div class="password-container">
     <label for="password">Password:</label>
@@ -136,6 +149,11 @@
       type="password"
       required
     />
+    <label for="email">Email:</label>
+    <input id="email" bind:value={email} type="email" required />
+
+    <label for="nickname">Nickname:</label>
+    <input id="nickname" bind:value={nickname} required />
   {/if}
 
   <p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
@@ -146,9 +164,7 @@
 
   {#if !isRegistration}
     <button type="submit">Sign In</button>
-    <button type="button" on:click={() => (isRegistration = true)}
-      >Sign Up</button
-    >
+    <button type="button" on:click={startRegistration}>Sign Up</button>
   {:else}
     <button type="submit">Sign Up</button>
     <button type="button" on:click={() => (isRegistration = false)}
