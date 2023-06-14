@@ -1,4 +1,3 @@
-// TODO: verify if this file is needed
 package db
 
 import (

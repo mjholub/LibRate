@@ -57,7 +57,7 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 			id SERIAL PRIMARY KEY,
 			edition VARCHAR(255) NOT NULL,
 			title VARCHAR(255) NOT NULL,
-			authors ARRAY NOT NULL,
+			authors INTEGER[] NOT NULL,
 			publisher VARCHAR(255),
 			publication_date TIMESTAMP,
 			genres TEXT[],
