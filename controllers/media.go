@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	_ "github.com/jmoiron/sqlx"
 
+	_ "codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/internal/client"
 	"codeberg.org/mjh/LibRate/models"
 	services "codeberg.org/mjh/LibRate/recommendation/go/services"
@@ -66,6 +68,8 @@ func GetRecommendations(c *fiber.Ctx) error {
 func AddMedia(c *fiber.Ctx) error {
 	mstor := models.NewMediaStorage()
 	var media models.MediaService // NOTE: this is a hack to get around the fact that we can't use an interface as a parameter to c.BodyParser
+	// dbConf := cfg.LoadConfig().OrElse(cfg.DefaultConfig()).Database
+	// TODO: set up database connection
 
 	mediaType := c.Params("type")
 	switch mediaType {
@@ -109,8 +113,7 @@ func AddMedia(c *fiber.Ctx) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	err := mstor.Add(ctx, media)
+	err := mstor.Add(ctx, nil, media, nil) // TODO: marshal into key-value pairs
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to add media",

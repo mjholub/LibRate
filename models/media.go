@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/samber/lo"
 )
 
 type (
@@ -47,6 +48,10 @@ type (
 		Summary         string     `json:"summary" db:"summary"`
 	}
 
+	BookValues interface {
+		[]string | string | int16 | time.Time | []Person
+	}
+
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
 		Name        string   `json:"name" db:"name"`
@@ -58,6 +63,22 @@ type (
 	}
 
 	MediaStorage struct{}
+)
+
+var (
+	BookKeys = [13]string{
+		"media_id", "title", "authors", "publisher", "publication_date",
+		"genres", "keywords", "languages", "pages", "isbn", "asin", "cover", "summary",
+	}
+	AlbumKeys = [7]string{
+		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
+	}
+	TrackKeys = [7]string{
+		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
+	}
+	GenreKeys = [5]string{
+		"id", "name", "desc_short", "desc_long", "keywords",
+	}
 )
 
 func NewMediaStorage() *MediaStorage {
@@ -72,7 +93,36 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, media Media) error {
+func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props ...interface{}) error {
+	props = append(props, media)
+	switch media.(type) {
+	case Book:
+		return addBook(ctx, db, BookKeys[:], props...)
+	case Album:
+		return addAlbum(ctx, db, props...)
+	case Track:
+		return addTrack(ctx, db, props...)
+	default:
+		return fmt.Errorf("unknown media type")
+	}
+}
+
+func addBook[B BookValues](ctx context.Context, db *sqlx.DB, keys []string, values B) error {
+	// TODO: add key validation
+	kvs := lo.Associate(keys, func(key string) (keys string, values interface{}) {
+		switch key {
+		case "media_id":
+			return uuid.Must(uuid.NewV4()).String(), values.(string)
+		case "authors":
+			return "authors", values.([]Person)
+		default:
+			return key, values
+		}
+	})
+	_, err := db.NamedExecContext(ctx, "INSERT INTO books (:keys) VALUES (:values)", kvs)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
