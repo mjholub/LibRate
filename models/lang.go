@@ -1,6 +1,6 @@
 package models
 
-type LangID int
+type LangID int16
 
 const (
 	English LangID = iota

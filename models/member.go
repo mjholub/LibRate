@@ -8,7 +8,7 @@ import (
 )
 
 type Member struct {
-	ID           int    `json:"id" db:"id"`
+	ID           uint32 `json:"id" db:"id"`
 	UUID         string `json:"_key,omitempty" db:"uuid"`
 	PassHash     string `json:"passhash" db:"passhash"`
 	MemberName   string `json:"membername" db:"nick"`
