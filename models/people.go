@@ -15,7 +15,7 @@ type (
 	}
 
 	Person struct {
-		ID         uint32       `json:"id" db:"id,pk,unique,autoincrement"`
+		ID         int32        `json:"id" db:"id,pk,unique,autoincrement"`
 		FirstName  string       `json:"first_name" db:"first_name"`
 		OtherNames []string     `json:"other_names,omitempty" db:"other_names"`
 		LastName   string       `json:"last_name" db:"last_name"`
@@ -29,10 +29,12 @@ type (
 		Photos     []string     `json:"photos,omitempty" db:"photos"`
 		Hometown   Place        `json:"hometown,omitempty" db:"hometown"`
 		Residence  Place        `json:"residence,omitempty" db:"residence"`
+		Added      time.Time    `json:"added" db:"added"`
+		Modified   sql.NullTime `json:"modified,omitempty" db:"modified"`
 	}
 
 	Group struct {
-		ID        uint32       `json:"id" db:"id"`
+		ID        int32        `json:"id" db:"id"`
 		Locations []Place      `json:"locations,omitempty" db:"locations"`
 		Name      string       `json:"name" db:"name"`
 		Active    bool         `json:"active" db:"active"`
@@ -40,25 +42,26 @@ type (
 		Disbanded sql.NullTime `json:"disbanded,omitempty" db:"disbanded"`
 		Website   string       `json:"website,omitempty" db:"website"`
 		Photos    []string     `json:"photos,omitempty" db:"photos"`
-		Works     []Album      `json:"works,omitempty" db:"works"`
+		Works     []*uuid.UUID `json:"works,omitempty" db:"works"`
 		Members   []Person     `json:"members,omitempty" db:"members"`
 		Genres    []Genre      `json:"genres,omitempty" db:"genres"`
-		Countries []string     `json:"countries,omitempty" db:"countries"`
-		Plays     []string     `json:"plays,omitempty" db:"plays"`
 		Kind      string       `json:"kind,omitempty" db:"kind"` // Orchestra, Choir, Ensemble, Collective, etc.
+		Added     time.Time    `json:"added" db:"added"`
+		Modified  sql.NullTime `json:"modified,omitempty" db:"modified"`
 	}
 
 	Studio struct {
-		ID           uint32   `json:"id" db:"id,pk"`
+		ID           int32    `json:"id" db:"id,pk,serial,unique"`
 		Name         string   `json:"name" db:"name"`
 		Active       bool     `json:"active" db:"active"`
-		City         string   `json:"city,omitempty" db:"city"`
+		City         *City    `json:"city,omitempty" db:"city"`
 		Artists      []Person `json:"artists,omitempty" db:"artists"`
 		Works        Media    `json:"works,omitempty" db:"works"`
 		IsFilm       bool     `json:"is_film" db:"is_film"`
 		IsMusic      bool     `json:"is_music" db:"is_music"`
 		IsTV         bool     `json:"is_tv" db:"is_tv"`
 		IsPublishing bool     `json:"is_publishing" db:"is_publishing"`
+		IsGame       bool     `json:"is_game" db:"is_game"`
 	}
 )
 
@@ -83,16 +86,16 @@ func (g *Group) Validate() error {
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (p Person) GetID() uint32 {
+func (p Person) GetID() int32 {
 	return p.ID
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (g Group) GetID() uint32 {
+func (g Group) GetID() int32 {
 	return g.ID
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (s Studio) GetID() uint32 {
+func (s Studio) GetID() int32 {
 	return s.ID
 }
