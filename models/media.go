@@ -97,14 +97,27 @@ func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService
 	props = append(props, media)
 	switch media.(type) {
 	case Book:
-		return addBook(ctx, db, BookKeys[:], props...)
+		if len(props) > 0 {
+			if bookValues, ok := props[0].(BookValues); ok {
+				return addBook(ctx, db, BookKeys[:], bookValues)
+			}
+		}
 	case Album:
-		return addAlbum(ctx, db, props...)
+		if len(props) > 0 {
+			if albumValues, ok := props[0].(MusicValues); ok {
+				return addAlbum(ctx, db, AlbumKeys[:], albumValues)
+			}
+		}
 	case Track:
-		return addTrack(ctx, db, props...)
+		if len(props) > 0 {
+			if trackValues, ok := props[0].(MusicValues); ok {
+				return addTrack(ctx, db, TrackKeys[:], trackValues)
+			}
+		}
 	default:
 		return fmt.Errorf("unknown media type")
 	}
+	return nil
 }
 
 func addBook[B BookValues](ctx context.Context, db *sqlx.DB, keys []string, values B) error {
