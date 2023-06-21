@@ -16,7 +16,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		CREATE SCHEMA IF NOT EXISTS places;`)
 		if err != nil {
 			return fmt.Errorf("failed to create places schema: %w", err)
-	}
+		}
 		_, err = db.Exec(`
 		CREATE ENUM IF NOT EXISTS places.kind AS ('country', 'city', 'venue', 'other');`)
 		if err != nil {
@@ -69,4 +69,5 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create venue table: %w", err)
 		}
 		return nil
+	}
 }
