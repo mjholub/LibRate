@@ -2,7 +2,8 @@ fiber_host: "localhost"
 fiber_port: 3000
 database:
   - engine: "postgres"
+    pg_config: "/usr/bin/pg_config"
     host: "localhost"
     port: 5432
-    database: "librerym_dev"
+    database: "librerym"
     user: "postgres"

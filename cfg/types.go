@@ -8,13 +8,14 @@ type Config struct {
 }
 
 type DBConfig struct {
-	Engine   string `yaml:"engine,default:postgres"`
-	Host     string `yaml:"host,default:localhost"`
-	Port     uint16 `yaml:"port,default:5432"`
-	Database string `yaml:"database,default:librerym"`
-	User     string `yaml:"user,default:postgres"`
-	Password string `yaml:"password,default:postgres"`
-	SSL      string `yaml:"ssl,default:unknown"`
+	Engine    string `yaml:"engine,default:postgres"`
+	Host      string `yaml:"host,default:localhost"`
+	Port      uint16 `yaml:"port,default:5432"`
+	Database  string `yaml:"database,default:librerym"`
+	User      string `yaml:"user,default:postgres"`
+	Password  string `yaml:"password,default:postgres"`
+	SSL       string `yaml:"ssl,default:unknown"`
+	PG_Config string `yaml:"pg_config,default:/usr/bin/pg_config"`
 }
 
 type FiberConfig struct {

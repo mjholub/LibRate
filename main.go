@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
+	"os"
+	"os/exec"
 	"strconv"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -26,6 +29,18 @@ func main() {
 	}
 	if DBRunning(conf.Port) {
 		if *init {
+			pgUintCmd := exec.Command("./deps/pguint/make", "PG_CONFIG="+conf.PG_Config)
+			if err := pgUintCmd.Run(); err != nil {
+				panic(fmt.Errorf("failed to build pguint: %w", err))
+			}
+			if os.Getuid() != 0 {
+				log.Warn().Msg("Not running as root, skipping database initialization (installing pguint requires root)")
+				return
+			}
+			pgUintInstallCmd := exec.Command("./deps/pguint/make", "PG_CONFIG="+conf.PG_Config, "install")
+			if err := pgUintInstallCmd.Run(); err != nil {
+				panic(fmt.Errorf("failed to install pguint: %w", err))
+			}
 			if err := db.InitDB(); err != nil {
 				panic(err)
 			}

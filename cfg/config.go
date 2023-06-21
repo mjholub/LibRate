@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 
@@ -25,6 +26,30 @@ var log = logging.Init()
 
 func LoadConfig() mo.Result[Config] {
 	return mo.Try(func() (Config, error) {
+		pg_config, err := exec.LookPath("pg_config")
+		if err != nil {
+			return Config{}, fmt.Errorf("failed to find pg_config: %w. Is postgres installed?", err)
+		}
+		if os.Getenv("LIBRATE_ENV") == "test" {
+			return Config{
+				DBConfig: DBConfig{
+					Engine:    "postgres",
+					Host:      "localhost",
+					Port:      uint16(5432),
+					Database:  "librate_test",
+					User:      "postgres",
+					Password:  "postgres",
+					SSL:       "disable",
+					PG_Config: pg_config,
+				},
+				Fiber: FiberConfig{
+					Host: "localhost",
+					Port: "3000",
+				},
+				SiginingKey: "",
+				DBPass:      "postgres",
+			}, nil
+		}
 		locs := tryLocations()
 		loc := lookForExisting(locs)
 		if loc == "" {
@@ -49,13 +74,14 @@ func LoadConfig() mo.Result[Config] {
 		// preallocate default config
 		conf := Config{
 			DBConfig: DBConfig{
-				Engine:   "postgres",
-				Host:     "localhost",
-				Port:     uint16(5432),
-				Database: "librate",
-				User:     "postgres",
-				Password: "postgres",
-				SSL:      "disable",
+				Engine:    "postgres",
+				Host:      "localhost",
+				Port:      uint16(5432),
+				Database:  "librate",
+				User:      "postgres",
+				Password:  "postgres",
+				SSL:       "disable",
+				PG_Config: pg_config,
 			},
 			Fiber: FiberConfig{
 				Host: "localhost",
@@ -79,13 +105,14 @@ func LoadConfig() mo.Result[Config] {
 func ReadDefaults() Config {
 	return Config{
 		DBConfig: DBConfig{
-			Engine:   "postgres",
-			Host:     "localhost",
-			Port:     uint16(5432),
-			Database: "librerym",
-			User:     "postgres",
-			Password: "postgres",
-			SSL:      "disable",
+			Engine:    "postgres",
+			Host:      "localhost",
+			Port:      uint16(5432),
+			Database:  "librerym",
+			User:      "postgres",
+			Password:  "postgres",
+			SSL:       "disable",
+			PG_Config: "/usr/bin/pg_config",
 		},
 		Fiber: FiberConfig{
 			Host: "localhost",

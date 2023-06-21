@@ -7,14 +7,16 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 ## Prerequisites:
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
-- a working Postgres instance
+- Python 3 for setting up the uint Postgres extension
+- a working Postgres instance. You'll also need to install the development files package
+  since LibRate uses Postgres extensions
 
 ## Development prerequisites
 
 To develop the recommendations feature, you'll need:
 
 - `protoc` and `protoc-gen-go` for generating the protobufs
-- Rust toolchain
+- Rust and Go toolchains
 
 ## Building and installing
 
@@ -28,3 +30,7 @@ go run . -init
 For subsequent runs of course you shouldn't use the `init` flag.
 
 You can then test your instance at [http://localhost:3000](localhost:3000)
+
+# Testing
+
+In order to test the database code, you should create a `librate_test` database.

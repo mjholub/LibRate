@@ -58,17 +58,33 @@ func InitDB() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
-	err = bootstrap.Media(ctx, db)
+	_, err = db.ExecContext(ctx, "CREATE EXTENSION uint;")
 	if err != nil {
-		return fmt.Errorf("failed to create media tables: %w", err)
-	}
-	err = bootstrap.Members(ctx, db)
-	if err != nil {
-		return fmt.Errorf("failed to create members tables: %w", err)
+		return fmt.Errorf("failed to create uint extension: %w", err)
 	}
 	err = bootstrap.CDN(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create cdn tables: %w", err)
+	}
+	err = bootstrap.Places(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.People(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Media(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Members(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Review(ctx, db)
+	if err != nil {
+		return err
 	}
 
 	return nil
