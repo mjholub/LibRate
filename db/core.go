@@ -66,6 +66,10 @@ func InitDB() error {
 	if err != nil {
 		return fmt.Errorf("failed to create members tables: %w", err)
 	}
+	err = bootstrap.CDN(ctx, db)
+	if err != nil {
+		return fmt.Errorf("failed to create cdn tables: %w", err)
+	}
 
 	return nil
 }

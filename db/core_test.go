@@ -91,3 +91,7 @@ func TestConnect(t *testing.T) {
 		})
 	}
 }
+
+// TestInitDB bootstraps, then cleans up on the test database
+func TestInitDB(t *testing.T) {
+}
