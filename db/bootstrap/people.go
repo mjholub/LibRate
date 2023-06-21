@@ -32,7 +32,7 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			death DATE,
 			website VARCHAR(255),
 			bio TEXT,
-			photos INT[] REFERENCES cdn.images(id),
+			photos BIGINT[] REFERENCES cdn.images(id),
 			added TIMESTAMP DEFAULT NOW() NOT NULL,
 			modified TIMESTAMP DEFAULT NOW()
 		);
@@ -55,7 +55,7 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			formed DATE,
 			disbanded DATE,
 			website VARCHAR(255),
-			photos INT[] REFERENCES cdn.images(id),
+			photos BIGINT[] REFERENCES cdn.images(id),
 			works UUID[] REFERENCES media.media(id),
 			members INT[] REFERENCES people.person(id),
 			genres SMALLINT[] REFERENCES media.genres(id),

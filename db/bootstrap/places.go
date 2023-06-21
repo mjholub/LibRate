@@ -18,9 +18,19 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create places schema: %w", err)
 		}
 		_, err = db.Exec(`
-		CREATE ENUM IF NOT EXISTS places.kind AS ('country', 'city', 'venue', 'other');`)
+		CREATE TYPE places.kind AS ENUM ('country', 'city', 'venue', 'other');`)
 		if err != nil {
 			return fmt.Errorf("failed to create places kind enum: %w", err)
+		}
+
+		_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS places.country (
+			id SMALLINT PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			code VARCHAR(2) NOT NULL
+		);`)
+		if err != nil {
+			return fmt.Errorf("failed to create country table: %w", err)
 		}
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS places.place (
@@ -33,15 +43,6 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create place table: %w", err)
-		}
-		_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS places.country (
-			id SMALLINT PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			code VARCHAR(2) NOT NULL
-		);`)
-		if err != nil {
-			return fmt.Errorf("failed to create country table: %w", err)
 		}
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS places.city (
@@ -60,8 +61,8 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 			name VARCHAR(255) NOT NULL,
 			active BOOLEAN NOT NULL,
 			street VARCHAR(255) NOT NULL,
-			zip VARCHAR(255) NOT NULL,
-			unit VARCHAR(255) NOT NULL,
+			zip VARCHAR(255),
+			unit VARCHAR(255),
 			city UUID REFERENCES places.city(uuid),
 			country SMALLINT REFERENCES places.country(id)
 		);`)
