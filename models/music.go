@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -20,11 +21,33 @@ type Album struct {
 	Languages    []string                     `json:"languages" db:"languages,omitempty"`
 }
 
-type Track struct {
+ Track struct {
 	MediaID   *uuid.UUID                   `json:"media_id" db:"media_id,pk,unique"`
 	Name      string                       `json:"name" db:"name"`
 	Artists   mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
 	Duration  time.Duration                `json:"duration" db:"duration"`
 	Lyrics    string                       `json:"lyrics,omitempty" db:"lyrics"`
 	Languages []string                     `json:"languages,omitempty" db:"languages"`
+ }
+
+	AlbumValues interface {
+		string | []string | time.Duration | []time.Duration | []uuid.UUID | []Person | []Group | []Genre | []Studio | []Track | time.Time | uuid.UUID 
+
+func addAlbum[A AlbumValues](ctx context.Context, db *sqlx.DB, keys []stringm, values A) error {
+ kvsm := lo.Associate()	
+	kvs := lo.Associate(keys, func(key string) (keys string, values interface{}) {
+		switch key {
+		case "media_id":
+			return uuid.Must(uuid.NewV4()).String(), values.(string)
+		case "authors":
+			return "authors", values.([]Person)
+		default:
+			return key, values
+		}
+	})
+	_, err := db.NamedExecContext(ctx, "INSERT INTO users (:keys) VALUES (:values)", kvs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
