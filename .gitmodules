@@ -1,0 +1,3 @@
+[submodule "deps/pguint"]
+	path = deps/pguint
+	url = https://github.com/petere/pguint
