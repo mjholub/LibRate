@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -21,7 +20,8 @@ func TestCreateDsn(t *testing.T) {
 	testCases := []TestCase{
 		{
 			Name: "PostgresNoSSL",
-			Inputs: cfg.DBConfig{
+			Inputs: &cfg.DBConfig{
+				//				DBConfig: cfg.DBConfig{
 				Engine:   "postgres",
 				Host:     "localhost",
 				Port:     5432,
@@ -30,51 +30,64 @@ func TestCreateDsn(t *testing.T) {
 				Password: "postgres",
 				SSL:      "disable",
 			},
+			//			},
 			Want: []interface{}{("postgres://postgres:postgres@localhost:5432/librate_test?sslmode=disable")},
 		},
 	}
-	for _, tc := range testCases {
+	for i, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			got := db.CreateDsn(tc.Inputs.(*cfg.DBConfig))
-			assert.Equal(t, got, tc.Want)
+			assert.Equal(t, tc.Want[i], got)
 		})
 	}
 }
 
 func TestConnect(t *testing.T) {
-	testCases := []TestCase{
+	testCases := []struct {
+		Name    string
+		Inputs  *cfg.Config
+		WantErr bool
+	}{
 		{
 			Name: "HappyPath",
-			Inputs: cfg.DBConfig{
-				Engine:   "postgres",
-				Host:     "localhost",
-				Port:     5432,
-				Database: "librate_test",
-				User:     "postgres",
-				Password: "postgres",
-				SSL:      "disable",
+			Inputs: &cfg.Config{
+				DBConfig: cfg.DBConfig{
+					Engine:   "postgres",
+					Host:     "localhost",
+					Port:     5432,
+					Database: "librate_test",
+					User:     "postgres",
+					Password: "postgres",
+					SSL:      "disable",
+				},
 			},
-			Want: []interface{}{(&sqlx.DB{}), nil},
+			WantErr: false,
 		},
 		{
 			Name: "BadEngine",
-			Inputs: cfg.DBConfig{
-				Engine:   "badengine",
-				Host:     "localhost",
-				Port:     5432,
-				Database: "librate_test",
-				User:     "postgres",
-				Password: "postgres",
-				SSL:      "disable",
+			Inputs: &cfg.Config{
+				DBConfig: cfg.DBConfig{
+					Engine:   "badengine",
+					Host:     "localhost",
+					Port:     5432,
+					Database: "librate_test",
+					User:     "postgres",
+					Password: "postgres",
+					SSL:      "disable",
+				},
 			},
-			Want: []interface{}{nil, errors.New("sql: unknown driver \"badengine\" (forgotten import?)")},
+			WantErr: true,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			got, err := db.Connect(tc.Inputs.(*cfg.Config))
-			assert.Equal(t, got, tc.Want[0])
-			assert.Equal(t, err, tc.Want[1])
+			got, err := db.Connect(tc.Inputs)
+			if tc.WantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.IsType(t, &sqlx.DB{}, got)
+			assert.NoError(t, err)
 		})
 	}
 }
