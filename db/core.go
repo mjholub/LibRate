@@ -58,15 +58,38 @@ func InitDB() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
+	_, err = db.ExecContext(ctx, `CREATE SCHEMA IF NOT EXISTS public;`)
+	if err != nil {
+		return fmt.Errorf("failed to create public schema: %w", err)
+	}
+	// set up the public schema
+	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "pgcrypto" SCHEMA public;`)
+	if err != nil {
+		return fmt.Errorf("failed to create pgcrypto extension: %w", err)
+	}
+	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;`)
+	if err != nil {
+		return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
+	}
+	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA public;`)
+	if err != nil {
+		return fmt.Errorf("failed to create pg_trgm extension: %w", err)
+	}
+	/* postgres 15 no longer supports pg_atoi
 	_, err = db.ExecContext(ctx, "CREATE EXTENSION uint;")
 	if err != nil {
 		return fmt.Errorf("failed to create uint extension: %w", err)
 	}
+	*/
 	err = bootstrap.CDN(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create cdn tables: %w", err)
 	}
 	err = bootstrap.Places(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.MediaCore(ctx, db)
 	if err != nil {
 		return err
 	}

@@ -34,3 +34,5 @@ You can then test your instance at [http://localhost:3000](localhost:3000)
 # Testing
 
 In order to test the database code, you should create a `librate_test` database.
+
+If you set the `$CLEANUP_TEST_DB` variable to 0, the test database will not be cleaned up by the deferred function in the database initialization unit test.

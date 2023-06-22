@@ -13,7 +13,14 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		return ctx.Err()
 	default:
 		_, err := db.Exec(`
-		CREATE ENUM IF NOT EXISTS people.role AS ('actor', 'director', 'producer', 'writer',
+			CREATE SCHEMA IF NOT EXISTS people;
+			SET search_path TO people, public;
+		`)
+		if err != nil {
+			return fmt.Errorf("failed to create people schema: %w", err)
+		}
+		_, err = db.Exec(`
+		CREATE TYPE people.role AS ENUM ('actor', 'director', 'producer', 'writer',
 			'composer', 'artist', 'author', 'publisher', 'editor', 'photographer',
 			'illustrator', 'narrator', 'performer', 'host', 'guest', 'other');`)
 		if err != nil {
@@ -21,18 +28,16 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		}
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.person (
-			id INT PRIMARY KEY AUTO_INCREMENT,
+			id SERIAL PRIMARY KEY,
 			first_name VARCHAR(255) NOT NULL,
 			other_names VARCHAR(255)[],
 			last_name VARCHAR(255) NOT NULL,	
 			nick_name VARCHAR(255),
 			roles people.role[],
-			works UUID[] REFERENCES media.media(id),
 			birth DATE,
 			death DATE,
 			website VARCHAR(255),
 			bio TEXT,
-			photos BIGINT[] REFERENCES cdn.images(id),
 			added TIMESTAMP DEFAULT NOW() NOT NULL,
 			modified TIMESTAMP DEFAULT NOW()
 		);
@@ -41,24 +46,37 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people table: %w", err)
 		}
 		_, err = db.Exec(`
-			CREATE ENUM IF NOT EXISTS people.group_kind AS (
+			CREATE TABLE IF NOT EXISTS people.person_photos (
+				person_id SERIAL REFERENCES people.person(id),
+				image_id BIGINT REFERENCES cdn.images(id),
+				PRIMARY KEY (person_id, image_id)
+	);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people photos table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.person_works (
+				person_id SERIAL REFERENCES people.person(id),
+				media_id UUID REFERENCES media.media(id),
+				PRIMARY KEY (person_id, media_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people works table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TYPE people.group_kind AS ENUM (
 		'band', 'orchestra', 'choir', 'ensemble', 'troupe', 'collective', 'other');`)
 		if err != nil {
 			return fmt.Errorf("failed to create people group kind enum: %w", err)
 		}
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.group (
-			id INT PRIMARY KEY AUTO_INCREMENT,
+			id SERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
-			locations UUID[] REFERENCES places.place(uuid),
 			active BOOLEAN DEFAULT TRUE,
 			formed DATE,
 			disbanded DATE,
 			website VARCHAR(255),
-			photos BIGINT[] REFERENCES cdn.images(id),
-			works UUID[] REFERENCES media.media(id),
-			members INT[] REFERENCES people.person(id),
-			genres SMALLINT[] REFERENCES media.genres(id),
 			kind people.group_kind,
 			added TIMESTAMP DEFAULT NOW() NOT NULL,
 			modified TIMESTAMP DEFAULT NOW()
@@ -67,21 +85,82 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people group table: %w", err)
 		}
 		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_locations (
+				group_id SERIAL REFERENCES people.group(id),
+				location_id UUID REFERENCES places.place(uuid),
+				PRIMARY KEY (group_id, location_id)
+	);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people group locations table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_photos (
+				group_id SERIAL REFERENCES people.group(id),
+				image_id BIGINT REFERENCES cdn.images(id),
+				PRIMARY KEY (group_id, image_id)
+	);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people group photos table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_members (
+				group_id SERIAL REFERENCES people.group(id),
+				person_id SERIAL REFERENCES people.person(id),
+				PRIMARY KEY (group_id, person_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people group members table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_genres (
+				group_id SERIAL REFERENCES people.group(id),
+				genre_id SMALLINT REFERENCES media.genres(id),
+				PRIMARY KEY (group_id, genre_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people group genres table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_works (
+				group_id SERIAL REFERENCES people.group(id),
+				media_id UUID REFERENCES media.media(id),
+				PRIMARY KEY (group_id, media_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people group works table: %w", err)
+		}
+		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.studio (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
 			active BOOLEAN DEFAULT TRUE,
 			city UUID REFERENCES places.city(uuid),	
-			artists INT[] REFERENCES people.person(id),
-			worts UUID[] REFERENCES media.media(id),
 			is_film BOOLEAN DEFAULT FALSE,
 			is_music BOOLEAN DEFAULT FALSE,
 			is_tv BOOLEAN DEFAULT FALSE,
 			is_publishing BOOLEAN DEFAULT FALSE,
-			is_game BOOLEAN DEFAULT FALSE,
+			is_game BOOLEAN DEFAULT FALSE
 );`)
 		if err != nil {
 			return fmt.Errorf("failed to create people studio table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.studio_artists (
+				studio_id SERIAL REFERENCES people.studio(id),
+				person_id SERIAL REFERENCES people.person(id),
+				PRIMARY KEY (studio_id, person_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people studio artists table: %w", err)
+		}
+		_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.studio_works (
+				studio_id SERIAL REFERENCES people.studio(id),
+				media_id UUID REFERENCES media.media(id),
+				PRIMARY KEY (studio_id, media_id)
+			);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people studio works table: %w", err)
 		}
 		return nil
 	}

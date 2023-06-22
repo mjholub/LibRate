@@ -25,8 +25,8 @@ func Review(ctx context.Context, connection *sqlx.DB) (err error) {
     comment TEXT,
     topic TEXT,
     attribution TEXT,
-    user_id UNSIGNED INTEGER REFERENCES public.members(id),
-    media_id UUID REFERENCES media.media(id),
+    user_id SERIAL REFERENCES public.members(id),
+    media_id UUID REFERENCES media.media(id)
 		);`,
 		)
 		if err != nil {

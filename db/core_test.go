@@ -97,15 +97,26 @@ func TestConnect(t *testing.T) {
 // TestInitDB bootstraps, then cleans up on the test database
 func TestInitDB(t *testing.T) {
 	os.Setenv("LIBRATE_ENV", "test")
-	cfg, err := cfg.LoadConfig().Get()
+	config, err := cfg.LoadConfig().Get()
 	assert.NoError(t, err)
-	require.Equal(t, cfg.Database, "librate_test")
+	require.Equal(t, config.Database, "librate_test")
+	defer func(conf *cfg.Config) {
+		if os.Getenv("CLEANUP_TEST_DB") == "0" {
+			return
+		}
+		database := conf.DBConfig
+		dsn := db.CreateDsn(&database)
+		var cleanTables *sqlx.DB
+		cleanTables, err = sqlx.Open("postgres", dsn)
+		assert.NoError(t, err)
+		defer cleanTables.Close()
+		_, err = cleanTables.Exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
+		assert.NoError(t, err)
+		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS cdn CASCADE;")
+		assert.NoError(t, err)
+		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS places CASCADE;")
+		assert.NoError(t, err)
+	}(&config)
 	err = db.InitDB()
 	require.NoError(t, err)
-	db := cfg.Database
-	cleanTables, err := sqlx.Open("postgres", db)
-	assert.NoError(t, err)
-	defer cleanTables.Close()
-	_, err = cleanTables.Exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
-	assert.NoError(t, err)
 }
