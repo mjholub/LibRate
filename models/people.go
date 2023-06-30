@@ -66,18 +66,15 @@ type (
 	}
 )
 
-// FIXME: find a better workaround for go's shitty immutability support
-var (
-	GroupKinds = []string{
-		"Orchestra",
-		"Choir",
-		"Ensemble",
-		"Collective",
-		"Band",
-		"Troupe",
-		"Other",
-	}
-)
+var GroupKinds = []string{
+	"Orchestra",
+	"Choir",
+	"Ensemble",
+	"Collective",
+	"Band",
+	"Troupe",
+	"Other",
+}
 
 func (g *Group) Validate() error {
 	if lo.Contains(GroupKinds, g.Kind) {
