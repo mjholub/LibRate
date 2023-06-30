@@ -15,12 +15,12 @@ type (
 		IsMedia() bool // dummy placeholder so that we can have somewhat idiomatic parametric polymorphism
 	}
 
-	MediaStorer interface {
-		Get(ctx context.Context, key string, kind interface{}) (any, error)
-		GetAll() ([]*interface{}, error)
-		Add(ctx context.Context, key, value interface{}, obj interface{}) error
-		Update(ctx context.Context, key, value interface{}, obj interface{}) error
-		Delete(ctx context.Context, key interface{}, obj interface{}) error
+	MediaStorer[T any] interface {
+		Get(ctx context.Context, key string) (T, error)
+		GetAll() ([]T, error)
+		Add(ctx context.Context, key, value T) error
+		Update(ctx context.Context, key string, value T) error
+		Delete(ctx context.Context, key string) error
 	}
 
 	Media struct {
@@ -94,31 +94,17 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props ...interface{}) error {
-	props = append(props, media)
-	switch media.(type) {
-	case Book:
-		if len(props) > 0 {
-			if bookValues, ok := props[0].(BookValues); ok {
-				return addBook(ctx, db, BookKeys[:], bookValues)
-			}
-		}
-	case Album:
-		if len(props) > 0 {
-			if albumValues, ok := props[0].(MusicValues); ok {
-				return addAlbum(ctx, db, AlbumKeys[:], albumValues)
-			}
-		}
-	case Track:
-		if len(props) > 0 {
-			if trackValues, ok := props[0].(MusicValues); ok {
-				return addTrack(ctx, db, TrackKeys[:], trackValues)
-			}
-		}
+func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props MediaProperties) error {
+	switch m := media.(type) {
+	case *Book:
+		return addBook(ctx, db, m, props)
+	case *Album:
+		return addAlbum(ctx, db, m, props)
+	case *Track:
+		return addTrack(ctx, db, m, props)
 	default:
 		return fmt.Errorf("unknown media type")
 	}
-	return nil
 }
 
 func addBook[B BookValues](ctx context.Context, db *sqlx.DB, keys []string, values B) error {
