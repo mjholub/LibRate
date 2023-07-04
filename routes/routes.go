@@ -30,4 +30,5 @@ func Setup(app *fiber.App) {
 	app.Post("/api/reviews", controllers.PostRating)
 	app.Post("/api/login", auth.Login)
 	app.Post("/api/register", auth.Register)
+	app.Post("/api/search", controllers.SearchMedia)
 }

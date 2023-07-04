@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import MediaCard from "../media/mediaCard.svelte";
 
   export let items = [];
 
@@ -33,13 +34,18 @@
     bind:value={search}
     placeholder="Enter search keywords..."
     on:input={searchItems}
+    on:keydown={(e) => {
+      if (e.key === "Enter") {
+        searchItems();
+      }
+    }}
   />
   <button on:click={searchItems}>Search</button>
 </div>
 
 <div>
   <ul class="search-results">
-    {#each searchItems() as item (item.id)}
+    {#each items as item (item.id)}
       <li class="search-result">{item.name}</li>
     {/each}
   </ul>
@@ -48,6 +54,12 @@
 <style>
   .search-bar {
     margin-bottom: 0.8em;
+    width: 50%; /* initial width */
+    transition: width 0.4s ease-in-out;
+  }
+
+  .search-bar:focus {
+    width: 80%;
   }
 
   .search-results {
