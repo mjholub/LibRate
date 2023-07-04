@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -66,10 +67,11 @@ type (
 	MediaStorage struct{}
 )
 
+// strictly necessary (not nil keys for each media type)
 var (
-	BookKeys = [13]string{
-		"media_id", "title", "authors", "publisher", "publication_date",
-		"genres", "keywords", "languages", "pages", "isbn", "asin", "cover", "summary",
+	BookKeys = []string{
+		"media_id", "title", "authors",
+		"genres", "edition", "languages",
 	}
 	AlbumKeys = [7]string{
 		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
@@ -94,27 +96,34 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props MediaProperties) error {
+func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {
 	switch m := media.(type) {
 	case *Book:
-		return addBook(ctx, db, m, props)
+		return addBook(ctx, db, BookKeys[:], *m)
 	case *Album:
-		return addAlbum(ctx, db, m, props)
+		return addAlbum(ctx, db, *m)
 	case *Track:
-		return addTrack(ctx, db, m, props)
+		return addTrack(ctx, db, *m)
 	default:
 		return fmt.Errorf("unknown media type")
 	}
 }
 
-func addBook[B BookValues](ctx context.Context, db *sqlx.DB, keys []string, values B) error {
-	// TODO: add key validation
+func addBook(ctx context.Context, db *sqlx.DB, keys []string, book Book) error {
+	if !lo.Every(BookKeys, keys) {
+		quoted := make([]string, len(BookKeys))
+		for i, key := range BookKeys {
+			quoted[i] = fmt.Sprintf("'%s'", key)
+		}
+		return fmt.Errorf("keys not a subset of book keys (%s)", strings.Join(quoted, ", "))
+	}
+
 	kvs := lo.Associate(keys, func(key string) (keys string, values interface{}) {
 		switch key {
 		case "media_id":
-			return uuid.Must(uuid.NewV4()).String(), values.(string)
+			return uuid.Must(uuid.NewV4()).String(), book.MediaID
 		case "authors":
-			return "authors", values.([]Person)
+			return "authors", book.Authors
 		default:
 			return key, values
 		}
