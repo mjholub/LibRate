@@ -103,63 +103,74 @@
 </script>
 
 <form on:submit|preventDefault={isRegistration ? register : login}>
-  <label for="email_or_username">Email or nickname:</label>
-  <input id="email_or_username" bind:value={email_or_username} required />
-  <label for="nickname">Nickname:</label>
-  <input id="nickname" bind:value={nickname} required />
-
-  <div class="password-container">
-    <label for="password">Password:</label>
-
+  {#if !isRegistration}
+    <label for="email_or_username">Email or Username:</label>
     <input
-      id="password"
-      class={!showPassword ? "" : "hidden"}
-      bind:value={password}
-      type="password"
-      autocomplete="new-password"
-      required
-    />
-
-    <!-- use the autocomplete property to prevent the browser from filling in the password -->
-    <input
-      id="textPassword"
-      class={showPassword ? "" : "hidden"}
-      bind:value={password}
       type="text"
-      autocomplete="new-password"
+      id="email_or_username"
+      bind:value={email_or_username}
       required
+      aria-label="Email or Username"
     />
 
-    <button
-      class="toggle-btn"
-      type="button"
-      on:click|preventDefault={toggleObfuscation}
-    >
-      <span class="material-icons">
-        {showPassword ? "visibility_off" : "visibility"}
-      </span>
-    </button>
-  </div>
+    <label for="password">Password:</label>
+    <div class="password-container">
+      <input
+        id="password"
+        class={!showPassword ? "" : "hidden"}
+        bind:value={password}
+        type="password"
+        autocomplete="new-password"
+        required
+        aria-label="Password"
+      />
+      <input
+        id="textPassword"
+        class={showPassword ? "" : "hidden"}
+        bind:value={password}
+        type="text"
+        autocomplete="new-password"
+        required
+        aria-label="Password"
+      />
+      <button
+        class="toggle-btn"
+        type="button"
+        on:click|preventDefault={toggleObfuscation}
+        aria-label="Toggle password visibility"
+      >
+        <span class="material-icons">
+          {showPassword ? "visibility_off" : "visibility"}
+        </span>
+      </button>
+    </div>
+  {:else}
+    <label for="email">Email:</label>
+    <input
+      id="email"
+      bind:value={email}
+      type="email"
+      required
+      aria-label="Email"
+    />
 
-  {#if isRegistration}
+    <label for="nickname">Nickname:</label>
+    <input id="nickname" bind:value={nickname} required aria-label="Nickname" />
+
     <label for="passwordConfirm">Confirm Password:</label>
     <input
       id="passwordConfirm"
       bind:value={passwordConfirm}
       type="password"
       required
+      aria-label="Confirm Password"
     />
-    <label for="email">Email:</label>
-    <input id="email" bind:value={email} type="email" required />
 
-    <label for="nickname">Nickname:</label>
-    <input id="nickname" bind:value={nickname} required />
+    <p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
   {/if}
 
-  <p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
-
   {#if errorMessage}
-    <p style="color: red;">{errorMessage}</p>
+    <p class="error-message">{errorMessage}</p>
   {/if}
 
   {#if !isRegistration}
@@ -187,7 +198,8 @@
 
   .password-container {
     position: relative;
-    display: inline-block;
+    overflow: hidden;
+    display: flex;
   }
 
   .hidden {
@@ -220,5 +232,10 @@
     text-rendering: optimizeLegibility;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "liga";
+  }
+
+  .error-message {
+    color: red;
+    font-weight: bold;
   }
 </style>
