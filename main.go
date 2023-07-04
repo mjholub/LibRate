@@ -54,7 +54,7 @@ func main() {
 
 	// CORS
 	app.Use("/api", func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", conf.Host)
+		c.Set("Access-Control-Allow-Origin", conf.Host+":"+strconv.Itoa(int(conf.Port)))
 		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		return c.Next()

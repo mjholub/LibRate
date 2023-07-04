@@ -31,4 +31,7 @@ func Setup(app *fiber.App) {
 	app.Post("/api/login", auth.Login)
 	app.Post("/api/register", auth.Register)
 	app.Post("/api/search", controllers.SearchMedia)
+	app.Options("/api/search", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 }
