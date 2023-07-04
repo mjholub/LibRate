@@ -54,3 +54,15 @@ type (
 func (f Film) IsMedia() bool {
 	return true
 }
+
+func (ts TVShow) IsMedia() bool {
+	return true
+}
+
+func (s Season) IsMedia() bool {
+	return true
+}
+
+func (e Episode) IsMedia() bool {
+	return true
+}
