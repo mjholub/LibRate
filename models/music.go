@@ -68,14 +68,11 @@ func addTrack(ctx context.Context, db *sqlx.DB, track Track) error {
 		return fmt.Errorf("failed to insert track into media.tracks: %w", err)
 	}
 
-	switch {
-	// FIXME: https://pkg.go.dev/github.com/samber/mo#Left
-	case track.Artists.IsLeft():
-		for i := range track.Artists.Left.Unpack() {
-			_, err := db.ExecContext(ctx, "INSERT INTO media.track_artists (track, artist) VALUES (?, ?)", track.MediaID, track.Artists.Left[i].ID)
-			if err != nil {
-				return fmt.Errorf("failed to insert track artist into media.track_artists: %w", err)
-			}
+	artists, _ := track.Artists.Left()
+	for i := range artists {
+		_, err := db.ExecContext(ctx, "INSERT INTO media.track_artists (track, artist) VALUES (?, ?)", track.MediaID, artists[i].ID)
+		if err != nil {
+			return fmt.Errorf("failed to insert track artist into media.track_artists: %w", err)
 		}
 	}
 
