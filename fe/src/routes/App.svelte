@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import ReviewList from "../components/review/ReviewList.svelte";
   import Auth from "../components/form/Auth.svelte";
   import Search from "../components/utility/Search.svelte";
