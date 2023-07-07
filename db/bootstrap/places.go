@@ -18,7 +18,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create places schema: %w", err)
 		}
 		_, err = db.Exec(`
-		CREATE TYPE places.kind AS ENUM ('country', 'city', 'venue', 'other');`)
+		CREATE TYPE places.place_kind AS ENUM ('country', 'city', 'venue', 'other');`)
 		if err != nil {
 			return fmt.Errorf("failed to create places kind enum: %w", err)
 		}
@@ -36,7 +36,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		CREATE TABLE IF NOT EXISTS places.place (
 			uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(255) NOT NULL,
-			kind places.kind NOT NULL,
+			kind places.place_kind NOT NULL,
 			lat FLOAT NOT NULL,
 			lng FLOAT NOT NULL,
 			country SMALLINT REFERENCES places.country(id)	
