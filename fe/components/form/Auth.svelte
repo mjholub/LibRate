@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
 
   let isRegistration = false;
-  let email_or_username = "";
+  let email_or_username = localStorage.getItem("email_or_username") || "";
   let email = "";
   let nickname = "";
   let password = "";
@@ -15,6 +15,7 @@
     showPassword = !showPassword;
   };
 
+  // helper function to check password strength
   const checkEntropy = async (password) => {
     const response = await fetch(`/api/password-entropy`, {
       method: "POST",
@@ -32,24 +33,21 @@
   // helper function to trigger moving either email or nickname to a dedicated field
   const startRegistration = () => {
     isRegistration = true;
-    email_or_username = email_or_username.includes("@")
-      ? ""
-      : email_or_username;
-    email = email_or_username.includes("@") ? email_or_username : "";
+    email_or_username.includes("@")
+      ? ((email = email_or_username),
+        localStorage.setItem("email_or_username", ""))
+      : ((nickname = email_or_username),
+        localStorage.setItem("email_or_username", ""));
   };
 
   const register = async (event) => {
     event.preventDefault();
 
-    if (isRegistration && password !== passwordConfirm) {
-      errorMessage = "Passwords do not match";
-      return;
-    }
-
-    if (passwordStrength !== "Password is strong enough") {
-      errorMessage = "Password is not strong enough";
-      return;
-    }
+    isRegistration && password !== passwordConfirm
+      ? ((errorMessage = "Passwords do not match"), false)
+      : passwordStrength !== "Password is strong enough"
+      ? ((errorMessage = "Password is not strong enough"), false)
+      : true;
 
     const response = await fetch("/api/register", {
       method: "POST",
@@ -66,13 +64,11 @@
 
     const data = await response.json();
 
-    if (response.ok) {
-      const { token } = data;
-      localStorage.setItem("token", token);
-      window.location = "/";
-    } else {
-      errorMessage = data.message;
-    }
+    response.ok
+      ? (localStorage.setItem("token", data.token),
+        localStorage.setItem("email_or_username", ""),
+        (window.location = "/"))
+      : (errorMessage = data.message);
   };
 
   const login = async (event) => {
