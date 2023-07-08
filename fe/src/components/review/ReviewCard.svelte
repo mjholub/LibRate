@@ -1,52 +1,50 @@
 <script lang="ts">
-	import { Review } from '../../types/review.ts';
-	import { Media } from '../../types/media.ts';
+	import { getNick } from '../../stores/members/getnick.ts';
+	import type { TrackRating, CastRating, ThemeVote, Review } from '../../types/review.ts';
+	import type { Media } from '../../types/media.ts';
 
-	export let review = {
-		id: 0,
-		username: '',
-		userImage: '',
-		text: '',
-		date: '',
-		rating: 0,
-		favoriteTrack: '',
-		trackRatings: [],
-		castRatings: [],
-		themeVoting: []
-	};
+	export let media: Media;
+	export let review: Review;
+	export let userid: number;
+	let userImage = '';
+	let nick = '';
+
+	$: (async () => {
+		if (userid) {
+			nick = await getNick(userid);
+			userImage = await fetch('/static/images/' + nick + '.png').then((r) => r.text());
+		}
+	})();
 </script>
 
 <div class="review-card">
 	<div class="review-user">
-		<img
-			class="review-user-image"
-			src={review.userImage}
-			alt="{review.username}'s profile picture"
-		/>
-		<div>{review.username}</div>
+		<img class="review-user-image" src={userImage} alt="{nick}'s profile picture" />
+		<div>{nick}</div>
 	</div>
 
-	<div class="review-content">{review.text}</div>
-	<div>Rating: {review.rating}</div>
-	<div>Favorite track: {review.favoriteTrack}</div>
+	<div class="review-content">{review.comment}</div>
+	<div>Rating: {review.numstars}</div>
+	<!--<div>Favorite track: {review.favoriteTrack}</div>-->
+	<!-- FIXME: add this property to the review type and in the DB -->
 
-	{#if Media.kind === 'album'}
+	{#if media.kind === 'album'}
 		<div>
 			<strong>Track ratings:</strong>
 			<ul>
-				{#each review.trackRatings as trackRating (trackRating.id)}
+				{#each review.trackratings as trackRating (trackRating.id)}
 					<li>{trackRating.track}: {trackRating.rating}</li>
 				{/each}
 			</ul>
 		</div>
 	{/if}
 
-	{#if Media.kind === 'film' || Media.kind === 'tv_show' || Media.kind === 'anime'}
+	{#if media.kind === 'film' || media.kind === 'tv_show' || media.kind === 'anime'}
 		<div>
-			<strong>Cast ratings:</strong>
+			<strong>Cast rating:</strong>
 			<ul>
-				{#each review.castRatings as castRating (castRating.id)}
-					<li>{castRating.cast}: {castRating.rating}</li>
+				{#each review.castrating as castRating (castRating.id)}
+					<li>{castRating.cast}: {castRating.numstars}</li>
 				{/each}
 			</ul>
 		</div>
@@ -56,13 +54,13 @@
 	<div>
 		<strong>Theme voting:</strong>
 		<ul>
-			{#each review.themeVoting as themeVote (themeVote.id)}
-				<li>{themeVote.theme}: {themeVote.vote}</li>
+			{#each review.themevotes as themeVote (themeVote.id)}
+				<li>{themeVote.theme}: {themeVote.numstars}</li>
 			{/each}
 		</ul>
 	</div>
 
-	<div>Reviewed on {review.date}</div>
+	<div>Reviewed on {review.created_at}</div>
 </div>
 
 <style>

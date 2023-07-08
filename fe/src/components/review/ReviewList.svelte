@@ -1,8 +1,20 @@
-<script>
+<script lang="ts">
+	import { onMount } from 'svelte';
 	import ReviewForm from '../form/Review.svelte';
 	import ReviewCard from './ReviewCard.svelte';
+	import type { Review } from '../../types/review.ts';
 
-	export let reviews = [];
+	export let reviews: Review[];
+
+	const getReviews = async () => {
+		const res = await fetch('/api/reviews');
+		const data = await res.json();
+		reviews = data;
+	};
+
+	onMount(() => {
+		getReviews();
+	});
 </script>
 
 <div class="review-list">
@@ -11,7 +23,7 @@
 	{#if reviews.length > 0}
 		<div>
 			{#each reviews as review (review.id)}
-				<ReviewCard {review} />
+				<ReviewCard {review} userid={review.userid} media={review.media} />
 			{/each}
 		</div>
 	{:else}
