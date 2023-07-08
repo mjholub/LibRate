@@ -19,7 +19,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 			return fmt.Errorf("failed to create media schema: %w", err)
 		}
 		_, err = connection.ExecContext(ctx, `
-		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book');
+		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book', 'anime', 'manga', 'comic', 'game');
 		CREATE TABLE IF NOT EXISTS media.media (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			title VARCHAR(255) NOT NULL,

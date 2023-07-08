@@ -97,9 +97,14 @@ func InitDB() error {
 		return fmt.Errorf("failed to create public schema: %w", err)
 	}
 	// set up the extensions
-	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pgsequentialuuid", "pg_trgm"); err != nil {
+	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm"); err != nil {
 		return fmt.Errorf("failed to create database extensions: %w", err)
 	}
+	/* TODO: verify whether use sequential UUIDs or just ints
+	* if err = createUniversalExtension(db, "pgsequentialuuid"); err != nil {
+	* return fmt.Errorf("failed to create database extensions: %w", err)
+	* }
+	 */
 	/* postgres 15 no longer supports pg_atoi
 	_, err = db.ExecContext(ctx, "CREATE EXTENSION uint;")
 	if err != nil {

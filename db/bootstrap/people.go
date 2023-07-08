@@ -32,7 +32,7 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			first_name VARCHAR(255) NOT NULL,
 			other_names VARCHAR(255)[],
 			last_name VARCHAR(255) NOT NULL,	
-			nick_name VARCHAR(255),
+			nick_names VARCHAR(255)[],
 			roles people.role[],
 			birth DATE,
 			death DATE,

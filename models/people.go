@@ -20,7 +20,7 @@ type (
 		FirstName  string       `json:"first_name" db:"first_name"`
 		OtherNames []string     `json:"other_names,omitempty" db:"other_names"`
 		LastName   string       `json:"last_name" db:"last_name"`
-		NickName   string       `json:"nick_name,omitempty" db:"nick_name"`
+		NickNames  []string     `json:"nick_name,omitempty" db:"nick_name"`
 		Roles      []string     `json:"roles,omitempty" db:"roles"`
 		Works      []*uuid.UUID `json:"works" db:"works"`
 		Birth      sql.NullTime `json:"birth,omitempty" db:"birth"` // DOB can also be unknown

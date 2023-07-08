@@ -20,7 +20,7 @@ func Review(ctx context.Context, connection *sqlx.DB) (err error) {
 		}
 		_, err = connection.ExecContext(ctx, ` 
 		CREATE TABLE IF NOT EXISTS reviews.ratings (
-		uuid UUID PRIMARY KEY,
+		id BIGSERIAL PRIMARY KEY,
     stars SMALLINT NOT NULL CHECK (stars >= 1 AND stars <= 10),
     comment TEXT,
     topic TEXT,

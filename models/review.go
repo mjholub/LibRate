@@ -9,35 +9,69 @@ import (
 
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
+	"github.com/gofrs/uuid/v5"
 )
 
-type RatingInput struct {
-	// TODO: allow for setting dynamic rating scales
-	NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
-	Comment     string `json:"comment,omitempty" db:"comment"`
-	Topic       string `json:"topic,omitempty" db:"topic"`
-	Attribution string `json:"attribution,omitempty" db:"attribution"`
-	UserID      uint32 `json:"userid" db:"user_id"`
-	MediaID     uint   `json:"mediaid" db:"media_id"`
-}
+type (
+	RatingInput struct {
+		// TODO: allow for setting dynamic rating scales
+		NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
+		Comment     string `json:"comment,omitempty" db:"comment"`
+		Topic       string `json:"topic,omitempty" db:"topic"`
+		Attribution string `json:"attribution,omitempty" db:"attribution"`
+		UserID      uint32 `json:"userid" db:"user_id"`
+		MediaID     uint   `json:"mediaid" db:"media_id"`
+	}
 
-type Rating struct {
-	UUID        string `json:"_key" db:"uuid,pk"`
-	NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-	Comment     string `json:"comment,omitempty" db:"comment"`
-	Topic       string `json:"topic,omitempty" db:"topic"`
-	Attribution string `json:"attribution,omitempty" db:"attribution"`
-	UserID      uint32 `json:"userid" db:"user_id"`
-	MediaID     uint   `json:"mediaid" db:"media_id"`
-}
+	Rating struct {
+		ID          int64     `json:"_key" db:"id,pk"`
+		CreatedAt   time.Time `json:"created_at" db:"created_at"`
+		NumStars    uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		Comment     string    `json:"comment,omitempty" db:"comment"`
+		Topic       string    `json:"topic,omitempty" db:"topic"`
+		Attribution string    `json:"attribution,omitempty" db:"attribution"`
+		UserID      uint32    `json:"userid" db:"user_id"`
+		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
+	}
 
-type RatingStorer interface {
-	SaveRating(rating *Rating) error
-	Get(ctx context.Context, key string) (*Rating, error)
-	GetAll() ([]*Rating, error)
-}
+	/*
+	* It should probably be better from the perspective of the UX
+	* as well as the performance, normalization, modularity and reusability
+	* to have a separate table for each kind of rating
+	 */
 
-type RatingStorage struct{}
+	TrackRating struct {
+		ID       int64  `json:"_key" db:"id,pk"`
+		Track    *Track `json:"track" db:"track"`
+		NumStars uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		UserID   uint32 `json:"userid" db:"user_id"`
+	}
+
+	CastRating struct {
+		ID       int64     `json:"_key" db:"id,pk"`
+		MediaID  uuid.UUID `json:"mediaid" db:"media_id"`
+		Cast     *Cast     `json:"cast" db:"cast"`
+		NumStars uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		UserID   uint32    `json:"userid" db:"user_id"`
+	}
+
+	// Theme vote serves as the basis for constructing most relevant tags for a given media
+	ThemeVote struct {
+		ID       int64     `json:"_key" db:"id,pk"`
+		MediaID  uuid.UUID `json:"mediaid" db:"media_id"`
+		Theme    string    `json:"theme" db:"theme"`
+		NumStars uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		UserID   uint32    `json:"userid" db:"user_id"`
+	}
+
+	RatingStorer interface {
+		SaveRating(rating *Rating) error
+		Get(ctx context.Context, key string) (*Rating, error)
+		GetAll() ([]*Rating, error)
+	}
+
+	RatingStorage struct{}
+)
 
 func NewRatingStorage() *RatingStorage {
 	return &RatingStorage{}

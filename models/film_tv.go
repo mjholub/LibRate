@@ -45,6 +45,7 @@ type (
 		Plot      string        `json:"plot" db:"plot"`
 	}
 
+	// TODO: add more fields
 	Cast struct {
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
