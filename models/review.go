@@ -15,12 +15,12 @@ import (
 type (
 	RatingInput struct {
 		// TODO: allow for setting dynamic rating scales
-		NumStars    uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
-		Comment     string `json:"comment,omitempty" db:"comment"`
-		Topic       string `json:"topic,omitempty" db:"topic"`
-		Attribution string `json:"attribution,omitempty" db:"attribution"`
-		UserID      uint32 `json:"userid" db:"user_id"`
-		MediaID     uint   `json:"mediaid" db:"media_id"`
+		NumStars    uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
+		Comment     string    `json:"comment,omitempty" db:"comment"`
+		Topic       string    `json:"topic,omitempty" db:"topic"`
+		Attribution string    `json:"attribution,omitempty" db:"attribution"`
+		UserID      uint32    `json:"userid" db:"user_id"`
+		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
 	}
 
 	Rating struct {

@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 
 	let isRegistration = false;
-	let email_or_username = localStorage.getItem('email_or_username') || '';
+	let email_or_username = '';
+	if (browser) {
+		email_or_username = localStorage.getItem('email_or_username') || '';
+	}
 	let email = '';
 	let nickname = '';
 	let password = '';
@@ -33,9 +37,11 @@
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
 		isRegistration = true;
-		email_or_username.includes('@')
-			? ((email = email_or_username), localStorage.setItem('email_or_username', ''))
-			: ((nickname = email_or_username), localStorage.setItem('email_or_username', ''));
+		if (browser) {
+			email_or_username.includes('@')
+				? ((email = email_or_username), localStorage.setItem('email_or_username', ''))
+				: ((nickname = email_or_username), localStorage.setItem('email_or_username', ''));
+		}
 	};
 
 	const register = async (event: Event) => {
@@ -62,11 +68,13 @@
 
 		const data = await response.json();
 
-		response.ok
-			? (localStorage.setItem('token', data.token),
-			  localStorage.setItem('email_or_username', ''),
-			  (window.location.href = '/'))
-			: (errorMessage = data.message);
+		if (browser) {
+			response.ok
+				? (localStorage.setItem('token', data.token),
+				  localStorage.setItem('email_or_username', ''),
+				  (window.location.href = '/'))
+				: (errorMessage = data.message);
+		}
 	};
 
 	const login = async (event: Event) => {
