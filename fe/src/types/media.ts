@@ -1,3 +1,5 @@
+import type { Person } from './people';
+
 export type Media = {
   UUID: string;
   kind: string;
@@ -5,6 +7,7 @@ export type Media = {
   genres: Genre[];
   keywords: string[];
   lang_ids: number[];
+  creators: Person[];
 }
 
 export type Genre = {

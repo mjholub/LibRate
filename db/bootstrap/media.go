@@ -24,7 +24,8 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			title VARCHAR(255) NOT NULL,
 			kind media.kind NOT NULL,
-			created TIMESTAMP DEFAULT NOW() NOT NULL	
+			created TIMESTAMP DEFAULT NOW() NOT NULL,
+			creators serial4 NOT NULL references people.person(id);
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)

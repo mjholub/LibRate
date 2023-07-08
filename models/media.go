@@ -31,6 +31,7 @@ type (
 		Genres   []Genre   `json:"genres,omitempty" db:"genres"`
 		Keywords []string  `json:"keywords,omitempty" db:"keywords"` // WARN: should this really be nullable?
 		LangIDs  []int16   `json:"lang_ids,omitempty" db:"lang_ids"`
+		Creators []Person  `json:"creators,omitempty" db:"creators"`
 	}
 
 	Book struct {
