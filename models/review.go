@@ -32,6 +32,10 @@ type (
 		Attribution string    `json:"attribution,omitempty" db:"attribution"`
 		UserID      uint32    `json:"userid" db:"user_id"`
 		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
+		// track/cast/theme
+		TrackRatings *TrackRating `json:"trackRatings,omitempty" db:"track_rating"`
+		CastRating   *CastRating  `json:"castRating,omitempty" db:"cast_rating"` // hehe
+		ThemeVotes   *ThemeVote   `json:"themeVotes,omitempty" db:"theme_votes"`
 	}
 
 	/*
