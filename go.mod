@@ -5,7 +5,6 @@ go 1.20
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230522144350-ddf001145149
 	github.com/AlecAivazis/survey/v2 v2.3.6
-	github.com/arangodb/go-driver v1.5.2
 	github.com/avast/retry-go/v4 v4.3.4
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/gofiber/jwt/v2 v2.2.7
@@ -27,7 +26,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/cenkalti/backoff/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -46,7 +44,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect

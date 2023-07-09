@@ -2,13 +2,14 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/db"
+	"codeberg.org/mjh/LibRate/internal/logging"
 
-	"github.com/arangodb/go-driver"
-	"github.com/arangodb/go-driver/http"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -34,8 +35,11 @@ type (
 		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
 		// track/cast/theme
 		TrackRatings *TrackRating `json:"trackRatings,omitempty" db:"track_rating"`
-		CastRating   *CastRating  `json:"castRating,omitempty" db:"cast_rating"` // hehe
-		ThemeVotes   *ThemeVote   `json:"themeVotes,omitempty" db:"theme_votes"`
+		CastRating   *CastRating  `json:"castRating,omitempty" db:"cast_rating"`
+	}
+
+	UpdateableKeyTypes interface {
+		~int | ~uint | string
 	}
 
 	/*

@@ -295,6 +295,30 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media book genres table: %w", err)
 		}
+		err = bootstrapKeywords(ctx, connection)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
+}
+
+func bootstrapKeywords(ctx context.Context, db *sqlx.DB) error {
+	_, err := db.ExecContext(ctx,
+		`CREATE TABLE IF NOT EXISTS media.keywords (
+  id serial PRIMARY KEY,
+  keyword varchar NOT NULL,
+  media_id uuid references media.media(id),
+  total_stars integer not null default 0,
+  vote_count integer not null default 0
+  );`)
+	if err != nil {
+		return fmt.Errorf("failed to create keywords table: %w", err)
+	}
+	_, err = db.ExecContext(ctx,
+		`CREATE INDEX IF NOT EXISTS keywords_media_id_idx ON media.keywords(media_id);`)
+	if err != nil {
+		return fmt.Errorf("failed to create keywords index: %w", err)
+	}
+	return nil
 }
