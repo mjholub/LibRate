@@ -23,7 +23,7 @@ func GetMedia(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	media, err := rStorage.Get(ctx, mediaID)
+	media, err := rStorage.Get(ctx, int64(mediaID))
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			"error": "Media not found",

@@ -121,31 +121,29 @@ func UpdateRating[U UpdateableKeyTypes](ctx context.Context, id int64, values []
 		return ctx.Err()
 	default:
 
-	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	db, err := db.Connect(&config)
+		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+		db, err := db.Connect(&config)
 
-	for v := range values {
-		_, err = db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
-		if err != nil {
-			return fmt.Errorf("error updating rating: %w", err)
+		for v := range values {
+			_, err = db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
+			if err != nil {
+				return fmt.Errorf("error updating rating: %w", err)
+			}
 		}
-	}
-	return nil
+		return nil
 	}
 }
 
-func (rs *RatingStorage) Get(ctx context.Context, ID int64) (err error) {
+func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Rating, err error) {
 	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	db, err := db.Connect(&config)
 
-	err = db.GetContext(ctx, &Rating{}, `SELECT * FROM reviews.ratings WHERE id = $1`, ID)
+	err = db.GetContext(ctx, &r, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
 	if err != nil {
-		return fmt.Errorf("error getting rating: %w", err)
+		return Rating{}, fmt.Errorf("error getting rating: %w", err)
 	}
-	return nil
+	return r, nil
 }
-
-func (rs *RatingStorage) GetID(
 
 func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
