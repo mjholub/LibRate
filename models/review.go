@@ -73,7 +73,11 @@ type (
 	RatingStorage struct{}
 )
 
-var log = logging.Init()
+var (
+	// WARN: using MustGet
+	lc  = cfg.LoadLoggerConfig().MustGet()
+	log = logging.Init(&lc)
+)
 
 func NewRatingStorage() *RatingStorage {
 	return &RatingStorage{}

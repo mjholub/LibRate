@@ -7,9 +7,16 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func Init() zerolog.Logger {
+type Config struct {
+	Level  string `yaml:"level"`
+	Target string `yaml:"target"`
+	Format string `yaml:"format"`
+}
+
+// FIXME: add function to load logger config in the config package
+func Init(c *Config) zerolog.Logger {
 	zerolog.TimeFieldFormat = time.RFC822Z
-	switch os.Getenv("LOG_LEVEL") {
+	switch c.Level {
 	case "trace":
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "info":
@@ -20,15 +27,15 @@ func Init() zerolog.Logger {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
-	if os.Getenv("LOG_TARGET") == "stdout" {
-		if os.Getenv("LOG_FORMAT") == "json" {
+	if c.Target == "stdout" {
+		if c.Format == "json" {
 			return zerolog.New(os.Stdout).With().Timestamp().
 				Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
 		}
 		return zerolog.New(os.Stdout).With().Timestamp().Logger()
 	}
 
-	if os.Getenv("LOG_FORMAT") == "json" {
+	if c.Format == "json" {
 		return zerolog.New(os.Stderr).With().Timestamp().
 			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}

@@ -18,7 +18,15 @@ import (
 func main() {
 	init := flag.Bool("init", false, "Initialize database")
 	flag.Parse()
-	log := logging.Init()
+	// TODO: refactor so it looks better
+	logConf := cfg.LoadLoggerConfig().OrElse(func(err error) logging.Config {
+		return logging.Config{
+			Level:  "info",
+			Target: "stdout",
+			Format: "json",
+		}
+	}(nil))
+	log := logging.Init(&logConf)
 	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	if cfg.LoadConfig().IsError() {
 		err := cfg.LoadConfig().Error()
