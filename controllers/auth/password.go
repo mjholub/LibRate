@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -71,7 +72,7 @@ func checkArgonPassword(password, hash string) bool {
 	// Hash password
 	hashedPassword := argon2.IDKey([]byte(password), salt, timeComplexity, mem, threads, keyLen)
 
-	return string(hashedPassword) == string(encHash)
+	return bytes.Equal(encHash, hashedPassword)
 }
 
 func checkBcryptPassword(password, hash string) bool {

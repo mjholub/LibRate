@@ -150,6 +150,10 @@ func InitDB() error {
 	if err != nil {
 		return err
 	}
+	err = bootstrap.MembersProfilePic(ctx, db)
+	if err != nil {
+		return err
+	}
 	err = bootstrap.Review(ctx, db)
 	if err != nil {
 		return err

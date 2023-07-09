@@ -118,7 +118,8 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 		PassHash:     passhash,
 		MemberName:   in.MemberName,
 		Email:        in.Email,
-		RegTimestamp: time.Now().Unix(),
+		RegTimestamp: time.Now(),
+		Roles:        []uint8{3},
 	}
 
 	return member, nil

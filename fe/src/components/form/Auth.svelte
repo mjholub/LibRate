@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { isAuthenticated, member } from '../../stores/members/auth';
+	import PasswordInput from './PasswordInput.svelte';
 
 	let isRegistration = false;
 	let email_or_username = '';
@@ -20,16 +22,25 @@
 	};
 
 	// helper function to check password strength
+	let timeoutId: any;
 	const checkEntropy = async (password: string) => {
-		const response = await fetch(`/api/password-entropy`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ password })
-		});
-		const data = await response.json();
-		passwordStrength = data.message;
+		clearTimeout(timeoutId);
+		timeoutId = setTimeout(async () => {
+			const response = await fetch(`/api/password-entropy`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ password })
+			});
+			const data = await response.json();
+			passwordStrength = data.message;
+		}, 300);
+	};
+
+	// FIXME: correct the types in the PasswordInput component
+	const entropyDummy = async (password: string) => {
+		Promise.resolve(password);
 	};
 
 	$: password && checkEntropy(password);
@@ -62,7 +73,8 @@
 				MemberName: nickname,
 				Email: email,
 				Password: password,
-				PasswordConfirm: passwordConfirm
+				PasswordConfirm: passwordConfirm,
+				Roles: ['regular']
 			})
 		});
 
@@ -72,6 +84,8 @@
 			response.ok
 				? (localStorage.setItem('token', data.token),
 				  localStorage.setItem('email_or_username', ''),
+				  isAuthenticated.set(true),
+				  member.set(data.member),
 				  (window.location.href = '/'))
 				: (errorMessage = data.message);
 		}
@@ -95,7 +109,11 @@
 		const data = await response.json();
 
 		response.ok
-			? (localStorage.setItem('token', data.token), (window.location.href = '/'))
+			? (localStorage.setItem('token', data.token),
+			  localStorage.setItem('email_or_username', ''),
+			  isAuthenticated.set(true),
+			  member.set(data.member),
+			  (window.location.href = '/'))
 			: (errorMessage = data.message);
 	};
 </script>
@@ -111,37 +129,13 @@
 			aria-label="Email or Username"
 		/>
 
-		<label for="password">Password:</label>
-		<div class="password-container">
-			<input
-				id="password"
-				class={!showPassword ? '' : 'hidden'}
-				bind:value={password}
-				type="password"
-				autocomplete="new-password"
-				required
-				aria-label="Password"
-			/>
-			<input
-				id="textPassword"
-				class={showPassword ? '' : 'hidden'}
-				bind:value={password}
-				type="text"
-				autocomplete="new-password"
-				required
-				aria-label="Password"
-			/>
-			<button
-				class="toggle-btn"
-				type="button"
-				on:click|preventDefault={toggleObfuscation}
-				aria-label="Toggle password visibility"
-			>
-				<span class="material-icons">
-					{showPassword ? 'visibility_off' : 'visibility'}
-				</span>
-			</button>
-		</div>
+		<PasswordInput
+			bind:value={password}
+			id="password"
+			onInput={entropyDummy}
+			{showPassword}
+			{toggleObfuscation}
+		/>
 	{:else}
 		<label for="email">Email:</label>
 		<input id="email" bind:value={email} type="email" required aria-label="Email" />
@@ -149,6 +143,16 @@
 		<label for="nickname">Nickname:</label>
 		<input id="nickname" bind:value={nickname} required aria-label="Nickname" />
 
+		<PasswordInput
+			bind:value={password}
+			id="password"
+			onInput={() => checkEntropy(password)}
+			{showPassword}
+			{toggleObfuscation}
+		/>
+	{/if}
+
+	{#if isRegistration}
 		<label for="passwordConfirm">Confirm Password:</label>
 		<input
 			id="passwordConfirm"
@@ -156,9 +160,13 @@
 			type="password"
 			required
 			aria-label="Confirm Password"
+			on:input={() => checkEntropy(passwordConfirm)}
 		/>
-
-		<p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
+		{#if passwordStrength !== 'Password is strong enough'}
+			<p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
+		{:else}
+			<p>Password strength: {passwordStrength}</p>
+		{/if}
 	{/if}
 
 	{#if errorMessage}
@@ -184,44 +192,6 @@
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 4px;
-	}
-
-	.password-container {
-		position: relative;
-		overflow: hidden;
-		display: flex;
-	}
-
-	.hidden {
-		display: none;
-	}
-
-	.toggle-btn {
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		background: transparent;
-		border: none;
-		cursor: pointer;
-	}
-
-	.material-icons {
-		font-family: 'Material Icons';
-		font-weight: normal;
-		font-style: normal;
-		font-size: 20px; /* Preferred icon size */
-		display: inline-block;
-		line-height: 1;
-		text-transform: none;
-		letter-spacing: normal;
-		word-wrap: normal;
-		white-space: nowrap;
-		direction: ltr;
-		-webkit-font-smoothing: antialiased;
-		text-rendering: optimizeLegibility;
-		-moz-osx-font-smoothing: grayscale;
-		font-feature-settings: 'liga';
 	}
 
 	.error-message {

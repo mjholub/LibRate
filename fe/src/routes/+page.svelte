@@ -2,10 +2,14 @@
 	import ReviewList from '../components/review/ReviewList.svelte';
 	import Auth from '../components/form/Auth.svelte';
 	import Search from '../components/utility/Search.svelte';
+	import MemberCard from '../components/member/MemberCard.svelte';
+	import { isAuthenticated, member as memberStore } from '../stores/members/auth.ts';
 	import type { Review } from '../types/review.ts';
+	import type { Member } from '../types/member.ts';
 	import { onMount } from 'svelte';
 
 	let reviews: Review[] = [];
+	let member: Member = $memberStore;
 </script>
 
 <div class="navbar">
@@ -17,7 +21,11 @@
 		<ReviewList {reviews} />
 	</div>
 	<div class="right">
-		<Auth />
+		{#if $isAuthenticated}
+			<MemberCard {member} />
+		{:else}
+			<Auth />
+		{/if}
 	</div>
 </div>
 
