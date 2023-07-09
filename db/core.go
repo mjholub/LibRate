@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
@@ -39,12 +40,26 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 
 func Connect(conf *cfg.Config) (*sqlx.DB, error) {
 	data := CreateDsn(&conf.DBConfig)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	db, err := sqlx.ConnectContext(ctx, conf.Engine, data)
+	var db *sqlx.DB
+
+	err := retry.Do(
+		func() error {
+			var err error
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
+			return err
+		},
+		retry.Attempts(5),
+		retry.Delay(1*time.Second), // Delay between retries
+		retry.OnRetry(func(n uint, _ error) {
+			fmt.Printf("Attempt %d failed; retrying...", n)
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
