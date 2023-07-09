@@ -56,169 +56,155 @@ type (
 	}
 
 	CastRating struct {
-		ID       int64     `json:"_key" db:"id,pk"`
-		MediaID  uuid.UUID `json:"mediaid" db:"media_id"`
-		Cast     *Cast     `json:"cast" db:"cast"`
-		NumStars uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		UserID   uint32    `json:"userid" db:"user_id"`
+		ID       int64  `json:"_key" db:"id,pk"`
+		Cast     *Cast  `json:"cast" db:"cast_id"`
+		NumStars uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		UserID   uint32 `json:"userid" db:"user_id"`
 	}
 
-	// Theme vote serves as the basis for constructing most relevant tags for a given media
-	ThemeVote struct {
-		ID       int64     `json:"_key" db:"id,pk"`
-		MediaID  uuid.UUID `json:"mediaid" db:"media_id"`
-		Theme    string    `json:"theme" db:"theme"`
-		NumStars uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		UserID   uint32    `json:"userid" db:"user_id"`
-	}
-
+	// Update is not present, because methods cannot have type parameters
 	RatingStorer interface {
-		SaveRating(rating *Rating) error
-		Get(ctx context.Context, key string) (*Rating, error)
+		New(ri *RatingInput) error
+		Get(ctx context.Context, ID int64) (*Rating, error)
 		GetAll() ([]*Rating, error)
+		GetByMediaID(ctx context.Context, mediaID uuid.UUID) ([]*Rating, error)
 	}
 
 	RatingStorage struct{}
 )
 
+var log = logging.Init()
+
 func NewRatingStorage() *RatingStorage {
 	return &RatingStorage{}
 }
 
-func (rs *RatingStorage) SaveRating(rating *Rating) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (rs *RatingStorage) New(ctx context.Context, rating *RatingInput) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+		db, err := db.Connect(&config)
+
+		stmt, err := db.PreparexContext(ctx,
+			`INSERT INTO reviews.ratings (stars, comment, topic, attribution, user_id, media_id)
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)
+		if err != nil {
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		var id int64
+
+		err = stmt.QueryRowxContext(ctx,
+			rating.NumStars,
+			rating.Comment,
+			rating.Topic,
+			rating.Attribution,
+			rating.UserID,
+			rating.MediaID,
+		).Scan(&id)
+
+		if err != nil {
+			return fmt.Errorf("error inserting rating: %w", err)
+		}
+		log.Debug().Msgf("Inserted rating with id %d", id)
+
+		return nil
+	}
+}
+
+func UpdateRating[U UpdateableKeyTypes](ctx context.Context, id int64, values []U) (err error) {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+
 	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	dbConf := config.DBConfig
+	db, err := db.Connect(&config)
 
-	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
-	})
-	if err != nil {
-		return err
+	for v := range values {
+		_, err = db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
+		if err != nil {
+			return fmt.Errorf("error updating rating: %w", err)
+		}
 	}
-
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection:     conn,
-		Authentication: driver.BasicAuthentication(dbConf.User, dbConf.Password),
-	})
-	if err != nil {
-		return err
+	return nil
 	}
+}
 
-	db, err := client.Database(ctx, dbConf.Database)
+func (rs *RatingStorage) Get(ctx context.Context, ID int64) (err error) {
+	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+	db, err := db.Connect(&config)
+
+	err = db.GetContext(ctx, &Rating{}, `SELECT * FROM reviews.ratings WHERE id = $1`, ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting rating: %w", err)
 	}
-
-	ratings, err := db.Collection(ctx, "ratings")
-	if err != nil {
-		return err
-	}
-
-	meta, err := ratings.CreateDocument(ctx, rating)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Created document with key: %s\n", meta.Key)
 	return nil
 }
 
-func (rs *RatingStorage) Get(ctx context.Context, key interface{}) (*Rating, error) {
-	var rating Rating
+func (rs *RatingStorage) GetID(
+
+func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	dbConf := config.DBConfig
+	db, err := db.Connect(&config)
 
-	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
-	})
+	err = db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings`)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting ratings: %w", err)
 	}
-
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection:     conn,
-		Authentication: driver.BasicAuthentication(dbConf.User, dbConf.Password),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := client.Database(ctx, dbConf.Database)
-	if err != nil {
-		return nil, err
-	}
-
-	ratings, err := db.Collection(ctx, "ratings")
-	if err != nil {
-		return nil, err
-	}
-	_ = ratings
-
-	ratingKey := fmt.Sprintf("ratings/%s", key)
-
-	ratingDoc, err := ratings.ReadDocument(ctx, ratingKey, &rating)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("Read document with key '%s' from collection '%s': %s\n", ratingDoc.Key, "ratings", ratingDoc)
-
-	return &rating, nil
+	return ratings, nil
 }
 
-func (rs *RatingStorage) GetPinned(ctx context.Context) ([]*Rating, error) {
-	var ratings []*Rating
-
+func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Rating, err error) {
 	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	dbConf := config.DBConfig
+	db, err := db.Connect(&config)
 
-	conn, err := http.NewConnection(http.ConnectionConfig{
-		Endpoints: []string{fmt.Sprintf("http://%s:%d", dbConf.Host, dbConf.Port)},
-	})
+	err = db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings WHERE media_id = $1`, mediaID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting ratings: %w", err)
 	}
+	return ratings, nil
+}
 
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection:     conn,
-		Authentication: driver.BasicAuthentication(dbConf.User, dbConf.Password),
-	})
-	if err != nil {
-		return nil, err
-	}
+func GetAverageStars(ctx context.Context, rating interface{}, mediaID uuid.UUID) (avgStars float64, err error) {
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+		db, err := db.Connect(&config)
 
-	db, err := client.Database(ctx, dbConf.Database)
-	if err != nil {
-		return nil, err
-	}
+		var avgStarsFloat sql.NullFloat64
 
-	// FIXME: This is a hack to get around the fact that the collection is not created
-	_, err = db.Collection(ctx, "ratings")
-	if err != nil {
-		return nil, err
-	}
-
-	query := "FOR r IN ratings FILTER r.pinned == true RETURN r"
-	cursor, err := db.Query(ctx, query, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close()
-
-	for {
-		var rating Rating
-		_, err := cursor.ReadDocument(ctx, &rating)
-		if driver.IsNoMoreDocuments(err) {
-			break
-		} else if err != nil {
-			return nil, err
+		switch rating.(type) {
+		case *Track:
+			err = db.GetContext(ctx, &avgStarsFloat,
+				`SELECT AVG(stars) FROM reviews.track_ratings WHERE track_id = $1`, mediaID)
+			if err != nil {
+				return 0, fmt.Errorf("error getting average stars: %w", err)
+			}
+		case *CastRating:
+			err = db.GetContext(ctx, &avgStarsFloat,
+				`SELECT AVG(stars) FROM reviews.cast_ratings WHERE cast_id = $1`, mediaID)
+			if err != nil {
+				return 0, fmt.Errorf("error getting average stars: %w", err)
+			}
+		case *Rating:
+			err = db.GetContext(ctx, &avgStarsFloat,
+				`SELECT AVG(stars) FROM reviews.ratings WHERE media_id = $1`, mediaID)
+			if err != nil {
+				return 0, fmt.Errorf("error getting average stars: %w", err)
+			}
+		default:
+			return 0, fmt.Errorf("invalid type")
 		}
 
-		ratings = append(ratings, &rating)
+		return avgStarsFloat.Float64, nil
 	}
-
-	return ratings, nil
 }
