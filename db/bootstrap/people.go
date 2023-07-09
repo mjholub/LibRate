@@ -162,6 +162,55 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people studio works table: %w", err)
 		}
+
+		_, err = db.Exec(`
+CREATE TABLE IF NOT EXISTS people.cast (
+  id BIGSERIAL PRIMARY KEY,
+  media_id uuid NOT NULL REFERENCES media.media(id),
+  actors INTEGER[] NOT NULL,
+  directors INTEGER[] NOT NULL
+);
+);`)
+		if err != nil {
+			return fmt.Errorf("failed to create people cast table: %w", err)
+		}
+		errChan := make(chan error)
+		// don't defer closing the channel, let the GC handle it
+		defer func() {
+			err := createCastTrigger(db)
+			if err != nil {
+				errChan <- err
+			}
+		}()
+
 		return nil
 	}
+}
+
+func createCastTrigger(db *sqlx.DB) error {
+	_, err := db.Exec(`
+CREATE OR REPLACE FUNCTION check_actor_director_roles()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NOT (NEW.actors <@ (SELECT ARRAY(SELECT id FROM people.person WHERE roles = 'actor'))) THEN
+        RAISE EXCEPTION 'Invalid actor(s) provided.';
+    END IF;
+    
+    IF NOT (NEW.directors <@ (SELECT ARRAY(SELECT id FROM people.person WHERE roles = 'director'))) THEN
+        RAISE EXCEPTION 'Invalid director(s) provided.';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_roles_before_insert_or_update
+BEFORE INSERT OR UPDATE ON people.cast
+FOR EACH ROW EXECUTE FUNCTION check_actor_director_roles();
+`)
+	if err != nil {
+		return fmt.Errorf("failed to create cast trigger: %w", err)
+	}
+
+	return nil
 }
