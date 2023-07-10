@@ -80,6 +80,10 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			kind people.group_kind,
 			added TIMESTAMP DEFAULT NOW() NOT NULL,
 			modified TIMESTAMP DEFAULT NOW()
+			wikipedia VARCHAR(255),
+			bandcamp VARCHAR(255),
+			soundcloud VARCHAR(255),
+			bio TEXT
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create people group table: %w", err)

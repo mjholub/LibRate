@@ -42,6 +42,10 @@ export interface Group {
   kind?: string;
   added: Date;
   modified?: Date | null;
+  bio: string | null;
+  soundcloud: string | null;
+  bandcamp: string | null;
+  wikipedia: string | null;
 }
 
 export interface Studio {

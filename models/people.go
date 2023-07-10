@@ -35,20 +35,24 @@ type (
 	}
 
 	Group struct {
-		ID        int32        `json:"id" db:"id"`
-		Locations []Place      `json:"locations,omitempty" db:"locations"`
-		Name      string       `json:"name" db:"name"`
-		Active    bool         `json:"active" db:"active"`
-		Formed    sql.NullTime `json:"formed,omitempty" db:"formed"`
-		Disbanded sql.NullTime `json:"disbanded,omitempty" db:"disbanded"`
-		Website   string       `json:"website,omitempty" db:"website"`
-		Photos    []string     `json:"photos,omitempty" db:"photos"`
-		Works     []*uuid.UUID `json:"works,omitempty" db:"works"`
-		Members   []Person     `json:"members,omitempty" db:"members"`
-		Genres    []Genre      `json:"genres,omitempty" db:"genres"`
-		Kind      string       `json:"kind,omitempty" db:"kind"` // Orchestra, Choir, Ensemble, Collective, etc.
-		Added     time.Time    `json:"added" db:"added"`
-		Modified  sql.NullTime `json:"modified,omitempty" db:"modified"`
+		ID         int32        `json:"id" db:"id"`
+		Locations  []Place      `json:"locations,omitempty" db:"locations"`
+		Name       string       `json:"name" db:"name"`
+		Active     bool         `json:"active" db:"active"`
+		Formed     sql.NullTime `json:"formed,omitempty" db:"formed"`
+		Disbanded  sql.NullTime `json:"disbanded,omitempty" db:"disbanded"`
+		Website    string       `json:"website,omitempty" db:"website"`
+		Photos     []string     `json:"photos,omitempty" db:"photos"`
+		Works      []*uuid.UUID `json:"works,omitempty" db:"works"`
+		Members    []Person     `json:"members,omitempty" db:"members"`
+		Genres     []Genre      `json:"genres,omitempty" db:"genres"`
+		Kind       string       `json:"kind,omitempty" db:"kind"` // Orchestra, Choir, Ensemble, Collective, etc.
+		Added      time.Time    `json:"added" db:"added"`
+		Modified   sql.NullTime `json:"modified,omitempty" db:"modified"`
+		Wikipedia  string       `json:"wikipedia,omitempty" db:"wikipedia"`
+		Bandcamp   string       `json:"bandcamp,omitempty" db:"bandcamp"`
+		Soundcloud string       `json:"soundcloud,omitempty" db:"soundcloud"`
+		Bio        string       `json:"bio,omitempty" db:"bio"`
 	}
 
 	Studio struct {
