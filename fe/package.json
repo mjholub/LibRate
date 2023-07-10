@@ -19,6 +19,7 @@
     "@types/uuid": "^9.0.2",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "Either": "link:fp-ts/lib/Either",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-svelte": "^2.30.0",
@@ -28,6 +29,7 @@
     "svelte-check": "^3.4.3",
     "tslib": "^2.4.1",
     "typescript": "^5.0.0",
+    "typescript-monads": "^8.9.0",
     "uuid": "^9.0.0",
     "vite": "^4.3.6",
     "vitest": "^0.32.2"

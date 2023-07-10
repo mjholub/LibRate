@@ -23,6 +23,9 @@ devDependencies:
   '@typescript-eslint/parser':
     specifier: ^5.45.0
     version: 5.61.0(eslint@8.44.0)(typescript@5.1.6)
+  Either:
+    specifier: link:fp-ts/lib/Either
+    version: link:fp-ts/lib/Either
   eslint:
     specifier: ^8.28.0
     version: 8.44.0
@@ -50,6 +53,9 @@ devDependencies:
   typescript:
     specifier: ^5.0.0
     version: 5.1.6
+  typescript-monads:
+    specifier: ^8.9.0
+    version: 8.9.0
   uuid:
     specifier: ^9.0.0
     version: 9.0.0
@@ -1777,6 +1783,14 @@ packages:
       queue-microtask: 1.2.3
     dev: true
 
+  /rxjs@7.8.1:
+    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
+    requiresBuild: true
+    dependencies:
+      tslib: 2.6.0
+    dev: true
+    optional: true
+
   /sade@1.8.1:
     resolution: {integrity: sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==}
     engines: {node: '>=6'}
@@ -2078,6 +2092,12 @@ packages:
   /type-fest@0.20.2:
     resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
     engines: {node: '>=10'}
+    dev: true
+
+  /typescript-monads@8.9.0:
+    resolution: {integrity: sha512-Qn3LhMlzdQsFB3Fo05LbD+Osxh5/sdwVu/KUPvkkobKxeI6iFyR8VcoQbK2fw2XiXh01Qle7/Ue0h7A6S90Dyw==}
+    optionalDependencies:
+      rxjs: 7.8.1
     dev: true
 
   /typescript@5.1.6:

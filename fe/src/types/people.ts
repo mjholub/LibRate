@@ -1,5 +1,6 @@
-import type { Media } from './media';
-import type { Place } from './places';
+import type { Genre, Media } from './media';
+import type { City, Place } from './places';
+import type { UUID } from './utils';
 
 export type Person = {
   id: number;
@@ -25,3 +26,34 @@ export type Cast = {
   actors: Person[];
   directors: Person[];
 };
+
+export interface Group {
+  id: number;
+  locations?: Place[];
+  name: string;
+  active: boolean;
+  formed?: Date | null;
+  disbanded?: Date | null;
+  website?: string;
+  photos?: string[];
+  works?: UUID[];
+  members?: Person[];
+  genres?: Genre[];
+  kind?: string;
+  added: Date;
+  modified?: Date | null;
+}
+
+export interface Studio {
+  id: number;
+  name: string;
+  active: boolean;
+  city?: City;
+  artists?: Person[];
+  works?: Media;
+  is_film: boolean;
+  is_music: boolean;
+  is_tv: boolean;
+  is_publishing: boolean;
+  is_game: boolean;
+}
