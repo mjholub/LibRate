@@ -163,7 +163,11 @@
 			on:input={() => checkEntropy(passwordConfirm)}
 		/>
 		{#if passwordStrength !== 'Password is strong enough'}
-			<p>Password strength: {passwordStrength} bits of entropy, required: 60</p>
+			<p>
+				Password strength: {passwordStrength} bits of (<a
+					href="https://www.omnicalculator.com/other/password-entropy">entropy</a
+				>), required: 50
+			</p>
 		{:else}
 			<p>Password strength: {passwordStrength}</p>
 		{/if}
