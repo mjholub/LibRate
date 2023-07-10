@@ -7,7 +7,7 @@
 	export let reviews: Review[];
 
 	const getReviews = async () => {
-		const res = await fetch('/api/reviews');
+    const res = await fetch('/api/reviews/latest');
 		const data = await res.json();
 		reviews = data;
 	};

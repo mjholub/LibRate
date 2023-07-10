@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/internal/logging"
-
 	"github.com/gofrs/uuid/v5"
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
 type (
@@ -70,16 +68,13 @@ type (
 		GetByMediaID(ctx context.Context, mediaID uuid.UUID) ([]*Rating, error)
 	}
 
-	RatingStorage struct{}
+	RatingStorage struct {
+		db  *sqlx.DB
+		log *zerolog.Logger
+	}
 )
 
-var (
-	// WARN: using MustGet
-	lc  = cfg.LoadLoggerConfig().MustGet()
-	log = logging.Init(&lc)
-)
-
-func NewRatingStorage() *RatingStorage {
+func NewRatingStorage(db *sqlx.DB, log *zerolog.Logger) *RatingStorage {
 	return &RatingStorage{}
 }
 
@@ -88,10 +83,7 @@ func (rs *RatingStorage) New(ctx context.Context, rating *RatingInput) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-		db, err := db.Connect(&config)
-
-		stmt, err := db.PreparexContext(ctx,
+		stmt, err := rs.db.PreparexContext(ctx,
 			`INSERT INTO reviews.ratings (stars, comment, topic, attribution, user_id, media_id)
 		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)
 		if err != nil {
@@ -113,23 +105,20 @@ func (rs *RatingStorage) New(ctx context.Context, rating *RatingInput) error {
 		if err != nil {
 			return fmt.Errorf("error inserting rating: %w", err)
 		}
-		log.Debug().Msgf("Inserted rating with id %d", id)
+		rs.log.Debug().Msgf("Inserted rating with id %d", id)
 
 		return nil
 	}
 }
 
-func UpdateRating[U UpdateableKeyTypes](ctx context.Context, id int64, values []U) (err error) {
+func UpdateRating[U UpdateableKeyTypes](ctx context.Context, rs *RatingStorage, id int64, values []U) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
 
-		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-		db, err := db.Connect(&config)
-
 		for v := range values {
-			_, err = db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
+			_, err = rs.db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
 			if err != nil {
 				return fmt.Errorf("error updating rating: %w", err)
 			}
@@ -138,25 +127,32 @@ func UpdateRating[U UpdateableKeyTypes](ctx context.Context, id int64, values []
 	}
 }
 
+// Get retrieves a rating by its id.
 func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Rating, err error) {
-	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	db, err := db.Connect(&config)
-
-	err = db.GetContext(ctx, &r, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
+	err = rs.db.GetContext(ctx, &r, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
 	if err != nil {
 		return Rating{}, fmt.Errorf("error getting rating: %w", err)
 	}
 	return r, nil
 }
 
+// GetLatestRatings retrieves the latest reviews for all media items. The limit and offset
+// parameters are used for pagination.
+func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Rating, err error) {
+	err = rs.db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings 
+		ORDER BY created_at
+		DESC LIMIT $1 OFFSET $2`, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ratings: %w", err)
+	}
+	return ratings, nil
+}
+
 func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	db, err := db.Connect(&config)
-
-	err = db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings`)
+	err = rs.db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings`)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ratings: %w", err)
 	}
@@ -164,41 +160,38 @@ func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
 }
 
 func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Rating, err error) {
-	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	db, err := db.Connect(&config)
-
-	err = db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings WHERE media_id = $1`, mediaID)
+	err = rs.db.SelectContext(
+		ctx, &ratings, `SELECT * FROM reviews.ratings WHERE media_id = $1`, mediaID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ratings: %w", err)
 	}
 	return ratings, nil
 }
 
-func GetAverageStars(ctx context.Context, rating interface{}, mediaID uuid.UUID) (avgStars float64, err error) {
+func (rs *RatingStorage) GetAverageStars(ctx context.Context, rating interface{},
+	mediaID uuid.UUID,
+) (avgStars float64, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
-		config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-		db, err := db.Connect(&config)
-
 		var avgStarsFloat sql.NullFloat64
 
 		switch rating.(type) {
 		case *Track:
-			err = db.GetContext(ctx, &avgStarsFloat,
+			err = rs.db.GetContext(ctx, &avgStarsFloat,
 				`SELECT AVG(stars) FROM reviews.track_ratings WHERE track_id = $1`, mediaID)
 			if err != nil {
 				return 0, fmt.Errorf("error getting average stars: %w", err)
 			}
 		case *CastRating:
-			err = db.GetContext(ctx, &avgStarsFloat,
+			err = rs.db.GetContext(ctx, &avgStarsFloat,
 				`SELECT AVG(stars) FROM reviews.cast_ratings WHERE cast_id = $1`, mediaID)
 			if err != nil {
 				return 0, fmt.Errorf("error getting average stars: %w", err)
 			}
 		case *Rating:
-			err = db.GetContext(ctx, &avgStarsFloat,
+			err = rs.db.GetContext(ctx, &avgStarsFloat,
 				`SELECT AVG(stars) FROM reviews.ratings WHERE media_id = $1`, mediaID)
 			if err != nil {
 				return 0, fmt.Errorf("error getting average stars: %w", err)

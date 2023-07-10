@@ -13,21 +13,45 @@ import (
 	"codeberg.org/mjh/LibRate/models"
 )
 
-// GetRatings retrieves reviews for a specific media item based on the media ID
-func GetRatings(c *fiber.Ctx) error {
-	rStorage := models.NewRatingStorage()
+type ReviewController struct {
+	rs *models.RatingStorage
+}
 
+func NewReviewController(rs models.RatingStorage) *ReviewController {
+	return &ReviewController{rs: &rs}
+}
+
+// GetRatings retrieves reviews for a specific media item based on the media ID
+func (rc *ReviewController) GetRatings(c *fiber.Ctx) error {
 	ratingID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
-	reviews, err := rStorage.GetByMediaID(context.Background(), ratingID)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	reviews, err := rc.rs.GetByMediaID(ctx, ratingID)
 	if err != nil {
 		return h.Res(c, fiber.StatusNotFound, "Ratings not found")
 	}
 
 	return c.JSON(reviews)
+}
+
+func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
+	// Extract limit and offset parameters from the query string.
+	// Note: You might want to add error handling here to deal with cases where limit and offset are not provided or are not valid integers.
+	limit, _ := strconv.Atoi(ctx.Query("limit", "5"))   // Default to 5 if limit is not provided
+	offset, _ := strconv.Atoi(ctx.Query("offset", "0")) // Default to 0 if offset is not provided
+
+	// Call the GetLatest function with the provided limit and offset.
+	ratings, err := rc.rs.GetLatest(ctx.Context(), limit, offset)
+	if err != nil {
+		return h.Res(ctx, fiber.StatusNotFound, err.Error())
+	}
+
+	// Return the ratings as a JSON response.
+	return ctx.JSON(ratings)
 }
 
 // GetAverageRatings retrieves the average number of stars for the general models.Rating type
@@ -49,9 +73,8 @@ func GetAverageRatings(c *fiber.Ctx) error {
 }
 
 // PostRating handles the submission of a user's review for a specific media item
-func PostRating(c *fiber.Ctx) error {
+func (rc *ReviewController) PostRating(c *fiber.Ctx) error {
 	var input models.RatingInput
-	rs := models.NewRatingStorage()
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
@@ -60,7 +83,7 @@ func PostRating(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = rs.New(ctx, &input)
+	err = rc.rs.New(ctx, &input)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to add rating")
 	}
@@ -70,7 +93,7 @@ func PostRating(c *fiber.Ctx) error {
 	})
 }
 
-func UpdateRating(c *fiber.Ctx) error {
+func (rc *ReviewController) UpdateRating(c *fiber.Ctx) error {
 	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid rating ID")
@@ -85,7 +108,8 @@ func UpdateRating(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = models.UpdateRating(ctx, ratingID, keysToUpdate)
+	// WARN: not sure if this is correct, but one cannot have type params on receiver methods
+	err = models.UpdateRating(ctx, rc.rs, ratingID, keysToUpdate)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to update rating")
 	}
