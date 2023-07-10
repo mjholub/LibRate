@@ -33,13 +33,12 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.genres (
 			id SMALLSERIAL PRIMARY KEY,
-			media_id UUID UNIQUE REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL,
-			desc_short VARCHAR(255),
+			desc_short TEXT,
 			desc_long TEXT,
 			keywords VARCHAR(255)[],
-			parent SMALLSERIAL,
-			children SMALLSERIAL
+			parent int2,
+			children int2[]
 			);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media genres table: %w", err)
@@ -47,7 +46,6 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		_, err = connection.ExecContext(ctx, `
 			ALTER TABLE media.genres
 				ADD CONSTRAINT genres_parent_fkey FOREIGN KEY (parent) REFERENCES media.genres(id),
-				ADD CONSTRAINT genres_children_fkey FOREIGN KEY (children) REFERENCES media.genres(id);
 		`)
 		if err != nil {
 			return fmt.Errorf("failed to add foreign key constraints to media genres table: %w", err)

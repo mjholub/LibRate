@@ -55,14 +55,13 @@ type (
 	}
 
 	Genre struct {
-		ID          int16      `json:"id" db:"id,pk,autoinc"`
-		MediaID     *uuid.UUID `json:"media_id" db:"media_id"`
-		Name        string     `json:"name" db:"name"`
-		DescShort   string     `json:"desc_short" db:"desc_short"`
-		DescLong    string     `json:"desc_long" db:"desc_long"`
-		Keywords    []string   `json:"keywords" db:"keywords"`
-		ParentGenre *Genre     `json:"parent_genre omitempty" db:"parent"`
-		Children    []Genre    `json:"children omitempty" db:"children"`
+		ID          int16    `json:"id" db:"id,pk,autoinc"`
+		Name        string   `json:"name" db:"name"`
+		DescShort   string   `json:"desc_short" db:"desc_short"`
+		DescLong    string   `json:"desc_long" db:"desc_long"`
+		Keywords    []string `json:"keywords" db:"keywords"`
+		ParentGenre *Genre   `json:"parent_genre omitempty" db:"parent"`
+		Children    []Genre  `json:"children omitempty" db:"children"`
 	}
 
 	MediaStorage struct{}

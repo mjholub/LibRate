@@ -13,7 +13,6 @@ export type Media = {
 
 export type Genre = {
   id: number;
-  media_id: string; // UUID
   name: string;
   desc_short: string;
   desc_long: string;
