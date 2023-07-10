@@ -8,8 +8,8 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/routes"
 
+	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -47,8 +47,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer dbConn.Close()
+
 	app := fiber.New()
-	app.Use(logger.New())
+	app.Use(fiberzerolog.New(fiberzerolog.Config{
+		Logger: &log,
+	}))
 
 	// CORS
 	setupCors(app)
