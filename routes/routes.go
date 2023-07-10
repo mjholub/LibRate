@@ -33,6 +33,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 
 	app.Get("/api/reviews/:id", controllers.GetRatings)
 	app.Get("/api/member/:id", memberSvc.GetMember)
+	app.Get("api/reviews/:mediaID", controllers.GetRatings)
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 	app.Post("/api/reviews", controllers.PostRating)
 	app.Post("/api/login", authSvc.Login)
