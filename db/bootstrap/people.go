@@ -118,7 +118,8 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		_, err = db.Exec(`
 			CREATE TABLE IF NOT EXISTS people.group_genres (
 				group_id SERIAL REFERENCES people.group(id),
-				genre_id SMALLINT REFERENCES media.genres(id),
+				primary_genre_id SMALLINT REFERENCES media.genres(id),
+				secondary_genres SMALLINT[] REFERENCES media.genres(id),
 				PRIMARY KEY (group_id, genre_id)
 			);`)
 		if err != nil {

@@ -38,7 +38,8 @@ export interface Group {
   photos?: string[];
   works?: UUID[];
   members?: Person[];
-  genres?: Genre[];
+  primary_genre: Genre;
+  secondary_genres: Genre[] | null;
   kind?: string;
   added: Date;
   modified?: Date | null;
