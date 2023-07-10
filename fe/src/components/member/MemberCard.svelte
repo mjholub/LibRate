@@ -24,7 +24,7 @@
 	}
 
 	const getMemberProps = async () => {
-		const res = await fetch(`/api/member/get/${member.id}`);
+		const res = await fetch(`/api/member/${member.id}`);
 		const data = await res.json();
 		member = { ...data.member };
 	};

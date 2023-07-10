@@ -6,6 +6,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/models"
 
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -43,12 +44,12 @@ func (a *AuthService) validatePassword(email, login, password string) error {
 func (a *AuthService) Login(c *fiber.Ctx) error {
 	input, err := parseInput("login", c)
 	if err != nil {
-		return errorResponse(c, http.StatusBadRequest, "Invalid login request")
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
 	}
 
 	validatedInput, err := input.Validate()
 	if err != nil {
-		return errorResponse(c, http.StatusBadRequest, "Invalid login request")
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
 	}
 
 	err = a.validatePassword(
@@ -56,18 +57,12 @@ func (a *AuthService) Login(c *fiber.Ctx) error {
 		validatedInput.MemberName,
 		validatedInput.Password)
 	if err != nil && a.conf.LibrateEnv == "dev" {
-		return errorResponse(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
 	} else if err != nil {
-		return errorResponse(c, http.StatusUnauthorized, "Invalid credentials")
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "Logged in successfully",
-	})
-}
-
-func errorResponse(c *fiber.Ctx, statusCode int, message string) error {
-	return c.Status(statusCode).JSON(fiber.Map{
-		"message": message,
 	})
 }

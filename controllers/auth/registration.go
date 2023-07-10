@@ -9,6 +9,7 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	validator "github.com/wagslane/go-password-validator"
 
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
 
@@ -16,22 +17,22 @@ import (
 func (a *AuthService) Register(c *fiber.Ctx) error {
 	input, err := parseInput("register", c)
 	if err != nil {
-		return errorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.Res(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	validatedInput, err := input.Validate()
 	if err != nil {
-		return errorResponse(c, fiber.StatusBadRequest, err.Error())
+		return h.Res(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	member, err := createMember(validatedInput)
 	if err != nil {
-		return errorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	err = a.saveMember(member)
 	if err != nil {
-		return errorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

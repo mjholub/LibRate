@@ -12,6 +12,7 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
+	"codeberg.org/mjh/LibRate/models"
 	// "codeberg.org/mjh/LibRate/middleware"
 )
 
@@ -27,8 +28,11 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	}))
 
 	authSvc := auth.NewAuthService(conf, dbConn)
+	mStor := models.NewMemberStorage(dbConn)
+	memberSvc := controllers.NewMemberController(*mStor)
 
 	app.Get("/api/reviews/:id", controllers.GetRatings)
+	app.Get("/api/member/:id", memberSvc.GetMember)
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 	app.Post("/api/reviews", controllers.PostRating)
 	app.Post("/api/login", authSvc.Login)
