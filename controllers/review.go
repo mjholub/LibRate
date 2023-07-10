@@ -3,13 +3,13 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
 
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
 
@@ -19,16 +19,12 @@ func GetRatings(c *fiber.Ctx) error {
 
 	ratingID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid media ID",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	reviews, err := rStorage.GetByMediaID(context.Background(), ratingID)
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "Ratings not found",
-		})
+		return h.Res(c, fiber.StatusNotFound, "Ratings not found")
 	}
 
 	return c.JSON(reviews)
@@ -42,15 +38,11 @@ func GetAverageRatings(c *fiber.Ctx) error {
 
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid media ID",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 	avgStars, err := models.GetAverageStars(ctx, &models.Rating{}, mediaID)
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "Ratings not found",
-		})
+		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
 	}
 
 	return c.JSON(avgStars)
@@ -62,9 +54,7 @@ func PostRating(c *fiber.Ctx) error {
 	rs := models.NewRatingStorage()
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -72,9 +62,7 @@ func PostRating(c *fiber.Ctx) error {
 
 	err = rs.New(ctx, &input)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to add rating",
-		})
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to add rating")
 	}
 
 	return c.JSON(fiber.Map{
@@ -85,17 +73,13 @@ func PostRating(c *fiber.Ctx) error {
 func UpdateRating(c *fiber.Ctx) error {
 	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid rating ID",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid rating ID")
 	}
 
 	var keysToUpdate []string
 	err = json.Unmarshal(c.Body(), &keysToUpdate)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -103,9 +87,7 @@ func UpdateRating(c *fiber.Ctx) error {
 
 	err = models.UpdateRating(ctx, ratingID, keysToUpdate)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update rating",
-		})
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to update rating")
 	}
 
 	return c.JSON(fiber.Map{
