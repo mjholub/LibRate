@@ -1,4 +1,5 @@
 import type { Person } from './people';
+import type { UUID } from './utils';
 
 export type Media = {
   UUID: string;
@@ -19,4 +20,11 @@ export type Genre = {
   keywords: string[]
   parent_genre: Genre;
   children: Genre[];
+}
+
+export type Keyword = {
+  id: number;
+  keyword: string;
+  media_id: UUID;
+  stars: number;
 }

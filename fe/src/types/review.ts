@@ -1,5 +1,6 @@
 import type { Cast } from './people';
 import type { Media } from './media';
+import type { Track } from './music';
 
 export type Review = {
   id: number;
@@ -13,12 +14,11 @@ export type Review = {
   created_at: Date;
   trackratings: TrackRating[];
   castrating: CastRating[];
-  themevotes: ThemeVote[];
 }
 
 export type TrackRating = {
   id: number;
-  track: string;
+  track: Track;
   rating: number;
 };
 
@@ -26,14 +26,6 @@ export type CastRating = {
   id: number;
   mediaid: number;
   cast: Cast;
-  numstars: number;
-  userid: number;
-};
-
-export type ThemeVote = {
-  id: number;
-  mediaid: number;
-  theme: string;
   numstars: number;
   userid: number;
 };

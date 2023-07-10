@@ -16,7 +16,7 @@ export interface Album {
   languages?: string[];
 }
 
-interface Track {
+export interface Track {
   media_id: UUID;
   name: string;
   artists: Either<Person[], Group[]>;
