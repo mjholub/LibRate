@@ -7,29 +7,51 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jmoiron/sqlx"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models"
 )
 
-type RegisterInput struct {
-	Email           string `json:"email"`
-	MemberName      string `json:"membername"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"passwordConfirm"`
-}
+type (
+	// RegisterInput is the input for the registration request
+	RegisterInput struct {
+		Email           string `json:"email"`
+		MemberName      string `json:"membername"`
+		Password        string `json:"password"`
+		PasswordConfirm string `json:"passwordConfirm"`
+	}
 
-type LoginInput struct {
-	Email      string `json:"email"`
-	MemberName string `json:"membername"`
-	Password   string `json:"password"`
-}
+	// LoginInput is the input for the login request
+	LoginInput struct {
+		Email      string `json:"email"`
+		MemberName string `json:"membername"`
+		Password   string `json:"password"`
+	}
 
-type RegLoginInput interface {
-	RegisterInput | LoginInput
-}
+	// AuthService allows dependency injection for the controller methods,
+	// so that the db connection needn't be created in the controller methods
+	AuthService struct {
+		conf *cfg.Config
+		db   *sqlx.DB
+	}
 
-type Validator interface {
-	Validate() (*models.MemberInput, error)
+	// RegLoginInput is an union (feature introduced in Go 1.18) of RegisterInput and LoginInput
+	RegLoginInput interface {
+		RegisterInput | LoginInput
+	}
+
+	Validator interface {
+		Validate() (*models.MemberInput, error)
+	}
+)
+
+// NewAuthService creates an instance of the AuthService struct
+// and returns a pointer to it
+// It should be used within the routes package
+// where the db connection and config are passed from the main package
+func NewAuthService(conf *cfg.Config, db *sqlx.DB) *AuthService {
+	return &AuthService{conf, db}
 }
 
 func isEmail(email string) bool {
@@ -37,6 +59,7 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
+//  parseInput parses the input from the request body to be used in the controller
 func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 	switch reqType {
 	case "register":

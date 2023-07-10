@@ -3,59 +3,49 @@ package auth
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	uuid "github.com/gofrs/uuid/v5"
 	validator "github.com/wagslane/go-password-validator"
 
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/models"
 )
 
 // Register handles the creation of a new user
-func Register(c *fiber.Ctx) error {
+func (a *AuthService) Register(c *fiber.Ctx) error {
 	input, err := parseInput("register", c)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return errorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
+
 	validatedInput, err := input.Validate()
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return errorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	member, err := createMember(validatedInput)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return errorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	err = saveMember(member)
+	err = a.saveMember(member)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return errorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Registration successful",
 	})
 }
 
 func checkPasswordEntropy(password string) (entropy float64, err error) {
-	return validator.GetEntropy(password), validator.Validate(password, 60.0)
+	return validator.GetEntropy(password), validator.Validate(password, 50.0)
 }
 
 func (r RegisterInput) Validate() (*models.MemberInput, error) {
 	if r.Email == "" && r.MemberName == "" {
-		return nil, fmt.Errorf("email or membername required")
+		return nil, fmt.Errorf("email or nickname required")
 	}
 
 	if r.Password == "" {
@@ -79,6 +69,7 @@ func (r RegisterInput) Validate() (*models.MemberInput, error) {
 }
 
 func ValidatePassword() fiber.Handler {
+	const minEntropy = 50.0
 	return func(c *fiber.Ctx) error {
 		// Parse the JSON body
 		var input struct {
@@ -94,7 +85,7 @@ func ValidatePassword() fiber.Handler {
 		entropy, err := checkPasswordEntropy(input.Password)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "password too weak: want entropy > 60, got " + fmt.Sprintf("%f", entropy),
+				"message": fmt.Sprintf("password too weak: want entropy > %f, got %f", minEntropy, entropy),
 			})
 		}
 
@@ -125,14 +116,8 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 	return member, nil
 }
 
-func saveMember(member *models.Member) error {
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	dbConn, err := db.Connect(&conf)
-	if err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
-	}
-	defer dbConn.Close()
-	ms := models.NewMemberStorage(dbConn)
+func (a *AuthService) saveMember(member *models.Member) error {
+	ms := models.NewMemberStorage(a.db)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

@@ -5,6 +5,8 @@ type Config struct {
 	Fiber       FiberConfig `json:"fiber,omitempty" yaml:"fiber"`
 	SiginingKey string      `json:"sigining_key,omitempty" yaml:"sigining_key"`
 	DBPass      string      `json:"db_pass,omitempty" yaml:"db_pass"`
+	// default to production for security reasons
+	LibrateEnv string `json:"librate_env,omitempty" yaml:"librate_env,default:production"`
 }
 
 type DBConfig struct {
@@ -21,15 +23,4 @@ type DBConfig struct {
 type FiberConfig struct {
 	Host string `yaml:"host,default:localhost"`
 	Port string `yaml:"port,default:3000"`
-}
-
-type DgraphConfig struct {
-	Host           string `yaml:"host"`
-	GRPCPort       string `yaml:"grpc_port"`
-	HTTPPort       string `yaml:"http_port"`
-	AlphaBadger    string `yaml:"alpha_badger"`
-	AlphaBlockRate string `yaml:"alpha_block_rate"`
-	AlphaTrace     string `yaml:"alpha_trace"`
-	AlphaTLS       string `yaml:"alpha_tls"`
-	AlphaSecurity  string `yaml:"alpha_security"`
 }
