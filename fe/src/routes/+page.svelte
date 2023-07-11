@@ -27,6 +27,8 @@
 			<Auth />
 		{/if}
 	</div>
+</div>
+<div class="footer">
 	<Footer />
 </div>
 
@@ -54,6 +56,13 @@
 		padding: 10px 0;
 		box-shadow: 0 2px 4px rgba(64, 64, 64, 0.2);
 		z-index: 1000;
+	}
+
+	.footer {
+		position: bottom;
+		bottom: 0;
+		width: 100%;
+		align-items: center;
 	}
 
 	:global(body) {
