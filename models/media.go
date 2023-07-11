@@ -3,12 +3,9 @@ package models
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
-	"github.com/samber/lo"
 )
 
 type (
@@ -31,40 +28,23 @@ type (
 		Genres   []Genre   `json:"genres,omitempty" db:"genres"`
 		Keywords []string  `json:"keywords,omitempty" db:"keywords"` // WARN: should this really be nullable?
 		LangIDs  []int16   `json:"lang_ids,omitempty" db:"lang_ids"`
+		Creators []Person  `json:"creators,omitempty" db:"creators"`
 	}
 
-	Book struct {
-		MediaID         *uuid.UUID `json:"media_id" db:"media_id,pk,unique"`
-		Title           string     `json:"title" db:"title"`
-		Authors         []Person   `json:"author" db:"author"`
-		Publisher       string     `json:"publisher" db:"publisher"`
-		PublicationDate time.Time  `json:"publication_date" db:"publication_date"`
-		Genres          []string   `json:"genres" db:"genres"`
-		Keywords        []string   `json:"keywords,omitempty" db:"keywords,omitempty"`
-		Languages       []string   `json:"languages" db:"languages"`
-		Pages           int16      `json:"pages" db:"pages"`
-		ISBN            string     `json:"isbn,omitempty" db:"isbn,unique,omitempty"`
-		ASIN            string     `json:"asin,omitempty" db:"asin,unique,omitempty"`
-		Cover           string     `json:"cover,omitempty" db:"cover,omitempty"`
-		Summary         string     `json:"summary" db:"summary"`
-	}
-
-	BookValues interface {
-		[]string | string | int16 | time.Time | []Person
-	}
-
+	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
-		ID          int16      `json:"id" db:"id,pk,autoinc"`
-		MediaID     *uuid.UUID `json:"media_id" db:"media_id"`
-		Name        string     `json:"name" db:"name"`
-		DescShort   string     `json:"desc_short" db:"desc_short"`
-		DescLong    string     `json:"desc_long" db:"desc_long"`
-		Keywords    []string   `json:"keywords" db:"keywords"`
-		ParentGenre *Genre     `json:"parent_genre omitempty" db:"parent"`
-		Children    []Genre    `json:"children omitempty" db:"children"`
+		ID          int16    `json:"id" db:"id,pk,autoinc"`
+		Name        string   `json:"name" db:"name"`
+		DescShort   string   `json:"desc_short" db:"desc_short"`
+		DescLong    string   `json:"desc_long" db:"desc_long"`
+		Keywords    []string `json:"keywords" db:"keywords"`
+		ParentGenre *Genre   `json:"parent_genre omitempty" db:"parent"`
+		Children    []Genre  `json:"children omitempty" db:"children"`
 	}
 
-	MediaStorage struct{}
+	MediaStorage struct {
+		db *sqlx.DB
+	}
 )
 
 // strictly necessary (not nil keys for each media type)
@@ -84,12 +64,41 @@ var (
 	}
 )
 
-func NewMediaStorage() *MediaStorage {
+func NewMediaStorage(db *sqlx.DB) *MediaStorage {
 	return &MediaStorage{}
 }
 
-func (ms *MediaStorage) Get(ctx context.Context, key string, kind interface{}) (any, error) {
-	return nil, nil
+func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
+		if err != nil {
+			return nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		row := stmt.QueryRowContext(ctx, id)
+		var kind string
+		if err := row.Scan(&kind); err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		switch kind {
+		case "book":
+			return ms.getBook(ctx, id)
+		case "album":
+			return ms.getAlbum(ctx, id)
+		case "track":
+			return ms.getTrack(ctx, id)
+		case "film":
+			return ms.getFilm(ctx, id)
+		case "tv_show":
+			return ms.getSeries(ctx, id)
+		default:
+			return nil, fmt.Errorf("unknown media kind")
+		}
+	}
 }
 
 func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
@@ -107,32 +116,6 @@ func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService
 	default:
 		return fmt.Errorf("unknown media type")
 	}
-}
-
-func addBook(ctx context.Context, db *sqlx.DB, keys []string, book Book) error {
-	if !lo.Every(BookKeys, keys) {
-		quoted := make([]string, len(BookKeys))
-		for i, key := range BookKeys {
-			quoted[i] = fmt.Sprintf("'%s'", key)
-		}
-		return fmt.Errorf("keys not a subset of book keys (%s)", strings.Join(quoted, ", "))
-	}
-
-	kvs := lo.Associate(keys, func(key string) (keys string, values interface{}) {
-		switch key {
-		case "media_id":
-			return uuid.Must(uuid.NewV4()).String(), book.MediaID
-		case "authors":
-			return "authors", book.Authors
-		default:
-			return key, values
-		}
-	})
-	_, err := db.NamedExecContext(ctx, "INSERT INTO books (:keys) VALUES (:values)", kvs)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objType interface{}) error {
