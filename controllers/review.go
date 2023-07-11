@@ -40,9 +40,14 @@ func (rc *ReviewController) GetRatings(c *fiber.Ctx) error {
 
 func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
 	// Extract limit and offset parameters from the query string.
-	// Note: You might want to add error handling here to deal with cases where limit and offset are not provided or are not valid integers.
-	limit, _ := strconv.Atoi(ctx.Query("limit", "5"))   // Default to 5 if limit is not provided
-	offset, _ := strconv.Atoi(ctx.Query("offset", "0")) // Default to 0 if offset is not provided
+	limit, err := strconv.Atoi(ctx.Query("limit", "5"))
+	if err != nil {
+		return h.Res(ctx, fiber.StatusBadRequest, "Invalid limit")
+	}
+	offset, err := strconv.Atoi(ctx.Query("offset", "0"))
+	if err != nil {
+		return h.Res(ctx, fiber.StatusBadRequest, "Invalid offset")
+	}
 
 	// Call the GetLatest function with the provided limit and offset.
 	ratings, err := rc.rs.GetLatest(ctx.Context(), limit, offset)
@@ -56,7 +61,7 @@ func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
 
 // GetAverageRatings retrieves the average number of stars for the general models.Rating type
 // (i.e. not track or cast ratings)
-func GetAverageRatings(c *fiber.Ctx) error {
+func (rc *ReviewController) GetAverageRatings(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -64,7 +69,7 @@ func GetAverageRatings(c *fiber.Ctx) error {
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
-	avgStars, err := models.GetAverageStars(ctx, &models.Rating{}, mediaID)
+	avgStars, err := rc.rs.GetAverageStars(ctx, &models.Rating{}, mediaID)
 	if err != nil {
 		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
 	}

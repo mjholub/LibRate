@@ -8,7 +8,7 @@
 	import { keywordStore } from '../../stores/form/keyword.ts';
 	import { trackStore } from '../../stores/media/music.ts';
 
-	export let album: Album;
+	let album: Album;
 	let mediaID: UUID = ''; // updated on fetch
 	let isMediaVideo = false;
 	let favoriteTrack = null;
