@@ -36,6 +36,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	rStor := models.NewRatingStorage(dbConn, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
+	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
 	app.Get("/api/reviews/:id", reviewSvc.GetRatings)
@@ -47,7 +48,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Post("/api/reviews", reviewSvc.PostRating)
 	app.Post("/api/login", authSvc.Login)
 	app.Post("/api/register", authSvc.Register)
-	app.Post("/api/search", controllers.SearchMedia)
+	app.Post("/api/search", sc.Search)
 	app.Options("/api/search", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
