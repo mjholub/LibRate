@@ -118,9 +118,8 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 }
 
 func (a *AuthService) saveMember(member *models.Member) error {
-	ms := models.NewMemberStorage(a.db)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return ms.Save(ctx, member)
+	return a.ms.Save(ctx, member)
 }

@@ -27,8 +27,8 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 		Browse: true,
 	}))
 
-	authSvc := auth.NewAuthService(conf, dbConn)
-	mStor := models.NewMemberStorage(dbConn)
+	mStor := models.NewMemberStorage(dbConn, logger)
+	authSvc := auth.NewAuthService(conf, mStor)
 	rStor := models.NewRatingStorage(dbConn, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)

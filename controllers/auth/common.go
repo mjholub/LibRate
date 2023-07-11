@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models"
@@ -33,7 +32,7 @@ type (
 	// so that the db connection needn't be created in the controller methods
 	AuthService struct {
 		conf *cfg.Config
-		db   *sqlx.DB
+		ms   *models.MemberStorage
 	}
 
 	// RegLoginInput is an union (feature introduced in Go 1.18) of RegisterInput and LoginInput
@@ -50,8 +49,8 @@ type (
 // and returns a pointer to it
 // It should be used within the routes package
 // where the db connection and config are passed from the main package
-func NewAuthService(conf *cfg.Config, db *sqlx.DB) *AuthService {
-	return &AuthService{conf, db}
+func NewAuthService(conf *cfg.Config, ms *models.MemberStorage) *AuthService {
+	return &AuthService{conf, ms}
 }
 
 func isEmail(email string) bool {

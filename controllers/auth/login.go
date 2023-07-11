@@ -27,9 +27,7 @@ func (l LoginInput) Validate() (*models.MemberInput, error) {
 }
 
 func (a *AuthService) validatePassword(email, login, password string) error {
-	ms := models.NewMemberStorage(a.db)
-
-	passhash, err := ms.GetPassHash(email, login)
+	passhash, err := a.ms.GetPassHash(email, login)
 	if err != nil {
 		return err
 	}
