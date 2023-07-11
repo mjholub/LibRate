@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
@@ -22,13 +23,11 @@ type (
 	}
 
 	Media struct {
-		UUID     uuid.UUID `json:"uuid" db:"uuid,pk,unique"`
-		Kind     string    `json:"kind" db:"kind"`
-		Name     string    `json:"name" db:"name"`
-		Genres   []Genre   `json:"genres,omitempty" db:"genres"`
-		Keywords []string  `json:"keywords,omitempty" db:"keywords"` // WARN: should this really be nullable?
-		LangIDs  []int16   `json:"lang_ids,omitempty" db:"lang_ids"`
-		Creators []Person  `json:"creators,omitempty" db:"creators"`
+		ID      uuid.UUID `json:"id" db:"id,pk,unique"`
+		Title   string    `json:"title" db:"title"`
+		Kind    string    `json:"kind" db:"kind"`
+		Created time.Time `json:"keywords,omitempty" db:"keywords"`
+		Creator int32     `json:"creator,omitempty" db:"creator"`
 	}
 
 	// Genre does not hage a UUID due to parent-child relationships
@@ -110,7 +109,10 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Medi
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media ORDER BY RANDOM() LIMIT ?")
+		if ms.db == nil {
+			return nil, fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media.media ORDER BY RANDOM() LIMIT $1")
 		if err != nil {
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}

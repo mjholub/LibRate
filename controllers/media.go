@@ -96,21 +96,21 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &film
-		props = models.Media{UUID: *film.MediaID, Name: film.Title}
+		props = models.Media{ID: *film.MediaID, Title: film.Title}
 	case "album":
 		var album models.Album
 		if err := c.BodyParser(&album); err != nil {
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &album
-		props = models.Media{UUID: *album.MediaID, Name: album.Name}
+		props = models.Media{ID: *album.MediaID, Title: album.Name}
 	case "track":
 		var track models.Track
 		if err := c.BodyParser(&track); err != nil {
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &track
-		props = models.Media{UUID: *track.MediaID, Name: track.Name}
+		props = models.Media{ID: *track.MediaID, Title: track.Name}
 	case "book":
 		var book models.Book
 		if err := c.BodyParser(&book); err != nil {
@@ -119,7 +119,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 			})
 		}
 		media = &book
-		props = models.Media{UUID: *book.MediaID, Name: book.Title}
+		props = models.Media{ID: *book.MediaID, Title: book.Title}
 	case "tvshow":
 		var tvshow models.TVShow
 		if err := c.BodyParser(&tvshow); err != nil {
@@ -128,7 +128,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 			})
 		}
 		media = &tvshow
-		props = models.Media{UUID: *tvshow.MediaID, Name: tvshow.Title}
+		props = models.Media{ID: *tvshow.MediaID, Title: tvshow.Title}
 	case "season":
 		var season models.Season
 		if err := c.BodyParser(&season); err != nil {
@@ -137,7 +137,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 			})
 		}
 		media = &season
-		props = models.Media{UUID: *season.MediaID, Name: strconv.Itoa(int(season.Number))}
+		props = models.Media{ID: *season.MediaID, Title: strconv.Itoa(int(season.Number))}
 	case "episode":
 		var episode models.Episode
 		if err := c.BodyParser(&episode); err != nil {
@@ -146,7 +146,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 			})
 		}
 		media = &episode
-		props = models.Media{UUID: *episode.MediaID, Name: episode.Title}
+		props = models.Media{ID: *episode.MediaID, Title: episode.Title}
 	default:
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid media type",
