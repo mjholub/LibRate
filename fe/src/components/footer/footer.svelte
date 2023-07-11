@@ -3,9 +3,16 @@
 	let version = 'Loading...';
 
 	onMount(async () => {
-		const res = await fetch('/package.json');
-		const pkg = await res.json();
-		version = pkg.version;
+		try {
+			const response = await fetch('/api/version');
+			console.debug('Response:', response);
+			const { message: dataVersion } = await response.json();
+			version = dataVersion;
+			console.debug('Version:', version);
+		} catch (error) {
+			console.error(error);
+			version = 'Error fetching version';
+		}
 	});
 </script>
 

@@ -12,10 +12,14 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
+	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/models"
 	// "codeberg.org/mjh/LibRate/middleware"
 )
 
+// Setup handles all the routes for the application
+// It receives the configuration, logger and db connection from main
+// and then passes them to the controllers
 func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber.App) {
 	staticPath, err := filepath.Abs("./fe/build")
 	if err != nil {
@@ -33,6 +37,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
 
+	app.Get("/api/version", version.Get)
 	app.Get("/api/reviews/:id", reviewSvc.GetRatings)
 	app.Get("/api/reviews/", reviewSvc.GetRatings)
 	app.Get("/api/reviews/latest", reviewSvc.GetLatestRatings)
