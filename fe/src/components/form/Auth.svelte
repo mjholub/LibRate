@@ -24,6 +24,9 @@
 	// helper function to check password strength
 	let timeoutId: any;
 	const checkEntropy = async (password: string) => {
+		// if just logging in, don't check the entropy
+		if (!isRegistration) return;
+
 		clearTimeout(timeoutId);
 		timeoutId = setTimeout(async () => {
 			const response = await fetch(`/api/password-entropy`, {
@@ -43,7 +46,7 @@
 		Promise.resolve(password);
 	};
 
-	$: password && checkEntropy(password);
+	$: isRegistration && password && checkEntropy(password);
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -118,6 +121,7 @@
 	};
 </script>
 
+<!-- Form submission handler -->
 <form on:submit|preventDefault={isRegistration ? register : login}>
 	{#if !isRegistration}
 		<label for="email_or_username">Email or Username:</label>
@@ -137,6 +141,7 @@
 			{toggleObfuscation}
 		/>
 	{:else}
+		<!-- Registration form -->
 		<label for="email">Email:</label>
 		<input id="email" bind:value={email} type="email" required aria-label="Email" />
 
@@ -162,6 +167,7 @@
 			aria-label="Confirm Password"
 			on:input={() => checkEntropy(passwordConfirm)}
 		/>
+		<!-- Password strength indicator -->
 		{#if passwordStrength !== 'Password is strong enough'}
 			<p>
 				Password strength: {passwordStrength} bits of (<a

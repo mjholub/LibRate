@@ -1,6 +1,6 @@
 {
   "name": "librate",
-  "version": "0.4.8",
+  "version": "0.4.9-no-login-entropy-checks",
   "private": true,
   "scripts": {
     "dev": "vite dev",
