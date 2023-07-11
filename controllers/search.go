@@ -3,88 +3,101 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/models"
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
-// TODO: parameterize the search
-/*
-func Search() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-return nil
+type SearchController struct {
+	dbConn *sqlx.DB
+}
+
+type SearchResult struct {
+	Type string `json:"type" db:"type"`
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
+func NewSearchController(dbConn *sqlx.DB) *SearchController {
+	return &SearchController{
+		dbConn: dbConn,
 	}
 }
-*/
 
-func SearchMedia(c *fiber.Ctx) error {
+func (sc *SearchController) Search(c *fiber.Ctx) error {
 	// Parse the search term from the request body
 	var body map[string]string
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid request body")
 	}
-	config := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	searchTerm := body["search"]
-	dConn, err := db.Connect(&config)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to connect to database",
-		})
-	}
-
 	// Perform the search (this is just a placeholder - you'll need to implement the actual search logic)
-	media, err := performSearch(dConn, searchTerm)
+	results, err := performSearch(c.Context(), sc.dbConn, searchTerm)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to perform search",
-		})
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to perform search"+err.Error())
 	}
 
 	// Return the search results
-	return c.JSON(media)
+	return c.JSON(results)
 }
 
-func performSearch(db *sqlx.DB, searchTerm string) ([]models.Media, error) {
-	// Create a context for the database query
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func performSearch(ctx context.Context, db *sqlx.DB, searchTerm string) (res []SearchResult, err error) {
 	// Define the SQL query
-	query := `
-		SELECT *
-		FROM media
-		WHERE title LIKE $1 OR description LIKE $1
-	`
+	stmt, err := db.PreparexContext(ctx, `
+		SELECT 'person' AS type, id::text, first_name AS name
+		FROM people.person
+		WHERE to_tsvector('english', first_name || ' ' || last_name) @@ plainto_tsquery('english', $1)
+
+		UNION ALL
+
+		SELECT 'group' AS type, id::text, name
+		FROM people."group"
+		WHERE to_tsvector('english', name) @@ plainto_tsquery('english', $1)
+
+		UNION ALL
+
+		SELECT 'genre' AS type, id::text, name
+		FROM media.genres
+		WHERE to_tsvector('english', name) @@ plainto_tsquery('english', $1)
+
+		UNION ALL
+
+		SELECT 'studio' AS type, id::text, name
+		FROM people.studio
+		WHERE to_tsvector('english', name) @@ plainto_tsquery('english', $1)
+
+		UNION ALL
+
+		SELECT 'media' AS type, id::text, title AS name
+		FROM media.media
+		WHERE to_tsvector('english', title) @@ plainto_tsquery('english', $1)
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare search query: %w", err)
+	}
 
 	// Perform the database query
-	rows, err := db.QueryContext(ctx, query, fmt.Sprintf("%%%s%%", searchTerm))
+	rows, err := stmt.QueryxContext(ctx, searchTerm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to perform search: %w", err)
 	}
 	defer rows.Close()
 
 	// Parse the results
-	var media []models.Media
 	for rows.Next() {
-		var m models.Media
-		if err := rows.Scan(m.UUID.String(), &m.Name, &m.Kind); err != nil {
+		var r SearchResult
+		if err := rows.StructScan(&r); err != nil {
 			return nil, err
 		}
-		media = append(media, m)
+		res = append(res, r)
 	}
 
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to iterate over search results: %w", err)
 	}
 
-	return media, nil
+	return res, nil
 }
