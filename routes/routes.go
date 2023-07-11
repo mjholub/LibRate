@@ -36,6 +36,8 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	rStor := models.NewRatingStorage(dbConn, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
+	mediaStor := models.NewMediaStorage(dbConn)
+	mediaCon := controllers.NewMediaController(*mediaStor)
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
@@ -44,6 +46,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Get("/api/reviews/latest", reviewSvc.GetLatestRatings)
 	app.Get("/api/member/:id", memberSvc.GetMember)
 	app.Get("api/reviews/:mediaID", reviewSvc.GetRatings)
+	app.Get("api/media/random", mediaCon.GetRandom)
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 	app.Post("/api/reviews", reviewSvc.PostRating)
 	app.Post("/api/login", authSvc.Login)

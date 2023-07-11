@@ -105,6 +105,34 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
+func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Media, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media ORDER BY RANDOM() LIMIT ?")
+		if err != nil {
+			return nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		rows, err := stmt.QueryxContext(ctx, count)
+		if err != nil {
+			return nil, fmt.Errorf("error querying rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var m Media
+			if err := rows.StructScan(&m); err != nil {
+				return nil, fmt.Errorf("error scanning row: %w", err)
+			}
+			media = append(media, &m)
+		}
+		return media, nil
+	}
+}
+
 func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {
 	switch m := media.(type) {
 	case *Book:

@@ -25,7 +25,10 @@
 
 	const getMemberProps = async () => {
 		const res = await fetch(`/api/member/${member.id}`);
+		console.debug(res);
+		res.ok || console.error(res);
 		const data = await res.json();
+		console.debug(data.member);
 		member = { ...data.member };
 	};
 	let regDate: string;

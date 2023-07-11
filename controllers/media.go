@@ -68,6 +68,19 @@ func GetRecommendations(c *fiber.Ctx) error {
 	return c.JSON(recommendedMedia)
 }
 
+// GetRandom fetches up to 5 random media items to be displayed in a carousel on the home pag
+func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	media, err := mc.storage.GetRandom(ctx, 5)
+	if err != nil {
+		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media")
+	}
+
+	return c.JSON(media)
+}
+
 // WARN: this is probably wrong
 func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	var (
