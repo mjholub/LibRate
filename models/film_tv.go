@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -45,12 +46,45 @@ type (
 		Plot      string        `json:"plot" db:"plot"`
 	}
 
+	// TODO: add more fields
 	Cast struct {
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
 	}
 )
 
+func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
+	var film Film
+	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = ?", id)
+	if err != nil {
+		return Film{}, err
+	}
+
+	return film, nil
+}
+
+func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
+	var tvshow TVShow
+	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = ?", id)
+	if err != nil {
+		return TVShow{}, err
+	}
+
+	return tvshow, nil
+}
+
 func (f Film) IsMedia() bool {
+	return true
+}
+
+func (ts TVShow) IsMedia() bool {
+	return true
+}
+
+func (s Season) IsMedia() bool {
+	return true
+}
+
+func (e Episode) IsMedia() bool {
 	return true
 }

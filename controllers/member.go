@@ -3,71 +3,52 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/db"
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
 
+// MemberController allows for the retrieval of user information
+type MemberController struct {
+	storage models.MemberStorage
+}
+
+func NewMemberController(storage models.MemberStorage) *MemberController {
+	return &MemberController{storage: storage}
+}
+
 // GetMember retrieves user information based on the user ID
-func GetMember(c *fiber.Ctx) error {
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(&conf)
-	ms := models.NewMemberStorage(dbConn)
-	defer dbConn.Close()
+func (mc *MemberController) GetMember(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	member, err := mc.storage.Read(ctx, c.Params("id"), c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize member storage",
-		})
-	}
-	member, err := ms.Read(context.TODO(), c.Params("id"), c.Params("id"))
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Member not found",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
 
 	return c.JSON(member)
 }
 
-func UpdateMember(c *fiber.Ctx) error {
+// UpdateMember handles the updating of user information
+func (mc *MemberController) UpdateMember(c *fiber.Ctx) error {
 	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
 	}
-
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(&conf)
-	ms := models.NewMemberStorage(dbConn)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize member storage",
-		})
-	}
-	defer dbConn.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	member, err := ms.Read(ctx, "email", input.Email)
+	member, err := mc.storage.Read(ctx, "email", input.Email)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Member not found",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
-	err = ms.Update(ctx, member)
+	err = mc.storage.Update(ctx, member)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update user",
-		})
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to update member info")
 	}
 
 	return c.JSON(fiber.Map{
@@ -76,36 +57,22 @@ func UpdateMember(c *fiber.Ctx) error {
 }
 
 // DeleteMember handles the deletion of a user
-func DeleteMember(c *fiber.Ctx) error {
+func (mc *MemberController) DeleteMember(c *fiber.Ctx) error {
 	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	// TODO: wrap handling db errors into monads as well
-	dbConn, err := db.Connect(&conf)
-	ms := models.NewMemberStorage(dbConn)
-	defer dbConn.Close()
+	member, err := mc.storage.Read(ctx, "email", input.Email)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize member storage",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
-	member, err := ms.Read(context.Background(), "email", input.Email)
+	err = mc.storage.Delete(ctx, member)
 	if err != nil {
-		return c.JSON(fiber.Map{
-			"error": "Failed to load member",
-		})
-	}
-	err = ms.Delete(context.Background(), member)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user",
-		})
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to delete member")
 	}
 
 	return c.JSON(fiber.Map{

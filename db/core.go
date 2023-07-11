@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
@@ -39,13 +40,61 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 
 func Connect(conf *cfg.Config) (*sqlx.DB, error) {
 	data := CreateDsn(&conf.DBConfig)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	db, err := sqlx.ConnectContext(ctx, conf.Engine, data)
+	var db *sqlx.DB
+
+	err := retry.Do(
+		func() error {
+			var err error
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
+			return err
+		},
+		retry.Attempts(5),
+		retry.Delay(1*time.Second), // Delay between retries
+		retry.OnRetry(func(n uint, _ error) {
+			fmt.Printf("Attempt %d failed; retrying...", n)
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
+}
+
+func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, `SELECT schema_name
+	FROM information_schema.schemata
+	WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema';`)
+	if err != nil {
+		return fmt.Errorf("failed to query schema names: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var schemaName string
+		err = rows.Scan(&schemaName)
+		if err != nil {
+			return fmt.Errorf("failed to scan schema name: %w", err)
+		}
+		for i := range extNames {
+			_, err = db.ExecContext(ctx,
+				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA "%s";`, extNames[i], schemaName))
+			if err != nil {
+				return fmt.Errorf("failed to create extension %s in schema %s: %w", extNames[i], schemaName, err)
+			}
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("failed to iterate over schema names: %w", err)
+	}
+
+	return nil
 }
 
 func InitDB() error {
@@ -62,19 +111,15 @@ func InitDB() error {
 	if err != nil {
 		return fmt.Errorf("failed to create public schema: %w", err)
 	}
-	// set up the public schema
-	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "pgcrypto" SCHEMA public;`)
-	if err != nil {
-		return fmt.Errorf("failed to create pgcrypto extension: %w", err)
+	// set up the extensions
+	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm"); err != nil {
+		return fmt.Errorf("failed to create database extensions: %w", err)
 	}
-	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;`)
-	if err != nil {
-		return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
-	}
-	_, err = db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "pg_trgm" SCHEMA public;`)
-	if err != nil {
-		return fmt.Errorf("failed to create pg_trgm extension: %w", err)
-	}
+	/* TODO: verify whether use sequential UUIDs or just ints
+	* if err = createUniversalExtension(db, "pgsequentialuuid"); err != nil {
+	* return fmt.Errorf("failed to create database extensions: %w", err)
+	* }
+	 */
 	/* postgres 15 no longer supports pg_atoi
 	_, err = db.ExecContext(ctx, "CREATE EXTENSION uint;")
 	if err != nil {
@@ -102,6 +147,10 @@ func InitDB() error {
 		return err
 	}
 	err = bootstrap.Members(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.MembersProfilePic(ctx, db)
 	if err != nil {
 		return err
 	}

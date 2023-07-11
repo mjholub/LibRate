@@ -3,63 +3,123 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofrs/uuid/v5"
 
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
 
-// GetRatings retrieves reviews for a specific media item based on the media ID
-func GetRatings(c *fiber.Ctx) error {
-	rStorage := models.NewRatingStorage()
+type ReviewController struct {
+	rs *models.RatingStorage
+}
 
-	reviews, err := rStorage.Get(context.Background(), c.Params("id"))
+func NewReviewController(rs models.RatingStorage) *ReviewController {
+	return &ReviewController{rs: &rs}
+}
+
+// GetRatings retrieves reviews for a specific media item based on the media ID
+func (rc *ReviewController) GetRatings(c *fiber.Ctx) error {
+	ratingID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(fiber.Map{
-			"error": "Ratings not found",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	reviews, err := rc.rs.GetByMediaID(ctx, ratingID)
+	if err != nil {
+		return h.Res(c, fiber.StatusNotFound, "Ratings not found")
 	}
 
 	return c.JSON(reviews)
 }
 
-// PostRating handles the submission of a user's review for a specific media item
-func PostRating(c *fiber.Ctx) error {
-	var input models.RatingInput
-	rs := models.NewRatingStorage()
-	err := json.Unmarshal(c.Body(), &input)
+func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
+	// Extract limit and offset parameters from the query string.
+	limit, err := strconv.Atoi(ctx.Query("limit", "5"))
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return h.Res(ctx, fiber.StatusBadRequest, "Invalid limit")
 	}
-
-	review := models.Rating{
-		UserID:  input.UserID,
-		MediaID: input.MediaID,
-		Comment: input.Comment,
-	}
-
-	err = rs.SaveRating(&review)
+	offset, err := strconv.Atoi(ctx.Query("offset", "0"))
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to save review",
-		})
+		return h.Res(ctx, fiber.StatusBadRequest, "Invalid offset")
 	}
 
-	return c.JSON(review)
+	// Call the GetLatest function with the provided limit and offset.
+	ratings, err := rc.rs.GetLatest(ctx.Context(), limit, offset)
+	if err != nil {
+		return h.Res(ctx, fiber.StatusNotFound, err.Error())
+	}
+
+	// Return the ratings as a JSON response.
+	return ctx.JSON(ratings)
 }
 
-// GetPinnedRatings returns pinned reviews for a user profile
-func GetPinnedRatings(c *fiber.Ctx) error {
-	rs := models.NewRatingStorage()
-	pinnedRatings, err := rs.GetPinned(context.TODO())
+// GetAverageRatings retrieves the average number of stars for the general models.Rating type
+// (i.e. not track or cast ratings)
+func (rc *ReviewController) GetAverageRatings(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to get pinned reviews",
-		})
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+	}
+	avgStars, err := rc.rs.GetAverageStars(ctx, &models.Rating{}, mediaID)
+	if err != nil {
+		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
 	}
 
-	return c.JSON(pinnedRatings)
+	return c.JSON(avgStars)
+}
+
+// PostRating handles the submission of a user's review for a specific media item
+func (rc *ReviewController) PostRating(c *fiber.Ctx) error {
+	var input models.RatingInput
+	err := json.Unmarshal(c.Body(), &input)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = rc.rs.New(ctx, &input)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to add rating")
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Rating added successfully",
+	})
+}
+
+func (rc *ReviewController) UpdateRating(c *fiber.Ctx) error {
+	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid rating ID")
+	}
+
+	var keysToUpdate []string
+	err = json.Unmarshal(c.Body(), &keysToUpdate)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// WARN: not sure if this is correct, but one cannot have type params on receiver methods
+	err = models.UpdateRating(ctx, rc.rs, ratingID, keysToUpdate)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to update rating")
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Rating updated successfully",
+	})
 }

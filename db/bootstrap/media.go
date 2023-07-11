@@ -19,12 +19,13 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 			return fmt.Errorf("failed to create media schema: %w", err)
 		}
 		_, err = connection.ExecContext(ctx, `
-		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book');
+		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book', 'anime', 'manga', 'comic', 'game');
 		CREATE TABLE IF NOT EXISTS media.media (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			title VARCHAR(255) NOT NULL,
 			kind media.kind NOT NULL,
-			created TIMESTAMP DEFAULT NOW() NOT NULL	
+			created TIMESTAMP DEFAULT NOW() NOT NULL,
+			creators serial4 NOT NULL references people.person(id);
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
@@ -32,13 +33,12 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.genres (
 			id SMALLSERIAL PRIMARY KEY,
-			media_id UUID UNIQUE REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL,
-			desc_short VARCHAR(255),
+			desc_short TEXT,
 			desc_long TEXT,
 			keywords VARCHAR(255)[],
-			parent SMALLSERIAL,
-			children SMALLSERIAL
+			parent int2,
+			children int2[]
 			);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media genres table: %w", err)
@@ -46,7 +46,6 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		_, err = connection.ExecContext(ctx, `
 			ALTER TABLE media.genres
 				ADD CONSTRAINT genres_parent_fkey FOREIGN KEY (parent) REFERENCES media.genres(id),
-				ADD CONSTRAINT genres_children_fkey FOREIGN KEY (children) REFERENCES media.genres(id);
 		`)
 		if err != nil {
 			return fmt.Errorf("failed to add foreign key constraints to media genres table: %w", err)
@@ -294,6 +293,30 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media book genres table: %w", err)
 		}
+		err = bootstrapKeywords(ctx, connection)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
+}
+
+func bootstrapKeywords(ctx context.Context, db *sqlx.DB) error {
+	_, err := db.ExecContext(ctx,
+		`CREATE TABLE IF NOT EXISTS media.keywords (
+  id serial PRIMARY KEY,
+  keyword varchar NOT NULL,
+  media_id uuid references media.media(id),
+  total_stars integer not null default 0,
+  vote_count integer not null default 0
+  );`)
+	if err != nil {
+		return fmt.Errorf("failed to create keywords table: %w", err)
+	}
+	_, err = db.ExecContext(ctx,
+		`CREATE INDEX IF NOT EXISTS keywords_media_id_idx ON media.keywords(media_id);`)
+	if err != nil {
+		return fmt.Errorf("failed to create keywords index: %w", err)
+	}
+	return nil
 }

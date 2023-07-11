@@ -7,3 +7,7 @@ database:
     port: 5432
     database: "librerym"
     user: "postgres"
+logging:
+  level: "info"
+  output: "stdout"
+  format: "json"

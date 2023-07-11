@@ -78,3 +78,35 @@ func addTrack(ctx context.Context, db *sqlx.DB, track Track) error {
 
 	return nil
 }
+
+func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
+	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM albums WHERE media_id = ?")
+	if err != nil {
+		return Album{}, fmt.Errorf("error preparing statement: %w", err)
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRowContext(ctx, id)
+	var album Album
+	if err := row.Scan(&album); err != nil {
+		return Album{}, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return album, nil
+}
+
+func (ms *MediaStorage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
+	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM tracks WHERE media_id = ?")
+	if err != nil {
+		return Track{}, fmt.Errorf("error preparing statement: %w", err)
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRowContext(ctx, id)
+	var track Track
+	if err := row.Scan(&track); err != nil {
+		return Track{}, fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return track, nil
+}

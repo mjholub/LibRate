@@ -22,7 +22,38 @@ import (
 )
 
 // nolint:gochecknoglobals
-var log = logging.Init()
+var log = logging.Init(&logging.Config{
+	Level:  "info",
+	Target: "stdout",
+	Format: "json",
+})
+
+// TODO: refactor so that parser parses each section of the config separately
+func LoadLoggerConfig() mo.Result[logging.Config] {
+	return mo.Try(func() (logging.Config, error) {
+		loc, err := locateConfig()
+		if err != nil {
+			return logging.Config{}, fmt.Errorf("failed to locate logger config: %w", err)
+		}
+		configRaw, err := parser.Parse(loc)
+		if err != nil {
+			return logging.Config{}, fmt.Errorf("failed to parse logger config: %w", err)
+		}
+		log.Info().Msgf("got logger config: %v", configRaw)
+
+		// preallocate default config
+		conf := logging.Config{
+			Level:  "info",
+			Target: "stdout",
+			Format: "json",
+		}
+
+		configStr := createKVPairs(configRaw)
+		_ = config.MapStruct(configStr, conf) // WARN: unsure if this is correct
+
+		return conf, nil
+	})
+}
 
 func LoadConfig() mo.Result[Config] {
 	return mo.Try(func() (Config, error) {
@@ -50,20 +81,9 @@ func LoadConfig() mo.Result[Config] {
 				DBPass:      "postgres",
 			}, nil
 		}
-		locs := tryLocations()
-		loc := lookForExisting(locs)
-		if loc == "" {
-			userSpecifiedLoc, err := tryGettingConfig(locs)
-			if err != nil {
-				return Config{}, fmt.Errorf("failed to get config: %w", err)
-			}
-			if lookForExisting([]string{userSpecifiedLoc}) == "" {
-				err := writeConfig(userSpecifiedLoc, &Config{})
-				if err != nil {
-					return Config{}, fmt.Errorf("failed to write config: %w", err)
-				}
-			}
-			loc = userSpecifiedLoc
+		loc, err := locateConfig()
+		if err != nil {
+			return Config{}, fmt.Errorf("failed to locate config: %w", err)
 		}
 		configRaw, err := parser.Parse(loc)
 		if err != nil {
@@ -120,6 +140,25 @@ func ReadDefaults() Config {
 		},
 		// Set your default values for SiginingKey and DBPass here.
 	}
+}
+
+func locateConfig() (string, error) {
+	locs := tryLocations()
+	loc := lookForExisting(locs)
+	if loc == "" {
+		userSpecifiedLoc, err := tryGettingConfig(locs)
+		if err != nil {
+			return "", fmt.Errorf("failed to get config: %w", err)
+		}
+		if lookForExisting([]string{userSpecifiedLoc}) == "" {
+			err := writeConfig(userSpecifiedLoc, &Config{})
+			if err != nil {
+				return "", fmt.Errorf("failed to write config: %w", err)
+			}
+		}
+		loc = userSpecifiedLoc
+	}
+	return loc, nil
 }
 
 func tryLocations() []string {

@@ -1,21 +1,18 @@
 package auth
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"time"
 
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/models"
 
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (l LoginInput) Validate() (*models.MemberInput, error) {
 	if l.Email == "" && l.MemberName == "" {
-		return nil, errors.New("email or membername required")
+		return nil, errors.New("email or nickname required")
 	}
 
 	if l.Password == "" {
@@ -29,74 +26,38 @@ func (l LoginInput) Validate() (*models.MemberInput, error) {
 	}, nil
 }
 
-func getMemberData(lookupField, lookupTarget string) (*models.Member, error) {
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
-	dbConn, err := db.Connect(&conf)
+func (a *AuthService) validatePassword(email, login, password string) error {
+	passhash, err := a.ms.GetPassHash(email, login)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer dbConn.Close()
-
-	ms := models.NewMemberStorage(dbConn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	member, err := ms.Read(ctx, lookupField, lookupTarget)
-	if err != nil {
-		return nil, err
-	}
-
-	return member, nil
-}
-
-func validatePassword(member *models.Member, password string) error {
-	if !checkArgonPassword(member.PassHash, password) {
-		return errors.New("invalid email or password")
+	if !checkArgonPassword(password, passhash) {
+		return errors.New("invalid email, username or password")
 	}
 
 	return nil
 }
 
-func Login(c *fiber.Ctx) error {
+// TODO: verify if the database connection can be passed in as a parameter
+func (a *AuthService) Login(c *fiber.Ctx) error {
 	input, err := parseInput("login", c)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid login request",
-		})
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
 	}
-	var lookupField, lookupTarget string
 
 	validatedInput, err := input.Validate()
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid login request",
-		})
-	}
-	switch {
-	case validatedInput.Email == "" && validatedInput.MemberName != "":
-		lookupTarget = validatedInput.MemberName
-		lookupField = "nick"
-	case validatedInput.Email != "" && validatedInput.MemberName == "":
-		lookupTarget = validatedInput.Email
-		lookupField = "email"
-	default:
-		lookupTarget = validatedInput.MemberName
-		lookupField = "nick"
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
 	}
 
-	member, err := getMemberData(lookupField, lookupTarget)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to connect to database: %s" + err.Error(),
-		})
-	}
-
-	err = validatePassword(member, validatedInput.Password)
-
-	if err != nil {
-		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+	err = a.validatePassword(
+		validatedInput.Email,
+		validatedInput.MemberName,
+		validatedInput.Password)
+	if err != nil && a.conf.LibrateEnv == "dev" {
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
+	} else if err != nil {
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
