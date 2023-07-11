@@ -34,6 +34,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	memberSvc := controllers.NewMemberController(*mStor)
 
 	app.Get("/api/reviews/:id", reviewSvc.GetRatings)
+	app.Get("/api/reviews/", reviewSvc.GetRatings)
 	app.Get("/api/reviews/latest", reviewSvc.GetLatestRatings)
 	app.Get("/api/member/:id", memberSvc.GetMember)
 	app.Get("api/reviews/:mediaID", reviewSvc.GetRatings)

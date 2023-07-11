@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/rs/zerolog"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -26,12 +27,13 @@ type (
 	}
 
 	KeywordStorage struct {
-		db *sqlx.DB
+		db  *sqlx.DB
+		log *zerolog.Logger
 	}
 )
 
-func NewKeywordStorage(db *sqlx.DB) *KeywordStorage {
-	return &KeywordStorage{db}
+func NewKeywordStorage(db *sqlx.DB, log *zerolog.Logger) *KeywordStorage {
+	return &KeywordStorage{db, log}
 }
 
 func (ks *KeywordStorage) CastVote(ctx context.Context, k Keyword) error {
@@ -120,7 +122,7 @@ func (ks *KeywordStorage) AddKeyword(ctx context.Context, keyword string, mediaI
 		if err != nil {
 			return err
 		}
-		log.Debug().Msgf("Added keyword: %s for media: %s. ID is: %d", keyword, mediaID.String(), k)
+		ks.log.Debug().Msgf("Added keyword: %s for media: %s. ID is: %d", keyword, mediaID.String(), k)
 		return nil
 	}
 }

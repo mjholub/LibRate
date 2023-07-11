@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 
 	"github.com/lib/pq"
 )
@@ -54,10 +55,11 @@ type MemberStorer interface {
 
 type MemberStorage struct {
 	client *sqlx.DB
+	log    *zerolog.Logger
 }
 
-func NewMemberStorage(client *sqlx.DB) *MemberStorage {
-	return &MemberStorage{client: client}
+func NewMemberStorage(client *sqlx.DB, log *zerolog.Logger) *MemberStorage {
+	return &MemberStorage{client: client, log: log}
 }
 
 func mapRoleCodesToStrings(roles []uint8) []string {
@@ -99,7 +101,7 @@ func (s *MemberStorage) Save(ctx context.Context, member *Member) error {
 		"roles":         pq.Array(mapRoleCodesToStrings(member.Roles)),
 	}
 
-	log.Debug().Msgf("params: %v", params)
+	s.log.Debug().Msgf("params: %v", params)
 	fmt.Printf("params: %v", params)
 	fmt.Printf("statement: %v", stmt)
 
