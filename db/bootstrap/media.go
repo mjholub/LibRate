@@ -21,7 +21,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		_, err = connection.ExecContext(ctx, `
 		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book', 'anime', 'manga', 'comic', 'game');
 		CREATE TABLE IF NOT EXISTS media.media (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			id UUID PRIMARY KEY DEFAULT uuid_time_nextval(),
 			title VARCHAR(255) NOT NULL,
 			kind media.kind NOT NULL,
 			created TIMESTAMP DEFAULT NOW() NOT NULL,
@@ -83,11 +83,20 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL,
 			release_date TIMESTAMP NOT NULL,
-			keywords VARCHAR(255)[],
-			duration INTERVAL NOT NULL
+			duration TIME NOT NULL
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media albums table: %w", err)
+		}
+		// junction table for keywords
+		_, err = connection.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS media.album_keywords (
+			album UUID NOT NULL REFERENCES media.albums(media_id),
+			keyword_id SMALLINT NOT NULL REFERENCES media.keywords(id),
+			PRIMARY KEY (album, keyword_id)
+		);`)
+		if err != nil {
+			return fmt.Errorf("failed to create media album keywords table: %w", err)
 		}
 		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_langs (
@@ -98,6 +107,7 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media album languages table: %w", err)
 		}
+
 		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_artists (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
@@ -124,7 +134,7 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL,
 			album UUID NOT NULL REFERENCES media.albums(media_id),
-			duration INTERVAL NOT NULL,
+			duration TIME NOT NULL,
 			lyrics TEXT
 		);`)
 		if err != nil {
@@ -305,7 +315,7 @@ func bootstrapKeywords(ctx context.Context, db *sqlx.DB) error {
 	_, err := db.ExecContext(ctx,
 		`CREATE TABLE IF NOT EXISTS media.keywords (
   id serial PRIMARY KEY,
-  keyword varchar NOT NULL,
+  keyword varchar NOT NULL UNIQUE,
   media_id uuid references media.media(id),
   total_stars integer not null default 0,
   vote_count integer not null default 0
