@@ -3,7 +3,7 @@
 	import Auth from '../components/form/Auth.svelte';
 	import Search from '../components/utility/Search.svelte';
 	import MemberCard from '../components/member/MemberCard.svelte';
-	import footer from '../components/footer/footer.svelte';
+	import Footer from '../components/footer/footer.svelte';
 	import { isAuthenticated, member as memberStore } from '../stores/members/auth.ts';
 	import type { Review } from '../types/review.ts';
 	import type { Member } from '../types/member.ts';
@@ -27,9 +27,7 @@
 			<Auth />
 		{/if}
 	</div>
-	<footer>
-		{footer}
-	</footer>
+	<Footer />
 </div>
 
 <style>
