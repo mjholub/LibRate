@@ -9,6 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Get retrieves the version of the frontend
+// TODO: add a precommit hook to update the version in package.json
 func Get(c *fiber.Ctx) error {
 	f, err := os.Open("fe/package.json")
 	if err != nil {

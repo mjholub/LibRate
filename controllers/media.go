@@ -15,15 +15,30 @@ import (
 	services "codeberg.org/mjh/LibRate/recommendation/go/services"
 )
 
-type MediaController struct {
-	storage models.MediaStorage
-}
+type (
+	// IMediaController is the interface for the media controller
+	// It defines the methods that the media controller must implement
+	// This is useful for mocking the media controller in unit tests
+	IMediaController interface {
+		GetMedia(c *fiber.Ctx) error
+		GetRandom(c *fiber.Ctx) error
+		AddMedia(c *fiber.Ctx) error
+	}
+
+	// MediaController is the controller for media endpoints
+	// The methods which are the receivers of this struct are a bridge between the HTTP layer and the storage layer
+	MediaController struct {
+		storage models.MediaStorage
+	}
+)
 
 func NewMediaController(storage models.MediaStorage) *MediaController {
 	return &MediaController{storage: storage}
 }
 
 // GetMedia retrieves media information based on the media ID
+// media ID is a UUID (binary, but passed from the fronetend as a string,
+// since typescript doesn't support binary)
 func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
@@ -42,6 +57,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 }
 
 // GetRecommendations returns media recommendations for a user based on collaborative filtering
+// FIXME: the actual underlying functionality, i.e. the recommendations server is yet to be implemented
 func GetRecommendations(c *fiber.Ctx) error {
 	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
@@ -68,7 +84,7 @@ func GetRecommendations(c *fiber.Ctx) error {
 	return c.JSON(recommendedMedia)
 }
 
-// GetRandom fetches up to 5 random media items to be displayed in a carousel on the home pag
+// GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
 func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

@@ -10,15 +10,26 @@ import (
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
-type SearchController struct {
-	dbConn *sqlx.DB
-}
+type (
+	// ISearchController is the interface for the search controller.
+	// It is mostly useful for automatically generating mocks for unit tests.
+	ISearchController interface {
+		Search(c *fiber.Ctx) error
+	}
 
-type SearchResult struct {
-	Type string `json:"type" db:"type"`
-	ID   string `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
-}
+	// SearchController is the controller for search endpoints
+	// It provides a bridge between the HTTP layer and the database layer
+	SearchController struct {
+		dbConn *sqlx.DB
+	}
+	// Search result holds the fields into which the results
+	// of a full text search are marshalled
+	SearchResult struct {
+		Type string `json:"type" db:"type"`
+		ID   string `json:"id" db:"id"`
+		Name string `json:"name" db:"name"`
+	}
+)
 
 func NewSearchController(dbConn *sqlx.DB) *SearchController {
 	return &SearchController{
@@ -26,6 +37,7 @@ func NewSearchController(dbConn *sqlx.DB) *SearchController {
 	}
 }
 
+// Search calls the private function performSearch to perform a full text search
 func (sc *SearchController) Search(c *fiber.Ctx) error {
 	// Parse the search term from the request body
 	var body map[string]string
@@ -33,7 +45,8 @@ func (sc *SearchController) Search(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 	searchTerm := body["search"]
-	// Perform the search (this is just a placeholder - you'll need to implement the actual search logic)
+	// Perform the search and handle any errors
+	// The context is acquired from the request
 	results, err := performSearch(c.Context(), sc.dbConn, searchTerm)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to perform search"+err.Error())
