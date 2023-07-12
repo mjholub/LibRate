@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -26,7 +26,7 @@ type (
 	}
 
 	// MediaController is the controller for media endpoints
-	// The methods which are the receivers of this struct are a bridge between the HTTP layer and the storage layer
+	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
 	MediaController struct {
 		storage models.MediaStorage
 	}
@@ -61,13 +61,15 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 func GetRecommendations(c *fiber.Ctx) error {
 	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
-		return h.Res(c, fiber.StatusBadRequest, "Invalid member ID")
+		//nolint:errcheck
+		return h.Res(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid member ID %s (must be an integer)", c.Params("id")))
 	}
 
 	memberID := int32(mID)
 
 	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
 	if err != nil {
+		//nolint:errcheck
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
 	}
 	defer conn.Close()
@@ -78,6 +80,7 @@ func GetRecommendations(c *fiber.Ctx) error {
 		MemberId: memberID,
 	})
 	if err != nil {
+		//nolint:errcheck
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
 	}
 
@@ -91,7 +94,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 
 	media, err := mc.storage.GetRandom(ctx, 5)
 	if err != nil {
-		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media")
+		//nolint:errcheck
+		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
 	}
 
 	return c.JSON(media)
@@ -130,7 +134,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "book":
 		var book models.Book
 		if err := c.BodyParser(&book); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Cannot parse JSON",
 			})
 		}
@@ -139,7 +143,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "tvshow":
 		var tvshow models.TVShow
 		if err := c.BodyParser(&tvshow); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Cannot parse JSON",
 			})
 		}
@@ -148,7 +152,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "season":
 		var season models.Season
 		if err := c.BodyParser(&season); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Cannot parse JSON",
 			})
 		}
@@ -157,14 +161,14 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "episode":
 		var episode models.Episode
 		if err := c.BodyParser(&episode); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Cannot parse JSON",
 			})
 		}
 		media = &episode
 		props = models.Media{ID: *episode.MediaID, Title: episode.Title}
 	default:
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid media type",
 		})
 	}
@@ -173,7 +177,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	defer cancel()
 	err := mc.storage.Add(ctx, nil, media, props) // TODO: marshal into key-value pairs
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to add media",
 		})
 	}
