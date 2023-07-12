@@ -1,15 +1,65 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { randomStore } from '../../stores/media/getRandom.ts';
+	import { mediaImageStore } from '../../stores/media/media.ts';
+	import { imageStore } from '../../stores/cdn/imagePath.ts';
 	import MediaCard from './MediaCard.svelte';
-	import type { Media } from '../../types/media.ts';
+	import type { Person } from '../../types/people.ts';
+	import type { Media, MediaImage } from '../../types/media.ts';
 
 	let media: Media[] = [];
+	let mediaImage: MediaImage = {
+		mediaID: '',
+		imageID: 0,
+		isMain: false
+	};
+	let mediaImgPath = '';
+	let creators = [] as Person[];
 
 	onMount(async () => {
 		await randomStore.getRandom();
 		randomStore.subscribe((data) => {
-			media = data.mediaID;
+			if (
+				!data.mediaID ||
+				!data.mediaTitle ||
+				!data.mediaCreator ||
+				!data.created ||
+				!data.mediaKind
+			) {
+				return;
+			}
+			const newMedia: Media = {
+				UUID: data.mediaID[0],
+				title: data.mediaTitle,
+				kind: data.mediaKind,
+				created: data.created,
+				creator: data.mediaCreator
+			};
+			media.push(newMedia);
+		});
+		media.forEach(async (mediaItem) => {
+			await mediaImageStore.getImagesByMedia(mediaItem.UUID);
+			mediaImageStore.subscribe((data) => {
+				if (!data || !data.mediaID || data.images.length === 0) {
+					return;
+				}
+				mediaImage = {
+					mediaID: data.mediaID,
+					imageID: data.images[0].imageID,
+					isMain: data.mainImage.isMain
+				};
+			});
+			// fetch the paths of the images using getPaths from imageStore
+			await imageStore.getPaths(mediaImage.imageID);
+			imageStore.subscribe((data) => {
+				if (!data || !data.images || data.images.length === 0) {
+					return;
+				}
+				mediaImgPath = data.images[0].source;
+			});
+			if (mediaItem?.creator) {
+				creators.push(mediaItem?.creator);
+			}
 		});
 	});
 </script>
@@ -20,12 +70,7 @@
 	{:else}
 		{#each media as mediaItem (mediaItem.UUID)}
 			<div class="media-card-wrapper">
-				<MediaCard
-					title={mediaItem.name}
-					image={mediaItem.image}
-					averageRating={mediaItem.averageRating}
-					creators={mediaItem.creators}
-				/>
+				<MediaCard title={mediaItem.title} image={mediaImgPath} {creators} />
 			</div>
 		{/each}
 	{/if}

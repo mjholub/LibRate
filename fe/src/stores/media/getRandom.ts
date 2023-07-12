@@ -1,9 +1,14 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { UUID } from '../../types/utils.ts';
+import type { Person } from '../../types/people.ts';
 
 interface RandomStoreState {
   mediaID: UUID[] | null;
+  mediaTitle?: string;
+  mediaKind?: string;
+  created?: Date;
+  mediaCreator?: Person;
 };
 
 interface RandomStore extends Writable<RandomStoreState> {

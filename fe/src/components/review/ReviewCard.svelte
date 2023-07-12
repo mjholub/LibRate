@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { getNick } from '../../stores/members/getnick.ts';
-	import type { TrackRating, CastRating, ThemeVote, Review } from '../../types/review.ts';
+	import type { Review } from '../../types/review.ts';
 	import type { Media } from '../../types/media.ts';
+	import { keywordStore } from '../../stores/form/keyword.ts';
 
 	export let media: Media;
 	export let review: Review;
@@ -50,12 +51,12 @@
 		</div>
 	{/if}
 
-	<!-- theme voting is used to vote for the most relevant characteristics of a media from the community-submitted themes -->
+	<!-- Keywords voting -->
 	<div>
-		<strong>Theme voting:</strong>
+		<strong>Vote for most relevant tags:</strong>
 		<ul>
-			{#each review.themevotes as themeVote (themeVote.id)}
-				<li>{themeVote.theme}: {themeVote.numstars}</li>
+			{#each $keywordStore.keywords as keywordVote (keywordVote.id)}
+				<li>{keywordVote.keyword}: {keywordVote.stars}</li>
 			{/each}
 		</ul>
 	</div>

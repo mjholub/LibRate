@@ -6,11 +6,9 @@
 	export const media: Media = {
 		UUID: '',
 		kind: '',
-		name: '',
-		genres: [],
-		keywords: [],
-		lang_ids: [],
-		creators: []
+		title: '',
+		created: new Date(),
+		creator: null
 	};
 	export let title = '';
 	export let image = '';
