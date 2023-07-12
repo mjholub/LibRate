@@ -3,9 +3,11 @@ package models
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
 type (
@@ -22,13 +24,11 @@ type (
 	}
 
 	Media struct {
-		UUID     uuid.UUID `json:"uuid" db:"uuid,pk,unique"`
-		Kind     string    `json:"kind" db:"kind"`
-		Name     string    `json:"name" db:"name"`
-		Genres   []Genre   `json:"genres,omitempty" db:"genres"`
-		Keywords []string  `json:"keywords,omitempty" db:"keywords"` // WARN: should this really be nullable?
-		LangIDs  []int16   `json:"lang_ids,omitempty" db:"lang_ids"`
-		Creators []Person  `json:"creators,omitempty" db:"creators"`
+		ID      uuid.UUID `json:"id" db:"id,pk,unique"`
+		Title   string    `json:"title" db:"title"`
+		Kind    string    `json:"kind" db:"kind"`
+		Created time.Time `json:"keywords,omitempty" db:"created"`
+		Creator int32     `json:"creator,omitempty" db:"creator"`
 	}
 
 	// Genre does not hage a UUID due to parent-child relationships
@@ -44,6 +44,7 @@ type (
 
 	MediaStorage struct {
 		db *sqlx.DB
+		l  *zerolog.Logger
 	}
 )
 
@@ -64,8 +65,8 @@ var (
 	}
 )
 
-func NewMediaStorage(db *sqlx.DB) *MediaStorage {
-	return &MediaStorage{}
+func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
+	return &MediaStorage{db: db, l: l}
 }
 
 func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err error) {
@@ -75,6 +76,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err e
 	default:
 		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
 		if err != nil {
+			ms.l.Error().Err(err).Msg("error preparing statement")
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
@@ -82,6 +84,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err e
 		row := stmt.QueryRowContext(ctx, id)
 		var kind string
 		if err := row.Scan(&kind); err != nil {
+			ms.l.Error().Err(err).Msg("error scanning row")
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
 		switch kind {
@@ -103,6 +106,41 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err e
 
 func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
+}
+
+func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Media, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		if ms.db == nil {
+			ms.l.Error().Msg("no database connection or nil pointer")
+			return nil, fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media.media ORDER BY RANDOM() LIMIT $1")
+		if err != nil {
+			ms.l.Error().Err(err).Msg("error preparing statement")
+			return nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		rows, err := stmt.QueryxContext(ctx, count)
+		if err != nil {
+			ms.l.Error().Err(err).Msg("error querying rows")
+			return nil, fmt.Errorf("error querying rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var m Media
+			if err := rows.StructScan(&m); err != nil {
+				ms.l.Error().Err(err).Msg("error scanning row")
+				return nil, fmt.Errorf("error scanning row: %w", err)
+			}
+			media = append(media, &m)
+		}
+		return media, nil
+	}
 }
 
 func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {

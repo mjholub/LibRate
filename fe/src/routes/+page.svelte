@@ -7,9 +7,14 @@
 	import { isAuthenticated, member as memberStore } from '../stores/members/auth.ts';
 	import type { Review } from '../types/review.ts';
 	import type { Member } from '../types/member.ts';
+	import type { UUID } from '../types/utils.ts';
+	import { randomStore } from '../stores/media/getRandom.ts';
+	import MediaCarousel from '../components/media/MediaCarousel.svelte';
 
 	let reviews: Review[] = [];
 	let member: Member = $memberStore;
+
+	let randomMedia: UUID[] = [];
 </script>
 
 <div class="navbar">
@@ -18,7 +23,7 @@
 
 <div class="app">
 	<div class="left">
-		<ReviewList {reviews} />
+		<MediaCarousel />
 	</div>
 	<div class="right">
 		{#if $isAuthenticated}

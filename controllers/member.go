@@ -12,9 +12,21 @@ import (
 )
 
 // MemberController allows for the retrieval of user information
-type MemberController struct {
-	storage models.MemberStorage
-}
+type (
+	// IMemberController is the interface for the member controller
+	// It defines the methods that the member controller must implement
+	// This is useful for mocking the member controller in unit tests
+	IMemberController interface {
+		GetMember(c *fiber.Ctx) error
+		UpdateMember(c *fiber.Ctx) error
+		DeleteMember(c *fiber.Ctx) error
+	}
+
+	// MemberController is the controller for member endpoints
+	MemberController struct {
+		storage models.MemberStorage
+	}
+)
 
 func NewMemberController(storage models.MemberStorage) *MemberController {
 	return &MemberController{storage: storage}
@@ -56,7 +68,7 @@ func (mc *MemberController) UpdateMember(c *fiber.Ctx) error {
 	})
 }
 
-// DeleteMember handles the deletion of a user
+// DeleteMember handles the deletion of an user
 func (mc *MemberController) DeleteMember(c *fiber.Ctx) error {
 	var input models.MemberInput
 	err := json.Unmarshal(c.Body(), &input)
