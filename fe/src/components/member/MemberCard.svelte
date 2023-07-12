@@ -36,7 +36,9 @@
 		regDate = new Date(member.regdate * 1000).toLocaleDateString();
 	}
 	onMount(() => {
-		getMemberProps();
+		if (member && member.id) {
+			getMemberProps();
+		}
 	});
 </script>
 
