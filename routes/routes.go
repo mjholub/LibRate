@@ -36,7 +36,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	rStor := models.NewRatingStorage(dbConn, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
-	mediaStor := models.NewMediaStorage(dbConn)
+	mediaStor := models.NewMediaStorage(dbConn, logger)
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	sc := controllers.NewSearchController(dbConn)
 

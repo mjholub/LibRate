@@ -25,10 +25,20 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 			title VARCHAR(255) NOT NULL,
 			kind media.kind NOT NULL,
 			created TIMESTAMP DEFAULT NOW() NOT NULL,
-			creators serial4 NOT NULL references people.person(id);
+			creator INTEGER NOT NULL references people.person(id);
 		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
+		}
+		// junction table for additional media creators
+		_, err = connection.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS media.media_creators (
+			media_id UUID NOT NULL references media.media(id),
+			creator_id INTEGER NOT NULL references people.person(id),
+			PRIMARY KEY (media_id, creator_id)
+		);`)
+		if err != nil {
+			return fmt.Errorf("failed to create media creators table: %w", err)
 		}
 		_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.genres (
