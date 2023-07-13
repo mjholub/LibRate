@@ -7,12 +7,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Config struct {
-	Level  string `yaml:"level"`
-	Target string `yaml:"target"`
-	Format string `yaml:"format"`
-}
-
 // FIXME: add function to load logger config in the config package
 func Init(c *Config) zerolog.Logger {
 	zerolog.TimeFieldFormat = time.RFC822Z
