@@ -6,7 +6,7 @@ export type Media = {
   kind: string;
   title: string;
   created: Date;
-  creator: Person | null;
+  creator: Person;
 }
 
 export type MediaImage = {

@@ -95,6 +95,7 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	media, err := mc.storage.GetRandom(ctx, 5)
 	if err != nil {
 		//nolint:errcheck
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
 		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
 	}
 
@@ -113,6 +114,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "film":
 		var film models.Film
 		if err := c.BodyParser(&film); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &film
@@ -120,6 +122,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "album":
 		var album models.Album
 		if err := c.BodyParser(&album); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &album
@@ -127,6 +130,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "track":
 		var track models.Track
 		if err := c.BodyParser(&track); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &track
