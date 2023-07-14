@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,6 +31,11 @@ type (
 	MediaController struct {
 		storage models.MediaStorage
 	}
+
+	mediaError struct {
+		ID  uuid.UUID
+		Err error
+	}
 )
 
 func NewMediaController(storage models.MediaStorage) *MediaController {
@@ -55,11 +61,17 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
 	}
 
-	return c.JSON(media)
+	detailedMedia, err := mc.storage.GetMediaDetails(ctx, media.Kind, media.ID)
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
+	}
+
+	return c.JSON(detailedMedia)
 }
 
 // GetRecommendations returns media recommendations for a user based on collaborative filtering
-// FIXME: the actual underlying functionality, i.e. the recommendations server is yet to be implemented
+// TODO: the actual underlying functionality, i.e. the recommendations server
 func GetRecommendations(c *fiber.Ctx) error {
 	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
@@ -99,7 +111,39 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
 	}
 
-	return c.JSON(media)
+	mc.storage.Log.Info().Msgf("Got %d random media items", len(media))
+	mediaItems := make([]interface{}, len(media))
+
+	errChan := make(chan mediaError, len(media))
+	var (
+		wg       sync.WaitGroup
+		mDetails interface{}
+	)
+
+	for i, m := range media {
+		wg.Add(1)
+		go func(i int, m *models.Media) {
+			defer wg.Done()
+			mDetails, err = mc.storage.GetMediaDetails(ctx, m.Kind, m.ID)
+			if err != nil {
+				errChan <- mediaError{ID: m.ID, Err: err}
+				return
+			}
+			mediaItems[i] = mDetails
+		}(i, m)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	if len(errChan) > 0 {
+		for e := range errChan {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s", e.ID)
+		}
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
+	}
+
+	return c.JSON(mediaItems)
 }
 
 // WARN: this is probably wrong

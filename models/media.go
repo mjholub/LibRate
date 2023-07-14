@@ -69,38 +69,41 @@ func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	return &MediaStorage{db: db, Log: l}
 }
 
-func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err error) {
+func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return Media{}, ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media WHERE uuid = ?")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return Media{}, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
 		row := stmt.QueryRowContext(ctx, id)
-		var kind string
-		if err := row.Scan(&kind); err != nil {
+		if err := row.Scan(&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator); err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
-			return nil, fmt.Errorf("error scanning row: %w", err)
+			return Media{}, fmt.Errorf("error scanning row: %w", err)
 		}
-		switch kind {
-		case "book":
-			return ms.getBook(ctx, id)
-		case "album":
-			return ms.getAlbum(ctx, id)
-		case "track":
-			return ms.getTrack(ctx, id)
-		case "film":
-			return ms.getFilm(ctx, id)
-		case "tv_show":
-			return ms.getSeries(ctx, id)
-		default:
-			return nil, fmt.Errorf("unknown media kind")
-		}
+		return media, nil
+	}
+}
+
+func (ms *MediaStorage) GetMediaDetails(ctx context.Context, mediaKind string, id uuid.UUID) (interface{}, error) {
+	switch mediaKind {
+	case "book":
+		return ms.getBook(ctx, id)
+	case "album":
+		return ms.getAlbum(ctx, id)
+	case "track":
+		return ms.getTrack(ctx, id)
+	case "film":
+		return ms.getFilm(ctx, id)
+	case "tv_show":
+		return ms.getSeries(ctx, id)
+	default:
+		return nil, fmt.Errorf("unknown media kind")
 	}
 }
 
