@@ -2,36 +2,49 @@ package logging
 
 import (
 	"os"
-	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 )
 
 // FIXME: add function to load logger config in the config package
 func Init(c *Config) zerolog.Logger {
-	zerolog.TimeFieldFormat = time.RFC822Z
+	zerolog.TimeFieldFormat = lo.Ternary(c.Timestamp.Enabled, c.Timestamp.Format, "")
+
 	switch c.Level {
 	case "trace":
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel) // pretty, for dev env
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel) // compact, for prod env
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	default:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
-	if c.Target == "stdout" {
-		if c.Format == "json" {
-			return zerolog.New(os.Stdout).With().Timestamp().
-				Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		}
-		return zerolog.New(os.Stdout).With().Timestamp().Logger()
+	logger := lo.TernaryF(c.Target == "stdout",
+		func() interface{} {
+			return lo.TernaryF(c.Format == "json",
+				func() interface{} {
+					return zerolog.New(os.Stdout).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
+				},
+				func() interface{} {
+					return zerolog.New(os.Stdout).With().Timestamp().Logger()
+				}).(zerolog.Logger)
+		},
+		func() interface{} {
+			return lo.TernaryF(c.Format == "json",
+				func() interface{} {
+					return zerolog.New(os.Stderr).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+				},
+				func() interface{} {
+					return zerolog.New(os.Stderr).With().Timestamp().Logger()
+				}).(zerolog.Logger)
+		}).(zerolog.Logger)
+
+	if c.Caller {
+		logger = logger.With().Caller().Logger()
 	}
 
-	if c.Format == "json" {
-		return zerolog.New(os.Stderr).With().Timestamp().
-			Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	}
-	return zerolog.New(os.Stderr).With().Timestamp().Logger()
+	return logger
 }

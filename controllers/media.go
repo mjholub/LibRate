@@ -42,7 +42,8 @@ func NewMediaController(storage models.MediaStorage) *MediaController {
 func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+		mc.storage.Log.Error().Err(err).Msgf("Failed to parse media ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -50,7 +51,8 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 
 	media, err := mc.storage.Get(ctx, mediaID)
 	if err != nil {
-		h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
 	}
 
 	return c.JSON(media)
@@ -69,7 +71,6 @@ func GetRecommendations(c *fiber.Ctx) error {
 
 	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
 	if err != nil {
-		//nolint:errcheck
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
 	}
 	defer conn.Close()
@@ -80,7 +81,6 @@ func GetRecommendations(c *fiber.Ctx) error {
 		MemberId: memberID,
 	})
 	if err != nil {
-		//nolint:errcheck
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
 	}
 
@@ -89,14 +89,14 @@ func GetRecommendations(c *fiber.Ctx) error {
 
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
 func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
+	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	media, err := mc.storage.GetRandom(ctx, 5)
 	if err != nil {
-		//nolint:errcheck
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
-		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
 	}
 
 	return c.JSON(media)
