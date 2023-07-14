@@ -8,7 +8,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
 - Go toolchain installed
-~~- Python 3 for setting up the uint Postgres extension~~ **FIXME:** fork the extension since one of the features it depends on has been removed in Postgres 15+
+- ~~Python 3 for setting up the uint Postgres extension~~ **FIXME:** fork the extension since one of the features it depends on has been removed in Postgres 15+
 - a working Postgres instance. You'll also need to install the development files package
   since LibRate uses Postgres extensions
 
