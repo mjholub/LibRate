@@ -92,6 +92,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Get("/api/member/:id", memberSvc.GetMember)
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 
+	app.Get("/api/media/:id", mediaCon.GetMedia)
 	// this is a very expensive operation, so it's
 	// parallelized to reduce the higher latency impact
 	wg.Add(1)
