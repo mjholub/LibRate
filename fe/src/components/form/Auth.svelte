@@ -24,6 +24,9 @@
 	// helper function to check password strength
 	let timeoutId: any;
 	const checkEntropy = async (password: string) => {
+		// if just logging in, don't check the entropy
+		if (!isRegistration) return;
+
 		clearTimeout(timeoutId);
 		timeoutId = setTimeout(async () => {
 			const response = await fetch(`/api/password-entropy`, {
@@ -43,7 +46,7 @@
 		Promise.resolve(password);
 	};
 
-	$: password && checkEntropy(password);
+	$: isRegistration && password && checkEntropy(password);
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -107,17 +110,21 @@
 		});
 
 		const data = await response.json();
+		console.debug(data);
 
 		response.ok
 			? (localStorage.setItem('token', data.token),
 			  localStorage.setItem('email_or_username', ''),
 			  isAuthenticated.set(true),
 			  member.set(data.member),
-			  (window.location.href = '/'))
+			  (window.location.href = '/'),
+			  console.info('Login successful'))
 			: (errorMessage = data.message);
+		console.error(data.message);
 	};
 </script>
 
+<!-- Form submission handler -->
 <form on:submit|preventDefault={isRegistration ? register : login}>
 	{#if !isRegistration}
 		<label for="email_or_username">Email or Username:</label>
@@ -137,6 +144,7 @@
 			{toggleObfuscation}
 		/>
 	{:else}
+		<!-- Registration form -->
 		<label for="email">Email:</label>
 		<input id="email" bind:value={email} type="email" required aria-label="Email" />
 
@@ -162,6 +170,7 @@
 			aria-label="Confirm Password"
 			on:input={() => checkEntropy(passwordConfirm)}
 		/>
+		<!-- Password strength indicator -->
 		{#if passwordStrength !== 'Password is strong enough'}
 			<p>
 				Password strength: {passwordStrength} bits of (<a
@@ -178,7 +187,7 @@
 	{/if}
 
 	{#if !isRegistration}
-		<button type="submit">Sign In</button>
+		<button type="submit" on:click={login}>Sign In</button>
 		<button type="button" on:click={startRegistration}>Sign Up</button>
 	{:else}
 		<button type="submit">Sign Up</button>

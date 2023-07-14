@@ -4,12 +4,17 @@ import type { UUID } from './utils';
 export type Media = {
   UUID: string;
   kind: string;
-  name: string;
-  genres: Genre[];
-  keywords: string[];
-  lang_ids: number[];
-  creators: Person[];
+  title: string;
+  created: Date;
+  creator: Person;
 }
+
+export type MediaImage = {
+  mediaID: UUID;
+  imageID: number;
+  isMain: boolean;
+};
+
 
 export type Genre = {
   id: number;

@@ -13,9 +13,22 @@ import (
 	"codeberg.org/mjh/LibRate/models"
 )
 
-type ReviewController struct {
-	rs *models.RatingStorage
-}
+type (
+	// IReviewController is the interface for the review controller
+	// It defines the methods that the review controller must implement
+	// This is useful for mocking the review controller in unit tests
+	IReviewController interface {
+		GetRatings(c *fiber.Ctx) error
+		GetLatestRatings(c *fiber.Ctx) error
+		GetAverageRatings(c *fiber.Ctx) error
+		PostRating(c *fiber.Ctx) error
+	}
+
+	// ReviewController is the controller for review endpoints
+	ReviewController struct {
+		rs *models.RatingStorage
+	}
+)
 
 func NewReviewController(rs models.RatingStorage) *ReviewController {
 	return &ReviewController{rs: &rs}
@@ -98,6 +111,9 @@ func (rc *ReviewController) PostRating(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateRating handles the update of a user's review for a specific media item
+// The types of values that can be updated are defined by the union type models.UpdateableKeyTypes
+// This way, things like the date of the review are not updateable
 func (rc *ReviewController) UpdateRating(c *fiber.Ctx) error {
 	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {

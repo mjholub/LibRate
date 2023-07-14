@@ -19,19 +19,19 @@ func main() {
 	init := flag.Bool("init", false, "Initialize database")
 	flag.Parse()
 	// TODO: refactor so it looks better
-	logConf := cfg.LoadLoggerConfig().OrElse(func(err error) logging.Config {
-		return logging.Config{
-			Level:  "info",
-			Target: "stdout",
-			Format: "json",
-		}
-	}(nil))
+	logConf := logging.Config{
+		Level:  "debug",
+		Target: "stdout",
+		Format: "json",
+	}
 	log := logging.Init(&logConf)
+	// Load config
 	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
 	if cfg.LoadConfig().IsError() {
 		err := cfg.LoadConfig().Error()
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
 	}
+	// Initialize database if it's running
 	if DBRunning(conf.Port) {
 		if *init {
 			if err := db.InitDB(); err != nil {
@@ -42,12 +42,15 @@ func main() {
 	} else {
 		log.Warn().Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
 	}
+
+	// Connect to database
 	dbConn, err := db.Connect(&conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer dbConn.Close()
 
+	// Create a new Fiber instance
 	app := fiber.New()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{
 		Logger: &log,
@@ -56,11 +59,22 @@ func main() {
 	// CORS
 	setupCors(app)
 
-	routes.Setup(&log, &conf, dbConn, app)
+	// Setup routes
+	err = routes.Setup(&log, &conf, dbConn, app)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to setup routes")
+	}
 
+	// Listen on port 3000
 	err = app.Listen(":3000")
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen on port 3000")
+	}
+
+	// Graceful shutdown
+	err = app.ShutdownWithTimeout(time.Second * 10)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to shutdown app gracefully")
 	}
 }
 

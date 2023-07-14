@@ -1,6 +1,8 @@
-import { writable, Writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
+import type { Writable } from 'svelte/store';
 import type { TrackRating, CastRating } from '../../types/review.ts';
 import type { Track } from '../../types/music.ts';
+import type { UUID } from '../../types/utils.ts';
 
 interface ReviewStoreState {
   favoriteTrack: Track | null;
@@ -13,14 +15,15 @@ interface ReviewStoreState {
 
 interface ReviewStore extends Writable<ReviewStoreState> {
   handleReviewChange: (event: Event) => void;
-  submitReview: () => void;
+  submitReview: (mediaID: UUID) => Promise<void>;
   setFavoriteTrack: (track: Track) => void;
   setTrackRatings: (ratings: TrackRating[]) => void;
+  setTrackRating: (rating: TrackRating) => void;
   // TODO: implement fetching rating scale from user prefs
   getRatingScale: (userID: number) => number;
 }
 
-const  initialState: ReviewStoreState = {
+const initialState: ReviewStoreState = {
   favoriteTrack: null,
   trackRatings: [],
   castRatings: [],
@@ -30,62 +33,64 @@ const  initialState: ReviewStoreState = {
 };
 
 function createReviewStore() {
-  const { subscribe, update } = writable<ReviewStoreState>(initialState);
+  const { subscribe, set, update } = writable<ReviewStoreState>(initialState);
 
   return {
-  subscribe,
-  handleReviewChange: (event: Event) => update((state: ReviewStoreState) => {
-    state.reviewText = (event.target as HTMLTextAreaElement).value;
+    subscribe,
+    handleReviewChange: (event: Event) => update((state: ReviewStoreState) => {
+      const reviewText = (event.target as HTMLTextAreaElement).value;
+      const wordCount = state.reviewText.split(/\s+/).length;
+      return { ...state, reviewText, wordCount };
+    }),
 
-  state.wordCount = state.reviewText.split(/\s+/).length;
-  }),
+    submitReview: async (mediaID: UUID) => {
 
-  submitReview: async () => {
-  let reviewText, wordCount;
+      // Get the current state of the store synchronously
+      const state = get(reviewStore);
+      if (!state.wordCount || state.wordCount < 20) {
+        alert('Review must be at least 20 words!');
+        return;
+      }
 
-  // Subscribe to the store to get current state
-  reviewStore.subscribe(state => {
-    reviewText = state.reviewText;
-    wordCount = state.wordCount;
-  })();
+      const memberID = 1; // Replace with actual member ID
+      const response = await fetch('/api/review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          MemberID: memberID,
+          MediaID: mediaID,
+          ReviewText: state.reviewText
+        })
+      });
 
-  if (wordCount < 20) {
-    alert('Review must be at least 20 words!');
-    return;
-  }
-
-  const memberID = 1; // Replace with actual member ID
-  const response = await fetch('/api/review', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+      response.ok ?
+        alert('Review submitted successfully!') :
+        alert('Failed to submit review.');
+      // Reset the store state to initial after submission
+      set(initialState);
     },
-    body: JSON.stringify({
-      MemberID: memberID,
-      MediaID: 1, // Replace with the actual media ID
-      ReviewText: reviewText
-    })
-  });
 
-  if (response.ok) {
-    alert('Review submitted successfully!');
-  } else {
-    alert('Failed to submit review.');
+    setFavoriteTrack: (track: Track) => update((state: ReviewStoreState) => {
+      return { ...state, favoriteTrack: track };
+    }),
+  
+    // setTrackRating handles both adding and removing track ratings
+    setTrackRating: (trackRating: TrackRating) => update((state: ReviewStoreState) => {
+      // if track is already rated, remove the rating
+      // otherwise, add the rating
+      if (state.trackRatings) {
+        const isRated = state.trackRatings.some((tr) => tr.track.media_id === trackRating.track.media_id);
+        const trackRatings = isRated
+          ? state.trackRatings.filter((tr) => tr.track.media_id !== trackRating.track.media_id)
+          : [...state.trackRatings, trackRating];
+        return { ...state, trackRatings };
+      } else {
+        return { ...state, trackRatings: [trackRating] };
+      }
+    }),
   }
-  // Reset the store state to initial after submission
-  set(initialState);
-},
-
-  setFavoriteTrack: (track: Track) => update((state: ReviewStoreState) => {
-    state.favoriteTrack = track;
-  }),
-
-  setTrackRating: (trackRating: TrackRating) => update((state: ReviewStoreState) => {
-    state.trackRatings = state.trackRatings.find((tr) => tr.trackID === trackRating.trackID)
-      ? state.trackRatings.filter((tr) => tr.trackID !== trackRating.trackID)
-      : [...state.trackRatings, trackRating];
-  }),
-}
 };
 
 export const reviewStore: ReviewStore = createReviewStore(); 

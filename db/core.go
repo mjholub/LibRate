@@ -107,12 +107,12 @@ func InitDB() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
-	_, err = db.ExecContext(ctx, `CREATE SCHEMA IF NOT EXISTS public;`)
+	_, err = db.ExecContext(ctx, `CREATE SCHEMA IF NOT EXISTS public; SET search_path TO public;`)
 	if err != nil {
 		return fmt.Errorf("failed to create public schema: %w", err)
 	}
 	// set up the extensions
-	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm"); err != nil {
+	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"); err != nil {
 		return fmt.Errorf("failed to create database extensions: %w", err)
 	}
 	/* TODO: verify whether use sequential UUIDs or just ints
