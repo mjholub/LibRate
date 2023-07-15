@@ -9,14 +9,14 @@ export type Person = {
   last_name: string;
   nick_names: string[];
   roles: string[];
-  works: Media[];
+  works: Media[] | null;
   birth: Date | null; // sql.NullTime in the backend
   death: Date | null;
   website: string;
   bio: string;
   photos: string[];
-  hometown: Place;
-  residence: Place;
+  hometown: Place | null;
+  residence: Place | null;
   added: Date;
   modified: Date | null;
 };

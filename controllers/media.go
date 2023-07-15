@@ -70,35 +70,6 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	return c.JSON(detailedMedia)
 }
 
-// GetRecommendations returns media recommendations for a user based on collaborative filtering
-// TODO: the actual underlying functionality, i.e. the recommendations server
-func GetRecommendations(c *fiber.Ctx) error {
-	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		//nolint:errcheck
-		return h.Res(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid member ID %s (must be an integer)", c.Params("id")))
-	}
-
-	memberID := int32(mID)
-
-	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
-	if err != nil {
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
-	}
-	defer conn.Close()
-
-	s := services.NewRecommendationServiceClient(conn)
-
-	recommendedMedia, err := s.GetRecommendations(context.Background(), &services.GetRecommendationsRequest{
-		MemberId: memberID,
-	})
-	if err != nil {
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
-	}
-
-	return c.JSON(recommendedMedia)
-}
-
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
 func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
@@ -124,6 +95,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 		wg.Add(1)
 		go func(i int, m *models.Media) {
 			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
 			mDetails, err = mc.storage.GetMediaDetails(ctx, m.Kind, m.ID)
 			if err != nil {
 				errChan <- mediaError{ID: m.ID, Err: err}
@@ -231,6 +204,35 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(media)
+}
+
+// GetRecommendations returns media recommendations for a user based on collaborative filtering
+// TODO: the actual underlying functionality, i.e. the recommendations server
+func GetRecommendations(c *fiber.Ctx) error {
+	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		//nolint:errcheck
+		return h.Res(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid member ID %s (must be an integer)", c.Params("id")))
+	}
+
+	memberID := int32(mID)
+
+	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
+	}
+	defer conn.Close()
+
+	s := services.NewRecommendationServiceClient(conn)
+
+	recommendedMedia, err := s.GetRecommendations(context.Background(), &services.GetRecommendationsRequest{
+		MemberId: memberID,
+	})
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
+	}
+
+	return c.JSON(recommendedMedia)
 }
 
 func AddGenre() {

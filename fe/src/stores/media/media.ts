@@ -1,45 +1,43 @@
-import { writable } from "svelte/store";
-import type { Writable } from "svelte/store";
-import type { MediaImage } from "../../types/media";
-import type { UUID } from "../../types/utils";
+import { writable } from 'svelte/store';
+import { initialPerson } from './people.ts';
+import type { Writable } from 'svelte/store';
+import type { UUID } from '../../types/utils.ts';
+import type { Person } from '../../types/people.ts';
 
-interface MediaImageStoreState {
-  mediaID?: UUID;
-  images: MediaImage[];
-  mainImage: MediaImage;
-  mainImagePath?: string;
+
+export interface MediaStoreState {
+  mediaID: UUID | UUID[] | null;
+  mediaTitle?: string;
+  mediaKind?: string;
+  created?: Date;
+  mediaCreator?: Person;
 };
 
-interface MediaImageStore extends Writable<MediaImageStoreState> {
-  getImagesByMedia: (mediaID: UUID) => Promise<void>;
-  setMainImage: (image: MediaImage) => void;
+interface MediaStore extends Writable<MediaStoreState> {
+  getMedia: (mediaID: UUID) => Promise<void>;
 };
 
-const initialState: MediaImageStoreState = {
-  images: [],
-  mainImage: {
-    mediaID: "",
-    imageID: 0,
-    isMain: false,
-  },
+const initialState: MediaStoreState = {
+  mediaID: null,
+  mediaTitle: '',
+  mediaKind: '',
+  created: new Date(),
+  mediaCreator: { ...initialPerson },
 };
 
-function createMediaImageStore() {
-  const { subscribe, update } = writable<MediaImageStoreState>(initialState);
+function createMediaStore(): MediaStore {
+  const { subscribe, set, update } = writable<MediaStoreState>(initialState);
 
   return {
     subscribe,
-    getImagesByMedia: async (mediaID: UUID) => {
-      const response = await fetch(`/api/media/${mediaID}/images`);
-      const images = await response.json();
-      update((state: MediaImageStoreState) => ({ ...state, images }));
+    set,
+    update,
+    getMedia: async (mediaID: UUID) => {
+      const response = await fetch(`/api/media/${mediaID}`);
+      const media = await response.json();
+      update((state: MediaStoreState) => ({ ...state, ...media }));
     },
-
-    setMainImage: (image: MediaImage) => update((state: MediaImageStoreState) => {
-      state.mainImage = image;
-      return state;
-    })
   };
 }
 
-export const mediaImageStore = createMediaImageStore();
+export const mediaStore: MediaStore = createMediaStore();

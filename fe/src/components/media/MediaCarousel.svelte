@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { randomStore } from '../../stores/media/getRandom.ts';
-	import { mediaImageStore } from '../../stores/media/media.ts';
+	import { mediaImageStore } from '../../stores/media/image.ts';
 	import { imageStore } from '../../stores/cdn/imagePath.ts';
 	import MediaCard from './MediaCard.svelte';
 	import type { Person } from '../../types/people.ts';
@@ -16,9 +16,15 @@
 	let mediaImgPath = '';
 	let creators = [] as Person[];
 
-	onMount(async () => {
-		await randomStore.getRandom();
-		randomStore.subscribe((data) => {
+	onMount(() => {
+		(async () => {
+			await randomStore.getRandom();
+		})();
+		console.info('mounting MediaCarousel initialized');
+		console.info('data from randomStore: ', randomStore);
+
+		let subscriptions: (() => void)[] = [];
+		let unsubscribe = randomStore.subscribe((data) => {
 			if (
 				!data.mediaID ||
 				!data.mediaTitle ||
@@ -35,32 +41,46 @@
 				created: data.created,
 				creator: data.mediaCreator
 			};
-			media.push(newMedia);
-		});
-		media.forEach(async (mediaItem) => {
-			await mediaImageStore.getImagesByMedia(mediaItem.UUID);
-			mediaImageStore.subscribe((data) => {
-				if (!data || !data.mediaID || data.images.length === 0) {
-					return;
+			media = [...media, newMedia];
+
+			// fetch the images and paths here, so that they run after media is updated
+			media.forEach(async (mediaItem) => {
+				console.debug('mediaItem: ', mediaItem);
+				await mediaImageStore.getImagesByMedia(mediaItem.UUID);
+				let mediaImgStrSub = mediaImageStore.subscribe((data) => {
+					if (!data || !data.mediaID || data.images.length === 0) {
+						return;
+					}
+					mediaImage = {
+						mediaID: data.mediaID,
+						imageID: data.images[0].imageID,
+						isMain: data.mainImage.isMain
+					};
+				});
+				subscriptions.push(mediaImgStrSub);
+				// fetch the paths of the images using getPaths from imageStore
+				await imageStore.getPaths(mediaImage.imageID);
+				console.debug('imageStore: ', imageStore);
+				let imgStoreSub = imageStore.subscribe((data) => {
+					if (!data || !data.images || data.images.length === 0) {
+						return;
+					}
+					mediaImgPath = data.images[0].source;
+				});
+				subscriptions.push(imgStoreSub);
+				if (mediaItem?.creator) {
+					creators.push(mediaItem?.creator);
 				}
-				mediaImage = {
-					mediaID: data.mediaID,
-					imageID: data.images[0].imageID,
-					isMain: data.mainImage.isMain
-				};
 			});
-			// fetch the paths of the images using getPaths from imageStore
-			await imageStore.getPaths(mediaImage.imageID);
-			imageStore.subscribe((data) => {
-				if (!data || !data.images || data.images.length === 0) {
-					return;
-				}
-				mediaImgPath = data.images[0].source;
-			});
-			if (mediaItem?.creator) {
-				creators.push(mediaItem?.creator);
-			}
 		});
+
+		subscriptions.push(unsubscribe);
+		// noop function to unsubscribe from the store when component is destroyed
+		return () => {
+			subscriptions.forEach((unsub) => {
+				unsub();
+			});
+		};
 	});
 </script>
 
