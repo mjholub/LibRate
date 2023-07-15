@@ -92,15 +92,8 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Get("/api/member/:id", memberSvc.GetMember)
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 
+	app.Get("/api/media/random", mediaCon.GetRandom)
 	app.Get("/api/media/:id", mediaCon.GetMedia)
-	// this is a very expensive operation, so it's
-	// parallelized to reduce the higher latency impact
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		app.Get("/api/media/random", mediaCon.GetRandom)
-	}()
-	wg.Wait()
 
 	app.Post("/api/search", sc.Search)
 	app.Options("/api/search", func(c *fiber.Ctx) error {
