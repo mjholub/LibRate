@@ -45,6 +45,7 @@ type (
 	MediaStorage struct {
 		db  *sqlx.DB
 		Log *zerolog.Logger
+		ks  *KeywordStorage
 	}
 )
 
@@ -66,7 +67,8 @@ var (
 )
 
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
-	return &MediaStorage{db: db, Log: l}
+	ks := NewKeywordStorage(db, l)
+	return &MediaStorage{db: db, Log: l, ks: ks}
 }
 
 func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
@@ -153,7 +155,7 @@ func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService
 	case *Album:
 		return addAlbum(ctx, db, *m)
 	case *Track:
-		return addTrack(ctx, db, *m)
+		return addTrack(ctx, db, m)
 	default:
 		return fmt.Errorf("unknown media type")
 	}
