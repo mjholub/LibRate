@@ -1,9 +1,9 @@
 import type { Either } from 'typescript-monads'
 import type { Person, Studio, Group } from './people';
-import type { Genre } from './media';
+import type { Genre, Media } from './media';
 import type { UUID } from './utils';
 
-export interface Album {
+export interface Album extends Media {
   media_id: UUID;
   name: string;
   album_artists: Either<Person[], Group[]>;
@@ -16,7 +16,7 @@ export interface Album {
   languages?: string[];
 }
 
-export interface Track {
+export interface Track extends Media {
   media_id: UUID;
   name: string;
   artists: Either<Person[], Group[]>;

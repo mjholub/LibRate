@@ -1,14 +1,13 @@
 import type { Person } from './people';
 import type { UUID } from './utils';
-import type { Film, TVShow } from './film_tv';
 
-export type Media = {
-  UUID: string;
+export interface Media {
+  UUID: string | UUID;
   kind: string;
   title: string;
   created: Date;
-  creator: Person;
-} | Film | TVShow;
+  creator: Person | null;
+};
 
 export type MediaImage = {
   mediaID: UUID;
