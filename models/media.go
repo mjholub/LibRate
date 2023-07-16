@@ -85,7 +85,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 	case <-ctx.Done():
 		return Media{}, ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media WHERE uuid = ?")
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return Media{}, fmt.Errorf("error preparing statement: %w", err)
@@ -108,7 +108,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return "", fmt.Errorf("error preparing statement: %w", err)

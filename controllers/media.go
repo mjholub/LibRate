@@ -70,7 +70,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}
 
-	return c.JSON(detailedMedia)
+	return h.ResData(c, fiber.StatusOK, "success", detailedMedia)
 }
 
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
