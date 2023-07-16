@@ -1,12 +1,16 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 )
 
@@ -16,22 +20,22 @@ type (
 	}
 
 	Person struct {
-		ID         int32        `json:"id" db:"id,pk,unique,autoincrement"`
-		FirstName  string       `json:"first_name" db:"first_name"`
-		OtherNames []string     `json:"other_names,omitempty" db:"other_names"`
-		LastName   string       `json:"last_name" db:"last_name"`
-		NickNames  []string     `json:"nick_name,omitempty" db:"nick_name"`
-		Roles      []string     `json:"roles,omitempty" db:"roles"`
-		Works      []*uuid.UUID `json:"works" db:"works"`
-		Birth      sql.NullTime `json:"birth,omitempty" db:"birth"` // DOB can also be unknown
-		Death      sql.NullTime `json:"death,omitempty" db:"death"`
-		Website    string       `json:"website,omitempty" db:"website"`
-		Bio        string       `json:"bio,omitempty" db:"bio"`
-		Photos     []string     `json:"photos,omitempty" db:"photos"`
-		Hometown   Place        `json:"hometown,omitempty" db:"hometown"`
-		Residence  Place        `json:"residence,omitempty" db:"residence"`
-		Added      time.Time    `json:"added" db:"added"`
-		Modified   sql.NullTime `json:"modified,omitempty" db:"modified"`
+		ID         int32          `json:"id" db:"id,pk,unique,autoincrement"`
+		FirstName  string         `json:"first_name" db:"first_name"`
+		OtherNames pq.StringArray `json:"other_names,omitempty" db:"other_names"`
+		LastName   string         `json:"last_name" db:"last_name"`
+		NickNames  pq.StringArray `json:"nick_names,omitempty" db:"nick_names"`
+		Roles      pq.StringArray `json:"roles,omitempty" db:"roles"`
+		Works      []*uuid.UUID   `json:"works" db:"works"`
+		Birth      sql.NullTime   `json:"birth,omitempty" db:"birth"` // DOB can also be unknown
+		Death      sql.NullTime   `json:"death,omitempty" db:"death"`
+		Website    string         `json:"website,omitempty" db:"website"`
+		Bio        string         `json:"bio,omitempty" db:"bio"`
+		Photos     pq.StringArray `json:"photos,omitempty" db:"photos"`
+		Hometown   Place          `json:"hometown,omitempty" db:"hometown"`
+		Residence  Place          `json:"residence,omitempty" db:"residence"`
+		Added      time.Time      `json:"added" db:"added"`
+		Modified   sql.NullTime   `json:"modified,omitempty" db:"modified"`
 	}
 
 	Group struct {
@@ -69,6 +73,11 @@ type (
 		IsPublishing bool     `json:"is_publishing" db:"is_publishing"`
 		IsGame       bool     `json:"is_game" db:"is_game"`
 	}
+
+	PeopleStorage struct {
+		dbConn *sqlx.DB
+		logger *zerolog.Logger
+	}
 )
 
 var GroupKinds = []string{
@@ -79,6 +88,83 @@ var GroupKinds = []string{
 	"Band",
 	"Troupe",
 	"Other",
+}
+
+func NewPeopleStorage(dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
+	return &PeopleStorage{
+		dbConn: dbConn,
+		logger: logger,
+	}
+}
+
+func (p *PeopleStorage) GetPersonNames(ctx context.Context, id int32) (*Person, error) {
+	var person Person
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&person, "SELECT first_name, last_name, other_names, nick_names FROM people.person WHERE id = $1", id)
+		if err != nil {
+			return nil, err
+		}
+		return &person, nil
+	}
+}
+
+func (p *PeopleStorage) GetPerson(ctx context.Context, id int32) (*Person, error) {
+	var person Person
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&person, "SELECT * FROM people.person WHERE id = $1", id)
+		if err != nil {
+			return nil, err
+		}
+		return &person, nil
+	}
+}
+
+func (p *PeopleStorage) GetGroup(ctx context.Context, id int32) (*Group, error) {
+	var group Group
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&group, "SELECT * FROM people.group WHERE id = $1", id)
+		if err != nil {
+			return nil, err
+		}
+		return &group, nil
+	}
+}
+
+func (p *PeopleStorage) GetStudio(ctx context.Context, id int32) (*Studio, error) {
+	var studio Studio
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&studio, "SELECT * FROM people.studio WHERE id = $1", id)
+		if err != nil {
+			return nil, err
+		}
+		return &studio, nil
+	}
+}
+
+func (p *PeopleStorage) GetGroupName(ctx context.Context, id int32) (*Group, error) {
+	var group Group
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&group, "SELECT name FROM people.group WHERE id = $1", id)
+		if err != nil {
+			return nil, err
+		}
+		return &group, nil
+	}
 }
 
 func (g *Group) Validate() error {

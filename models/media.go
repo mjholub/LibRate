@@ -50,6 +50,7 @@ type (
 		db  *sqlx.DB
 		Log *zerolog.Logger
 		ks  *KeywordStorage
+		ps  *PeopleStorage
 	}
 )
 
@@ -72,7 +73,8 @@ var (
 
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
-	return &MediaStorage{db: db, Log: l, ks: ks}
+	ps := NewPeopleStorage(db, l)
+	return &MediaStorage{db: db, Log: l, ks: ks, ps: ps}
 }
 
 // Get scans into a complete Media struct
