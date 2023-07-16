@@ -1,5 +1,10 @@
 import type { Person, Group } from './people';
 import type { UUID } from './utils';
+import type { Album, Track } from './music';
+import type { Book } from './books';
+import type { Film, TVShow } from './film_tv';
+
+export type AnyMedia = Album | Track | Book | Film | TVShow;
 
 export interface Media {
   UUID: string | UUID;

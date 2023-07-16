@@ -1,7 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { UUID } from '../../types/utils.ts';
-import type { Media } from '../../types/media.ts';
+import type { AnyMedia } from '../../types/media.ts';
 import type { MediaStoreState } from './media.ts';
 
 interface RandomStore extends Writable<MediaStoreState> {
@@ -21,53 +20,63 @@ function createRandomStore(): RandomStore {
     set,
     update,
     getRandom: async () => {
-      const response = await fetch(`/api/media/random`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      try {
+        const response = await fetch(`/api/media/random`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
 
-      if (!response.ok) {
-        console.error(response.statusText);
-        throw new Error("Failed to fetch media");
+        if (!response.ok) {
+          console.error('Response not ok: ', response);
+          throw new Error(`Response not ok: ${response.status} ${response.statusText}`);
+        }
+
+        const responseBody = await response.json();
+        const mediaData: AnyMedia[] = responseBody.data;
+
+        if (!mediaData) {
+          console.error('No data returned from the server');
+          throw new Error('No data returned from the server');
+        }
+
+        console.debug(`mediaData: `, mediaData);
+
+        const mediaTypes = determineMediaTypes(mediaData);
+        mediaTypes.forEach((mediaType) => {
+          set({ ...initialRandomState, mediaType, [mediaType.toLowerCase()]: mediaData });
+        });
+      } catch (error) {
+        console.error('Error in getRandom: ', error);
+        throw error;
       }
-
-      const mediaData: Media[] = await response.json();
-      console.debug(`mediaData: `, mediaData);
-
-      const mediaType = determineMediaType(mediaData);
-      set({ ...initialRandomState, mediaType, [mediaType.toLowerCase()]: mediaData });
-    }
+    },
   };
-};
+}
 
-const determineMediaType = (mediaData: Media[]): 'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' => {
+const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> => {
   if (mediaData.length === 0) {
     throw new Error('Empty media data');
   }
 
-  const firstMedia = mediaData[0];
+  const mediaTypes: Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> = [];
 
-  if ('media_id' in firstMedia && 'album_artists' in firstMedia) {
-    return 'Album';
-  }
+  mediaData.forEach((media) => {
+    if ('media_id' in media && 'album_artists' in media) {
+      mediaTypes.push('Album');
+    } else if ('media_id' in media && 'track_number' in media && 'artists' in media) {
+      mediaTypes.push('Track');
+    } else if ('publication_date' in media && 'authors' in media && 'pages' in media) {
+      mediaTypes.push('Book');
+    } else if (media.kind === 'film') {
+      mediaTypes.push('Film');
+    } else if (media.kind === 'tvshow') {
+      mediaTypes.push('TVShow');
+    } else {
+      mediaTypes.push('Unknown');
+    }
+  });
 
-  if ('media_id' in firstMedia && 'track_number' in firstMedia && 'artists' in firstMedia) {
-    return 'Track';
-  }
-
-  if ('publication_date' in firstMedia && 'authors' in firstMedia && 'pages' in firstMedia) {
-    return 'Book';
-  }
-
-  if (firstMedia.kind === 'film') {
-    return 'Film';
-  }
-
-  if (firstMedia.kind === 'tvshow') {
-    return 'TVShow';
-  }
-
-  throw new Error('Unknown media type');
+  return mediaTypes;
 }
 
 export const randomStore: RandomStore = createRandomStore();

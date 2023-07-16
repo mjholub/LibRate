@@ -2,13 +2,14 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/samber/mo"
+	//"github.com/samber/mo"
 )
 
 type (
@@ -16,29 +17,30 @@ type (
 		MediaID      *uuid.UUID     `json:"media_id" db:"media_id,pk,unique"`
 		Name         string         `json:"name" db:"name"`
 		AlbumArtists AlbumArtist    `json:"album_artists" db:"album_artists"`
-		ImagePaths   pq.StringArray `json:"image_paths"` // we make use of a junction table that utilizes the image IDs
+		ImagePaths   pq.StringArray `json:"image_paths,omitempty"` // we make use of a junction table that utilizes the image IDs
 		ReleaseDate  time.Time      `json:"release_date" db:"release_date"`
 		Genres       []Genre        `json:"genres,omitempty" db:"genres"`
 		//	Studio       Studio                       `json:"studio,omitempty" db:"studio"`
-		Keywords []Keyword `json:"keywords,omitempty" db:"keywords"`
-		Duration time.Time `json:"duration" db:"duration"`
-		Tracks   []Track   `json:"tracks" db:"tracks"`
+		Keywords []Keyword    `json:"keywords,omitempty" db:"keywords"`
+		Duration sql.NullTime `json:"duration,omitempty" db:"duration"`
+		Tracks   []Track      `json:"tracks,omitempty" db:"tracks"`
 		//	Languages int16         `json:"languages" db:"languages,omitempty"`
 	}
 
 	AlbumArtist struct {
-		PersonArtists []*Person `json:"person_artist" db:"person_artist"`
-		GroupArtists  []*Group  `json:"group_artist" db:"group_artist"`
+		PersonArtists []Person `json:"person_artist,omitempty" db:"person_artist"`
+		GroupArtists  []Group  `json:"group_artist,omitempty" db:"group_artist"`
 	}
 
 	Track struct {
-		MediaID   *uuid.UUID                   `json:"media_id" db:"media_id,pk,unique"`
-		Number    int16                        `json:"track_number" db:"trac_number"`
-		Name      string                       `json:"name" db:"name"`
-		Artists   mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
-		Duration  time.Duration                `json:"duration" db:"duration"`
-		Lyrics    string                       `json:"lyrics,omitempty" db:"lyrics"`
-		Languages []string                     `json:"languages,omitempty" db:"languages"`
+		MediaID *uuid.UUID `json:"media_id" db:"media_id,pk,unique"`
+		Name    string     `json:"name" db:"name"`
+		AlbumID *uuid.UUID `json:"album_id" db:"album"`
+		//		Artists   mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
+		Duration time.Time `json:"duration" db:"duration"`
+		Lyrics   string    `json:"lyrics,omitempty" db:"lyrics"`
+		Number   int16     `json:"track_number" db:"track_number"`
+		// Languages []string                     `json:"languages,omitempty" db:"languages"`
 	}
 
 	MusicValues interface {
@@ -111,15 +113,6 @@ func addTrack(ctx context.Context, db *sqlx.DB, track *Track) error {
 		return fmt.Errorf("failed to insert track into media.tracks: %w", err)
 	}
 
-	artists, _ := track.Artists.Left()
-	for i := range artists {
-		_, err := db.ExecContext(ctx, "INSERT INTO media.track_artists (track, artist) VALUES ($1, $2)",
-			&track.MediaID, artists[i].ID)
-		if err != nil {
-			return fmt.Errorf("failed to insert track artist into media.track_artists: %w", err)
-		}
-	}
-
 	return nil
 }
 
@@ -149,7 +142,8 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 		if err != nil {
 			return Album{}, err
 		}
-		person, err := ms.ps.GetPersonNames(ctx, personID)
+		var person Person
+		person, err = ms.ps.GetPerson(ctx, personID)
 		if err != nil {
 			return Album{}, fmt.Errorf("error getting person names: %w", err)
 		}
@@ -168,7 +162,8 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 		if err != nil {
 			return Album{}, fmt.Errorf("error scanning row: %w", err)
 		}
-		group, err := ms.ps.GetGroupName(ctx, groupID)
+		var group Group
+		group, err = ms.ps.GetGroup(ctx, groupID)
 		if err != nil {
 			return Album{}, fmt.Errorf("error getting group name: %w", err)
 		}
@@ -235,20 +230,23 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	}
 
 	album.Tracks = tracks
+	ms.Log.Trace().Msgf("album: %v", album)
 
 	return album, nil
 }
 
 func (ms *MediaStorage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
-	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM tracks WHERE media_id = $1")
+	stmt, err := ms.db.PreparexContext(ctx, `SELECT * 
+		FROM media.tracks 
+		WHERE media_id = $1`)
 	if err != nil {
 		return Track{}, fmt.Errorf("error preparing statement: %w", err)
 	}
 	defer stmt.Close()
 
-	row := stmt.QueryRowContext(ctx, id)
+	row := stmt.QueryRowxContext(ctx, id)
 	var track Track
-	if err := row.Scan(&track); err != nil {
+	if err := row.StructScan(&track); err != nil {
 		return Track{}, fmt.Errorf("error scanning row: %w", err)
 	}
 

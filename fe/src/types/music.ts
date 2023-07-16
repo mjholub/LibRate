@@ -11,7 +11,7 @@ export interface Album extends Media {
   genres?: Genre[];
   //  studio?: Studio;
   keywords?: string[];
-  duration: number;
+  duration: number | null;
   tracks: Track[];
   //languages?: string[];
 }
@@ -23,10 +23,10 @@ type AlbumArtists = {
 
 export interface Track extends Media {
   media_id: UUID;
-  track_number: number;
   name: string;
-  artists: Person[] | Group[];
+  album_id: UUID;
   duration: number;
-  lyrics?: string;
-  languages?: string[];
+  lyrics?: string | null;
+  //languages?: string[];
+  track_number: number;
 }

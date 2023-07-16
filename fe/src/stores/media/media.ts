@@ -9,7 +9,7 @@ import type { Film, TVShow } from '../../types/film_tv.ts';
 
 export interface MediaStoreState {
   mediaID: UUID | UUID[] | null;
-  mediaType: 'Album' | 'Film' | 'TVShow' | 'Book' | 'Track' | null;
+  mediaType: 'Album' | 'Film' | 'TVShow' | 'Book' | 'Track' | 'Unknown' | null;
   mediaTitle?: string;
   mediaKind?: string;
   created?: Date;

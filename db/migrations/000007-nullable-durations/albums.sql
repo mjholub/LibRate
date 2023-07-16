@@ -1,0 +1,1 @@
+ALTER TABLE media.albums ALTER COLUMN duration DROP NOT NULL;

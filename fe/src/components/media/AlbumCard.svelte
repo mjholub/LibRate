@@ -3,6 +3,7 @@
 	import type { Album } from '../../types/music.ts';
 
 	export let album: Album;
+  export let imgPath: string;
 	// TODO: create a store that'd fetch the main image for an album
 	//export let albumMainImage: string;
 </script>
@@ -15,7 +16,7 @@
 {/if}
 <MediaCard
 	media={album}
-	image={album.image_paths[0]}
+	image={imgPath}
 	title={album.title}
 	creators={album.album_artists}
 />

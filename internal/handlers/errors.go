@@ -7,3 +7,10 @@ func Res(c *fiber.Ctx, statusCode int, message string) error {
 		"message": message,
 	})
 }
+
+func ResData(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
+	return c.Status(statusCode).JSON(fiber.Map{
+		"message": message,
+		"data":    data,
+	})
+}

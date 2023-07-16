@@ -66,7 +66,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	detailedMedia, err := mc.storage.
 		GetMediaDetails(ctx, media.Kind, media.ID)
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s", c.Params("id"))
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %w", c.Params("id"), err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}
 
@@ -79,7 +79,7 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	media, err := mc.storage.GetRandom(ctx, 5)
+	media, err := mc.storage.GetRandom(ctx, 2)
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
 		return h.Res(c, fiber.StatusInternalServerError,
@@ -90,25 +90,25 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	mediaItems := make([]interface{}, len(media))
 
 	errChan := make(chan mediaError, len(media))
-	var (
-		wg       sync.WaitGroup
-		mDetails interface{}
-	)
+	var wg sync.WaitGroup
 
 	// set an iterator variable so we can access the media item in the goroutine
 	i := 0
+	mc.storage.Log.Info().Msg("Getting media details")
 	for id, kind := range media {
 		wg.Add(1)
 		go func(i int, id uuid.UUID, kind string) {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
+			var mDetails interface{}
 			mDetails, err = mc.storage.
 				GetMediaDetails(ctx, kind, id)
 			if err != nil {
 				errChan <- mediaError{ID: id, Err: err}
 				return
 			}
+			mc.storage.Log.Info().Msgf("Got media details for media with ID %s", id.String())
 			mediaItems[i] = mDetails
 		}(i, id, kind)
 		i++
@@ -120,12 +120,12 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	if len(errChan) > 0 {
 		for e := range errChan {
 			mc.storage.Log.Error().Err(err).
-				Msgf("Failed to get media details for media with ID %s", e.ID)
+				Msgf("Failed to get media details for media with ID %s: %s", e.ID, e.Err.Error())
 		}
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}
 
-	return c.JSON(mediaItems)
+	return h.ResData(c, fiber.StatusOK, "success", mediaItems)
 }
 
 // WARN: this is probably wrong
