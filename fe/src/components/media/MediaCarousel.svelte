@@ -6,21 +6,26 @@
 	import MediaCard from './MediaCard.svelte';
 	import AlbumCard from './AlbumCard.svelte';
 	import type { Group, Person, Creator } from '../../types/people.ts';
-	import type { Media, MediaImage } from '../../types/media.ts';
-	import type { Album } from '../../types/music.ts';
+	import type { AnyMedia, Media, MediaImage } from '../../types/media.ts';
+	import type { Album, Track } from '../../types/music.ts';
 
-	let media: (Media | Album)[] = [];
-  let album: Album = {
-    media_id: '',
-    name: '',
-    album_artists: [],
-    image_paths: [],
-    release_date: new Date(),
-    genres: [],
-    keywords: [], 
-    duration: 0,
-    tracks: []
-  };
+	let media: (Album | Track | Media)[] = [];
+	let album: Album = {
+		UUID: '',
+		kind: 'album',
+		title: '',
+		created: new Date(),
+		media_id: '',
+		name: '',
+		album_artists: [],
+		creator: null,
+		image_paths: [],
+		release_date: new Date(),
+		genres: [],
+		keywords: [],
+		duration: 0,
+		tracks: []
+	};
 	let mediaImage: MediaImage = {
 		mediaID: '',
 		imageID: 0,
@@ -35,127 +40,128 @@
 		})();
 
 		console.info('mounting MediaCarousel initialized');
-		console.info('data from randomStore: ', randomStore);
 
- let subscriptions: (() => void)[] = [];
+		let subscriptions: (() => void)[] = [];
 
-    let unsubscribe = randomStore.subscribe((data) => {
-      if (
-        !data.mediaID ||
-        !data.mediaTitle ||
-        !data.mediaCreator ||
-        !data.created ||
-        !data.mediaKind
-      ) {
-        return;
-      }
+		let unsubscribe = randomStore.subscribe((data) => {
+			console.debug('data: ', data);
+			if (
+				!data.mediaID ||
+				!data.mediaTitle ||
+				!data.mediaCreator ||
+				!data.created ||
+				!data.mediaKind
+			) {
+				return;
+			}
 
-      const newMedia: Media = {
-        UUID: data.mediaID[0],
-        title: data.mediaTitle,
-        kind: data.mediaKind,
-        created: data.created,
-        creator: data.mediaCreator
-      };
+			const newMedia: Media = {
+				UUID: data.mediaID[0],
+				title: data.mediaTitle,
+				kind: data.mediaKind,
+				created: data.created,
+				creator: data.mediaCreator
+			};
 
-      media = [...media, newMedia];
+			media = [...media, newMedia];
+			console.debug('media: ', media);
 
-      processMediaItems(media, subscriptions);
-    });
+			processMediaItems(media, subscriptions);
+		});
 
-    subscriptions.push(unsubscribe);
+		subscriptions.push(unsubscribe);
 
-    return () => {
-      subscriptions.forEach((unsub) => unsub());
-    };
-  });
+		return () => {
+			subscriptions.forEach((unsub) => unsub());
+		};
+	});
 
-  async function processMediaItems(mediaItems: (Media | Album)[], subscriptions: (() => void)[]) {
-    for (const mediaItem of mediaItems) {
-      console.debug('mediaItem: ', mediaItem);
-      await mediaImageStore.getImagesByMedia(mediaItem.UUID);
+	async function processMediaItems(mediaItems: (Media | Album)[], subscriptions: (() => void)[]) {
+		for (const mediaItem of mediaItems) {
+			console.debug('mediaItem: ', mediaItem);
+			await mediaImageStore.getImagesByMedia(mediaItem.UUID);
 
-      let mediaImgStrSub = mediaImageStore.subscribe((data) => {
-        if (!data || !data.mediaID || data.images.length === 0) {
-          return;
-        }
-        mediaImage = {
-          mediaID: data.mediaID,
-          imageID: data.images[0].imageID,
-          isMain: data.mainImage.isMain
-        };
-      });
+			let mediaImgStrSub = mediaImageStore.subscribe((data) => {
+				if (!data || !data.mediaID || data.images.length === 0) {
+					return;
+				}
+				mediaImage = {
+					mediaID: data.mediaID,
+					imageID: data.images[0].imageID,
+					isMain: data.mainImage.isMain
+				};
+			});
 
-      subscriptions.push(mediaImgStrSub);
+			subscriptions.push(mediaImgStrSub);
 
-      await imageStore.getPaths(mediaImage.imageID);
-      console.debug('imageStore: ', imageStore);
+			await imageStore.getPaths(mediaImage.imageID);
+			console.debug('imageStore: ', imageStore);
 
-      let imgStoreSub = imageStore.subscribe((data) => {
-        if (!data || !data.images || data.images.length === 0) {
-          return;
-        }
-        mediaImgPath = data.images[0].source;
-      });
+			let imgStoreSub = imageStore.subscribe((data) => {
+				if (!data || !data.images || data.images.length === 0) {
+					return;
+				}
+				mediaImgPath = data.images[0].source;
+			});
 
-      subscriptions.push(imgStoreSub);
+			subscriptions.push(imgStoreSub);
 
-      if (mediaItem.kind === 'album') {
-        const album = mediaItem as Album;
-        const creatorArray = Array.isArray(album.album_artists)
-          ? album.album_artists
-          : [album.album_artists];
+			if (mediaItem.kind === 'album') {
+				const album = mediaItem as Album;
+				const creatorArray = Array.isArray(album.album_artists)
+					? album.album_artists
+					: [album.album_artists];
 
-        for (const creator of creatorArray) {
-          if ('first_name' in creator) {
-            const newPerson = creator as Person;
-            const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
-            creators.push(newCreator);
-          } else {
-            const newGroup = creator as Group;
-            const newCreator: Creator = { id: newGroup.id, name: newGroup.name };
-            creators.push(newCreator);
-          }
-        }
-      } else {
-        const creatorArray = Array.isArray(mediaItem.creator)
-          ? mediaItem.creator
-          : [mediaItem.creator];
+				for (const creator of creatorArray) {
+					if ('first_name' in creator) {
+						const newPerson = creator as Person;
+						const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
+						creators.push(newCreator);
+					} else {
+						const newGroup = creator as Group;
+						const newCreator: Creator = { id: newGroup.id, name: newGroup.name };
+						creators.push(newCreator);
+					}
+				}
+			} else {
+				const creatorArray = Array.isArray(mediaItem.creator)
+					? mediaItem.creator
+					: [mediaItem.creator];
 
-        for (const creator of creatorArray) {
-          if ('first_name' in creator) {
-            const newPerson = creator as Person;
-            const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
-            creators.push(newCreator);
-          } else {
-            const newGroup = creator as Group;
-            const newCreator: Creator = { id: newGroup.id, name: newGroup.name };
-            creators.push(newCreator);
-          }
-        }
-      }
-    }
-  }
+				for (const creator of creatorArray) {
+					if ('first_name' in creator) {
+						const newPerson = creator as Person;
+						const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
+						creators.push(newCreator);
+					} else {
+						const newGroup = creator as Group;
+						const newCreator: Creator = { id: newGroup.id, name: newGroup.name };
+						creators.push(newCreator);
+					}
+				}
+			}
+		}
+	}
 
-  const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
-    return mediaItem.kind === 'album';
-  };
+	const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
+		return mediaItem.kind === 'album';
+	};
 </script>
 
 <div class="carousel">
-  {#if media.length === 0}
-    <div>Loading...</div>
-  {:else}
-    {#each media as mediaItem (mediaItem.UUID)}
-      <div class="media-card-wrapper">
-        {#if isAlbum(mediaItem)}
-          <AlbumCard {album} title={mediaItem.title} image={mediaImgPath} {creators} />
-        {:else}
-          <MediaCard {mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
-        {/if}
-      </div>
-    {/each}
-  {/if}
+	{#if media.length === 0}
+		<div>Loading...</div>
+	{:else}
+		{#each media as mediaItem (mediaItem.UUID)}
+			<div class="media-card-wrapper">
+				{#if isAlbum(mediaItem)}
+					<AlbumCard {album} imgPath={mediaImgPath} {creators} />
+				{:else}
+					<MediaCard {mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
+				{/if}
+			</div>
+		{/each}
+	{/if}
 </div>
 
 <style>
