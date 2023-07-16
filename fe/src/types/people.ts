@@ -5,6 +5,7 @@ import type { UUID } from './utils';
 export interface Creator {
   id: number;
   name: string;
+  kind?: string | null;
 }
 
 export interface Person extends Creator {

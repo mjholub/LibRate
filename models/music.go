@@ -169,8 +169,8 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 		}
 		album.AlbumArtists.GroupArtists = append(album.AlbumArtists.GroupArtists, group)
 	}
-	ms.Log.Info().Msgf("person artists: %v", album.AlbumArtists.PersonArtists)
-	ms.Log.Info().Msgf("group artists: %v", album.AlbumArtists.GroupArtists)
+	ms.Log.Debug().Msgf("person artists: %v", album.AlbumArtists.PersonArtists)
+	ms.Log.Debug().Msgf("group artists: %v", album.AlbumArtists.GroupArtists)
 
 	rows, err = ms.db.QueryContext(ctx, `SELECT genre FROM media.album_genres WHERE album = $1`, id)
 	if err != nil {

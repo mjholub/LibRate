@@ -17,7 +17,10 @@
 		created: new Date(),
 		media_id: '',
 		name: '',
-		album_artists: [],
+		album_artists: {
+			person_artist: [],
+			group_artist: []
+		},
 		creator: null,
 		image_paths: [],
 		release_date: new Date(),
@@ -44,7 +47,11 @@
 		let subscriptions: (() => void)[] = [];
 
 		let unsubscribe = randomStore.subscribe((data) => {
-			console.debug('data: ', data);
+			// FIXME: ehis is quite erroneouly expecting to retrieve sa simple media type,
+			// which is not going to happen
+			// instead, we need to refactor this code,
+			// so that the values matching the media type, which the interfaces like Album
+			// extend, are matched to the interface, and the rest is ignored or handled in a different way
 			if (
 				!data.mediaID ||
 				!data.mediaTitle ||
@@ -52,6 +59,7 @@
 				!data.created ||
 				!data.mediaKind
 			) {
+				console.warn('data is not valid: ', data);
 				return;
 			}
 
@@ -108,11 +116,13 @@
 
 			if (mediaItem.kind === 'album') {
 				const album = mediaItem as Album;
-				const creatorArray = Array.isArray(album.album_artists)
-					? album.album_artists
-					: [album.album_artists];
 
-				for (const creator of creatorArray) {
+				let creatorsArray = [
+					...album.album_artists.person_artist,
+					...album.album_artists.group_artist
+				];
+
+				for (const creator of creatorsArray) {
 					if ('first_name' in creator) {
 						const newPerson = creator as Person;
 						const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
@@ -146,6 +156,9 @@
 	const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
 		return mediaItem.kind === 'album';
 	};
+	const isTrack = (mediaItem: Media | Track): mediaItem is Track => {
+		return mediaItem.kind === 'track';
+	};
 </script>
 
 <div class="carousel">
@@ -155,9 +168,11 @@
 		{#each media as mediaItem (mediaItem.UUID)}
 			<div class="media-card-wrapper">
 				{#if isAlbum(mediaItem)}
-					<AlbumCard {album} imgPath={mediaImgPath} {creators} />
+					<AlbumCard {album} imgPath={mediaImgPath} />
+				{:else if isTrack(mediaItem)}
+					<p>Sorry, track cards are not yet implemented</p>
 				{:else}
-					<MediaCard {mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
+					<MediaCard media={mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
 				{/if}
 			</div>
 		{/each}
