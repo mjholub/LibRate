@@ -15,6 +15,7 @@ type (
 		MediaID      *uuid.UUID                   `json:"media_id" db:"media_id,pk,unique"`
 		Name         string                       `json:"name" db:"name"`
 		AlbumArtists mo.Either[[]Person, []Group] `json:"album_artists" db:"album_artists"`
+		ImagePaths   []string                     `json:"image_paths"` // we make use of a junction table that utilizes the image IDs
 		ReleaseDate  time.Time                    `json:"release_date" db:"release_date"`
 		Genres       []Genre                      `json:"genres,omitempty" db:"genres"`
 		//	Studio       Studio                       `json:"studio,omitempty" db:"studio"`
@@ -26,6 +27,7 @@ type (
 
 	Track struct {
 		MediaID   *uuid.UUID                   `json:"media_id" db:"media_id,pk,unique"`
+		Number    int16                        `json:"track_number" db:"trac_number"`
 		Name      string                       `json:"name" db:"name"`
 		Artists   mo.Either[[]Person, []Group] `json:"artists" db:"artists"`
 		Duration  time.Duration                `json:"duration" db:"duration"`

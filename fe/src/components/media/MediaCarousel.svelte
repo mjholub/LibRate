@@ -4,7 +4,8 @@
 	import { mediaImageStore } from '../../stores/media/image.ts';
 	import { imageStore } from '../../stores/cdn/imagePath.ts';
 	import MediaCard from './MediaCard.svelte';
-	import type { Person } from '../../types/people.ts';
+	import { Either } from 'typescript-monads';
+	import type { Group, Person, Creator } from '../../types/people.ts';
 	import type { Media, MediaImage } from '../../types/media.ts';
 
 	let media: Media[] = [];
@@ -14,16 +15,19 @@
 		isMain: false
 	};
 	let mediaImgPath = '';
-	let creators = [] as Person[];
+	let creators: Either<Person[], Group[]>[] = [];
+	let newCreators: Either<Person[], Group[]>;
 
 	onMount(() => {
 		(async () => {
 			await randomStore.getRandom();
 		})();
+
 		console.info('mounting MediaCarousel initialized');
 		console.info('data from randomStore: ', randomStore);
 
 		let subscriptions: (() => void)[] = [];
+
 		let unsubscribe = randomStore.subscribe((data) => {
 			if (
 				!data.mediaID ||
@@ -34,6 +38,7 @@
 			) {
 				return;
 			}
+
 			const newMedia: Media = {
 				UUID: data.mediaID[0],
 				title: data.mediaTitle,
@@ -41,47 +46,68 @@
 				created: data.created,
 				creator: data.mediaCreator
 			};
+
 			media = [...media, newMedia];
 
-			// fetch the images and paths here, so that they run after media is updated
-			media.forEach(async (mediaItem) => {
-				console.debug('mediaItem: ', mediaItem);
-				await mediaImageStore.getImagesByMedia(mediaItem.UUID);
-				let mediaImgStrSub = mediaImageStore.subscribe((data) => {
-					if (!data || !data.mediaID || data.images.length === 0) {
-						return;
-					}
-					mediaImage = {
-						mediaID: data.mediaID,
-						imageID: data.images[0].imageID,
-						isMain: data.mainImage.isMain
-					};
-				});
-				subscriptions.push(mediaImgStrSub);
-				// fetch the paths of the images using getPaths from imageStore
-				await imageStore.getPaths(mediaImage.imageID);
-				console.debug('imageStore: ', imageStore);
-				let imgStoreSub = imageStore.subscribe((data) => {
-					if (!data || !data.images || data.images.length === 0) {
-						return;
-					}
-					mediaImgPath = data.images[0].source;
-				});
-				subscriptions.push(imgStoreSub);
-				if (mediaItem?.creator) {
-					creators.push(mediaItem?.creator);
-				}
-			});
+			processMediaItems(media, subscriptions);
 		});
 
 		subscriptions.push(unsubscribe);
-		// noop function to unsubscribe from the store when component is destroyed
+
 		return () => {
-			subscriptions.forEach((unsub) => {
-				unsub();
-			});
+			subscriptions.forEach((unsub) => unsub());
 		};
 	});
+
+	async function processMediaItems(mediaItems: Media[], subscriptions: (() => void)[]) {
+		for (const mediaItem of mediaItems) {
+			console.debug('mediaItem: ', mediaItem);
+			await mediaImageStore.getImagesByMedia(mediaItem.UUID);
+
+			let mediaImgStrSub = mediaImageStore.subscribe((data) => {
+				if (!data || !data.mediaID || data.images.length === 0) {
+					return;
+				}
+				mediaImage = {
+					mediaID: data.mediaID,
+					imageID: data.images[0].imageID,
+					isMain: data.mainImage.isMain
+				};
+			});
+
+			subscriptions.push(mediaImgStrSub);
+
+			await imageStore.getPaths(mediaImage.imageID);
+			console.debug('imageStore: ', imageStore);
+
+			let imgStoreSub = imageStore.subscribe((data) => {
+				if (!data || !data.images || data.images.length === 0) {
+					return;
+				}
+				mediaImgPath = data.images[0].source;
+			});
+
+			subscriptions.push(imgStoreSub);
+
+			if (mediaItem?.creator) {
+        for (const creator of mediaItem.creator) {
+				updateCreators(creator, creators);
+			}
+		}
+	}
+
+	function updateCreators(newCreator: Either<Person, Group>, creators: Creator[]) {
+		newCreator.match({
+			left: (newPerson: Person) => {
+				const newCreator: Creator = { id: newPerson.id, name: newPerson.name };
+				creators.push(newCreator);
+			},
+			right: (newGroup: Group) => {
+				const newCreator: Creator = { id: newGroup.id, name: newGroup.name };
+				creators.push(newCreator);
+			}
+		});
+	}
 </script>
 
 <div class="carousel">

@@ -31,6 +31,10 @@ type (
 		Creator int32     `json:"creator,omitempty" db:"creator"`
 	}
 
+	MediaObject interface {
+		Book | Album | Track | TVShow | Season | Episode
+	}
+
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
@@ -71,6 +75,9 @@ func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	return &MediaStorage{db: db, Log: l, ks: ks}
 }
 
+// Get scans into a complete Media struct
+// In most cases though, all we need is an intermediate, partial instance with the UUID and Kind fields
+// to be passed to GetMediaDetails
 func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
 	select {
 	case <-ctx.Done():
@@ -84,7 +91,9 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 		defer stmt.Close()
 
 		row := stmt.QueryRowContext(ctx, id)
-		if err := row.Scan(&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator); err != nil {
+		err = row.Scan(
+			&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator)
+		if err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
 			return Media{}, fmt.Errorf("error scanning row: %w", err)
 		}
@@ -92,7 +101,34 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 	}
 }
 
-func (ms *MediaStorage) GetMediaDetails(ctx context.Context, mediaKind string, id uuid.UUID) (interface{}, error) {
+func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return "", fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		var kind string
+		row := stmt.QueryRowContext(ctx, id)
+		err = row.Scan(&kind)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error scanning row")
+			return "", fmt.Errorf("error scanning row: %w", err)
+		}
+		return kind, nil
+	}
+}
+
+func (ms *MediaStorage) GetMediaDetails(
+	ctx context.Context,
+	mediaKind string,
+	id uuid.UUID,
+) (interface{}, error) {
 	switch mediaKind {
 	case "book":
 		return ms.getBook(ctx, id)
@@ -113,22 +149,33 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Media, err error) {
+// mwks - media IDs with their corresponding kind
+func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (
+	mwks map[uuid.UUID]string, err error,
+) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
+		// early return on faulty db connection
 		if ms.db == nil {
 			ms.Log.Error().Msg("no database connection or nil pointer")
 			return nil, fmt.Errorf("no database connection or nil pointer")
 		}
-		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media.media ORDER BY RANDOM() LIMIT $1")
+
+		// prepare statement
+		stmt, err := ms.db.PreparexContext(ctx,
+			`SELECT id, kind
+			FROM media.media 
+			ORDER BY RANDOM()
+			LIMIT $1`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
+		// query
 		rows, err := stmt.QueryxContext(ctx, count)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error querying rows")
@@ -136,22 +183,27 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Medi
 		}
 		defer rows.Close()
 
+		// scan rows into map
+		mwks = make(map[uuid.UUID]string)
+		var (
+			id   uuid.UUID
+			kind string
+		)
 		for rows.Next() {
-			var m Media
-			if err := rows.StructScan(&m); err != nil {
+			if err := rows.Scan(&id, &kind); err != nil {
 				ms.Log.Error().Err(err).Msg("error scanning row")
 				return nil, fmt.Errorf("error scanning row: %w", err)
 			}
-			media = append(media, &m)
+			mwks[id] = kind
 		}
-		return media, nil
+		return mwks, nil
 	}
 }
 
 func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {
 	switch m := media.(type) {
 	case *Book:
-		return addBook(ctx, db, BookKeys[:], *m)
+		return addBook(ctx, db, BookKeys, *m)
 	case *Album:
 		return addAlbum(ctx, db, *m)
 	case *Track:

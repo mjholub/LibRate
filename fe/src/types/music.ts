@@ -7,6 +7,7 @@ export interface Album extends Media {
   media_id: UUID;
   name: string;
   album_artists: Either<Person[], Group[]>;
+  image_paths: string[];
   release_date: Date;
   genres?: Genre[];
   studio?: Studio;
@@ -18,6 +19,7 @@ export interface Album extends Media {
 
 export interface Track extends Media {
   media_id: UUID;
+  track_number: number;
   name: string;
   artists: Either<Person[], Group[]>;
   duration: number;

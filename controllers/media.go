@@ -48,7 +48,8 @@ func NewMediaController(storage models.MediaStorage) *MediaController {
 func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to parse media ID %s", c.Params("id"))
+		mc.storage.Log.Error().Err(err).
+			Msgf("Failed to parse media ID %s", c.Params("id"))
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
@@ -57,11 +58,13 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 
 	media, err := mc.storage.Get(ctx, mediaID)
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to get media with ID %s", c.Params("id"))
+		mc.storage.Log.Error().Err(err).
+			Msgf("Failed to get media with ID %s", c.Params("id"))
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
 	}
 
-	detailedMedia, err := mc.storage.GetMediaDetails(ctx, media.Kind, media.ID)
+	detailedMedia, err := mc.storage.
+		GetMediaDetails(ctx, media.Kind, media.ID)
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s", c.Params("id"))
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
@@ -79,7 +82,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	media, err := mc.storage.GetRandom(ctx, 5)
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
+		return h.Res(c, fiber.StatusInternalServerError,
+			"Failed to get random media: "+err.Error())
 	}
 
 	mc.storage.Log.Info().Msgf("Got %d random media items", len(media))
@@ -91,19 +95,23 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 		mDetails interface{}
 	)
 
-	for i, m := range media {
+	// set an iterator variable so we can access the media item in the goroutine
+	i := 0
+	for id, kind := range media {
 		wg.Add(1)
-		go func(i int, m *models.Media) {
+		go func(i int, id uuid.UUID, kind string) {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			mDetails, err = mc.storage.GetMediaDetails(ctx, m.Kind, m.ID)
+			mDetails, err = mc.storage.
+				GetMediaDetails(ctx, kind, id)
 			if err != nil {
-				errChan <- mediaError{ID: m.ID, Err: err}
+				errChan <- mediaError{ID: id, Err: err}
 				return
 			}
 			mediaItems[i] = mDetails
-		}(i, m)
+		}(i, id, kind)
+		i++
 	}
 
 	wg.Wait()
@@ -111,7 +119,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 
 	if len(errChan) > 0 {
 		for e := range errChan {
-			mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s", e.ID)
+			mc.storage.Log.Error().Err(err).
+				Msgf("Failed to get media details for media with ID %s", e.ID)
 		}
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}

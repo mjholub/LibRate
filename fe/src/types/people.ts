@@ -2,7 +2,12 @@ import type { Genre, Media } from './media';
 import type { City, Place } from './places';
 import type { UUID } from './utils';
 
-export type Person = {
+export interface Creator {
+  id: number;
+  name: string;
+}
+
+export interface Person extends Creator {
   id: number;
   first_name: string;
   other_names: string[];
@@ -27,7 +32,7 @@ export type Cast = {
   directors: Person[];
 };
 
-export interface Group {
+export interface Group extends Creator {
   id: number;
   locations?: Place[];
   name: string;
