@@ -1,4 +1,3 @@
-import type { Either } from 'typescript-monads'
 import type { Person, Group } from './people';
 import type { UUID } from './utils';
 
@@ -7,10 +6,7 @@ export interface Media {
   kind: string;
   title: string;
   created: Date;
-  // TODO: this doesn't precisely match the db
-  // We need to add a migration that'd allow the creator
-  // to not only be a person, but also a group
-  creator: Either<Person, Group>;
+  creator: Person | Group | null;
 };
 
 export type MediaImage = {
@@ -33,6 +29,7 @@ export type Genre = {
 export type Keyword = {
   id: number;
   keyword: string;
-  media_id: UUID;
   stars: number;
+  vote_count: number;
+  avg_score?: number | null;
 };

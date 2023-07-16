@@ -15,7 +15,6 @@ type (
 	Keyword struct {
 		ID         int32           `json:"_key" db:"id,pk"`
 		Keyword    string          `json:"keyword" db:"keyword"`
-		MediaID    uuid.NullUUID   `json:"mediaid" db:"media_id"`
 		TotalStars int32           `json:"stars" db:"total_stars"`
 		VoteCount  int32           `json:"vote_count" db:"vote_count"`
 		AvgScore   sql.NullFloat64 `json:"avg_score" db:"avg_score"`
