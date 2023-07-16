@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Either } from 'typescript-monads';
-	import type { Person, Group } from '../../types/people.ts';
+	import type { Person, Group, Creator } from '../../types/people.ts';
 	import type { Media } from '../../types/media.ts';
 
 	export let media: Media = {
@@ -17,15 +16,24 @@
 	// implement polymorphism by using Either type
 	// this is needed to match the fields from e.g. the album type
 	// when e.g. the album card renders this component
-	export let creators: Either<Person[], Group[]>;
+	export const creators: Person[] | Group[] | Creator[] = [];
 	// separate arrays for display purposes
+
 	let individualCreators: Person[] = [];
 	let groupCreators: Group[] = [];
+	// processCreators checks the type of the creators prop
+	function processCreators(creators: Person[] | Group[] | Creator[]) {
+		if (creators.length === 0) {
+			return;
+		}
 
-	creators.match<Person[] | Group[]>({
-		left: (people: Person[]) => (individualCreators = people),
-		right: (groups: Group[]) => (groupCreators = groups)
-	});
+		// check if the first element is a Person
+		if ('first_name' in creators[0]) {
+			individualCreators = creators as Person[];
+		} else {
+			groupCreators = creators as Group[];
+		}
+	}
 
 	const getAverageRatings = async () => {
 		const response = await fetch('/api/media/averageRatings', {
@@ -41,6 +49,7 @@
 
 	onMount(() => {
 		getAverageRatings();
+		processCreators(creators);
 	});
 </script>
 
