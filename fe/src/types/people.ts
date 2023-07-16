@@ -10,16 +10,16 @@ export interface Creator {
 export interface Person extends Creator {
   id: number;
   first_name: string;
-  other_names: string[];
+  other_names: string[] | null;
   last_name: string;
-  nick_names: string[];
-  roles: string[];
+  nick_names: string[] | null;
+  roles: string[] | null;
   works: Media[] | null;
   birth: Date | null; // sql.NullTime in the backend
   death: Date | null;
-  website: string;
-  bio: string;
-  photos: string[];
+  website: string | null;
+  bio: string | null;
+  photos: string[] | null;
   hometown: Place | null;
   residence: Place | null;
   added: Date;
@@ -34,18 +34,18 @@ export type Cast = {
 
 export interface Group extends Creator {
   id: number;
-  locations?: Place[];
+  locations?: Place[] | null;
   name: string;
   active: boolean;
   formed?: Date | null;
   disbanded?: Date | null;
-  website?: string;
-  photos?: string[];
-  works?: UUID[];
-  members?: Person[];
-  primary_genre: Genre;
+  website?: string | null;
+  photos?: string[] | null;
+  works?: UUID[] | null;
+  members?: Person[] | null;
+  primary_genre: Genre | null;
   secondary_genres: Genre[] | null;
-  kind?: string;
+  kind?: string | null;
   added: Date;
   modified?: Date | null;
   bio: string | null;

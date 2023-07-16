@@ -11,7 +11,6 @@ export interface Film extends Media {
   title: string;
   created: Date;
   creator: Person;
-  // other film specific properties
 }
 
 export interface TVShow extends Media {
@@ -20,5 +19,4 @@ export interface TVShow extends Media {
   title: string;
   created: Date;
   creator: Person;
-  // other tvshow specific properties
 }
