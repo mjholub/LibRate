@@ -38,7 +38,6 @@ func (a *AuthService) validatePassword(email, login, password string) error {
 	return nil
 }
 
-// TODO: verify if the database connection can be passed in as a parameter
 func (a *AuthService) Login(c *fiber.Ctx) error {
 	input, err := parseInput("login", c)
 	if err != nil {
