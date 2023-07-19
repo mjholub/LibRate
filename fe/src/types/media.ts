@@ -1,13 +1,18 @@
-import type { Person } from './people';
+import type { Person, Group } from './people';
 import type { UUID } from './utils';
+import type { Album, Track } from './music';
+import type { Book } from './books';
+import type { Film, TVShow } from './film_tv';
 
-export type Media = {
-  UUID: string;
+export type AnyMedia = Album | Track | Book | Film | TVShow;
+
+export interface Media {
+  UUID: string | UUID;
   kind: string;
   title: string;
   created: Date;
-  creator: Person | null;
-}
+  creator: Person | Group | null;
+};
 
 export type MediaImage = {
   mediaID: UUID;
@@ -24,11 +29,12 @@ export type Genre = {
   keywords: string[]
   parent_genre: Genre;
   children: Genre[];
-}
+};
 
 export type Keyword = {
   id: number;
   keyword: string;
-  media_id: UUID;
   stars: number;
-}
+  vote_count: number;
+  avg_score?: number | null;
+};

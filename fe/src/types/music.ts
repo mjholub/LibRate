@@ -1,26 +1,32 @@
-import type { Either } from 'typescript-monads'
-import type { Person, Studio, Group } from './people';
-import type { Genre } from './media';
-import type { UUID } from './utils';
+import type { Person, Group } from './people';
+import type { Genre, Media } from './media';
+import type { UUID, NullableDuration } from './utils';
 
-export interface Album {
+export interface Album extends Media {
   media_id: UUID;
   name: string;
-  album_artists: Either<Person[], Group[]>;
-  release_date: Date;
+  album_artists: AlbumArtists;
+  image_paths: string[] | null;
+  release_date: Date | string | null;
   genres?: Genre[];
-  studio?: Studio;
+  //  studio?: Studio;
   keywords?: string[];
-  duration: number;
+  duration: NullableDuration | null;
   tracks: Track[];
-  languages?: string[];
+  //languages?: string[];
 }
 
-export interface Track {
+type AlbumArtists = {
+  person_artist: Person[];
+  group_artist: Group[];
+}
+
+export interface Track extends Media {
   media_id: UUID;
   name: string;
-  artists: Either<Person[], Group[]>;
-  duration: number;
-  lyrics?: string;
-  languages?: string[];
+  album_id: UUID;
+  duration: number | string;
+  lyrics?: string | null;
+  //languages?: string[];
+  track_number: number;
 }

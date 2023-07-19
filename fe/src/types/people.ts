@@ -2,21 +2,27 @@ import type { Genre, Media } from './media';
 import type { City, Place } from './places';
 import type { UUID } from './utils';
 
-export type Person = {
+export interface Creator {
+  id: number;
+  name: string;
+  kind?: string | null;
+}
+
+export interface Person extends Creator {
   id: number;
   first_name: string;
-  other_names: string[];
+  other_names: string[] | null;
   last_name: string;
-  nick_names: string[];
-  roles: string[];
-  works: Media[];
+  nick_names: string[] | null;
+  roles: string[] | null;
+  works: Media[] | null;
   birth: Date | null; // sql.NullTime in the backend
   death: Date | null;
-  website: string;
-  bio: string;
-  photos: string[];
-  hometown: Place;
-  residence: Place;
+  website: string | null;
+  bio: string | null;
+  photos: string[] | null;
+  hometown: Place | null;
+  residence: Place | null;
   added: Date;
   modified: Date | null;
 };
@@ -27,20 +33,20 @@ export type Cast = {
   directors: Person[];
 };
 
-export interface Group {
+export interface Group extends Creator {
   id: number;
-  locations?: Place[];
+  locations?: Place[] | null;
   name: string;
   active: boolean;
   formed?: Date | null;
   disbanded?: Date | null;
-  website?: string;
-  photos?: string[];
-  works?: UUID[];
-  members?: Person[];
-  primary_genre: Genre;
+  website?: string | null;
+  photos?: string[] | null;
+  works?: UUID[] | null;
+  members?: Person[] | null;
+  primary_genre: Genre | null;
   secondary_genres: Genre[] | null;
-  kind?: string;
+  kind?: string | null;
   added: Date;
   modified?: Date | null;
   bio: string | null;

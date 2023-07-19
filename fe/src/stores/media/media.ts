@@ -1,45 +1,55 @@
-import { writable } from "svelte/store";
-import type { Writable } from "svelte/store";
-import type { MediaImage } from "../../types/media";
-import type { UUID } from "../../types/utils";
+import { writable } from 'svelte/store';
+import { initialPerson } from './people.ts';
+import type { Writable } from 'svelte/store';
+import type { UUID } from '../../types/utils.ts';
+import type { Person } from '../../types/people.ts';
+import type { Book } from '../../types/books.ts';
+import type { Album, Track } from '../../types/music.ts';
+import type { Film, TVShow } from '../../types/film_tv.ts';
 
-interface MediaImageStoreState {
-  mediaID?: UUID;
-  images: MediaImage[];
-  mainImage: MediaImage;
-  mainImagePath?: string;
+
+export interface MediaStoreState {
+  media_id: UUID | UUID[] | null;
+  mediaType: 'Album' | 'Film' | 'TVShow' | 'Book' | 'Track' | 'Unknown' | null;
+  isLoading: boolean;
+  mediaTitle?: string;
+  mediaKind?: string;
+  created?: Date;
+  mediaCreator?: Person;
+  album?: Album | Album[] | null;
+  book?: Book | Book[] | null;
+  track?: Track | Track[] | null;
+  film?: Film | Film[] | null;
+  tvShow?: TVShow | TVShow[] | null;
 };
 
-interface MediaImageStore extends Writable<MediaImageStoreState> {
-  getImagesByMedia: (mediaID: UUID) => Promise<void>;
-  setMainImage: (image: MediaImage) => void;
+interface MediaStore extends Writable<MediaStoreState> {
+  getMedia: (mediaID: UUID) => Promise<void>;
 };
 
-const initialState: MediaImageStoreState = {
-  images: [],
-  mainImage: {
-    mediaID: "",
-    imageID: 0,
-    isMain: false,
-  },
+const initialState: MediaStoreState = {
+  media_id: null,
+  mediaType: null,
+  isLoading: true,
+  mediaTitle: '',
+  mediaKind: '',
+  created: new Date(),
+  mediaCreator: { ...initialPerson },
 };
 
-function createMediaImageStore() {
-  const { subscribe, update } = writable<MediaImageStoreState>(initialState);
+function createMediaStore(): MediaStore {
+  const { subscribe, set, update } = writable<MediaStoreState>(initialState);
 
   return {
     subscribe,
-    getImagesByMedia: async (mediaID: UUID) => {
-      const response = await fetch(`/api/media/${mediaID}/images`);
-      const images = await response.json();
-      update((state: MediaImageStoreState) => ({ ...state, images }));
+    set,
+    update,
+    getMedia: async (mediaID: UUID) => {
+      const response = await fetch(`/api/media/${mediaID}`);
+      const media = await response.json();
+      update((state: MediaStoreState) => ({ ...state, ...media }));
     },
-
-    setMainImage: (image: MediaImage) => update((state: MediaImageStoreState) => {
-      state.mainImage = image;
-      return state;
-    })
   };
 }
 
-export const mediaImageStore = createMediaImageStore();
+export const mediaStore: MediaStore = createMediaStore();
