@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { isAuthenticated, member } from '../../stores/members/auth';
+	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
+	import type { Member } from '../../types/member.ts';
 
 	let isRegistration = false;
+	let member: Member;
+	let isAuthenticated = authStore.authenticate();
 	let email_or_username = '';
 	if (browser) {
 		email_or_username = localStorage.getItem('email_or_username') || '';
@@ -66,7 +69,7 @@
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
 
-		const response = await fetch('/api/register', {
+		const response = await fetch('/api/members/register', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -86,8 +89,9 @@
 			response.ok
 				? (localStorage.setItem('token', data.token),
 				  localStorage.setItem('email_or_username', ''),
-				  isAuthenticated.set(true),
-				  member.set(data.member),
+				  await authStore.authenticate(),
+				  authStore.set(data.member),
+				  authStore.getMember(data.member.id),
 				  (window.location.href = '/'))
 				: (errorMessage = data.message);
 		}
@@ -96,7 +100,7 @@
 	const login = async (event: Event) => {
 		event.preventDefault();
 
-		const response = await fetch('/api/login', {
+		const response = await fetch('/api/members/login', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -114,8 +118,9 @@
 		response.ok
 			? (localStorage.setItem('token', data.token),
 			  localStorage.setItem('email_or_username', ''),
-			  isAuthenticated.set(true),
-			  member.set(data.member),
+			  authStore.set(data.member),
+			  await authStore.authenticate(),
+			  authStore.getMember(data.member.id),
 			  (window.location.href = '/'),
 			  console.info('Login successful'))
 			: (errorMessage = data.message);

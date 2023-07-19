@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
 
@@ -63,6 +64,9 @@ func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 	switch reqType {
 	case "register":
 		var input RegisterInput
+		if !isEmail(input.Email) {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		}
 		err := c.BodyParser(&input)
 		if err != nil {
 			return input, fmt.Errorf("invalid registration request")
@@ -71,8 +75,11 @@ func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 		return input, nil
 	case "login":
 		var input LoginInput
+		if !isEmail(input.Email) {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		}
 		if err := c.BodyParser(&input); err != nil {
-			return nil, err
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
 		}
 		return input, nil
 	}

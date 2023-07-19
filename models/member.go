@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
+
+	"codeberg.org/mjh/LibRate/cfg"
 
 	"github.com/lib/pq"
 )
@@ -28,7 +31,7 @@ type Member struct {
 	PassHash     string         `json:"passhash" db:"passhash"`
 	MemberName   string         `json:"membername" db:"nick"` // i.e. @nick@instance
 	DisplayName  sql.NullString `json:"displayname:omitempty" db:"display_name"`
-	Email        string         `json:"email" db:"email"`
+	Email        string         `json:"email" db:"email" validate:"required,email"`
 	Bio          sql.NullString `json:"bio:omitempty" db:"bio"`
 	Active       bool           `json:"active" db:"active"`
 	Roles        []uint8        `json:"roles" db:"roles"`
@@ -56,10 +59,11 @@ type MemberStorer interface {
 type MemberStorage struct {
 	client *sqlx.DB
 	log    *zerolog.Logger
+	config *cfg.Config
 }
 
-func NewMemberStorage(client *sqlx.DB, log *zerolog.Logger) *MemberStorage {
-	return &MemberStorage{client: client, log: log}
+func NewMemberStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *MemberStorage {
+	return &MemberStorage{client: client, log: log, config: conf}
 }
 
 func mapRoleCodesToStrings(roles []uint8) []string {
@@ -140,6 +144,18 @@ func (s *MemberStorage) Read(ctx context.Context, keyName, key string) (*Member,
 	return member, nil
 }
 
+// GetID retrieves the ID required for JWT on the basis of one of the credentials,
+// i.e. email or login
+func (s *MemberStorage) GetID(ctx context.Context, credential string) (uint32, error) {
+	query := `SELECT id FROM members WHERE email = $1 OR nick = $2`
+	var id uint32
+	err := s.client.Get(&id, query, credential, credential)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get member id: %v", err)
+	}
+	return id, nil
+}
+
 func (s *MemberStorage) GetPassHash(email, login string) (string, error) {
 	query := `SELECT passhash FROM members WHERE email = $1 OR nick = $2`
 	var passHash string
@@ -148,4 +164,22 @@ func (s *MemberStorage) GetPassHash(email, login string) (string, error) {
 		return "", fmt.Errorf("failed to get passhash: %v", err)
 	}
 	return passHash, nil
+}
+
+func (s *MemberStorage) CreateSession(ctx context.Context, m Member) (t string, err error) {
+	token := *jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = m.ID
+	if m.MemberName != "" {
+		claims["membername"] = m.MemberName
+	} else {
+		claims["email"] = m.Email
+	}
+	claims["exp"] = time.Now().Add(time.Hour * 12).Unix()
+
+	t, err = token.SignedString([]byte(s.config.Secret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %v", err)
+	}
+	return t, nil
 }

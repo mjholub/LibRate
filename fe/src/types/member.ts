@@ -11,6 +11,6 @@ export type Member = {
   homepage: string | null,
   //bookwyrm: "",
   //funkwhale: "",
-  regdate: number,
+  regdate: number | Date,
   roles: string[],
 };

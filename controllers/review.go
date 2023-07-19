@@ -139,3 +139,21 @@ func (rc *ReviewController) UpdateRating(c *fiber.Ctx) error {
 		"message": "Rating updated successfully",
 	})
 }
+
+func (rc *ReviewController) DeleteRating(c *fiber.Ctx) error {
+	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid rating ID")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = rc.rs.Delete(ctx, ratingID)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to delete rating")
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Rating deleted successfully",
+	})
+}
