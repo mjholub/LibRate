@@ -74,3 +74,14 @@ func addBook(ctx context.Context, db *sqlx.DB, keys []string, book Book) error {
 	}
 	return nil
 }
+
+func (b *Book) GetMedia(db *sqlx.DB) (m *Media, err error) {
+	if b.MediaID == nil {
+		return nil, fmt.Errorf("book has no media id")
+	}
+	err = db.Get(m, "SELECT * FROM media WHERE uuid = $1", b.MediaID)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}

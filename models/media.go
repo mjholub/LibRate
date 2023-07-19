@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
 
@@ -31,6 +32,10 @@ type (
 		Creator int32     `json:"creator,omitempty" db:"creator"`
 	}
 
+	MediaObject interface {
+		Book | Album | Track | TVShow | Season | Episode
+	}
+
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
@@ -43,8 +48,10 @@ type (
 	}
 
 	MediaStorage struct {
-		db *sqlx.DB
-		l  *zerolog.Logger
+		db  *sqlx.DB
+		Log *zerolog.Logger
+		ks  *KeywordStorage
+		ps  *PeopleStorage
 	}
 )
 
@@ -66,41 +73,99 @@ var (
 )
 
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
-	return &MediaStorage{db: db, l: l}
+	ks := NewKeywordStorage(db, l)
+	ps := NewPeopleStorage(db, l)
+	return &MediaStorage{db: db, Log: l, ks: ks, ps: ps}
 }
 
-func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media any, err error) {
+// Get scans into a complete Media struct
+// In most cases though, all we need is an intermediate, partial instance with the UUID and Kind fields
+// to be passed to GetMediaDetails
+func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return Media{}, ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media WHERE uuid = ?")
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media.media WHERE id = $1")
 		if err != nil {
-			ms.l.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return Media{}, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
 		row := stmt.QueryRowContext(ctx, id)
+		err = row.Scan(
+			&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error scanning row")
+			return Media{}, fmt.Errorf("error scanning row: %w", err)
+		}
+		return media, nil
+	}
+}
+
+func (ms *MediaStorage) GetImagePath(ctx context.Context, id uuid.UUID) (path string, err error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		// TODO: add thumbnail paths
+		err := ms.db.GetContext(ctx, &path, `SELECT i.source
+			FROM media.media_images AS mi
+			JOIN cdn.images AS i ON mi.image_id = i.id
+			WHERE mi.media_id = $1
+			LIMIT 1
+			`, id)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error getting image paths")
+			return "", fmt.Errorf("error getting image paths: %w", err)
+		}
+
+		return path, nil
+	}
+}
+
+func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media.media WHERE id = $1")
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return "", fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
 		var kind string
-		if err := row.Scan(&kind); err != nil {
-			ms.l.Error().Err(err).Msg("error scanning row")
-			return nil, fmt.Errorf("error scanning row: %w", err)
+		row := stmt.QueryRowContext(ctx, id)
+		err = row.Scan(&kind)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error scanning row")
+			return "", fmt.Errorf("error scanning row: %w", err)
 		}
-		switch kind {
-		case "book":
-			return ms.getBook(ctx, id)
-		case "album":
-			return ms.getAlbum(ctx, id)
-		case "track":
-			return ms.getTrack(ctx, id)
-		case "film":
-			return ms.getFilm(ctx, id)
-		case "tv_show":
-			return ms.getSeries(ctx, id)
-		default:
-			return nil, fmt.Errorf("unknown media kind")
-		}
+		return kind, nil
+	}
+}
+
+func (ms *MediaStorage) GetMediaDetails(
+	ctx context.Context,
+	mediaKind string,
+	id uuid.UUID,
+) (interface{}, error) {
+	switch mediaKind {
+	case "book":
+		return ms.getBook(ctx, id)
+	case "album":
+		return ms.getAlbum(ctx, id)
+	case "track":
+		return ms.getTrack(ctx, id)
+	case "film":
+		return ms.getFilm(ctx, id)
+	case "tv_show":
+		return ms.getSeries(ctx, id)
+	default:
+		return nil, fmt.Errorf("unknown media kind")
 	}
 }
 
@@ -108,49 +173,66 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (media []*Media, err error) {
+// mwks - media IDs with their corresponding kind
+func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds ...string) (
+	mwks map[uuid.UUID]string, err error,
+) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
+		// early return on faulty db connection
 		if ms.db == nil {
-			ms.l.Error().Msg("no database connection or nil pointer")
+			ms.Log.Error().Msg("no database connection or nil pointer")
 			return nil, fmt.Errorf("no database connection or nil pointer")
 		}
-		stmt, err := ms.db.PreparexContext(ctx, "SELECT * FROM media.media ORDER BY RANDOM() LIMIT $1")
+
+		// prepare statement
+		stmt, err := ms.db.PreparexContext(ctx,
+			`SELECT id, kind
+			FROM media.media 
+			WHERE kind != ALL($1)
+			ORDER BY RANDOM()
+			LIMIT $2`)
 		if err != nil {
-			ms.l.Error().Err(err).Msg("error preparing statement")
+			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
-		rows, err := stmt.QueryxContext(ctx, count)
+		// query
+		rows, err := stmt.QueryxContext(ctx, pq.Array(blacklistKinds), count)
 		if err != nil {
-			ms.l.Error().Err(err).Msg("error querying rows")
+			ms.Log.Error().Err(err).Msg("error querying rows")
 			return nil, fmt.Errorf("error querying rows: %w", err)
 		}
 		defer rows.Close()
 
+		// scan rows into map
+		mwks = make(map[uuid.UUID]string)
+		var (
+			id   uuid.UUID
+			kind string
+		)
 		for rows.Next() {
-			var m Media
-			if err := rows.StructScan(&m); err != nil {
-				ms.l.Error().Err(err).Msg("error scanning row")
+			if err := rows.Scan(&id, &kind); err != nil {
+				ms.Log.Error().Err(err).Msg("error scanning row")
 				return nil, fmt.Errorf("error scanning row: %w", err)
 			}
-			media = append(media, &m)
+			mwks[id] = kind
 		}
-		return media, nil
+		return mwks, nil
 	}
 }
 
 func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {
 	switch m := media.(type) {
 	case *Book:
-		return addBook(ctx, db, BookKeys[:], *m)
+		return addBook(ctx, db, BookKeys, *m)
 	case *Album:
 		return addAlbum(ctx, db, *m)
 	case *Track:
-		return addTrack(ctx, db, *m)
+		return addTrack(ctx, db, m)
 	default:
 		return fmt.Errorf("unknown media type")
 	}
@@ -162,17 +244,6 @@ func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objT
 
 func (ms *MediaStorage) Delete(ctx context.Context, key interface{}, objType interface{}) error {
 	return nil
-}
-
-func (b *Book) GetMedia(db *sqlx.DB) (m *Media, err error) {
-	if b.MediaID == nil {
-		return nil, fmt.Errorf("book has no media id")
-	}
-	err = db.Get(m, "SELECT * FROM media WHERE uuid = $1", b.MediaID)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
