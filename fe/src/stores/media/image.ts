@@ -5,23 +5,23 @@ import type { UUID } from "../../types/utils";
 
 interface MediaImageStoreState {
   mediaID?: UUID;
-  images: MediaImage[];
+  //images: MediaImage;
   mainImage: MediaImage;
   mainImagePath?: string;
 };
 
 interface MediaImageStore extends Writable<MediaImageStoreState> {
-  getImagesByMedia: (mediaID: UUID) => Promise<void>;
+  getImageByMedia: (mediaID: UUID) => Promise<void>;
   setMainImage: (image: MediaImage) => void;
 };
 
 const initialState: MediaImageStoreState = {
-  images: [],
   mainImage: {
     mediaID: "",
     imageID: 0,
     isMain: false,
   },
+  mainImagePath: "",
 };
 
 function createMediaImageStore() {
@@ -33,10 +33,10 @@ function createMediaImageStore() {
     update,
     reset: () => set(initialState),
 
-    getImagesByMedia: async (mediaID: UUID) => {
+    getImageByMedia: async (mediaID: UUID) => {
       const response = await fetch(`/api/media/${mediaID}/images`);
-      const images = await response.json();
-      update((state: MediaImageStoreState) => ({ ...state, images }));
+      const image = await response.text();
+      update((state: MediaImageStoreState) => ({ ...state, mainImagePath: image }));
     },
 
     setMainImage: (image: MediaImage) => update((state: MediaImageStoreState) => {

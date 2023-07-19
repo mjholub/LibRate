@@ -8,8 +8,9 @@ interface RandomStore extends Writable<MediaStoreState> {
 };
 
 const initialRandomState: MediaStoreState = {
-  mediaID: null,
+  media_id: null,
   mediaType: null,
+  isLoading: true,
 };
 
 function createRandomStore(): RandomStore {
@@ -43,7 +44,10 @@ function createRandomStore(): RandomStore {
 
         const mediaTypes = determineMediaTypes(mediaData);
         mediaTypes.forEach((mediaType) => {
-          set({ ...initialRandomState, mediaType, [mediaType.toLowerCase()]: mediaData });
+          set({
+            ...initialRandomState, mediaType, [mediaType.toLowerCase()]: mediaData,
+            isLoading: false
+          });
         });
       } catch (error) {
         console.error('Error in getRandom: ', error);
@@ -63,7 +67,7 @@ const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'B
   mediaData.forEach((media) => {
     if ('media_id' in media && 'album_artists' in media) {
       mediaTypes.push('Album');
-    } else if ('media_id' in media && 'track_number' in media && 'artists' in media) {
+    } else if ('media_id' in media && 'track_number' in media && 'album_id' in media) {
       mediaTypes.push('Track');
     } else if ('publication_date' in media && 'authors' in media && 'pages' in media) {
       mediaTypes.push('Book');

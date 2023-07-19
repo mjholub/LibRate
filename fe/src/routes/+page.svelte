@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import ReviewList from '../components/review/ReviewList.svelte';
 	import Auth from '../components/form/Auth.svelte';
 	import Search from '../components/utility/Search.svelte';
@@ -11,6 +13,21 @@
 	import { randomStore } from '../stores/media/getRandom.ts';
 	import MediaCarousel from '../components/media/MediaCarousel.svelte';
 
+	let windowWidth: number;
+	if (browser) {
+		onMount(() => {
+			windowWidth = window.innerWidth;
+			const handleResize = () => {
+				windowWidth = window.innerWidth;
+			};
+			window.addEventListener('resize', handleResize);
+
+			return () => {
+				window.removeEventListener('resize', handleResize);
+			};
+		});
+	}
+
 	let reviews: Review[] = [];
 	let member: Member = $memberStore;
 
@@ -22,7 +39,7 @@
 </div>
 
 <div class="app">
-	<div class="left">
+	<div class="left" class:hidden={windowWidth <= 768}>
 		<MediaCarousel />
 	</div>
 	<div class="right">
@@ -38,6 +55,9 @@
 </div>
 
 <style>
+	.hidden {
+		display: none;
+	}
 	.app {
 		display: flex;
 		justify-content: space-between;
@@ -49,7 +69,7 @@
 	.left,
 	.right {
 		padding-top: 45px;
-		width: 30%;
+		width: 35%;
 	}
 
 	.navbar {

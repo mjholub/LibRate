@@ -16,6 +16,7 @@ interface PeopleStore extends Writable<PeopleStoreState> {
 
 export const initialPerson: Person = {
   id: 0,
+  name: "",
   first_name: "",
   other_names: [],
   last_name: "",

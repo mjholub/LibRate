@@ -9,7 +9,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	//"github.com/samber/mo"
 )
 
 type (
@@ -42,10 +41,6 @@ type (
 		Number   int16     `json:"track_number" db:"track_number"`
 		// Languages []string                     `json:"languages,omitempty" db:"languages"`
 	}
-
-	MusicValues interface {
-		string | []string | time.Duration | []time.Duration | []uuid.UUID | []Person | []Group | []Genre | []Studio | []Track | time.Time | uuid.UUID
-	}
 )
 
 func addAlbum(ctx context.Context, db *sqlx.DB, album Album) error {
@@ -77,17 +72,19 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album Album) error {
 
 	errChan := make(chan error)
 	go func() {
-		for _, artist := range album.AlbumArtists.PersonArtists {
+		pa := album.AlbumArtists.PersonArtists
+		for i := range pa {
 			_, err = db.ExecContext(ctx, "INSERT INTO media.album_artists (album, person_artist) VALUES ($1, $2)",
-				album.MediaID, artist.ID)
+				album.MediaID, pa[i].ID)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to insert album artist into media.album_artists: %w", err)
 				return
 			}
 		}
-		for _, group := range album.AlbumArtists.GroupArtists {
+		ga := album.AlbumArtists.GroupArtists
+		for i := range ga {
 			_, err = db.ExecContext(ctx, "INSERT INTO media.album_artists (album, group_artist) VALUES ($1, $2)",
-				album.MediaID, group.ID)
+				album.MediaID, ga[i].ID)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to insert album artist into media.album_artists: %w", err)
 				return

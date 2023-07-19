@@ -1,17 +1,17 @@
 import type { Person, Group } from './people';
 import type { Genre, Media } from './media';
-import type { UUID } from './utils';
+import type { UUID, NullableDuration } from './utils';
 
 export interface Album extends Media {
   media_id: UUID;
   name: string;
   album_artists: AlbumArtists;
   image_paths: string[] | null;
-  release_date: Date;
+  release_date: Date | string | null;
   genres?: Genre[];
   //  studio?: Studio;
   keywords?: string[];
-  duration: number | null;
+  duration: NullableDuration | null;
   tracks: Track[];
   //languages?: string[];
 }
@@ -25,7 +25,7 @@ export interface Track extends Media {
   media_id: UUID;
   name: string;
   album_id: UUID;
-  duration: number;
+  duration: number | string;
   lyrics?: string | null;
   //languages?: string[];
   track_number: number;

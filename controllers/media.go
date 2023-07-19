@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"sync"
@@ -79,7 +80,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	media, err := mc.storage.GetRandom(ctx, 2)
+	// FIXME: blacklist tracks, because they get e.g. improperly parsed as albums at some point
+	media, err := mc.storage.GetRandom(ctx, 2, "track")
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
 		return h.Res(c, fiber.StatusInternalServerError,
@@ -101,8 +103,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			var mDetails interface{}
-			mDetails, err = mc.storage.
+			// this val. of err must be shadowed, otherwise it will be the same err for all goroutines
+			mDetails, err := mc.storage.
 				GetMediaDetails(ctx, kind, id)
 			if err != nil {
 				errChan <- mediaError{ID: id, Err: err}
@@ -126,6 +128,61 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	}
 
 	return h.ResData(c, fiber.StatusOK, "success", mediaItems)
+}
+
+func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
+	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mediaID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to parse media ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+	}
+	kind, err := mc.storage.GetKind(ctx, mediaID)
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get kind for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get kind")
+	}
+
+	path, err := mc.storage.GetImagePath(ctx, mediaID)
+	if err == sql.ErrNoRows {
+		mc.storage.Log.Warn().Msgf("Using placeholder image for media with ID %s", c.Params("id"))
+		switch kind {
+		case "film", "tv_show":
+			err = c.SendString("./static/film/placeholder.png")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		case "album", "track":
+			err = c.SendString("./static/music/placeholder.webp")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		default:
+			err = c.SendString("./static/placeholder.png")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		}
+	} else if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get image paths for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get image paths")
+	}
+	mc.storage.Log.Debug().Msgf("Got image path %s for media with ID %s", path, c.Params("id"))
+	err = c.SendString("./static/" + path)
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to send image for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusNotFound, "Failed to send image")
+	}
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // WARN: this is probably wrong

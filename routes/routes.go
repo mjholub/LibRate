@@ -34,9 +34,18 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
 			errChan <- err
 		}
+		assetPath, err := filepath.Abs("./static")
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
+			errChan <- err
+		}
 
 		app.Use("/", filesystem.New(filesystem.Config{
 			Root:   http.Dir(staticPath),
+			Browse: true,
+		}))
+		app.Use("/static", filesystem.New(filesystem.Config{
+			Root:   http.Dir(assetPath),
 			Browse: true,
 		}))
 	}()
@@ -93,6 +102,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 
 	app.Get("/api/media/random", mediaCon.GetRandom)
+	app.Get("/api/media/:id/images", mediaCon.GetImagePaths)
 	app.Get("/api/media/:id", mediaCon.GetMedia)
 
 	app.Post("/api/search", sc.Search)

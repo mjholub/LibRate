@@ -29,10 +29,19 @@ go run . -init
 
 For subsequent runs of course you shouldn't use the `init` flag.
 
-You can then test your instance at [http://localhost:3000](localhost:3000)
+Additionally, for now you'll also have to run each of the migrations in the _db/migrations_ folder.
+
+You can then test your instance at [http://127.0.0.1:3000](127.0.0.1:3000)
 
 # Testing
 
 In order to test the database code, you should create a `librate_test` database.
 
 If you set the `$CLEANUP_TEST_DB` variable to 0, the test database will not be cleaned up by the deferred function in the database initialization unit test.
+
+## Legal notice
+
+All images included in this repository are assumed to be fair use.
+
+If you are the copyright holder of an image which you want to be removed, 
+please [contact the maintaner](mailto:1a6f1a@riseup.net).

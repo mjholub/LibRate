@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
 
@@ -103,6 +104,27 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 	}
 }
 
+func (ms *MediaStorage) GetImagePath(ctx context.Context, id uuid.UUID) (path string, err error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		// TODO: add thumbnail paths
+		err := ms.db.GetContext(ctx, &path, `SELECT i.source
+			FROM media.media_images AS mi
+			JOIN cdn.images AS i ON mi.image_id = i.id
+			WHERE mi.media_id = $1
+			LIMIT 1
+			`, id)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error getting image paths")
+			return "", fmt.Errorf("error getting image paths: %w", err)
+		}
+
+		return path, nil
+	}
+}
+
 func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
 	select {
 	case <-ctx.Done():
@@ -152,7 +174,7 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 }
 
 // mwks - media IDs with their corresponding kind
-func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (
+func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds ...string) (
 	mwks map[uuid.UUID]string, err error,
 ) {
 	select {
@@ -169,8 +191,9 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (
 		stmt, err := ms.db.PreparexContext(ctx,
 			`SELECT id, kind
 			FROM media.media 
+			WHERE kind != ALL($1)
 			ORDER BY RANDOM()
-			LIMIT $1`)
+			LIMIT $2`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return nil, fmt.Errorf("error preparing statement: %w", err)
@@ -178,7 +201,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int) (
 		defer stmt.Close()
 
 		// query
-		rows, err := stmt.QueryxContext(ctx, count)
+		rows, err := stmt.QueryxContext(ctx, pq.Array(blacklistKinds), count)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error querying rows")
 			return nil, fmt.Errorf("error querying rows: %w", err)
@@ -221,17 +244,6 @@ func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objT
 
 func (ms *MediaStorage) Delete(ctx context.Context, key interface{}, objType interface{}) error {
 	return nil
-}
-
-func (b *Book) GetMedia(db *sqlx.DB) (m *Media, err error) {
-	if b.MediaID == nil {
-		return nil, fmt.Errorf("book has no media id")
-	}
-	err = db.Get(m, "SELECT * FROM media WHERE uuid = $1", b.MediaID)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
