@@ -14,6 +14,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/controllers/version"
+	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
 	// "codeberg.org/mjh/LibRate/middleware"
 )
@@ -96,6 +97,9 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 	app.Get("/api/reviews/latest", reviewSvc.GetLatestRatings)
 	app.Get("api/reviews/:mediaID", reviewSvc.GetRatings)
 
+	app.Get("/api/authenticate", middleware.Protected(), func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 	app.Post("/api/login", authSvc.Login)
 	app.Post("/api/register", authSvc.Register)
 	app.Get("/api/member/:id", memberSvc.GetMember)

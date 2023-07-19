@@ -1,44 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { authStore } from '../../stores/members/auth.ts';
 	import type { Member } from '../../types/member.ts';
 
-	export let member: Member;
-	function splitNullable(input: string | null, separator: string): string[] {
-		return input ? input.split(separator) : [];
-	}
-
-	let matrixInstance: string,
-		matrixUser: string,
-		xmppUser: string,
-		xmppInstance: string,
-		ircUser: string,
-		ircInstance: string;
-
-	$: {
-		matrixInstance = splitNullable(member.matrix, ':')[1];
-		matrixUser = splitNullable(member.matrix, ':')[0];
-		xmppUser = splitNullable(member.xmpp, '@')[0];
-		xmppInstance = splitNullable(member.xmpp, '@')[1];
-		ircUser = splitNullable(member.irc, '@')[0];
-		ircInstance = splitNullable(member.irc, '@')[1];
-	}
-
-	const getMemberProps = async () => {
-		const res = await fetch(`/api/member/${member.id}`);
-		console.debug(res);
-		res.ok || console.error(res);
-		const data = await res.json();
-		console.debug(data.member);
-		member = { ...data.member };
-	};
 	let regDate: string;
+  export let member: Member;
 	$: {
 		regDate = new Date(member.regdate * 1000).toLocaleDateString();
 	}
 	onMount(() => {
 		if (member && member.id) {
-			getMemberProps();
+			authStore.subscribe((auth) => {
+        if (auth && auth.id === member.id) {
+          member = auth;
+        }
+      });
 		}
+    getMember();
 	});
 </script>
 
