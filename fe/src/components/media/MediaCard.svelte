@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Person } from '../../types/people.ts';
+	import type { Person, Group, Creator } from '../../types/people.ts';
 	import type { Media } from '../../types/media.ts';
 
-	export const media: Media = {
+	export let media: Media = {
 		UUID: '',
 		kind: '',
 		title: '',
@@ -13,7 +13,27 @@
 	export let title = '';
 	export let image = '';
 	export let averageRating = 0;
-	export let creators = [] as Person[];
+	// implement polymorphism by using Either type
+	// this is needed to match the fields from e.g. the album type
+	// when e.g. the album card renders this component
+	export const creators: Person[] | Group[] | Creator[] = [];
+	// separate arrays for display purposes
+
+	let individualCreators: Person[] = [];
+	let groupCreators: Group[] = [];
+	// processCreators checks the type of the creators prop
+	function processCreators(creators: Person[] | Group[] | Creator[]) {
+		if (creators.length === 0) {
+			return;
+		}
+
+		// check if the first element is a Person
+		if ('first_name' in creators[0]) {
+			individualCreators = creators as Person[];
+		} else {
+			groupCreators = creators as Group[];
+		}
+	}
 
 	const getAverageRatings = async () => {
 		const response = await fetch('/api/media/averageRatings', {
@@ -29,6 +49,7 @@
 
 	onMount(() => {
 		getAverageRatings();
+		processCreators(creators);
 	});
 </script>
 
@@ -37,11 +58,17 @@
 	<div class="media-title">{title}</div>
 	<div>Average rating: {averageRating}</div>
 	<div class="media-creators">
-		{#each creators as creator (creator.id)}
-			<div>{creator.first_name}</div>
-			<div>{creator.last_name}</div>
+		{#each individualCreators as person (person.id)}
+			<div>{person.first_name}</div>
+			<div>{person.last_name}</div>
+		{/each}
+		{#each groupCreators as group (group.id)}
+			<div>{group.name}</div>
 		{/each}
 	</div>
+	<!-- the following slot is used so that we can polymorphically render the media card 
+with various types that extend from the Media iface-->
+	<slot />
 </div>
 
 <style>

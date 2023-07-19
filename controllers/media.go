@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,6 +32,11 @@ type (
 	MediaController struct {
 		storage models.MediaStorage
 	}
+
+	mediaError struct {
+		ID  uuid.UUID
+		Err error
+	}
 )
 
 func NewMediaController(storage models.MediaStorage) *MediaController {
@@ -42,7 +49,9 @@ func NewMediaController(storage models.MediaStorage) *MediaController {
 func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+		mc.storage.Log.Error().Err(err).
+			Msgf("Failed to parse media ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -50,55 +59,130 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 
 	media, err := mc.storage.Get(ctx, mediaID)
 	if err != nil {
-		h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
+		mc.storage.Log.Error().Err(err).
+			Msgf("Failed to get media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media")
 	}
 
-	return c.JSON(media)
-}
-
-// GetRecommendations returns media recommendations for a user based on collaborative filtering
-// FIXME: the actual underlying functionality, i.e. the recommendations server is yet to be implemented
-func GetRecommendations(c *fiber.Ctx) error {
-	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	detailedMedia, err := mc.storage.
+		GetMediaDetails(ctx, media.Kind, media.ID)
 	if err != nil {
-		//nolint:errcheck
-		return h.Res(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid member ID %s (must be an integer)", c.Params("id")))
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %w", c.Params("id"), err)
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}
 
-	memberID := int32(mID)
-
-	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
-	if err != nil {
-		//nolint:errcheck
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
-	}
-	defer conn.Close()
-
-	s := services.NewRecommendationServiceClient(conn)
-
-	recommendedMedia, err := s.GetRecommendations(context.Background(), &services.GetRecommendationsRequest{
-		MemberId: memberID,
-	})
-	if err != nil {
-		//nolint:errcheck
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
-	}
-
-	return c.JSON(recommendedMedia)
+	return h.ResData(c, fiber.StatusOK, "success", detailedMedia)
 }
 
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
 func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
+	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	media, err := mc.storage.GetRandom(ctx, 5)
+	// FIXME: blacklist tracks, because they get e.g. improperly parsed as albums at some point
+	media, err := mc.storage.GetRandom(ctx, 2, "track")
 	if err != nil {
-		//nolint:errcheck
-		h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
+		return h.Res(c, fiber.StatusInternalServerError,
+			"Failed to get random media: "+err.Error())
 	}
 
-	return c.JSON(media)
+	mc.storage.Log.Info().Msgf("Got %d random media items", len(media))
+	mediaItems := make([]interface{}, len(media))
+
+	errChan := make(chan mediaError, len(media))
+	var wg sync.WaitGroup
+
+	// set an iterator variable so we can access the media item in the goroutine
+	i := 0
+	mc.storage.Log.Info().Msg("Getting media details")
+	for id, kind := range media {
+		wg.Add(1)
+		go func(i int, id uuid.UUID, kind string) {
+			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			// this val. of err must be shadowed, otherwise it will be the same err for all goroutines
+			mDetails, err := mc.storage.
+				GetMediaDetails(ctx, kind, id)
+			if err != nil {
+				errChan <- mediaError{ID: id, Err: err}
+				return
+			}
+			mc.storage.Log.Info().Msgf("Got media details for media with ID %s", id.String())
+			mediaItems[i] = mDetails
+		}(i, id, kind)
+		i++
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	if len(errChan) > 0 {
+		for e := range errChan {
+			mc.storage.Log.Error().Err(err).
+				Msgf("Failed to get media details for media with ID %s: %s", e.ID, e.Err.Error())
+		}
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
+	}
+
+	return h.ResData(c, fiber.StatusOK, "success", mediaItems)
+}
+
+func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
+	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mediaID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to parse media ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+	}
+	kind, err := mc.storage.GetKind(ctx, mediaID)
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get kind for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get kind")
+	}
+
+	path, err := mc.storage.GetImagePath(ctx, mediaID)
+	if err == sql.ErrNoRows {
+		mc.storage.Log.Warn().Msgf("Using placeholder image for media with ID %s", c.Params("id"))
+		switch kind {
+		case "film", "tv_show":
+			err = c.SendString("./static/film/placeholder.png")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		case "album", "track":
+			err = c.SendString("./static/music/placeholder.webp")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		default:
+			err = c.SendString("./static/placeholder.png")
+			if err != nil {
+				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+			}
+			return c.SendStatus(fiber.StatusOK)
+		}
+	} else if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get image paths for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get image paths")
+	}
+	mc.storage.Log.Debug().Msgf("Got image path %s for media with ID %s", path, c.Params("id"))
+	err = c.SendString("./static/" + path)
+	if err != nil {
+		mc.storage.Log.Error().Err(err).Msgf("Failed to send image for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusNotFound, "Failed to send image")
+	}
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // WARN: this is probably wrong
@@ -113,6 +197,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "film":
 		var film models.Film
 		if err := c.BodyParser(&film); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &film
@@ -120,6 +205,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "album":
 		var album models.Album
 		if err := c.BodyParser(&album); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &album
@@ -127,6 +213,7 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	case "track":
 		var track models.Track
 		if err := c.BodyParser(&track); err != nil {
+			mc.storage.Log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 			return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 		}
 		media = &track
@@ -183,6 +270,35 @@ func (mc *MediaController) AddMedia(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(media)
+}
+
+// GetRecommendations returns media recommendations for a user based on collaborative filtering
+// TODO: the actual underlying functionality, i.e. the recommendations server
+func GetRecommendations(c *fiber.Ctx) error {
+	mID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		//nolint:errcheck
+		return h.Res(c, fiber.StatusBadRequest, fmt.Sprintf("Invalid member ID %s (must be an integer)", c.Params("id")))
+	}
+
+	memberID := int32(mID)
+
+	conn, err := client.ConnectToService(context.Background(), "recommendation", "50051")
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to connect to recommendation service")
+	}
+	defer conn.Close()
+
+	s := services.NewRecommendationServiceClient(conn)
+
+	recommendedMedia, err := s.GetRecommendations(context.Background(), &services.GetRecommendationsRequest{
+		MemberId: memberID,
+	})
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get recommendations")
+	}
+
+	return c.JSON(recommendedMedia)
 }
 
 func AddGenre() {

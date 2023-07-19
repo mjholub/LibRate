@@ -41,7 +41,6 @@
 		}, 300);
 	};
 
-	// FIXME: correct the types in the PasswordInput component
 	const entropyDummy = async (password: string) => {
 		Promise.resolve(password);
 	};
