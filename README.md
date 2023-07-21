@@ -29,7 +29,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [x] Prototype logic
   - [ ] Actual working implementation
 
-###**Other**
+### **Other**
   - [ ] Extended configurability
   - [ ] Admin panel
 
