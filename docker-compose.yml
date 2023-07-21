@@ -1,0 +1,38 @@
+
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - LIBRATE_ENV="dev"
+    depends_on:
+      - db
+    command: sh -c "./LibRate -init && ./LibRate"
+    ports:
+      - 3000:3000
+
+  db:
+    image: postgres:15
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=librate
+      - POSTGRES_PASSWORD=librate
+      - POSTGRES_DB=librate
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile
+    volumes:
+      - ./fe:/app
+    ports:
+      - 8080:8080
+
+volumes:
+  db-data:
