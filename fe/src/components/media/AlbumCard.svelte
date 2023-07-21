@@ -47,12 +47,12 @@
 			</div>
 		{/if}
 	</div>
-	<div>Release Date: {album.release_date}</div>
+	<div><b>Release Date</b>: {album.release_date}</div>
 	<div class="album-tracklist">
 		{#each album.tracks as track (track.media_id)}
-			<p>Tracklist:</p>
+			<p><b>Tracklist:</b></p>
 			<div class="album-track">
-				<span>{track.track_number}</span>
+				<span>{track.track_number++}</span>
 				<span>{track.name}</span>
 				<span>{track.duration}</span>
 			</div>
