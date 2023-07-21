@@ -6,26 +6,30 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ## Roadmap:
 
-[-] **Social features**:
+### **Social features**:
   - [x] Basic registration support
   - [x] (**WIP**) Member cards with profile info
   - [ ] Full member profile pages
   - [ ] Groups
   - [ ] Direct messages, follows, sharing...
   - **ActivityPub support**
-- **Media features**
+### **Media features**
   - [x] Album cards
   - [x] Carousels showing random media
   - [x] Relevant DB setup
   - [ ] Film and series cards
   - [ ] Book cards
   - [ ] Anime and manga cards/pages
-- **Reviews**
+  ### **Reviews**
   - [x] Basic review form
   - [?] Backend logic for submission and fetching of reviews
   - [x] (**WIP**) Review feed
-- [ ] **Recommendations**
-- **Other**
+
+### **Recommendations**
+  - [x] Prototype logic
+  - [ ] Actual working implementation
+
+###**Other**
   - [ ] Extended configurability
   - [ ] Admin panel
 
