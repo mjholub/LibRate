@@ -136,6 +136,19 @@ func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Rating, err error
 	return r, nil
 }
 
+func (rs *RatingStorage) Delete(ctx context.Context, id int64) (err error) {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		_, err = rs.db.ExecContext(ctx, `DELETE FROM reviews.ratings WHERE id = $1`, id)
+		if err != nil {
+			return fmt.Errorf("error deleting rating: %w", err)
+		}
+		return nil
+	}
+}
+
 // GetLatestRatings retrieves the latest reviews for all media items. The limit and offset
 // parameters are used for pagination.
 func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Rating, err error) {
