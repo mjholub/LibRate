@@ -19,10 +19,10 @@ func Protected() fiber.Handler {
 		}
 	}
 	if os.Getenv("FIBER_ENV") == "dev" {
-		conf.SiginingKey = "dev"
+		conf.SigningKey = "dev"
 	}
 	return jwtware.New(jwtware.Config{
-		SigningKey:   []byte(conf.SiginingKey),
+		SigningKey:   jwtware.SigningKey{Key: []byte(conf.SigningKey)},
 		ErrorHandler: jwtError,
 	})
 }

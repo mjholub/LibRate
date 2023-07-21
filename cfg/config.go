@@ -77,8 +77,8 @@ func LoadConfig() mo.Result[Config] {
 					Host: "localhost",
 					Port: "3000",
 				},
-				SiginingKey: "",
-				DBPass:      "postgres",
+				SigningKey: "",
+				DBPass:     "postgres",
 			}, nil
 		}
 		loc, err := locateConfig()
@@ -107,8 +107,8 @@ func LoadConfig() mo.Result[Config] {
 				Host: "localhost",
 				Port: "3000",
 			},
-			SiginingKey: "",
-			DBPass:      "postgres",
+			SigningKey: "",
+			DBPass:     "postgres",
 		}
 
 		configStr := createKVPairs(configRaw)
