@@ -10,6 +10,58 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// 1. Parse the input
+// 2. Validate the input (check for empty fields, valid email, etc.)
+// 3. Pass the email to the database, get the password hash for the email or nickname
+// 4. Compare the password hash with the password hash from the database
+func (a *AuthService) Login(c *fiber.Ctx) error {
+	input, err := parseInput("login", c)
+	if err != nil {
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
+	}
+
+	validatedInput, err := input.Validate()
+	if err != nil {
+		return h.Res(c, http.StatusBadRequest, "Invalid login request")
+	}
+
+	err = a.validatePassword(
+		validatedInput.Email,
+		validatedInput.MemberName,
+		validatedInput.Password,
+	)
+
+	member := models.Member{
+		ID:         0,
+		Email:      validatedInput.Email,
+		MemberName: validatedInput.MemberName,
+		PassHash:   validatedInput.Password,
+	}
+
+	switch {
+	case validatedInput.Email != "" && err == nil:
+		memberID, err := a.ms.GetID(c.Context(), validatedInput.Email)
+		if err != nil {
+			return h.Res(c, http.StatusInternalServerError, "Failed to validate credentials")
+		}
+		member.ID = memberID
+		return a.createSession(c, &member)
+	case validatedInput.MemberName != "" && err == nil:
+		memberID, err := a.ms.GetID(c.Context(), validatedInput.MemberName)
+		if err != nil {
+			return h.Res(c, http.StatusInternalServerError, "Failed to validate credentials")
+		}
+		member.ID = memberID
+		return a.createSession(c, &member)
+	case err != nil && a.conf.LibrateEnv == "dev":
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
+	case err != nil:
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
+	default:
+		return h.Res(c, http.StatusInternalServerError, "Internal server error")
+	}
+}
+
 func (l LoginInput) Validate() (*models.MemberInput, error) {
 	if l.Email == "" && l.MemberName == "" {
 		return nil, errors.New("email or nickname required")
@@ -38,26 +90,18 @@ func (a *AuthService) validatePassword(email, login, password string) error {
 	return nil
 }
 
-func (a *AuthService) Login(c *fiber.Ctx) error {
-	input, err := parseInput("login", c)
+// TODO: move to a dedicated file?
+func (a *AuthService) createSession(c *fiber.Ctx, member *models.Member) error {
+	token, err := a.ms.CreateSession(c.Context(), *member)
 	if err != nil {
-		return h.Res(c, http.StatusBadRequest, "Invalid login request")
+		return h.Res(c, http.StatusInternalServerError, "Internal server error")
 	}
 
-	validatedInput, err := input.Validate()
-	if err != nil {
-		return h.Res(c, http.StatusBadRequest, "Invalid login request")
-	}
-
-	err = a.validatePassword(
-		validatedInput.Email,
-		validatedInput.MemberName,
-		validatedInput.Password)
-	if err != nil && a.conf.LibrateEnv == "dev" {
-		return h.Res(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
-	} else if err != nil {
-		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
-	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "session",
+		Value:    token,
+		HTTPOnly: true,
+	})
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "Logged in successfully",

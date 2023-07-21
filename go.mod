@@ -7,9 +7,10 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/avast/retry-go/v4 v4.3.4
 	github.com/gofiber/contrib/fiberzerolog v0.1.3
-	github.com/gofiber/fiber/v2 v2.47.0
-	github.com/gofiber/jwt/v2 v2.2.7
+	github.com/gofiber/contrib/jwt v1.0.4
+	github.com/gofiber/fiber/v2 v2.48.0
 	github.com/gofrs/uuid/v5 v5.0.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/gookit/config/v2 v2.2.1
 	github.com/imdario/mergo v0.3.16
 	github.com/jmoiron/sqlx v1.3.5
@@ -26,13 +27,14 @@ require (
 )
 
 require (
+	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/cenkalti/backoff/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/goccy/go-yaml v1.10.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gookit/color v1.5.2 // indirect
@@ -44,14 +46,10 @@ require (
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect
-	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/teivah/onecontext v0.0.0-20200513185103-40f981bfd775 // indirect
-	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.48.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
