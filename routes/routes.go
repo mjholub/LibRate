@@ -22,10 +22,18 @@ import (
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber.App) error {
+func Setup(logger *zerolog.Logger,
+	conf *cfg.Config,
+	dbConn *sqlx.DB,
+	app *fiber.App,
+	fzlog *fiber.Handler,
+) error {
 	var wg sync.WaitGroup
 	errChan := make(chan error, 1)
 
+	// setup the middleware
+	// NOTE: unsure if this handler is correct
+	api := app.Group("/api", *fzlog)
 	// initialize the reading of the static files in a goroutine
 	wg.Add(1)
 	go func() {
@@ -60,7 +68,7 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 
 	go func() {
 		defer wg.Done()
-		mStor = models.NewMemberStorage(dbConn, logger)
+		mStor = models.NewMemberStorage(dbConn, logger, conf)
 	}()
 	go func() {
 		defer wg.Done()
@@ -91,26 +99,37 @@ func Setup(logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB, app *fiber
 
 	app.Get("/api/version", version.Get)
 
-	app.Get("/api/reviews/:id", reviewSvc.GetRatings)
-	app.Get("/api/reviews/", reviewSvc.GetRatings)
-	app.Post("/api/reviews", reviewSvc.PostRating)
-	app.Get("/api/reviews/latest", reviewSvc.GetLatestRatings)
-	app.Get("api/reviews/:mediaID", reviewSvc.GetRatings)
+	reviews := api.Group("/reviews")
+	reviews.Get("/latest", reviewSvc.GetLatestRatings)
+	// TODO: handler for single review based on id
+	reviews.Get("/", reviewSvc.GetRatings)
+	reviews.Post("/", middleware.Protected(), reviewSvc.PostRating)
+	reviews.Patch("/:id", middleware.Protected(), reviewSvc.UpdateRating)
+	reviews.Delete("/:id", middleware.Protected(), reviewSvc.DeleteRating)
+	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
+	reviews.Get("/:id", reviewSvc.GetRatings)
 
-	app.Get("/api/authenticate", middleware.Protected(), func(c *fiber.Ctx) error {
+	authApi := api.Group("/authenticate")
+	authApi.Get("/", middleware.Protected(), func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
-	app.Post("/api/login", authSvc.Login)
-	app.Post("/api/register", authSvc.Register)
-	app.Get("/api/member/:id", memberSvc.GetMember)
-	app.Post("/api/password-entropy", auth.ValidatePassword())
 
-	app.Get("/api/media/random", mediaCon.GetRandom)
-	app.Get("/api/media/:id/images", mediaCon.GetImagePaths)
-	app.Get("/api/media/:id", mediaCon.GetMedia)
+	member := api.Group("/members")
+	member.Post("/login", middleware.Protected(), authSvc.Login)
+	member.Post("/register", middleware.Protected(), authSvc.Register)
+	member.Get("/:id", memberSvc.GetMember)
 
-	app.Post("/api/search", sc.Search)
-	app.Options("/api/search", func(c *fiber.Ctx) error {
+	// NOTE: is protected middleware needed here?
+	app.Post("/api/password-entropy", middleware.Protected(), auth.ValidatePassword())
+
+	media := api.Group("/media")
+	media.Get("/random", mediaCon.GetRandom)
+	media.Get("/:id/images", mediaCon.GetImagePaths)
+	media.Get("/:id", mediaCon.GetMedia)
+
+	search := api.Group("/search")
+	search.Post("/", sc.Search)
+	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 	return nil

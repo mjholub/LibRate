@@ -59,17 +59,20 @@ func main() {
 	}
 	defer dbConn.Close()
 
+	fiberlog := fiberzerolog.New(fiberzerolog.Config{
+		Logger: &log,
+		// skip logging for static files, there's too many of them
+		SkipURIs: []string{"/_app/immutable", "/_app/chunks"},
+	})
 	// Create a new Fiber instance
 	app := fiber.New()
-	app.Use(fiberzerolog.New(fiberzerolog.Config{
-		Logger: &log,
-	}))
+	app.Use(fiberlog)
 
 	// CORS
 	setupCors(app)
 
 	// Setup routes
-	err = routes.Setup(&log, &conf, dbConn, app)
+	err = routes.Setup(&log, &conf, dbConn, app, &fiberlog)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to setup routes")
 	}

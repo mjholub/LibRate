@@ -69,7 +69,7 @@
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
 
-		const response = await fetch('/api/register', {
+		const response = await fetch('/api/members/register', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -100,7 +100,7 @@
 	const login = async (event: Event) => {
 		event.preventDefault();
 
-		const response = await fetch('/api/login', {
+		const response = await fetch('/api/members/login', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
