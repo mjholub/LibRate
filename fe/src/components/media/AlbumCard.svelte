@@ -2,9 +2,13 @@
 	import type { Album } from '../../types/music.ts';
 	//import { mediaImageStore } from '../../stores/media/image.ts';
 	let showArtists = false;
+	let showKeywords = false;
 	let durationStr = '';
 	function toggleArtists() {
 		showArtists = !showArtists;
+	}
+	function toggleKeywords() {
+		showKeywords = !showKeywords;
 	}
 	export let album: Album;
 	if (album.duration && album.duration.Valid) {
@@ -59,6 +63,22 @@
 		{/each}
 	</div>
 	<div>Duration: {durationStr}</div>
+	<!-- TODO: ability to add keywords from this component-->
+	<div class="keywords-container">
+		<div class="keywords"><b>Keywords:</b></div>
+		<button class="toggle-button" on:click={toggleKeywords}>
+			{#if album.keywords !== undefined}
+				{#if showKeywords}
+					Show
+				{:else}
+					Hide
+					{#each album.keywords as keyword}
+						{keyword}
+					{/each}
+				{/if}
+			{/if}
+		</button>
+	</div>
 </div>
 
 <style>
@@ -95,5 +115,18 @@
 
 	.toggle-button:hover {
 		background-color: #45a049;
+	}
+	.keywords-container {
+		display: flex;
+		flex-direction: row;
+		font-size: 0.8em;
+		/* pale gray */
+		color: #d3d3d3;
+	}
+	.keywords {
+		display: flex;
+		flex-direction: row;
+		font-size: 1em;
+		color: #ffffff;
 	}
 </style>
