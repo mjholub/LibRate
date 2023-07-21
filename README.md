@@ -4,6 +4,31 @@ This project aims to bring a website combining the functionality of such project
 
 This project is currently in early alpha stage, bugs are expected and PRs are very welcome. 
 
+## Roadmap:
+
+[-] **Social features**:
+  - [x] Basic registration support
+  - [] Member cards with profile info
+  - [] Full member profile pages
+  - [] Groups
+  - [] Direct messages, follows, sharing...
+  - **ActivityPub support**
+- **Media features**
+  - [x] Album cards
+  - [x] Carousels showing random media
+  - [x] Relevant DB setup
+  - [] Film and series cards
+  - [] Book cards
+  - [] Anime and manga cards/pages
+- **Reviews**
+  - [x] Basic review form
+  - [?] Backend logic for submission and fetching of reviews
+  - [-] Review feed
+- [] **Recommendations**
+- **Other**
+  - [] Extended configurability
+  - [] Admin panel
+
 ## Prerequisites:
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
