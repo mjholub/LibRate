@@ -12,8 +12,9 @@ type (
 	Film struct {
 		MediaID     *uuid.UUID   `json:"media_id" db:"media_id,pk,unique"`
 		Title       string       `json:"title" db:"title"`
-		Cast        Cast         `json:"cast" db:"cast"`
+		CastID      int64        `json:"cast" db:"cast"`
 		ReleaseDate sql.NullTime `json:"release_date" db:"release_date"`
+		Duration    sql.NullTime `json:"duration" db:"duration"`
 	}
 
 	TVShow struct {
@@ -47,7 +48,16 @@ type (
 		Plot      string        `json:"plot" db:"plot"`
 	}
 
-	// TODO: add more fields
+	ActorCast struct {
+		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+	}
+
+	DirectorCast struct {
+		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+	}
+
 	Cast struct {
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
@@ -56,7 +66,7 @@ type (
 
 func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
 	var film Film
-	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = ?", id)
+	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = $1", id)
 	if err != nil {
 		return Film{}, err
 	}
@@ -66,7 +76,7 @@ func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error)
 
 func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
 	var tvshow TVShow
-	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = ?", id)
+	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = $1", id)
 	if err != nil {
 		return TVShow{}, err
 	}

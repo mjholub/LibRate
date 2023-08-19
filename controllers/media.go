@@ -103,7 +103,7 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			// this val. of err must be shadowed, otherwise it will be the same err for all goroutines
+			// NOTE:this val. of err must be shadowed, otherwise it will be the same err for all goroutines
 			mDetails, err := mc.storage.
 				GetMediaDetails(ctx, kind, id)
 			if err != nil {
