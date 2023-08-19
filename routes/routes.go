@@ -4,15 +4,18 @@ import (
 	"net/http"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
+	"codeberg.org/mjh/LibRate/controllers/form"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
@@ -95,6 +98,7 @@ func Setup(logger *zerolog.Logger,
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
 	mediaCon := controllers.NewMediaController(*mediaStor)
+	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
@@ -126,6 +130,11 @@ func Setup(logger *zerolog.Logger,
 	media.Get("/random", mediaCon.GetRandom)
 	media.Get("/:id/images", mediaCon.GetImagePaths)
 	media.Get("/:id", mediaCon.GetMedia)
+
+	formApi := api.Group("/form")
+	// TODO: make the timeouts configurable
+	formApi.Post("/add_media/:type", middleware.Protected(), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formApi.Post("/update_media/:type", middleware.Protected(), formCon.UpdateMedia)
 
 	search := api.Group("/search")
 	search.Post("/", sc.Search)

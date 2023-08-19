@@ -9,6 +9,11 @@ export interface Film extends Media {
   UUID: UUID;
   kind: 'film';
   title: string;
+  castID: number;
+  synopsis?: string;
+  releaseDate?: Date;
+  duration?: number;
+  rating?: number;
   created: Date;
   creator: Person;
 }
@@ -19,4 +24,20 @@ export interface TVShow extends Media {
   title: string;
   created: Date;
   creator: Person;
+}
+
+export type ActorCast = {
+  CastID: number;
+  PersonID: number;
+};
+
+export type DirectorCast = {
+  CastID: number;
+  PersonID: number;
+};
+
+export type Cast = {
+  ID: number;
+  Actors: ActorCast[];
+  Directors: DirectorCast[];
 }
