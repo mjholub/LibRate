@@ -65,7 +65,7 @@ type (
 
 func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
 	var film Film
-	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = ?", id)
+	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = $1", id)
 	if err != nil {
 		return Film{}, err
 	}
@@ -75,7 +75,7 @@ func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error)
 
 func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
 	var tvshow TVShow
-	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = ?", id)
+	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = $1", id)
 	if err != nil {
 		return TVShow{}, err
 	}
