@@ -6,6 +6,7 @@ require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230522144350-ddf001145149
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/avast/retry-go/v4 v4.3.4
+	github.com/bakape/thumbnailer/v2 v2.7.1
 	github.com/gofiber/contrib/fiberzerolog v0.1.3
 	github.com/gofiber/contrib/jwt v1.0.4
 	github.com/gofiber/fiber/v2 v2.48.0
@@ -46,6 +47,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
