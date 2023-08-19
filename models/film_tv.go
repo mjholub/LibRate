@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -9,10 +10,10 @@ import (
 
 type (
 	Film struct {
-		MediaID *uuid.UUID `json:"media_id" db:"media_id,pk,unique"`
-		Title   string     `json:"title" db:"title"`
-		Cast    Cast       `json:"cast" db:"cast"`
-		Year    int        `json:"year" db:"year"`
+		MediaID     *uuid.UUID   `json:"media_id" db:"media_id,pk,unique"`
+		Title       string       `json:"title" db:"title"`
+		Cast        Cast         `json:"cast" db:"cast"`
+		ReleaseDate sql.NullTime `json:"release_date" db:"release_date"`
 	}
 
 	TVShow struct {
