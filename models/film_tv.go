@@ -12,7 +12,7 @@ type (
 	Film struct {
 		MediaID     *uuid.UUID   `json:"media_id" db:"media_id,pk,unique"`
 		Title       string       `json:"title" db:"title"`
-		Cast        Cast         `json:"cast" db:"cast"`
+		CastID      int64        `json:"cast" db:"cast"`
 		ReleaseDate sql.NullTime `json:"release_date" db:"release_date"`
 	}
 
@@ -47,7 +47,16 @@ type (
 		Plot      string        `json:"plot" db:"plot"`
 	}
 
-	// TODO: add more fields
+	ActorCast struct {
+		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+	}
+
+	DirectorCast struct {
+		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+	}
+
 	Cast struct {
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
