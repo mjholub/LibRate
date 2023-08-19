@@ -14,6 +14,7 @@ type (
 		Title       string       `json:"title" db:"title"`
 		CastID      int64        `json:"cast" db:"cast"`
 		ReleaseDate sql.NullTime `json:"release_date" db:"release_date"`
+		Duration    sql.NullTime `json:"duration" db:"duration"`
 	}
 
 	TVShow struct {
