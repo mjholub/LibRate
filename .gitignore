@@ -4,3 +4,5 @@ recommendation/target
 recommendation/go/services
 config.yml
 LibRate
+node_modules/.pnpm
+node_modules
