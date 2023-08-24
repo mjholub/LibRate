@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -19,17 +20,20 @@ type (
 	MediaStorer[T any] interface {
 		Get(ctx context.Context, key string) (T, error)
 		GetAll() ([]T, error)
-		Add(ctx context.Context, key, value T) error
+		Add(ctx context.Context, db *sqlx.DB, props Media) (uuid.UUID, error)
 		Update(ctx context.Context, key string, value T) error
 		Delete(ctx context.Context, key string) error
 	}
 
 	Media struct {
-		ID      uuid.UUID `json:"id" db:"id,pk,unique"`
-		Title   string    `json:"title" db:"title"`
-		Kind    string    `json:"kind" db:"kind"`
-		Created time.Time `json:"keywords,omitempty" db:"created"`
-		Creator int32     `json:"creator,omitempty" db:"creator"`
+		ID       uuid.UUID     `json:"id" db:"id,pk,unique"`
+		Title    string        `json:"title" db:"title"`
+		Kind     string        `json:"kind" db:"kind"`
+		Created  time.Time     `json:"keywords,omitempty" db:"created"`
+		Creator  sql.NullInt32 `json:"creator,omitempty" db:"creator"`
+		Creators []Person      `json:"creators,omitempty"` // no db tag, we're using a junction table
+		Added    time.Time     `json:"added,omitempty" db:"added"`
+		Modified sql.NullTime  `json:"modified,omitempty" db:"modified"`
 	}
 
 	MediaObject interface {
@@ -225,16 +229,78 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 	}
 }
 
-func (ms *MediaStorage) Add(ctx context.Context, db *sqlx.DB, media MediaService, props Media) error {
-	switch m := media.(type) {
-	case *Book:
-		return addBook(ctx, db, BookKeys, *m)
-	case *Album:
-		return addAlbum(ctx, db, *m)
-	case *Track:
-		return addTrack(ctx, db, m)
+// Add is a generic method that adds an object to the media.media table. It needs to be run
+// BEFORE the object is added to its respective table, since it needs the media ID to be
+// generated first.
+func (ms *MediaStorage) Add(ctx context.Context, props Media) (mediaID uuid.UUID, err error) {
+	select {
+	case <-ctx.Done():
+		return uuid.Nil, ctx.Err()
 	default:
-		return fmt.Errorf("unknown media type")
+		// early return on faulty db connection
+		if ms.db == nil {
+			return uuid.Nil, fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, `	
+		INSERT INTO media.media (
+			title, kind, created
+		) VALUES (
+			$1, $2, $3
+		)
+		RETURNING id
+		`)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		err = stmt.GetContext(ctx, mediaID, props.Title, props.Kind, props.Created)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("error executing statement: %w", err)
+		}
+		err = ms.AddCreators(ctx, mediaID, props.Creators)
+		// handle the case in which the said person is not in the database
+		if err == sql.ErrNoRows {
+			ms.Log.Warn().Msg("no rows were affected")
+			return uuid.Nil, fmt.Errorf("no rows were affected: %w", err)
+		}
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("error adding creators: %w", err)
+		}
+		return mediaID, nil
+	}
+}
+
+func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creators []Person) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// early return on faulty db connection
+		if ms.db == nil {
+			return fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, `	
+		INSERT INTO media.media_creators (
+			media_id, creator_id
+		) VALUES (
+			$1, $2
+		)
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		for _, creator := range creators {
+			_, err = stmt.ExecContext(ctx, uuid, creator.ID)
+			if err != nil {
+				ms.Log.Error().Err(err).Msg("error executing statement")
+				return fmt.Errorf("error executing statement: %w", err)
+			}
+		}
+		return nil
 	}
 }
 

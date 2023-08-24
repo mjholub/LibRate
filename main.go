@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -67,6 +68,7 @@ func main() {
 	// Create a new Fiber instance
 	app := fiber.New()
 	app.Use(fiberlog)
+	app.Use(idempotency.New())
 
 	// CORS
 	setupCors(app)

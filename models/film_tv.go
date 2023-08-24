@@ -3,18 +3,23 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/samber/lo"
 )
 
 type (
 	Film struct {
-		MediaID     *uuid.UUID   `json:"media_id" db:"media_id,pk,unique"`
-		Title       string       `json:"title" db:"title"`
-		CastID      int64        `json:"cast" db:"cast"`
-		ReleaseDate sql.NullTime `json:"release_date" db:"release_date"`
-		Duration    sql.NullTime `json:"duration" db:"duration"`
+		MediaID     *uuid.UUID     `json:"media_id" db:"media_id,pk,unique"`
+		Title       string         `json:"title" db:"title"`
+		Cast        Cast           `json:"cast"` // this data is stored in the people schema, so no db tag
+		ReleaseDate sql.NullTime   `json:"release_date" db:"release_date"`
+		Duration    sql.NullTime   `json:"duration" db:"duration"`
+		Synopsis    sql.NullString `json:"synopsis" db:"synopsis"`
+		// TODO: check if nullFloat64 is the right type for this
+		Rating sql.NullFloat64 `json:"rating"` // stored in the reviews.rating table, can be queried with a join on media ID
 	}
 
 	TVShow struct {
@@ -59,6 +64,7 @@ type (
 	}
 
 	Cast struct {
+		ID        int64    `json:"cast_id" db:"cast_id,pk,unique"`
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
 	}
@@ -84,18 +90,111 @@ func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, er
 	return tvshow, nil
 }
 
-func (f Film) IsMedia() bool {
-	return true
+func (f *Film) GetPosterPath(ID uuid.UUID) string {
+	return "/media/" + ID.String() + "/poster.jpg"
 }
 
-func (ts TVShow) IsMedia() bool {
-	return true
+func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
+	ms.Log.Info().Msg("Adding film \"" + film.Title + "\"")
+	// if film has no release date provided yet, set it to 31st December 9999
+	// While making the media."media"(created) nullable would seem more intuitive,
+	// we do not want this to prevent low quality submissions for stuff that has already been released.
+	// This seems like a fair compromise.
+	// TODO: in the frontend display "Not released yet" if the release date is 31st December 9999
+	//
+	// If an exact release date is not known, there is no way we can prevent users from setting that to 1st January of the
+	// actual release year. It should be visible as a tip in the UI, so that if someone reviewing a submission happens to know
+	// the exact release date, they can add it.
+	if !film.ReleaseDate.Valid {
+		film.ReleaseDate.Time = time.Date(9999, 12, 31, 0, 0, 0, 0, time.UTC)
+		film.ReleaseDate.Valid = true
+	}
+	media := Media{
+		ID:       *film.MediaID,
+		Title:    film.Title,
+		Kind:     "film",
+		Created:  film.ReleaseDate.Time,
+		Creators: lo.Interleave(film.Cast.Actors, film.Cast.Directors),
+	}
+	mediaID, err := ms.Add(ctx, media)
+	if err != nil {
+		ms.Log.Error().Err(err).Msg("error adding film")
+		return err
+	}
+	ms.Log.Debug().Msgf("Added media with ID " + mediaID.String())
+	// ratings are stored in a
+	_, err = ms.db.NamedExecContext(ctx, `
+		INSERT INTO media.films (
+			media_id, title, cast, release_date, duration, synopsis
+		) VALUES (
+			:media_id, :title, :release_date, :duration, :synopsis
+		)
+	`, film)
+	if err != nil {
+		ms.Log.Error().Err(err).Msg("error adding film")
+		return err
+	}
+	return nil
 }
 
-func (s Season) IsMedia() bool {
-	return true
+func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, directors []Person) (castID int64, err error) {
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		if ms.db == nil {
+			return 0, fmt.Errorf("no database connection or nil pointer")
+		}
+		query := `
+		INSERT INTO people.cast VALUES media_id = $1 RETURNING cast_id
+		`
+		err = ms.db.GetContext(ctx, &castID, query, mediaID)
+		if err != nil {
+			return 0, fmt.Errorf("error creating cast for media with id %s: %w", mediaID.String(), err)
+		}
+		// create cast for actors
+		// WARN: unsure if the value of castID will be correctly copied in the callback
+		// TODO: test this
+		lo.ForEach(actors, func(actor Person, i int) {
+			_, err = ms.db.ExecContext(ctx, `
+			INSERT INTO people.actor_cast (
+				cast_id, person_id
+			) VALUES (
+				$1, $2
+			)`, castID, actor.ID)
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding actor %s to cast with ID %d", actor.FirstName+actor.LastName, castID)
+			}
+		})
+		// create cast for directors
+		lo.ForEach(directors, func(director Person, i int) {
+			_, err = ms.db.ExecContext(ctx, `
+			INSERT INTO people.director_cast (
+				cast_id, person_id
+			) VALUES (
+				$1, $2
+			)`, castID, director.ID)
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding director %s to cast with ID %d", director.FirstName+director.LastName, castID)
+			}
+		})
+		return castID, nil
+	}
 }
 
-func (e Episode) IsMedia() bool {
-	return true
+func (ms *MediaStorage) UpdateFilm(ctx context.Context, film *Film) error {
+	_, err := ms.db.NamedExecContext(ctx, `
+		UPDATE media.films SET
+			title = :title,
+			cast = :cast,
+			release_date = :release_date,
+			duration = :duration,
+			synopsis = :synopsis
+		WHERE media_id = :media_id
+	`, film)
+	if err != nil {
+		ms.Log.Error().Err(err).Msg("error updating film")
+		return err
+	}
+	return nil
 }
