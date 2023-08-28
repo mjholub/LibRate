@@ -107,24 +107,24 @@ func Setup(logger *zerolog.Logger,
 	reviews.Get("/latest", reviewSvc.GetLatestRatings)
 	// TODO: handler for single review based on id
 	reviews.Get("/", reviewSvc.GetRatings)
-	reviews.Post("/", middleware.Protected(), reviewSvc.PostRating)
-	reviews.Patch("/:id", middleware.Protected(), reviewSvc.UpdateRating)
-	reviews.Delete("/:id", middleware.Protected(), reviewSvc.DeleteRating)
+	reviews.Post("/", middleware.Protected(nil), reviewSvc.PostRating)
+	reviews.Patch("/:id", middleware.Protected(nil), reviewSvc.UpdateRating)
+	reviews.Delete("/:id", middleware.Protected(nil), reviewSvc.DeleteRating)
 	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
 	reviews.Get("/:id", reviewSvc.GetRatings)
 
 	authApi := api.Group("/authenticate")
-	authApi.Get("/", middleware.Protected(), func(c *fiber.Ctx) error {
+	authApi.Get("/", middleware.Protected(nil), func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
 	member := api.Group("/members")
-	member.Post("/login", middleware.Protected(), authSvc.Login)
-	member.Post("/register", middleware.Protected(), authSvc.Register)
+	member.Post("/login", middleware.Protected(logger), authSvc.Login)
+	member.Post("/register", middleware.Protected(logger), authSvc.Register)
 	member.Get("/:id", memberSvc.GetMember)
 
 	// NOTE: is protected middleware needed here?
-	app.Post("/api/password-entropy", middleware.Protected(), auth.ValidatePassword())
+	app.Post("/api/password-entropy", middleware.Protected(nil), auth.ValidatePassword())
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
@@ -133,8 +133,8 @@ func Setup(logger *zerolog.Logger,
 
 	formApi := api.Group("/form")
 	// TODO: make the timeouts configurable
-	formApi.Post("/add_media/:type", middleware.Protected(), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formApi.Post("/update_media/:type", middleware.Protected(), formCon.UpdateMedia)
+	formApi.Post("/add_media/:type", middleware.Protected(nil), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formApi.Post("/update_media/:type", middleware.Protected(nil), formCon.UpdateMedia)
 
 	search := api.Group("/search")
 	search.Post("/", sc.Search)
