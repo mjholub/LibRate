@@ -11,7 +11,10 @@ export interface Media {
   kind: string;
   title: string;
   created: Date;
-  creator: Person | Group | null;
+  creator: Person | Group | null; // WARN: in the backend code it only references the ID (nullable int32)
+  creators: (Person | Group)[];
+  added: Date;
+  modified?: Date;
 };
 
 export type MediaImage = {
