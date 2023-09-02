@@ -1,12 +1,11 @@
 package cfg
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
-	"github.com/reactivex/rxgo/v2"
 	"github.com/samber/lo"
 )
 
@@ -59,46 +58,45 @@ func tryLocations() []string {
 }
 
 // lookForExisting looks for an existing config file in the given locations and returns the first
-func lookForExisting(configLocations []string) string {
-	// create a channel to emit the file pahts
-	fpChan := make(chan rxgo.Item)
-
-	// WaitGroup to ensure all checks are done before closing fpChan
-	var wg sync.WaitGroup
-
-	if configFileEnv := os.Getenv("CONFIG_FILE"); configFileEnv != "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if _, err := os.Stat(configFileEnv); err == nil {
-				fpChan <- rxgo.Of(configFileEnv)
-			}
-		}()
-	}
-
-	for i := range configLocations {
-		wg.Add(1)
-		path := configLocations[i]
-		go func(i int) {
-			defer wg.Done()
-			if _, err := os.Stat(configLocations[i]); err == nil {
-				fpChan <- rxgo.Of(path)
-			}
-		}(i)
-	}
+func lookForExisting(configLocations []string) (string, error) {
+	// Create a channel for emitting file paths
+	resultChan := make(chan struct {
+		Path string
+		Err  error
+	})
 
 	go func() {
-		wg.Wait()
-		close(fpChan)
+		// Check the CONFIG_FILE environment variable
+		if configFileEnv := os.Getenv("CONFIG_FILE"); configFileEnv != "" {
+			if _, err := os.Stat(configFileEnv); err == nil {
+				resultChan <- struct {
+					Path string
+					Err  error
+				}{configFileEnv, nil}
+				return
+			}
+		}
+
+		// Check the other config locations
+		for _, path := range configLocations {
+			if _, err := os.Stat(path); err == nil {
+				resultChan <- struct {
+					Path string
+					Err  error
+				}{path, nil}
+				return
+			}
+		}
+
+		// If no file is found, emit an error
+		resultChan <- struct {
+			Path string
+			Err  error
+		}{"", errors.New("no config file found")}
 	}()
 
-	// create an observable from the channel
-	fpObs := rxgo.FromChannel(fpChan)
+	// Extract the result from the channel
+	result := <-resultChan
 
-	item, err := fpObs.First().Get()
-	if err != nil {
-		return "" // no config file found
-	}
-	// return the first config file found
-	return item.V.(string)
+	return result.Path, result.Err
 }

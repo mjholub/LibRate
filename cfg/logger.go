@@ -13,7 +13,10 @@ import (
 // TODO: refactor so that parser parses each section of the config separately
 func LoadLoggerConfig() mo.Result[logging.Config] {
 	return mo.Try(func() (logging.Config, error) {
-		loc := lookForExisting(tryLocations())
+		loc, err := lookForExisting(tryLocations())
+		if err != nil {
+			return logging.Config{}, fmt.Errorf("failed to find logger config: %w", err)
+		}
 		configRaw, err := parser.Parse(loc)
 		if err != nil {
 			return logging.Config{}, fmt.Errorf("failed to parse logger config: %w", err)

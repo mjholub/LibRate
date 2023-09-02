@@ -22,7 +22,7 @@ var log = logging.Init(&logging.Config{
 func LoadConfig() mo.Result[*Config] {
 	return mo.Try(func() (conf *Config, err error) {
 		// first, look for an existing config file
-		if confLoc := lookForExisting(tryLocations()); confLoc != "" {
+		if confLoc, err := lookForExisting(tryLocations()); err == nil && confLoc != "" {
 			log.Info().Msgf("found config at %s", confLoc)
 			conf, err = parseRaw(confLoc)
 			if err != nil {

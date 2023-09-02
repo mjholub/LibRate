@@ -48,13 +48,13 @@ func TestLoadConfig(t *testing.T) {
 		t.Run("NoConfigFile", func(t *testing.T) {
 			result, err := cfg.LoadConfig().Get()
 			suite.Error(err)
-			suite.Nil(result)
+			suite.Nil(&result, t)
 		})
 	}
 
 	t.Run("NonExampleConfigFileExists", func(t *testing.T) {
 		result, err := cfg.LoadConfig().Get()
 		suite.NoError(err)
-		suite.NotEqual(result, defaultConfig)
+		suite.NotEqual(result, defaultConfig, t)
 	})
 }
