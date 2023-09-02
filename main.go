@@ -35,14 +35,18 @@ func main() {
 	log := logging.Init(&logConf)
 
 	// Load config
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+	conf, err := cfg.LoadConfig().Get()
+	if err != nil {
+		log.Panic().Msgf("failed to load config: %v", err)
+	}
 	if cfg.LoadConfig().IsError() {
 		err := cfg.LoadConfig().Error()
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
 	}
 
-	// Initialize database if it's running
+	// database health check
 	if DBRunning(conf.Port) {
+		// Initialize database if it's running
 		if *init {
 			if err := db.InitDB(); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
@@ -50,11 +54,14 @@ func main() {
 			log.Info().Msg("Database initialized")
 		}
 	} else {
-		log.Warn().Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
+		// FIXME: restore falling back to the default config if loading config fails
+		// (bring back the cfg.ReadDefaults() function and put it in a call to .OrElse() error handler)
+		log.Warn().
+			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
 	}
 
 	// Connect to database
-	dbConn, err := db.Connect(&conf)
+	dbConn, err := db.Connect(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
@@ -74,7 +81,7 @@ func main() {
 	setupCors(app)
 
 	// Setup routes
-	err = routes.Setup(&log, &conf, dbConn, app, &fiberlog)
+	err = routes.Setup(&log, conf, dbConn, app, &fiberlog)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to setup routes")
 	}

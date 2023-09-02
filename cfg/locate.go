@@ -1,0 +1,102 @@
+package cfg
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/samber/lo"
+)
+
+func getDefaultConfigPath() (string, error) {
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("error getting user config dir: %w", err)
+	}
+	defaultConfigPath := filepath.Join(confDir, "librate", "config.yaml")
+	return defaultConfigPath, nil
+}
+
+// tryLocations returns a list of possible config file locations
+func tryLocations() []string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Panic().Err(err).Msgf("error getting user home dir: %s", err.Error())
+	}
+	cfhome, err := os.UserConfigDir()
+	if err != nil || cfhome == "" {
+		if _, err := os.Stat(filepath.Join(home, ".config")); err == nil {
+			cfhome = filepath.Join(home, ".config")
+		} else {
+			log.Fatal().Err(err).Msgf("error getting user config dir: %s", err.Error())
+		}
+	}
+
+	configLocations := []string{
+		"config",
+		"config/config",
+		"/etc/librate/config",
+		"/var/lib/librate/config",
+		"/opt/librate/config",
+		"/usr/local/librate/config",
+		home + "/.config/librate/config",
+		cfhome + "/.local/share/librate/config",
+	}
+	configExtensions := []string{
+		".yml",
+		".yaml",
+		"",
+	}
+	// use FlatMap and Map to create a list of all possible config file locations
+	configLocations = lo.FlatMap(configLocations, func(s string, _ int) []string {
+		return lo.Map(configExtensions, func(s2 string, _ int) string {
+			return s + s2
+		})
+	})
+	return configLocations
+}
+
+// lookForExisting looks for an existing config file in the given locations and returns the first
+func lookForExisting(configLocations []string) (string, error) {
+	// Create a channel for emitting file paths
+	resultChan := make(chan struct {
+		Path string
+		Err  error
+	})
+
+	go func() {
+		// Check the CONFIG_FILE environment variable
+		if configFileEnv := os.Getenv("CONFIG_FILE"); configFileEnv != "" {
+			if _, err := os.Stat(configFileEnv); err == nil {
+				resultChan <- struct {
+					Path string
+					Err  error
+				}{configFileEnv, nil}
+				return
+			}
+		}
+
+		// Check the other config locations
+		for _, path := range configLocations {
+			if _, err := os.Stat(path); err == nil {
+				resultChan <- struct {
+					Path string
+					Err  error
+				}{path, nil}
+				return
+			}
+		}
+
+		// If no file is found, emit an error
+		resultChan <- struct {
+			Path string
+			Err  error
+		}{"", errors.New("no config file found")}
+	}()
+
+	// Extract the result from the channel
+	result := <-resultChan
+
+	return result.Path, result.Err
+}
