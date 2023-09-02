@@ -14,7 +14,8 @@ type DBConfig struct {
 	Engine    string `yaml:"engine,default:postgres"`
 	Host      string `yaml:"host,default:localhost"`
 	Port      uint16 `yaml:"port,default:5432"`
-	Database  string `yaml:"database,default:librerym"`
+	Database  string `yaml:"database,default:librate"`
+	TestDB    string `yaml:"test_db,default:librate_test"`
 	User      string `yaml:"user,default:postgres"`
 	Password  string `yaml:"password,default:postgres"`
 	SSL       string `yaml:"ssl,default:unknown"`
