@@ -35,7 +35,10 @@ func main() {
 	log := logging.Init(&logConf)
 
 	// Load config
-	conf := cfg.LoadConfig().OrElse(cfg.ReadDefaults())
+	conf, err := cfg.LoadConfig().Get()
+	if err != nil {
+		log.Panic().Msg("failed to load config")
+	}
 	if cfg.LoadConfig().IsError() {
 		err := cfg.LoadConfig().Error()
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
@@ -54,7 +57,7 @@ func main() {
 	}
 
 	// Connect to database
-	dbConn, err := db.Connect(&conf)
+	dbConn, err := db.Connect(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
@@ -74,7 +77,7 @@ func main() {
 	setupCors(app)
 
 	// Setup routes
-	err = routes.Setup(&log, &conf, dbConn, app, &fiberlog)
+	err = routes.Setup(&log, conf, dbConn, app, &fiberlog)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to setup routes")
 	}
