@@ -31,7 +31,7 @@ func TestLoadConfig(t *testing.T) {
 		},
 		Fiber: cfg.FiberConfig{
 			Host: "localhost",
-			Port: "3000",
+			Port: 3000,
 		},
 		SigningKey: "eyJhbGciOiJIUzUxMiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJMaWJSYXRlIGRldmVsb3BlcnMiLCJVc2VybmFtZSI6InVzZXIiLCJleHAiOjE3MjUzMDc2OTMsImlhdCI6MTY5MzY4NTI5M30.GXq5OBlI4xvIlY5EnotksThjbsgDclm8ZjPl2Ans54XkeUnDE35RA9OD477EfkHrjVch8QihNFJrjpLgoeFQhA",
 		Secret:     "librate-secret-key",
