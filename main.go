@@ -44,8 +44,9 @@ func main() {
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
 	}
 
-	// Initialize database if it's running
+	// database health check
 	if DBRunning(conf.Port) {
+		// Initialize database if it's running
 		if *init {
 			if err := db.InitDB(); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
@@ -53,7 +54,10 @@ func main() {
 			log.Info().Msg("Database initialized")
 		}
 	} else {
-		log.Warn().Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
+		// FIXME: restore falling back to the default config if loading config fails
+		// (bring back the cfg.ReadDefaults() function and put it in a call to .OrElse() error handler)
+		log.Warn().
+			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
 	}
 
 	// Connect to database

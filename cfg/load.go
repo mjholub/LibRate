@@ -3,6 +3,8 @@ package cfg
 import (
 	"fmt"
 
+	"gopkg.in/yaml.v3"
+
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/clitools"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -22,15 +24,25 @@ var log = logging.Init(&logging.Config{
 func LoadConfig() mo.Result[*Config] {
 	return mo.Try(func() (conf *Config, err error) {
 		// first, look for an existing config file
+		conf = &Config{}
 		if confLoc, err := lookForExisting(tryLocations()); err == nil && confLoc != "" {
 			log.Info().Msgf("found config at %s", confLoc)
-			conf, err = parseRaw(confLoc)
+			loadedConfig, err := parseRaw(confLoc)
 			if err != nil {
 				return conf, fmt.Errorf("failed to parse config: %w", err)
 			}
-			if err = mergo.Merge(&conf, &Config{}); err != nil {
+			// FIXME: the db config is not getting properly marshalled into the struct
+			log.Debug().
+				Msgf("DB config from the conf variable before merge: %+v",
+					conf.DBConfig)
+			log.Debug().
+				Msgf("DB config from the loadedConfig variable before merge: %+v",
+					loadedConfig.DBConfig)
+			if err = mergo.Merge(conf, loadedConfig); err != nil {
 				return conf, fmt.Errorf("failed to merge config structs: %w", err)
 			}
+			log.Debug().
+				Msgf("After merge: %+v", conf)
 			return conf, nil
 		}
 		// if not found, fall back to defaults
@@ -48,20 +60,6 @@ func LoadConfig() mo.Result[*Config] {
 	})
 }
 
-func parseRaw(configLocation string) (conf *Config, err error) {
-	configRaw, err := parser.Parse(configLocation)
-	if err != nil {
-		return nil,
-			fmt.Errorf("failed to parse config: %w", err)
-	}
-	log.Info().Msgf("got config: %v", configRaw)
-
-	configStr := createKVPairs(configRaw)
-	_ = config.MapStruct(configStr, conf)
-
-	return conf, nil
-}
-
 func tryGettingConfig(tryPaths []string) (string, error) {
 	defaultConfigPath, err := getDefaultConfigPath()
 	if err != nil {
@@ -73,4 +71,54 @@ func tryGettingConfig(tryPaths []string) (string, error) {
 	}
 
 	return customPath, nil
+}
+
+// Generic function to marshal and unmarshal configuration
+func marshalUnmarshalConfig[T any](configRaw map[string]interface{}, fieldName string, target *T) error {
+	fieldData, exists := configRaw[fieldName]
+	if !exists {
+		return fmt.Errorf("field %s not found in configuration", fieldName)
+	}
+
+	fieldYAML, err := yaml.Marshal(fieldData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal %s config: %w", fieldName, err)
+	}
+
+	if err = yaml.Unmarshal(fieldYAML, target); err != nil {
+		return fmt.Errorf("failed to unmarshal %s config: %w", fieldName, err)
+	}
+
+	return nil
+}
+
+func parseRaw(configLocation string) (conf *Config, err error) {
+	conf = &Config{}
+
+	configRaw, err := parser.Parse(configLocation)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	// Define a mapping of field names to their corresponding struct pointers
+	fieldMappings := map[string]interface{}{
+		"database":    &conf.DBConfig,
+		"fiber":       &conf.Fiber,
+		"signing_key": &conf.SigningKey,
+		"secret":      &conf.Secret,
+		"librate_env": &conf.LibrateEnv,
+	}
+
+	for fieldName, target := range fieldMappings {
+		if err := marshalUnmarshalConfig(configRaw, fieldName, &target); err != nil {
+			return nil, err
+		}
+	}
+
+	log.Info().Msgf("got config: %v", configRaw)
+
+	configStr := createKVPairs(configRaw)
+	_ = config.MapStruct(configStr, conf)
+
+	return conf, nil
 }

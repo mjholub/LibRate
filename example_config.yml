@@ -1,5 +1,6 @@
-fiber_host: "localhost"
-fiber_port: 3000
+fiber:
+  host: "localhost"
+  port: 3000
 # Below is the payload used to generate the signing key:
 # {
 #    "Issuer": "LibRate developers",
@@ -23,3 +24,5 @@ logging:
   level: "info"
   output: "stdout"
   format: "json"
+# dev or production
+librate_env: "production"

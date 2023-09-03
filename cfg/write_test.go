@@ -122,7 +122,7 @@ func TestCorrectWrite(t *testing.T) {
 fiber:
     host: localhost
     port: 3000
-sigining_key: test_signing_key
+signing_key: test_signing_key
 secret: test_secret
 librate_env: test
 `, string(yamlFile))
