@@ -37,7 +37,7 @@ func main() {
 	// Load config
 	conf, err := cfg.LoadConfig().Get()
 	if err != nil {
-		log.Panic().Msg("failed to load config")
+		log.Panic().Msgf("failed to load config: %v", err)
 	}
 	if cfg.LoadConfig().IsError() {
 		err := cfg.LoadConfig().Error()
