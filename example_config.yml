@@ -1,16 +1,6 @@
 fiber:
   host: "localhost"
   port: 3000
-# Below is the payload used to generate the signing key:
-# {
-#    "Issuer": "LibRate developers",
-#    "Issued At": "2023-09-02T20:08:13.978Z",
-#    "Expiration": "2024-09-02T20:08:13.978Z",
-#   "Username": "user",
-#    "Role": "Admin"
-#}
-#
-signing_key: "eyJhbGciOiJIUzUxMiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJMaWJSYXRlIGRldmVsb3BlcnMiLCJVc2VybmFtZSI6InVzZXIiLCJleHAiOjE3MjUzMDc2OTMsImlhdCI6MTY5MzY4NTI5M30.GXq5OBlI4xvIlY5EnotksThjbsgDclm8ZjPl2Ans54XkeUnDE35RA9OD477EfkHrjVch8QihNFJrjpLgoeFQhA"
 secret: "librate-secret-key"
 database:
   - engine: "postgres"
@@ -20,6 +10,7 @@ database:
     database: "librate"
     test_database: "librate_test"
     user: "postgres"
+    password: "postgres"
 logging:
   level: "info"
   output: "stdout"

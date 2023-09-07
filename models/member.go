@@ -167,7 +167,7 @@ func (s *MemberStorage) GetPassHash(email, login string) (string, error) {
 }
 
 func (s *MemberStorage) CreateSession(ctx context.Context, m Member) (t string, err error) {
-	token := *jwt.New(jwt.SigningMethodHS256)
+	token := *jwt.New(jwt.SigningMethodHS512)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = m.ID
 	if m.MemberName != "" {

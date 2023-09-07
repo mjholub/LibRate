@@ -12,10 +12,10 @@ import (
 // Protected protect routes
 func Protected(log *zerolog.Logger, conf *cfg.Config) fiber.Handler {
 	if log != nil {
-		log.Debug().Msgf("Protected middleware: Signing key: %v", conf.SigningKey)
+		log.Debug().Msgf("Protected middleware: Signing key: %v", conf.Secret)
 	}
 	return jwtware.New(jwtware.Config{
-		SigningKey:   jwtware.SigningKey{Key: []byte(conf.SigningKey)},
+		SigningKey:   jwtware.SigningKey{Key: []byte(conf.Secret)},
 		ErrorHandler: jwtError,
 	})
 }

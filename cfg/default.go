@@ -19,7 +19,6 @@ var DefaultConfig = Config{
 		Host: "localhost",
 		Port: 3000,
 	},
-	SigningKey: "secret",
 	Secret:     "secret",
 	LibrateEnv: "production",
 }
