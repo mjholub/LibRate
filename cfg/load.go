@@ -31,11 +31,10 @@ func LoadConfig() mo.Result[*Config] {
 			if err != nil {
 				return conf, fmt.Errorf("failed to parse config: %w", err)
 			}
-			// FIXME: the db config is not getting properly marshalled into the struct
-			log.Debug().
+			log.Trace().
 				Msgf("DB config from the conf variable before merge: %+v",
 					conf.DBConfig)
-			log.Debug().
+			log.Trace().
 				Msgf("DB config from the loadedConfig variable before merge: %+v",
 					loadedConfig.DBConfig)
 			if err = mergo.Merge(conf, loadedConfig); err != nil {

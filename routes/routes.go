@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -25,7 +26,8 @@ import (
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(logger *zerolog.Logger,
+func Setup(
+	logger *zerolog.Logger,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
 	app *fiber.App,
@@ -43,13 +45,11 @@ func Setup(logger *zerolog.Logger,
 		defer wg.Done()
 		staticPath, err := filepath.Abs("./fe/build")
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
-			errChan <- err
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 		assetPath, err := filepath.Abs("./static")
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
-			errChan <- err
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 
 		app.Use("/", filesystem.New(filesystem.Config{
@@ -88,13 +88,12 @@ func Setup(logger *zerolog.Logger,
 	if len(errChan) > 0 {
 		for err := range errChan {
 			if err != nil {
-				logger.Error().Err(err).Msg("Error reading static files")
-				return err
+				return fmt.Errorf("error reading static files: %w", err)
 			}
 		}
 	}
 
-	authSvc := auth.NewAuthService(conf, mStor)
+	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
 	mediaCon := controllers.NewMediaController(*mediaStor)
@@ -119,11 +118,10 @@ func Setup(logger *zerolog.Logger,
 	})
 
 	member := api.Group("/members")
-	member.Post("/login", middleware.Protected(logger, conf), authSvc.Login)
-	member.Post("/register", middleware.Protected(logger, conf), authSvc.Register)
+	member.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	member.Post("/register", authSvc.Register)
 	member.Get("/:id", memberSvc.GetMember)
 
-	// NOTE: is protected middleware needed here?
 	app.Post("/api/password-entropy", middleware.Protected(nil, conf), auth.ValidatePassword())
 
 	media := api.Group("/media")

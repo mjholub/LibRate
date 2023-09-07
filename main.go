@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
+	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -33,20 +34,17 @@ func main() {
 		},
 	}
 	log := logging.Init(&logConf)
+	defer recoverPanic(&log)
 
 	// Load config
 	conf, err := cfg.LoadConfig().Get()
 	if err != nil {
-		log.Panic().Msgf("failed to load config: %v", err)
-	}
-	if cfg.LoadConfig().IsError() {
-		err = cfg.LoadConfig().Error()
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
+		conf = &cfg.DefaultConfig
 	}
 
-	// database health check
+	// database first-run initialization
 	if DBRunning(conf.Port) {
-		// Initialize database if it's running
 		if *init {
 			if err = db.InitDB(conf); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
@@ -54,8 +52,6 @@ func main() {
 			log.Info().Msg("Database initialized")
 		}
 	} else {
-		// FIXME: restore falling back to the default config if loading config fails
-		// (bring back the cfg.ReadDefaults() function and put it in a call to .OrElse() error handler)
 		log.Warn().
 			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
 	}
@@ -65,6 +61,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
+	log.Info().Msg("Connected to database")
 	defer dbConn.Close()
 
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
@@ -106,6 +103,13 @@ func setupCors(app *fiber.App) {
 		c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		return c.Next()
 	})
+}
+
+func recoverPanic(log *zerolog.Logger) error {
+	if err := recover(); err != nil {
+		log.Error().Msgf("Panic: %v", err)
+	}
+	return nil
 }
 
 func DBRunning(port uint16) bool {

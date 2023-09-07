@@ -75,9 +75,9 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				MemberName: nickname,
-				Email: email,
-				Password: password,
+				membername: nickname,
+				email: email,
+				password: password,
 				PasswordConfirm: passwordConfirm,
 				Roles: ['regular']
 			})
@@ -106,9 +106,9 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				MemberName: email_or_username.includes('@') ? '' : email_or_username,
-				Email: email_or_username.includes('@') ? email_or_username : '',
-				Password: password
+				membername: email_or_username.includes('@') ? '' : email_or_username,
+				email: email_or_username.includes('@') ? email_or_username : '',
+				password: password
 			})
 		});
 

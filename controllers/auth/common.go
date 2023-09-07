@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
@@ -24,8 +25,8 @@ type (
 
 	// LoginInput is the input for the login request
 	LoginInput struct {
-		Email      string `json:"email"`
-		MemberName string `json:"membername"`
+		Email      string `json:"email,omitempty"`
+		MemberName string `json:"membername,omitempty"`
 		Password   string `json:"password"`
 	}
 
@@ -33,6 +34,7 @@ type (
 	// so that the db connection needn't be created in the controller methods
 	AuthService struct {
 		conf *cfg.Config
+		log  *zerolog.Logger
 		ms   *models.MemberStorage
 	}
 
@@ -50,8 +52,8 @@ type (
 // and returns a pointer to it
 // It should be used within the routes package
 // where the db connection and config are passed from the main package
-func NewAuthService(conf *cfg.Config, ms *models.MemberStorage) *AuthService {
-	return &AuthService{conf, ms}
+func NewAuthService(conf *cfg.Config, ms *models.MemberStorage, log *zerolog.Logger) *AuthService {
+	return &AuthService{conf, log, ms}
 }
 
 func isEmail(email string) bool {
@@ -59,11 +61,15 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
-//  parseInput parses the input from the request body to be used in the controller
+// parseInput parses the input from the request body to be used in the controller
 func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 	switch reqType {
 	case "register":
+		c.SendStatus(fiber.StatusEarlyHints)
 		var input RegisterInput
+		if input.Password != input.PasswordConfirm {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
+		}
 		if !isEmail(input.Email) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
@@ -74,11 +80,15 @@ func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 
 		return input, nil
 	case "login":
+		c.SendStatus(fiber.StatusEarlyHints)
 		var input LoginInput
-		if !isEmail(input.Email) {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		if input.Email != "" || input.MemberName != "" {
+			if !isEmail(input.Email) {
+				return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+			}
 		}
-		if err := c.BodyParser(&input); err != nil {
+		err := c.BodyParser(&input)
+		if err != nil {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
 		}
 		return input, nil
