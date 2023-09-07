@@ -4,6 +4,7 @@
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import type { Member } from '../../types/member.ts';
+	import type { AuthStoreState } from '../../stores/members/auth.ts';
 
 	let isRegistration = false;
 	let member: Member;
@@ -19,6 +20,7 @@
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
+	let authState: AuthStoreState = $authStore;
 
 	const toggleObfuscation = () => {
 		showPassword = !showPassword;
@@ -78,12 +80,14 @@
 				membername: nickname,
 				email: email,
 				password: password,
-				PasswordConfirm: passwordConfirm,
-				Roles: ['regular']
+				passwordConfirm: passwordConfirm,
+				roles: ['regular']
 			})
 		});
 
 		const data = await response.json();
+
+		const member = await authStore.getMember(data.member_id);
 
 		if (browser) {
 			response.ok
@@ -91,7 +95,7 @@
 				  localStorage.setItem('email_or_username', ''),
 				  await authStore.authenticate(),
 				  authStore.set(data.member),
-				  authStore.getMember(data.member.id),
+				  (authState.id = member.id),
 				  (window.location.href = '/'))
 				: (errorMessage = data.message);
 		}
@@ -115,12 +119,15 @@
 		const data = await response.json();
 		console.debug(data);
 
+		const member = await authStore.getMember(data.member_id);
+		localStorage.setItem('member', JSON.stringify(member));
+
 		response.ok
 			? (localStorage.setItem('token', data.token),
 			  localStorage.setItem('email_or_username', ''),
-			  authStore.set(data.member),
+			  //(authState.id = member.id),
+			  //authStore.set(authState),
 			  await authStore.authenticate(),
-			  authStore.getMember(data.member.id),
 			  (window.location.href = '/'),
 			  console.info('Login successful'))
 			: (errorMessage = data.message);

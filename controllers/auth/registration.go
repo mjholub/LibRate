@@ -15,10 +15,15 @@ import (
 
 // Register handles the creation of a new user
 func (a *AuthService) Register(c *fiber.Ctx) error {
+	a.log.Debug().Msg("Registration request")
 	input, err := parseInput("register", c)
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, err.Error())
 	}
+	if input == nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Cannot parse input")
+	}
+	a.log.Debug().Msg("Parsed input")
 
 	validatedInput, err := input.Validate()
 	if err != nil {
