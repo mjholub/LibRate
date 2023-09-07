@@ -6,17 +6,25 @@
 
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
+import type { UUID } from '../../types/utils';
 import type { Media } from '../../types/media.ts';
 
-const initialState: Media = {
+export interface submissionFormState extends Media {
+  UUID: UUID,
+  kind: 'book' | 'film' | 'game' | 'album' | 'show' | 'anime' | 'manga' | 'comic',
+};
+
+const initialState: submissionFormState = {
   UUID: '',
-  kind: '',
+  kind: 'album',
   title: '',
   created: new Date(),
   creator: null,
   creators: [],
   added: new Date(),
+  modified: undefined,
 };
+
 
 interface SubmitMediaForm extends Writable<Media> {
   handleMediaChange: (event: Event) => void;
