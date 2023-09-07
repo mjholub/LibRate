@@ -35,7 +35,6 @@ func TestWriteConfig(t *testing.T) {
 				Host: "localhost",
 				Port: 3000,
 			},
-			SigningKey: "test_signing_key",
 			Secret:     "test_secret",
 			LibrateEnv: "test",
 		}}, false},
@@ -100,7 +99,6 @@ func TestCorrectWrite(t *testing.T) {
 			Host: "localhost",
 			Port: 3000,
 		},
-		SigningKey: "test_signing_key",
 		Secret:     "test_secret",
 		LibrateEnv: "test",
 	}
@@ -122,7 +120,6 @@ func TestCorrectWrite(t *testing.T) {
 fiber:
     host: localhost
     port: 3000
-signing_key: test_signing_key
 secret: test_secret
 librate_env: test
 `, string(yamlFile))

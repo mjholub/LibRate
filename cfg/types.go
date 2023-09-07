@@ -1,10 +1,9 @@
 package cfg
 
 type Config struct {
-	DBConfig   `json:"database,omitempty" yaml:"database" mapstructure:"database"`
-	Fiber      FiberConfig `json:"fiber,omitempty" yaml:"fiber" mapstructure:"fiber"`
-	SigningKey string      `json:"signing_key,omitempty" yaml:"signing_key" mapstructure:"signing_key"`
-	Secret     string      `json:"secret,omitempty" yaml:"secret" mapstructure:"secret"`
+	DBConfig `json:"database,omitempty" yaml:"database" mapstructure:"database"`
+	Fiber    FiberConfig `json:"fiber,omitempty" yaml:"fiber" mapstructure:"fiber"`
+	Secret   string      `json:"secret,omitempty" yaml:"secret" mapstructure:"secret"`
 	// default to production for security reasons
 	LibrateEnv string `json:"librate_env,omitempty" yaml:"librate_env" default:"production" mapstructure:"librate_env"`
 }

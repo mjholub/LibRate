@@ -111,5 +111,6 @@ func (a *AuthService) createSession(c *fiber.Ctx, member *models.Member) error {
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "Logged in successfully",
+		"token":   token,
 	})
 }
