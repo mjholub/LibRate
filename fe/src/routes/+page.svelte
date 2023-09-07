@@ -11,11 +11,13 @@
 	import type { Review } from '../types/review.ts';
 	import type { Member } from '../types/member.ts';
 	import type { UUID } from '../types/utils.ts';
-  import type { AuthStoreState } from '../stores/members/auth.ts';
+	import type { AuthStoreState } from '../stores/members/auth.ts';
 
 	let windowWidth: number;
-  let authState: AuthStoreState = $authStore.state;
+	let authState: AuthStoreState = $authStore;
+	let member: Member;
 	if (browser) {
+		member = JSON.parse(localStorage.getItem('member') || '{}');
 		onMount(() => {
 			windowWidth = window.innerWidth;
 			const handleResize = () => {
@@ -23,6 +25,7 @@
 			};
 			const handleAuth = async () => {
 				await authStore.authenticate();
+				console.debug('authState', authState);
 			};
 			handleAuth();
 			window.addEventListener('resize', handleResize);
@@ -34,7 +37,6 @@
 	}
 
 	//let reviews: Review[] = [];
-	let member: Member = $authStore.member;
 </script>
 
 <div class="navbar">

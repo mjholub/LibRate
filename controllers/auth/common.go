@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	// json "github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 
@@ -17,10 +18,11 @@ import (
 type (
 	// RegisterInput is the input for the registration request
 	RegisterInput struct {
-		Email           string `json:"email"`
-		MemberName      string `json:"membername"`
-		Password        string `json:"password"`
-		PasswordConfirm string `json:"passwordConfirm"`
+		Email           string   `json:"email"`
+		MemberName      string   `json:"membername"`
+		Password        string   `json:"password"`
+		PasswordConfirm string   `json:"passwordConfirm"`
+		Roles           []string `json:"roles"`
 	}
 
 	// LoginInput is the input for the login request
@@ -65,22 +67,22 @@ func isEmail(email string) bool {
 func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 	switch reqType {
 	case "register":
-		c.SendStatus(fiber.StatusEarlyHints)
 		var input RegisterInput
+		err := c.BodyParser(&input)
+		if err != nil {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
+		}
 		if input.Password != input.PasswordConfirm {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
+		}
+		if input.Email == "" && input.MemberName == "" {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
 		}
 		if !isEmail(input.Email) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
-		err := c.BodyParser(&input)
-		if err != nil {
-			return input, fmt.Errorf("invalid registration request")
-		}
-
 		return input, nil
 	case "login":
-		c.SendStatus(fiber.StatusEarlyHints)
 		var input LoginInput
 		if input.Email != "" || input.MemberName != "" {
 			if !isEmail(input.Email) {

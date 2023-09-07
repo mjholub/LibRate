@@ -4,19 +4,54 @@
 	import type { Member } from '../../types/member.ts';
 
 	let regDate: string;
-  export let member: Member;
+	let matrixUser: string;
+	let matrixInstance: string;
+	let xmppUser: string;
+	let xmppInstance: string;
+	let ircUser: string;
+	let ircInstance: string;
+	export let member: Member;
 	$: {
-		regDate = new Date(member.regdate * 1000).toLocaleDateString();
+		regDate = new Date(member.regdate).toLocaleDateString();
 	}
-	onMount(() => {
+
+	const splitMatrixUser = (matrixUser: string) => {
+		const [user, instance] = matrixUser.split(':');
+		matrixUser = user;
+		matrixInstance = instance;
+	};
+
+	const splitXmppUser = (xmppUser: string) => {
+		const [user, instance] = xmppUser.split('@');
+		xmppUser = user;
+		xmppInstance = instance;
+	};
+
+	const splitIrcUser = (ircUser: string) => {
+		const [user, instance] = ircUser.split('@');
+		ircUser = user;
+		ircInstance = instance;
+	};
+
+	onMount(async () => {
 		if (member && member.id) {
 			authStore.subscribe((auth) => {
-        if (auth && auth.id === member.id) {
-          member = auth;
-        }
-      });
+				if (auth && auth.id === member.id) {
+					console.debug('member', member);
+				}
+			});
 		}
-    getMember();
+		console.debug('member (called outside conditional): ', member);
+		// split the matrix user into user and instance
+		if (member.matrix) {
+			splitMatrixUser(member.matrix);
+		}
+		if (member.xmpp) {
+			splitXmppUser(member.xmpp);
+		}
+		if (member.irc) {
+			splitIrcUser(member.irc);
+		}
 	});
 </script>
 

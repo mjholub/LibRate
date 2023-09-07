@@ -95,7 +95,7 @@ func Setup(
 
 	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := controllers.NewMemberController(*mStor)
+	memberSvc := controllers.NewMemberController(*mStor, logger)
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
@@ -122,7 +122,7 @@ func Setup(
 	member.Post("/register", authSvc.Register)
 	member.Get("/:id", memberSvc.GetMember)
 
-	app.Post("/api/password-entropy", middleware.Protected(nil, conf), auth.ValidatePassword())
+	app.Post("/api/password-entropy", auth.ValidatePassword())
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
