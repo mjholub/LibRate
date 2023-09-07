@@ -39,9 +39,6 @@ func writeConfig(configPath string, c *Config) error {
 	envPath := filepath.Join(configDir, ".env")
 	env := fmt.Sprintf("CONFIG_FILE=%s", configPath)
 	err = os.WriteFile(envPath, []byte(env), 0o640)
-	if err != nil {
-		return fmt.Errorf("error writing .env file: %w", err)
-	}
 
 	return nil
 }

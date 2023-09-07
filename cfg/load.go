@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -11,6 +12,8 @@ import (
 
 	config "github.com/gookit/config/v2"
 	"github.com/imdario/mergo"
+	"github.com/mitchellh/mapstructure"
+	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
@@ -100,9 +103,19 @@ func parseRaw(configLocation string) (conf *Config, err error) {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
+	err = mapstructure.Decode(configRaw, &conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode config: %w", err)
+	}
+	log.Debug().Msgf("conf: %v", conf)
+
+	// convert the resulting bulk map into singular key-value pairs
+	entries := lo.Entries(configRaw)
+	log.Debug().Msgf("entries: %v", entries)
+
 	// Define a mapping of field names to their corresponding struct pointers
 	fieldMappings := map[string]interface{}{
-		"database":    &conf.DBConfig,
+		"database":    &conf.DBConfig, // assuming it's a slice
 		"fiber":       &conf.Fiber,
 		"signing_key": &conf.SigningKey,
 		"secret":      &conf.Secret,
@@ -110,15 +123,31 @@ func parseRaw(configLocation string) (conf *Config, err error) {
 	}
 
 	for fieldName, target := range fieldMappings {
-		if err := marshalUnmarshalConfig(configRaw, fieldName, &target); err != nil {
-			return nil, err
+		fieldEntries := make(map[string]interface{})
+
+		for i := range entries {
+			if strings.HasPrefix(entries[i].Key, fieldName+".") {
+				subKey := strings.TrimPrefix(entries[i].Key, fieldName+".")
+				fieldEntries[subKey] = entries[i].Value
+			}
+
+			if len(fieldEntries) > 0 {
+				if err := marshalUnmarshalConfig(fieldEntries, "", &target); err != nil {
+					return nil, err
+				}
+			} else {
+				log.Debug().Msgf("no entries found for %s", fieldName)
+			}
 		}
 	}
 
 	log.Info().Msgf("got config: %v", configRaw)
 
 	configStr := createKVPairs(configRaw)
-	_ = config.MapStruct(configStr, conf)
+	log.Debug().Msgf("configStr: %s", configStr)
+	mapped := config.MapStruct(configStr, conf)
+	log.Debug().Msgf("mapped: %v", mapped)
+	log.Debug().Msgf("conf: %v", conf)
 
 	return conf, nil
 }
