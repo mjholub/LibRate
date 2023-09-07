@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -25,7 +26,8 @@ import (
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(logger *zerolog.Logger,
+func Setup(
+	logger *zerolog.Logger,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
 	app *fiber.App,
@@ -43,13 +45,11 @@ func Setup(logger *zerolog.Logger,
 		defer wg.Done()
 		staticPath, err := filepath.Abs("./fe/build")
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
-			errChan <- err
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 		assetPath, err := filepath.Abs("./static")
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to get absolute path for static files")
-			errChan <- err
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 
 		app.Use("/", filesystem.New(filesystem.Config{
@@ -88,13 +88,12 @@ func Setup(logger *zerolog.Logger,
 	if len(errChan) > 0 {
 		for err := range errChan {
 			if err != nil {
-				logger.Error().Err(err).Msg("Error reading static files")
-				return err
+				return fmt.Errorf("error reading static files: %w", err)
 			}
 		}
 	}
 
-	authSvc := auth.NewAuthService(conf, mStor)
+	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(*mStor)
 	mediaCon := controllers.NewMediaController(*mediaStor)
@@ -107,24 +106,23 @@ func Setup(logger *zerolog.Logger,
 	reviews.Get("/latest", reviewSvc.GetLatestRatings)
 	// TODO: handler for single review based on id
 	reviews.Get("/", reviewSvc.GetRatings)
-	reviews.Post("/", middleware.Protected(nil), reviewSvc.PostRating)
-	reviews.Patch("/:id", middleware.Protected(nil), reviewSvc.UpdateRating)
-	reviews.Delete("/:id", middleware.Protected(nil), reviewSvc.DeleteRating)
+	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
+	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
+	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
 	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
 	reviews.Get("/:id", reviewSvc.GetRatings)
 
 	authApi := api.Group("/authenticate")
-	authApi.Get("/", middleware.Protected(nil), func(c *fiber.Ctx) error {
+	authApi.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
 	member := api.Group("/members")
-	member.Post("/login", middleware.Protected(logger), authSvc.Login)
-	member.Post("/register", middleware.Protected(logger), authSvc.Register)
+	member.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	member.Post("/register", authSvc.Register)
 	member.Get("/:id", memberSvc.GetMember)
 
-	// NOTE: is protected middleware needed here?
-	app.Post("/api/password-entropy", middleware.Protected(nil), auth.ValidatePassword())
+	app.Post("/api/password-entropy", middleware.Protected(nil, conf), auth.ValidatePassword())
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
@@ -133,8 +131,8 @@ func Setup(logger *zerolog.Logger,
 
 	formApi := api.Group("/form")
 	// TODO: make the timeouts configurable
-	formApi.Post("/add_media/:type", middleware.Protected(nil), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formApi.Post("/update_media/:type", middleware.Protected(nil), formCon.UpdateMedia)
+	formApi.Post("/add_media/:type", middleware.Protected(nil, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formApi.Post("/update_media/:type", middleware.Protected(nil, conf), formCon.UpdateMedia)
 
 	search := api.Group("/search")
 	search.Post("/", sc.Search)
