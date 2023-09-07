@@ -3,35 +3,31 @@
 	import { authStore } from '../../stores/members/auth.ts';
 	import type { Member } from '../../types/member.ts';
 
+	function splitNullable(input: string | null, separator: string): string[] {
+		return input ? input.split(separator) : [];
+	}
+
+	let matrixInstance: string,
+		matrixUser: string,
+		xmppUser: string,
+		xmppInstance: string,
+		ircUser: string,
+		ircInstance: string;
+
+	$: {
+		matrixInstance = splitNullable(member.matrix, ':')[1];
+		matrixUser = splitNullable(member.matrix, ':')[0];
+		xmppUser = splitNullable(member.xmpp, '@')[0];
+		xmppInstance = splitNullable(member.xmpp, '@')[1];
+		ircUser = splitNullable(member.irc, '@')[0];
+		ircInstance = splitNullable(member.irc, '@')[1];
+	}
+
 	let regDate: string;
-	let matrixUser: string;
-	let matrixInstance: string;
-	let xmppUser: string;
-	let xmppInstance: string;
-	let ircUser: string;
-	let ircInstance: string;
 	export let member: Member;
 	$: {
 		regDate = new Date(member.regdate).toLocaleDateString();
 	}
-
-	const splitMatrixUser = (matrixUser: string) => {
-		const [user, instance] = matrixUser.split(':');
-		matrixUser = user;
-		matrixInstance = instance;
-	};
-
-	const splitXmppUser = (xmppUser: string) => {
-		const [user, instance] = xmppUser.split('@');
-		xmppUser = user;
-		xmppInstance = instance;
-	};
-
-	const splitIrcUser = (ircUser: string) => {
-		const [user, instance] = ircUser.split('@');
-		ircUser = user;
-		ircInstance = instance;
-	};
 
 	onMount(async () => {
 		if (member && member.id) {
@@ -42,16 +38,6 @@
 			});
 		}
 		console.debug('member (called outside conditional): ', member);
-		// split the matrix user into user and instance
-		if (member.matrix) {
-			splitMatrixUser(member.matrix);
-		}
-		if (member.xmpp) {
-			splitXmppUser(member.xmpp);
-		}
-		if (member.irc) {
-			splitIrcUser(member.irc);
-		}
 	});
 </script>
 

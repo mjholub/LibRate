@@ -49,6 +49,20 @@ func (mc *MemberController) GetMember(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", member)
 }
 
+func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
+	mc.log.Info().Msg("GetMemberByNick called")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mc.log.Debug().Msgf("Nick: %s", c.Params("nick"))
+	member, err := mc.storage.Read(ctx, "nick", c.Params("nick"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
+	}
+	mc.log.Info().Msgf("Member: %+v", member)
+
+	return h.ResData(c, fiber.StatusOK, "success", member)
+}
+
 // UpdateMember handles the updating of user information
 func (mc *MemberController) UpdateMember(c *fiber.Ctx) error {
 	var input models.MemberInput

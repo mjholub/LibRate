@@ -71,6 +71,17 @@ func main() {
 	})
 	// Create a new Fiber instance
 	app := fiber.New()
+	profilesApp := fiber.New()
+	profilesApp.Static("/", "./fe/build/profiles/")
+	app.Mount("/profiles", profilesApp)
+	profilesApp.Use(fiberlog)
+	// redirect GET requests to /profiles/_app one directory up
+	profilesApp.Get("/_app/*", func(c *fiber.Ctx) error {
+		return c.Redirect("/_app/.."+c.Path(), 301)
+	})
+	profilesApp.Get("/:nick", func(c *fiber.Ctx) error {
+		return c.SendFile("./fe/build/profiles.html")
+	})
 	app.Use(fiberlog)
 	app.Use(idempotency.New())
 

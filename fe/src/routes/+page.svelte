@@ -8,9 +8,7 @@
 	import MemberCard from '../components/member/MemberCard.svelte';
 	import Footer from '../components/footer/footer.svelte';
 	import MediaCarousel from '../components/media/MediaCarousel.svelte';
-	import type { Review } from '../types/review.ts';
 	import type { Member } from '../types/member.ts';
-	import type { UUID } from '../types/utils.ts';
 	import type { AuthStoreState } from '../stores/members/auth.ts';
 
 	let windowWidth: number;
