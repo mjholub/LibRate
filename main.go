@@ -40,7 +40,7 @@ func main() {
 		log.Panic().Msgf("failed to load config: %v", err)
 	}
 	if cfg.LoadConfig().IsError() {
-		err := cfg.LoadConfig().Error()
+		err = cfg.LoadConfig().Error()
 		log.Warn().Msgf("failed to load config, using defaults: %v", err)
 	}
 
@@ -48,7 +48,7 @@ func main() {
 	if DBRunning(conf.Port) {
 		// Initialize database if it's running
 		if *init {
-			if err := db.InitDB(); err != nil {
+			if err = db.InitDB(conf); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
 			}
 			log.Info().Msg("Database initialized")

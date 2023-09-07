@@ -97,8 +97,7 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 	return nil
 }
 
-func InitDB() error {
-	conf := cfg.LoadConfig().MustGet()
+func InitDB(conf *cfg.Config) error {
 	db, err := Connect(conf)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)

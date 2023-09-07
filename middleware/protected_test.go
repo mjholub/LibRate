@@ -27,7 +27,8 @@ func (m *MockConfig) GetError() mo.Result[cfg.Config] {
 func TestProtected(t *testing.T) {
 	t.Run("When config is loaded successfully", func(t *testing.T) {
 		mockLogger := zerolog.New(os.Stdout)
-		handler := Protected(&mockLogger)
+		// FIXME: config must have the correct type
+		handler := Protected(&mockLogger, nil)
 
 		// Create a mock Fiber context for testing
 		ctx := &fiber.Ctx{}
@@ -39,7 +40,7 @@ func TestProtected(t *testing.T) {
 
 	t.Run("When config fails to load", func(t *testing.T) {
 		mockLogger := zerolog.New(os.Stdout)
-		handler := Protected(&mockLogger)
+		handler := Protected(&mockLogger, nil)
 
 		// Create a mock Fiber context for testing
 		ctx := &fiber.Ctx{}

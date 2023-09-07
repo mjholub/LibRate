@@ -12,16 +12,9 @@ import (
 )
 
 // Protected protect routes
-func Protected(log *zerolog.Logger) fiber.Handler {
-	conf, err := cfg.LoadConfig().Get()
+func Protected(log *zerolog.Logger, conf *cfg.Config) fiber.Handler {
 	// this looks ugly, but importing the compact error handler would require changing
 	// this function's signature in a way in which it'd accept *fiber.Ctx as a parameter
-	if err != nil {
-		return func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusInternalServerError).
-				JSON(fiber.Map{"status": "error", "message": "Internal Server Error", "data": nil})
-		}
-	}
 	if os.Getenv("FIBER_ENV") == "dev" {
 		conf.SigningKey = "dev"
 		// in most calls we pass nil to avoid spamming the logs with this warning
