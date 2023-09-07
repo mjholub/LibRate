@@ -3,6 +3,7 @@
 	import type { Track, Album } from '../../types/music.ts';
 	import type { Keyword } from '../../types/media.ts';
 	import type { UUID } from '../../types/utils.ts';
+	import type { Review } from '../../types/review.ts';
 	import { videoWork, isVideoWork } from '../../stores/media/isVideo.ts';
 	import { reviewStore } from '../../stores/form/review.ts';
 	import { keywordStore } from '../../stores/form/keyword.ts';
@@ -26,6 +27,19 @@
 			}
 		});
 	});
+
+	const submitReview = async (mediaID: UUID) => {
+		try {
+			await reviewStore.submitReview(mediaID);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
+	const handleSubmit = (e: Event) => {
+		e.preventDefault();
+		submitReview(mediaID);
+	};
 
 	function incrementVote(keyword: Keyword) {
 		keywordStore.incrementVote(keyword);
@@ -64,7 +78,7 @@
 	});
 </script>
 
-<form on:submit|preventDefault={reviewStore.submitReview}>
+<form on:submit={handleSubmit}>
 	<h2>Review</h2>
 	{#if isMediaVideo}
 		<select bind:value={$reviewStore.favoriteTrack} on:input={handleFavoriteTrackChange}>
