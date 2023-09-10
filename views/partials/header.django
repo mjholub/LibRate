@@ -1,0 +1,36 @@
+<div class="search-bar">
+  <form method="post" action="{{ urlFor('search') }}">
+    <input type="text" value="{{ search }}" placeholder="Enter search keywords..." />
+    <button type="submit">Search</button>
+</div>
+
+<div>
+  <ul class="search-results">
+    {% for item in items %}
+    <li class="search-result">{{ item.name }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<style>
+  .search-bar {
+    margin-bottom: 0.8em;
+    width: 50%;
+    /* initial width */
+    transition: width 0.4s ease-in-out;
+  }
+
+  .search-bar:focus {
+    width: 80%;
+  }
+
+  .search-results {
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  .search-result {
+    margin-bottom: 0.5em;
+  }
+</style>
+<!-- vim: set ft=html: -->

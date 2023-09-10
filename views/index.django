@@ -1,0 +1,6 @@
+{% include "partials/header.django" %}
+
+<p> Noscript support not fully implemented yet. </p>
+<p> See <a href="https://codeberg.org/mjh/LibRate/issues/20">issue #20</a> for more information. </p>
+
+{% include "partials/footer.django" %}
