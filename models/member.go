@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -30,17 +31,17 @@ type Member struct {
 	UUID         string         `json:"_key,omitempty" db:"uuid"`
 	PassHash     string         `json:"passhash" db:"passhash"`
 	MemberName   string         `json:"membername" db:"nick"` // i.e. @nick@instance
-	DisplayName  sql.NullString `json:"displayname:omitempty" db:"display_name"`
+	DisplayName  sql.NullString `json:"displayname,omitempty" db:"display_name"`
 	Email        string         `json:"email" db:"email" validate:"required,email"`
-	Bio          sql.NullString `json:"bio:omitempty" db:"bio"`
+	Bio          sql.NullString `json:"bio,omitempty" db:"bio"`
 	Active       bool           `json:"active" db:"active"`
-	Roles        []uint8        `json:"roles" db:"roles"`
+	Roles        []uint8        `json:"roles,omitempty" db:"roles"`
 	RegTimestamp time.Time      `json:"regdate" db:"reg_timestamp"`
-	ProfilePic   *Image         `json:"profilepic:omitempty" db:"profilepic_id"`
-	Homepage     sql.NullString `json:"homepage:omitempty" db:"homepage"`
-	IRC          sql.NullString `json:"irc:omitempty" db:"irc"`
-	XMPP         sql.NullString `json:"xmpp:omitempty" db:"xmpp"`
-	Matrix       sql.NullString `json:"matrix:omitempty" db:"matrix"`
+	ProfilePic   *Image         `json:"profilepic,omitempty" db:"profilepic_id"`
+	Homepage     sql.NullString `json:"homepage,omitempty" db:"homepage"`
+	IRC          sql.NullString `json:"irc,omitempty" db:"irc"`
+	XMPP         sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
+	Matrix       sql.NullString `json:"matrix,omitempty" db:"matrix"`
 }
 
 type MemberInput struct {
@@ -57,9 +58,11 @@ type MemberStorer interface {
 }
 
 type MemberStorage struct {
-	client *sqlx.DB
-	log    *zerolog.Logger
-	config *cfg.Config
+	client        *sqlx.DB
+	log           *zerolog.Logger
+	config        *cfg.Config
+	nicknameCache []string
+	cacheMutex    sync.RWMutex
 }
 
 func NewMemberStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *MemberStorage {

@@ -32,9 +32,6 @@ devDependencies:
   '@typescript-eslint/parser':
     specifier: ^5.45.0
     version: 5.61.0(eslint@8.44.0)(typescript@5.1.6)
-  Either:
-    specifier: link:@fp-ts/lib/Either
-    version: link:@fp-ts/lib/Either
   cross-env:
     specifier: ^7.0.3
     version: 7.0.3
@@ -68,6 +65,9 @@ devDependencies:
   svelte:
     specifier: ^4.0.0
     version: 4.0.5
+  svelte-adapter-bun:
+    specifier: ^0.5.0
+    version: 0.5.0
   svelte-check:
     specifier: ^3.4.3
     version: 3.4.5(postcss@8.4.25)(svelte@4.0.5)
@@ -1425,6 +1425,10 @@ packages:
       type-fest: 0.20.2
     dev: true
 
+  /globalyzer@0.1.0:
+    resolution: {integrity: sha512-40oNTM9UfG6aBmuKxk/giHn5nQ8RVz/SS4Ir6zgzOv9/qC3kKZ9v4etGTcJbEl/NyVQH7FGU7d+X1egr57Md2Q==}
+    dev: true
+
   /globby@11.1.0:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
@@ -1435,6 +1439,10 @@ packages:
       ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
+    dev: true
+
+  /globrex@0.1.2:
+    resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
     dev: true
 
   /graceful-fs@4.2.11:
@@ -2137,6 +2145,12 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
+  /svelte-adapter-bun@0.5.0:
+    resolution: {integrity: sha512-GoO65+HADOoC/n6LL0oKnQuU61sX604TJI2egaDPY6cJWPEGs92i6x1uHDnn+A/r6NZzB0uwIV/q4AJwSLqvbQ==}
+    dependencies:
+      tiny-glob: 0.2.9
+    dev: true
+
   /svelte-check@3.4.5(postcss@8.4.25)(svelte@4.0.5):
     resolution: {integrity: sha512-FsD/CUVdEI0F9sfylh1Fe15kDjvvbyBxzDpACPsdq0EASgaZukBXaMXofpxlgmWsgVET3OynMQlbtUQoWCz9Rw==}
     hasBin: true
@@ -2259,6 +2273,13 @@ packages:
 
   /text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
+    dev: true
+
+  /tiny-glob@0.2.9:
+    resolution: {integrity: sha512-g/55ssRPUjShh+xkfx9UPDXqhckHEsHr4Vd9zX55oSdGZc/MD0m3sferOkwWtp98bv+kcVfEHtRJgBVJzelrzg==}
+    dependencies:
+      globalyzer: 0.1.0
+      globrex: 0.1.2
     dev: true
 
   /tinybench@2.5.0:

@@ -32,69 +32,28 @@ func Setup(
 	app *fiber.App,
 	fzlog *fiber.Handler,
 ) error {
-	var wg sync.WaitGroup
-	errChan := make(chan error, 1)
-
 	// setup the middleware
 	// NOTE: unsure if this handler is correct
 	api := app.Group("/api", *fzlog)
 	// initialize the reading of the static files in a goroutine
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		staticPath, err := filepath.Abs("./fe/build")
-		if err != nil {
-			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
-		}
-		assetPath, err := filepath.Abs("./static")
-		if err != nil {
-			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
-		}
-
-		app.Use("/", filesystem.New(filesystem.Config{
-			Root:   http.Dir(staticPath),
-			Browse: true,
-		}))
-		app.Use("/static", filesystem.New(filesystem.Config{
-			Root:   http.Dir(assetPath),
-			Browse: true,
-		}))
-	}()
 
 	var (
 		mStor     *models.MemberStorage
 		rStor     *models.RatingStorage
 		mediaStor *models.MediaStorage
 	)
-	wg.Add(3)
 
-	go func() {
-		defer wg.Done()
-		mStor = models.NewMemberStorage(dbConn, logger, conf)
-	}()
-	go func() {
-		defer wg.Done()
-		rStor = models.NewRatingStorage(dbConn, logger)
-	}()
-	go func() {
-		defer wg.Done()
-		mediaStor = models.NewMediaStorage(dbConn, logger)
-	}()
-
-	// wait for the static files to be read and the data layer to be initialized
-	wg.Wait()
-	close(errChan)
-	if len(errChan) > 0 {
-		for err := range errChan {
-			if err != nil {
-				return fmt.Errorf("error reading static files: %w", err)
-			}
-		}
+	err := setupStatic(app)
+	if err != nil {
+		return fmt.Errorf("failed to setup static files: %w", err)
 	}
+	mStor = models.NewMemberStorage(dbConn, logger, conf)
+	rStor = models.NewRatingStorage(dbConn, logger)
+	mediaStor = models.NewMediaStorage(dbConn, logger)
 
 	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := controllers.NewMemberController(*mStor, logger)
+	memberSvc := controllers.NewMemberController(mStor, logger)
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
@@ -139,5 +98,45 @@ func Setup(
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
+	return nil
+}
+
+func setupStatic(app *fiber.App) error {
+	var wg sync.WaitGroup
+	errChan := make(chan error, 1)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		staticPath, err := filepath.Abs("./fe/build/")
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
+		}
+		assetPath, err := filepath.Abs("./static")
+		if err != nil {
+			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
+		}
+
+		app.Use("/", filesystem.New(filesystem.Config{
+			Root:   http.Dir(staticPath),
+			Browse: true,
+		}))
+		app.Use("/static", filesystem.New(filesystem.Config{
+			Root:   http.Dir(assetPath),
+			Browse: true,
+		}))
+	}()
+
+	// wait for the static files to be read and the data layer to be initialized
+	wg.Wait()
+	close(errChan)
+	if len(errChan) > 0 {
+		for err := range errChan {
+			if err != nil {
+				return fmt.Errorf("error reading static files: %w", err)
+			}
+		}
+	}
+
 	return nil
 }

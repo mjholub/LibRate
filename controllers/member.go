@@ -25,12 +25,12 @@ type (
 
 	// MemberController is the controller for member endpoints
 	MemberController struct {
-		storage models.MemberStorage
+		storage *models.MemberStorage
 		log     *zerolog.Logger
 	}
 )
 
-func NewMemberController(storage models.MemberStorage, logger *zerolog.Logger) *MemberController {
+func NewMemberController(storage *models.MemberStorage, logger *zerolog.Logger) *MemberController {
 	return &MemberController{storage: storage, log: logger}
 }
 
@@ -53,8 +53,8 @@ func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetMemberByNick called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mc.log.Debug().Msgf("Nick: %s", c.Params("nick"))
-	member, err := mc.storage.Read(ctx, "nick", c.Params("nick"))
+	mc.log.Debug().Msgf("Nick: %s", c.Params("nickname"))
+	member, err := mc.storage.Read(ctx, "nick", c.Params("nickname"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}

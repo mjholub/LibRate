@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/template/handlebars/v2"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -68,30 +66,36 @@ func main() {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: &log,
 		// skip logging for static files, there's too many of them
-		SkipURIs: []string{"/_app/immutable", "/_app/chunks"},
+		SkipURIs: []string{
+			"/_app/immutable",
+			"/_app/chunks",
+			"/profiles/_app",
+			"/_app/immutable/chunks/",
+		},
 	})
 	// Create a new Fiber instance
 	app := fiber.New()
 	app.Use(recover.New())
 
 	profilesApp := fiber.New()
-	profilesApp.Static("/", "./fe/build/profiles/")
+	profilesApp.Static("/", "./fe/build/")
 	app.Mount("/profiles", profilesApp)
 	profilesApp.Use(fiberlog)
 	// redirect GET requests to /profiles/_app one directory up
-	profilesApp.Get("/_app/*", func(c *fiber.Ctx) error {
-		return c.Redirect("/_app/.."+c.Path(), 301)
-	})
-	profilesApp.Get("/:nick", func(c *fiber.Ctx) error {
-		return c.SendFile("./fe/build/profiles.html")
-	})
-
+	err = routes.SetupProfiles(&log, conf, dbConn, profilesApp, &fiberlog)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to setup profiles routes")
+	}
 	// fallback using a templating engine in case sveltekit breaks
-	noscript, err := setupNoscript(&fiberlog)
+	noscript, err := setupNoscript()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}
 	app.Mount("/noscript", noscript)
+	err = routeNoScript(noscript, dbConn, &log, conf)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to setup noscript routes")
+	}
 
 	app.Use(fiberlog)
 	app.Use(idempotency.New())
@@ -134,29 +138,4 @@ func DBRunning(port uint16) bool {
 	}
 	conn.Close()
 	return false
-}
-
-func setupNoscript(fzlog *fiber.Handler) (*fiber.App, error) {
-	// FIXME: handlebars is abandoned, use something else
-	engine := handlebars.New("./views", ".hbs")
-	noscript := fiber.New(fiber.Config{
-		DisableStartupMessage: true,
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-			}
-			err = c.Status(code).SendFile(fmt.Sprintf("./views/%d.html", code))
-			if err != nil {
-				return c.Status(500).SendString("Internal Server Error")
-			}
-			return nil
-		},
-		Views: engine,
-	})
-	noscript.Use(fzlog)
-	if err := routes.SetupNoScript(noscript); err != nil {
-		return nil, err
-	}
-	return noscript, nil
 }
