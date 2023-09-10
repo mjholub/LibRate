@@ -96,7 +96,8 @@
 				  await authStore.authenticate(),
 				  authStore.set(data.member),
 				  (authState.id = member.id),
-				  (window.location.href = '/'))
+				  (window.location.href = '/'),
+				  alert('Registration successful'))
 				: (errorMessage = data.message);
 		}
 	};
@@ -120,18 +121,21 @@
 		console.debug(data);
 
 		const member = await authStore.getMember(data.member_id);
-		localStorage.setItem('member', JSON.stringify(member));
+		if (browser) {
+			localStorage.setItem('member', JSON.stringify(member));
 
-		response.ok
-			? (localStorage.setItem('token', data.token),
-			  localStorage.setItem('email_or_username', ''),
-			  //(authState.id = member.id),
-			  //authStore.set(authState),
-			  await authStore.authenticate(),
-			  (window.location.href = '/'),
-			  console.info('Login successful'))
-			: (errorMessage = data.message);
-		console.error(data.message);
+			response.ok
+				? (localStorage.setItem('token', data.token),
+				  localStorage.setItem('email_or_username', ''),
+				  //(authState.id = member.id),
+				  //authStore.set(authState),
+				  await authStore.authenticate(),
+				  (window.location.href = '/'),
+				  console.info('Login successful'),
+				  alert('Login successful'))
+				: (errorMessage = data.message);
+			console.error(data.message);
+		}
 	};
 </script>
 

@@ -10,7 +10,6 @@ export type Member = {
   irc: string | null,
   homepage: string | null,
   //bookwyrm: "",
-  //funkwhale: "",
   regdate: number | Date,
   roles: string[],
 };

@@ -20,7 +20,6 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
-	// "codeberg.org/mjh/LibRate/middleware"
 )
 
 // Setup handles all the routes for the application
@@ -121,6 +120,7 @@ func Setup(
 	member.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
 	member.Post("/register", authSvc.Register)
 	member.Get("/:id", memberSvc.GetMember)
+	member.Get("/:nickname/info", memberSvc.GetMemberByNick)
 
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 

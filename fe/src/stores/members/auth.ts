@@ -40,12 +40,17 @@ function createAuthStore(): AuthStore {
     set,
     update,
     authenticate: async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const res = await fetch(`/api/authenticate`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
+      if (typeof localStorage !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const res = await fetch(`/api/authenticate`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
+        } else {
+          isAuthenticated.set(false);
+          throw new Error('No token found');
+        }
       }
     },
     getMember: async (memberID: number) => {
