@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import Search from '../../components/utility/Search.svelte';
-	import MemberPage from '../../components/member/MemberPage.svelte';
+	import Search from '$components/utility/Search.svelte';
+	import MemberPage from '$components/member/MemberPage.svelte';
 	let windowWidth: number;
 	let nickname: string;
 	if (browser) {

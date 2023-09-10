@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { authStore } from '../stores/members/auth.ts';
+	import { authStore } from '$stores/members/auth.ts';
 	//import ReviewList from '../components/review/ReviewList.svelte';
-	import Auth from '../components/form/Auth.svelte';
-	import Search from '../components/utility/Search.svelte';
-	import MemberCard from '../components/member/MemberCard.svelte';
-	import Footer from '../components/footer/footer.svelte';
-	import MediaCarousel from '../components/media/MediaCarousel.svelte';
-	import type { Member } from '../types/member.ts';
-	import type { AuthStoreState } from '../stores/members/auth.ts';
+	import Auth from '$components/form/Auth.svelte';
+	import Search from '$components/utility/Search.svelte';
+	import MemberCard from '$components/member/MemberCard.svelte';
+	import Footer from '$components/footer/footer.svelte';
+	import MediaCarousel from '$components/media/MediaCarousel.svelte';
+	import type { Member } from '$types/member.ts';
+	import type { AuthStoreState } from '$stores/members/auth.ts';
 
 	let windowWidth: number;
 	let authState: AuthStoreState = $authStore;
