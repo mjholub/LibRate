@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- TODO: change to instance name -->
+  <title>LibRate: {{ .Member.Nick.String }}'s profile</title>
+  <link rel="stylesheet" href="/static/css/profile.css">
+</head>
+
+<body>
+  <div class="member-page">
+    <div class="member-page-content">
+      <div class="member-info">
+        <div class="member-card">
+          <h2>{{ .Member.DisplayName.String }}</h1>
+            <h3>{{ .Member.Nick.String }}
+          </h2>
+          <p>Joined: {{ .Member.RegTimestamp.Format "2006-01-02" }}</p>
+        </div>
+      </div>
+      <div class="reviews">
+        <ul>
+          {{ range .Reviews }}
+          <li>{{ .Media.Title }} - {{ .NumStars }}</li>
+          {{ end }}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% include "partials/header.django" %}
+  {% include "partials/footer.django" %}
+</body>
+
+</html>

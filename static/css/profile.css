@@ -1,0 +1,16 @@
+	.member-page {
+		padding: 1em;
+	}
+
+	.member-page-content {
+		display: flex;
+		gap: 2em;
+	}
+
+	.member-info {
+		flex: 1 0 40%;
+	}
+
+	.reviews {
+		flex: 1 0 60%;
+	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/template/handlebars/v2"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -92,6 +90,10 @@ func main() {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}
 	app.Mount("/noscript", noscript)
+	err = routeNoScript(noscript, dbConn, &log, conf)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to setup noscript routes")
+	}
 
 	app.Use(fiberlog)
 	app.Use(idempotency.New())
@@ -134,29 +136,4 @@ func DBRunning(port uint16) bool {
 	}
 	conn.Close()
 	return false
-}
-
-func setupNoscript(fzlog *fiber.Handler) (*fiber.App, error) {
-	// FIXME: handlebars is abandoned, use something else
-	engine := handlebars.New("./views", ".hbs")
-	noscript := fiber.New(fiber.Config{
-		DisableStartupMessage: true,
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-			}
-			err = c.Status(code).SendFile(fmt.Sprintf("./views/%d.html", code))
-			if err != nil {
-				return c.Status(500).SendString("Internal Server Error")
-			}
-			return nil
-		},
-		Views: engine,
-	})
-	noscript.Use(fzlog)
-	if err := routes.SetupNoScript(noscript); err != nil {
-		return nil, err
-	}
-	return noscript, nil
 }
