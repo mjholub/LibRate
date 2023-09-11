@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/template/django/v3"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -50,6 +53,16 @@ func routeNoScript(app *fiber.App,
 		latestTag = "unknown"
 		return fmt.Errorf("failed to get latest tag: %w", err)
 	}
+	noscriptData, err := filepath.Abs("./views")
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for views: %w", err)
+	}
+	app.Use("/", filesystem.New(filesystem.Config{
+		Root:         http.Dir(noscriptData),
+		Browse:       true,
+		NotFoundFile: "404.html",
+	}))
+
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", fiber.Map{
 			"version": latestTag,

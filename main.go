@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -91,6 +92,7 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}
+	noscript.Static("/", "./views")
 	app.Mount("/noscript", noscript)
 	err = routeNoScript(noscript, dbConn, &log, conf)
 	if err != nil {
