@@ -35,6 +35,7 @@
 <div class="navbar">
 	<Search />
 </div>
+<h1 class="title">Profile of {nickname}</h1>
 <div class="profile">
 	{#if windowWidth > 768}
 		<MemberPage {nickname} />

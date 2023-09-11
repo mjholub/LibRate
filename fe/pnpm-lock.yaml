@@ -32,9 +32,6 @@ devDependencies:
   '@typescript-eslint/parser':
     specifier: ^5.45.0
     version: 5.61.0(eslint@8.44.0)(typescript@5.1.6)
-  Either:
-    specifier: link:@fp-ts/lib/Either
-    version: link:@fp-ts/lib/Either
   cross-env:
     specifier: ^7.0.3
     version: 7.0.3
