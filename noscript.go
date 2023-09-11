@@ -57,7 +57,7 @@ func routeNoScript(app *fiber.App,
 	})
 
 	mStorage := models.NewMemberStorage(db, log, conf)
-	memberCon := controllers.NewMemberController(*mStorage, log)
+	memberCon := controllers.NewMemberController(mStorage, log)
 
 	app.Get("/profiles/:nick", func(c *fiber.Ctx) error {
 		member := memberCon.GetMemberByNick(c)

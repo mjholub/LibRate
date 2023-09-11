@@ -24,7 +24,13 @@ func SetupProfiles(
 	api := app.Group("/api", *fzlog)
 
 	mStor := models.NewMemberStorage(dbConn, logger, conf)
-	memberSvc := controllers.NewMemberController(*mStor, logger)
+	memberSvc := controllers.NewMemberController(mStor, logger)
+	nicknames := mStor.GetNicknames()
+	for i := range nicknames {
+		app.Get("/"+nicknames[i], func(c *fiber.Ctx) error {
+			return c.SendFile("./fe/build/profiles.html")
+		})
+	}
 	app.Get("_app/*", func(c *fiber.Ctx) error {
 		return c.SendFile("./fe/build/_app/" + c.Params("*"))
 	})
@@ -34,8 +40,14 @@ func SetupProfiles(
 	app.Get("/:nickname", func(c *fiber.Ctx) error {
 		return c.SendFile("./fe/build/profiles.html")
 	})
-	app.Get("/fallback/:nickname", func(c *fiber.Ctx) error {
-		return c.SendFile("./fe/build/fallback.html")
+	app.Get("/*/index.html", func(c *fiber.Ctx) error {
+		return c.SendFile("./fe/build/profiles.html")
+	})
+	app.Get("/*/*.css", func(c *fiber.Ctx) error {
+		return c.SendFile("./fe/build/" + c.Params("*.css"))
+	})
+	app.Get("/*/_app", func(c *fiber.Ctx) error {
+		return c.SendFile("./fe/build/_app/" + c.Params("*"))
 	})
 
 	member := api.Group("/members")

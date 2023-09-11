@@ -25,12 +25,12 @@ type (
 
 	// MemberController is the controller for member endpoints
 	MemberController struct {
-		storage models.MemberStorage
+		storage *models.MemberStorage
 		log     *zerolog.Logger
 	}
 )
 
-func NewMemberController(storage models.MemberStorage, logger *zerolog.Logger) *MemberController {
+func NewMemberController(storage *models.MemberStorage, logger *zerolog.Logger) *MemberController {
 	return &MemberController{storage: storage, log: logger}
 }
 

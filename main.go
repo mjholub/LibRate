@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -79,7 +78,7 @@ func main() {
 	app.Use(recover.New())
 
 	profilesApp := fiber.New()
-	profilesApp.Static("/", "./fe/build/prerendered/")
+	profilesApp.Static("/", "./fe/build/")
 	app.Mount("/profiles", profilesApp)
 	profilesApp.Use(fiberlog)
 	// redirect GET requests to /profiles/_app one directory up

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -57,9 +58,11 @@ type MemberStorer interface {
 }
 
 type MemberStorage struct {
-	client *sqlx.DB
-	log    *zerolog.Logger
-	config *cfg.Config
+	client        *sqlx.DB
+	log           *zerolog.Logger
+	config        *cfg.Config
+	nicknameCache []string
+	cacheMutex    sync.RWMutex
 }
 
 func NewMemberStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *MemberStorage {

@@ -53,7 +53,7 @@ func Setup(
 
 	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := controllers.NewMemberController(*mStor, logger)
+	memberSvc := controllers.NewMemberController(mStor, logger)
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
@@ -108,7 +108,7 @@ func setupStatic(app *fiber.App) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		staticPath, err := filepath.Abs("./fe/build/prerendered")
+		staticPath, err := filepath.Abs("./fe/build/")
 		if err != nil {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
