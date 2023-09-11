@@ -101,7 +101,7 @@ func main() {
 	app.Use(idempotency.New())
 
 	// CORS
-	setupCors(app)
+	setupCors(app, conf)
 
 	// Setup routes
 	err = routes.Setup(&log, conf, dbConn, app, &fiberlog)
@@ -122,9 +122,10 @@ func main() {
 	}
 }
 
-func setupCors(app *fiber.App) {
+func setupCors(app *fiber.App, conf *cfg.Config) {
 	app.Use("/api", func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Set("Access-Control-Allow-Origin", fmt.Sprintf("http://%s:%d", conf.Host, conf.Port))
+		c.Set("Access-Control-Allow-Origin", fmt.Sprintf("http://localhost:%d", conf.Port))
 		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		return c.Next()

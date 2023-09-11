@@ -118,8 +118,9 @@ func setupStatic(app *fiber.App) error {
 		}
 
 		app.Use("/", filesystem.New(filesystem.Config{
-			Root:   http.Dir(staticPath),
-			Browse: true,
+			Root:         http.Dir(staticPath),
+			Browse:       true,
+			NotFoundFile: "404.html",
 		}))
 		app.Use("/static", filesystem.New(filesystem.Config{
 			Root:   http.Dir(assetPath),
