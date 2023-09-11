@@ -16,7 +16,7 @@ import (
 	"codeberg.org/mjh/LibRate/routes"
 )
 
-func setupNoscript(fzlog *fiber.Handler) (*fiber.App, error) {
+func setupNoscript() (*fiber.App, error) {
 	engine := django.New("./views", ".django")
 	noscript := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
@@ -33,7 +33,7 @@ func setupNoscript(fzlog *fiber.Handler) (*fiber.App, error) {
 		},
 		Views: engine,
 	})
-	noscript.Use(fzlog)
+	// noscript.Use(fzlog)
 	if err := routes.SetupNoScript(noscript); err != nil {
 		return nil, err
 	}

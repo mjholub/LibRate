@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -66,26 +67,28 @@ func main() {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: &log,
 		// skip logging for static files, there's too many of them
-		SkipURIs: []string{"/_app/immutable", "/_app/chunks"},
+		SkipURIs: []string{
+			"/_app/immutable",
+			"/_app/chunks",
+			"/profiles/_app",
+			"/_app/immutable/chunks/",
+		},
 	})
 	// Create a new Fiber instance
 	app := fiber.New()
 	app.Use(recover.New())
 
 	profilesApp := fiber.New()
-	profilesApp.Static("/", "./fe/build/profiles/")
+	profilesApp.Static("/", "./fe/build/prerendered/")
 	app.Mount("/profiles", profilesApp)
 	profilesApp.Use(fiberlog)
 	// redirect GET requests to /profiles/_app one directory up
-	profilesApp.Get("/_app/*", func(c *fiber.Ctx) error {
-		return c.Redirect("/_app/.."+c.Path(), 301)
-	})
-	profilesApp.Get("/:nick", func(c *fiber.Ctx) error {
-		return c.SendFile("./fe/build/profiles.html")
-	})
-
+	err = routes.SetupProfiles(&log, conf, dbConn, profilesApp, &fiberlog)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to setup profiles routes")
+	}
 	// fallback using a templating engine in case sveltekit breaks
-	noscript, err := setupNoscript(&fiberlog)
+	noscript, err := setupNoscript()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}

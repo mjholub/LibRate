@@ -53,8 +53,8 @@ func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetMemberByNick called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mc.log.Debug().Msgf("Nick: %s", c.Params("nick"))
-	member, err := mc.storage.Read(ctx, "nick", c.Params("nick"))
+	mc.log.Debug().Msgf("Nick: %s", c.Params("nickname"))
+	member, err := mc.storage.Read(ctx, "nick", c.Params("nickname"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
