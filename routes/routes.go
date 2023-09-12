@@ -54,10 +54,16 @@ func Setup(
 	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := controllers.NewMemberController(mStor, logger)
+
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
-
+	app.Get("/profiles/:nickname", func(c *fiber.Ctx) error {
+		member := memberSvc.GetMemberByNick(c)
+		return c.Render("profiles/member_page.django", fiber.Map{
+			"member": member,
+		})
+	})
 	app.Get("/api/version", version.Get)
 
 	reviews := api.Group("/reviews")
@@ -108,7 +114,7 @@ func setupStatic(app *fiber.App) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		staticPath, err := filepath.Abs("./fe/build/")
+		staticPath, err := filepath.Abs("./views")
 		if err != nil {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
@@ -138,6 +144,5 @@ func setupStatic(app *fiber.App) error {
 			}
 		}
 	}
-
 	return nil
 }

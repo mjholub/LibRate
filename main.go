@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/django/v3"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -66,41 +67,38 @@ func main() {
 
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: &log,
-		// skip logging for static files, there's too many of them
-		SkipURIs: []string{
-			"/_app/immutable",
-			"/_app/chunks",
-			"/profiles/_app",
-			"/_app/immutable/chunks/",
-		},
 	})
 	// Create a new Fiber instance
-	app := fiber.New()
+	engine := django.New("./views", ".django")
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			err = c.Status(code).SendFile(fmt.Sprintf("./views/%d.html", code))
+			if err != nil {
+				return c.Status(500).SendString("Internal Server Error")
+			}
+			return nil
+		},
+		Views: engine,
+	})
 	app.Use(recover.New())
 
-	profilesApp := fiber.New()
-	profilesApp.Static("/", "./fe/build/")
-	app.Mount("/profiles", profilesApp)
-	profilesApp.Use(fiberlog)
-	// redirect GET requests to /profiles/_app one directory up
-	err = routes.SetupProfiles(&log, conf, dbConn, profilesApp, &fiberlog)
+	version, err := getLatestTag()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to setup profiles routes")
+		log.Warn().Err(err).Msg("Failed to get latest tag")
+		version = " unknown"
 	}
-	// fallback using a templating engine in case sveltekit breaks
-	noscript, err := setupNoscript()
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to setup noscript app")
-	}
-	noscript.Static("/", "./views")
-	app.Mount("/noscript", noscript)
-	err = routeNoScript(noscript, dbConn, &log, conf)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to setup noscript routes")
-	}
-
 	app.Use(fiberlog)
 	app.Use(idempotency.New())
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("index", fiber.Map{
+			//"static":  conf.Fiber.Static,
+			"version": version,
+		})
+	})
 
 	// CORS
 	setupCors(app, conf)

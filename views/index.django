@@ -1,6 +1,18 @@
-{% include "partials/header.django" %}
+<!DOCTYPE html>
+<html>
 
-<p> Noscript support not fully implemented yet. </p>
-<p> See <a href="https://codeberg.org/mjh/LibRate/issues/20">issue #20</a> for more information. </p>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="./static/css/global.css">
+  <title>LibRate - Noscript</title>
+</head>
 
-{% include "partials/footer.django" %}
+<body>
+  {% include "partials/header.django" %}
+  <p> Noscript support not fully implemented yet. </p>
+  <p> See <a href="https://codeberg.org/mjh/LibRate/issues/20">issue #20</a> for more information. </p>
+
+  {% include "partials/footer.django" %}
+</body>
+
+</html>

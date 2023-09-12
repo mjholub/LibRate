@@ -16,8 +16,9 @@ var DefaultConfig = Config{
 		PG_Config: "/usr/bin/pg_config",
 	},
 	Fiber: FiberConfig{
-		Host: "localhost",
-		Port: 3000,
+		Host:   "localhost",
+		Port:   3000,
+		Static: "./static",
 	},
 	Secret:     "secret",
 	LibrateEnv: "production",

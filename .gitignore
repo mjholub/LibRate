@@ -6,3 +6,7 @@ config.yml
 LibRate
 node_modules
 fe/_app
+fe/.svelte-kit
+fe/.vscode
+fe/.vscode
+fe/build

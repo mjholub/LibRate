@@ -21,6 +21,7 @@ type DBConfig struct {
 }
 
 type FiberConfig struct {
-	Host string `yaml:"host" default:"localhost"`
-	Port int    `yaml:"port" default:"3000"`
+	Host   string `yaml:"host" default:"localhost"`
+	Port   int    `yaml:"port" default:"3000"`
+	Static string `yaml:"static" default:"./static"`
 }

@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'css/global.css' %}">
+</head>
+
+<body>
+
+  <form method="POST" action="{% if isRegistration %}{% url 'register' %}{% else %}{% url 'login' %}{% endif %}">
+    {% csrf_token %}
+    {% if not isRegistration %}
+    <label for="email_or_username">Email or Username:</label>
+    <input type="text" id="email_or_username" name="email_or_username" value="{{ email_or_username }}" required
+      aria-label="Email or Username" />
+    <input type="password" id="password" name="password" value="{{ password }}" required aria-label="Password" />
+    {% else %}
+    <!-- Registration form -->
+    <label for="email">Email:</label>
+    <input id="email" type="email" name="email" value="{{ email }}" required aria-label="Email" />
+    <label for="nickname">Nickname:</label>
+    <input id="nickname" type="text" name="nickname" value="{{ nickname }}" required aria-label="Nickname" />
+    <input type="password" id="password" name="password" value="{{ password }}" required aria-label="Password" />
+    <label for="passwordConfirm">Confirm Password:</label>
+    <input id="passwordConfirm" type="password" name="passwordConfirm" value="{{ passwordConfirm }}" required
+      aria-label="Confirm Password" />
+    <!-- Password strength indicator -->
+    {% if passwordStrength != 'Password is strong enough' %}
+    <p>
+      Password strength: {{ passwordStrength }} bits of (<a
+        href="https://www.omnicalculator.com/other/password-entropy">entropy</a>), required: 50
+    </p>
+    {% else %}
+    <p>Password strength: {{ passwordStrength }}</p>
+    {% endif %}
+    {% endif %}
+    {% if errorMessage %}
+    <p class="error-message">{{ errorMessage }}</p>
+    {% endif %}
+    {% if not isRegistration %}
+    <button type="submit" onclick="login()">Sign In</button>
+    <button type="button" onclick="startRegistration()">Sign Up</button>
+    {% else %}
+    <button type="submit">Sign Up</button>
+    <button type="button" onclick="toggleRegistration()">Sign In</button>
+    {% endif %}
+  </form>
+
+  <script lang="ts">
