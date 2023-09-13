@@ -2,7 +2,42 @@
 
 This project aims to bring a website combining the functionality of such projects as Bookwyrm, RateYourMusic/Sonemic, IMDB and similar to the #fediverse. 
 
-This project is currently in early alpha stage, bugs are expected and PRs are very welcome. 
+This project is currently in early alpha stage, bugs are expected and PRs are very welcome.
+
+
+**Currently development is mostly happening on [this branch](https://codeberg.org/mjh/LibRate/src/branch/auth-fixes-carousel-improvements).**
+
+**The first public beta instance is expected to launch by the end of September 2023.**
+
+## Roadmap:
+
+### **Social features**:
+  - [x] Basic registration support
+  - [x] (**WIP**) Member cards with profile info
+  - [ ] Full member profile pages
+  - [ ] Groups
+  - [ ] Direct messages, follows, sharing...
+  - [ ] **ActivityPub support**
+### **Media features**
+  - [x] Album cards
+  - [x] Carousels showing random media 
+  - [x] Relevant DB setup
+  - [x] (**WIP**) Film and series cards
+  - [ ] Book cards
+  - [ ] Anime and manga cards/pages
+  - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
+  ### **Reviews**
+  - [x] Basic review form
+  - [?] Backend logic for submission and fetching of reviews
+  - [x] (**WIP**) Review feed
+
+### **Recommendations**
+  - [x] Prototype logic
+  - [ ] Actual working implementation
+
+### **Other**
+  - [ ] Extended configurability
+  - [ ] Admin panel
 
 ## Prerequisites:
 
