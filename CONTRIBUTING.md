@@ -18,6 +18,15 @@ Although striving towards 100% test coverage is irrational, to say the least, pr
 
 Your editor should have support for _eslint_, svelte LSP and _golangci-lint_ installed and enabled. For _golangci-lint_ though, you can also use it as a CLI tool, although a language server version is more convenient.
 
+# Dependencies
+
+When introducing a new dependency, consider the following:
+
+- Is the dependency actively maintained and stable?
+- Would it be a significant improvement and/or time saver compared to doing the same thing from scratch
+- Popularity: sometimes there are good libraries out there which few projects use, but generally popular libraries are a bit more trustworthy and less likely to be vulnerable to supply chain attacks
+- Avoiding bloat: use tools like Github GLOC, tokei, scc or library size info on npm website to assess and compare codebase sizes of various libraries
+
 ## Go backend
 
 The topmost functions, like those in the _main_ and _routes_ packages,   inject the dependencies (like logger and database connection) into the functions in _models_ and/or _controllers_ packages.  
