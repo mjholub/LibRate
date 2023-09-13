@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { Keyword } from '../../types/media.ts';
-import type { UUID } from '../../types/utils.ts';
+import type { Keyword } from '$lib/types/media.ts';
+import type { UUID } from '$lib/types/utils.ts';
 
 interface KeywordStoreState {
   selectedKeywords: Keyword[];
@@ -63,50 +63,50 @@ function createKeywordStore() {
       const keywords = await response.json();
       update((state: KeywordStoreState) => ({ ...state, keywords }));
     },
-submitKeywordVotes: async (mediaID: UUID) => {
-  let selectedKeywords;
-  
-  keywordStore.subscribe((state) => {
-    selectedKeywords = state.selectedKeywords;
-  })();
-  
-  const response = await fetch('/api/keywords/vote', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+    submitKeywordVotes: async (mediaID: UUID) => {
+      let selectedKeywords;
+
+      keywordStore.subscribe((state) => {
+        selectedKeywords = state.selectedKeywords;
+      })();
+
+      const response = await fetch('/api/keywords/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          MediaID: mediaID,
+          Keywords: selectedKeywords
+        })
+      });
+
+      if (response.ok) {
+        alert('Keyword votes submitted successfully!');
+      } else {
+        alert('Failed to submit keyword votes.');
+      }
     },
-    body: JSON.stringify({
-      MediaID: mediaID,
-      Keywords: selectedKeywords
-    })
-  });
 
-  if (response.ok) {
-    alert('Keyword votes submitted successfully!');
-  } else {
-    alert('Failed to submit keyword votes.');
-  }
-},
+    suggestKeywords: async (mediaID: UUID, keywordSearch: string) => {
+      const response = await fetch('/api/keywords/suggest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          MediaID: mediaID,
+          KeywordSearch: keywordSearch
+        })
+      });
 
-suggestKeywords: async (mediaID: UUID, keywordSearch: string) => {
-  const response = await fetch('/api/keywords/suggest', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+      if (response.ok) {
+        const keywords = await response.json();
+        update((state: KeywordStoreState) => ({ ...state, keywords }));
+      } else {
+        alert('Failed to suggest keywords.');
+      }
     },
-    body: JSON.stringify({
-      MediaID: mediaID,
-      KeywordSearch: keywordSearch
-    })
-  });
-
-  if (response.ok) {
-    const keywords = await response.json();
-    update((state: KeywordStoreState) => ({ ...state, keywords }));
-  } else {
-    alert('Failed to suggest keywords.');
-  }
-},
     clearSearch: () => update((state: KeywordStoreState) => ({ ...state, keywordSearch: '' })),
   }
 }

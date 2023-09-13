@@ -1,18 +1,21 @@
 <script lang="ts">
-	import { getNick } from '../../stores/members/getnick.ts';
-	import type { Review } from '../../types/review.ts';
-	import type { Media } from '../../types/media.ts';
-	import { keywordStore } from '../../stores/form/keyword.ts';
+	import { memberStore } from '$stores/members/getInfo.ts';
+	import type { Review } from '$lib/types/review.ts';
+	import type { Media } from '$lib/types/media.ts';
+	import type { Member } from '$lib/types/member.ts';
+	import { keywordStore } from '$stores/form/keyword.ts';
 
 	export let media: Media;
 	export let review: Review;
 	export let userid: number;
 	let userImage = '';
 	let nick = '';
+	let member: Member;
 
 	$: (async () => {
 		if (userid) {
-			nick = await getNick(userid);
+			member = await memberStore.getMemberByID(userid);
+			nick = member.memberName;
 			userImage = await fetch('/static/images/' + nick + '.png').then((r) => r.text());
 		}
 	})();

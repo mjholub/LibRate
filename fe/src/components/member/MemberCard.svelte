@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { authStore } from '../../stores/members/auth.ts';
-	import type { Member } from '../../types/member.ts';
+	import { authStore } from '$stores/members/auth.ts';
+	import type { Member } from '$lib/types/member.ts';
 
 	function splitNullable(input: string | null, separator: string): string[] {
 		return input ? input.split(separator) : [];

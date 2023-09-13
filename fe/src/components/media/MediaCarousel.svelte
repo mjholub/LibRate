@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { randomStore } from '../../stores/media/getRandom.ts';
-	import { mediaImageStore } from '../../stores/media/image.ts';
-	import { formatDuration } from '../../stores/time/duration.ts';
+	import { randomStore } from '$stores/media/getRandom.ts';
+	import { mediaImageStore } from '$stores/media/image.ts';
+	import { formatDuration } from '$stores/time/duration.ts';
 	import MediaCard from './MediaCard.svelte';
 	import AlbumCard from './AlbumCard.svelte';
-	import type { MediaStoreState } from '../../stores/media/media.ts';
-	import type { Group, Person, Creator } from '../../types/people.ts';
-	import type { Media } from '../../types/media.ts';
-	import type { Album, Track } from '../../types/music.ts';
-	import type { Book } from '../../types/books.ts';
+	import type { MediaStoreState } from '$stores/media/media.ts';
+	import type { Group, Person, Creator } from '$lib/types/people.ts';
+	import type { Media } from '$lib/types/media.ts';
+	import type { Album, Track } from '$lib/types/music.ts';
+	import type { Book } from '$lib/types/books.ts';
 
 	let media: (Album | Track | Media)[] = [];
 	let album: Album = {

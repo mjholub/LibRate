@@ -1,6 +1,6 @@
 <script lang="ts">
 	/* TODO: Add stills in a gallery */
-	import type { Film } from '../../types/film_tv.ts';
+	import type { Film } from '$lib/types/film_tv.ts';
 	console.info('mounting FilmCard initialized');
 	export let posterPath: string;
 	export let film: Film;

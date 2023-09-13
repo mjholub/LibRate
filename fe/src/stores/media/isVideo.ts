@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { UUID } from '../../types/utils.ts';
+import type { UUID } from '$lib/types/utils.ts';
 
 // create a writable store
 export const videoWork = writable(false);

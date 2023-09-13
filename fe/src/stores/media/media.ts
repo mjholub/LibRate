@@ -1,11 +1,11 @@
 import { writable } from 'svelte/store';
 import { initialPerson } from './people.ts';
 import type { Writable } from 'svelte/store';
-import type { UUID } from '../../types/utils.ts';
-import type { Person } from '../../types/people.ts';
-import type { Book } from '../../types/books.ts';
-import type { Album, Track } from '../../types/music.ts';
-import type { Film, TVShow } from '../../types/film_tv.ts';
+import type { UUID } from '$lib/types/utils.ts';
+import type { Person } from '$lib/types/people.ts';
+import type { Book } from '$lib/types/books.ts';
+import type { Album, Track } from '$lib/types/music.ts';
+import type { Film, TVShow } from '$lib/types/film_tv.ts';
 
 
 export interface MediaStoreState {

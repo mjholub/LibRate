@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { Person } from "../../types/people";
-import type { UUID } from "../../types/utils";
+import type { Person } from "$lib/types/people";
+import type { UUID } from "$lib/types/utils";
 
 interface PeopleStoreState {
   people: Person[];

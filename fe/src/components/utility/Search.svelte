@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import MediaCard from '../media/MediaCard.svelte';
-	import type { SearchItem } from '../../types/search.ts';
+	import type { SearchItem } from '$lib/types/search.ts';
 
 	let search = '';
 	let items: SearchItem[] = [];

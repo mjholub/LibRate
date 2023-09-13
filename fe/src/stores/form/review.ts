@@ -1,8 +1,8 @@
 import { writable, get } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { TrackRating, CastRating } from '../../types/review.ts';
-import type { Track } from '../../types/music.ts';
-import type { UUID } from '../../types/utils.ts';
+import type { TrackRating, CastRating } from '$lib/types/review.ts';
+import type { Track } from '$lib/types/music.ts';
+import type { UUID } from '$lib/types/utils.ts';
 
 interface ReviewStoreState {
   favoriteTrack: Track | null;
@@ -75,7 +75,7 @@ function createReviewStore() {
     setFavoriteTrack: (track: Track) => update((state: ReviewStoreState) => {
       return { ...state, favoriteTrack: track };
     }),
-  
+
     // setTrackRating handles both adding and removing track ratings
     setTrackRating: (trackRating: TrackRating) => update((state: ReviewStoreState) => {
       // if track is already rated, remove the rating

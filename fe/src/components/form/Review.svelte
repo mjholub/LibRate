@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import type { Track, Album } from '../../types/music.ts';
-	import type { Keyword } from '../../types/media.ts';
-	import type { UUID } from '../../types/utils.ts';
-	import type { Review } from '../../types/review.ts';
-	import { videoWork, isVideoWork } from '../../stores/media/isVideo.ts';
-	import { reviewStore } from '../../stores/form/review.ts';
-	import { keywordStore } from '../../stores/form/keyword.ts';
-	import { trackStore } from '../../stores/media/music.ts';
+	import type { Track, Album } from '$lib/types/music.ts';
+	import type { Keyword } from '$lib/types/media.ts';
+	import type { UUID } from '$lib/types/utils.ts';
+	import type { Review } from '$lib/types/review.ts';
+	import { videoWork, isVideoWork } from '$stores/media/isVideo.ts';
+	import { reviewStore } from '$stores/form/review.ts';
+	import { keywordStore } from '$stores/form/keyword.ts';
+	import { trackStore } from '$stores/media/music.ts';
 
 	let album: Album;
 	let mediaID: UUID = ''; // updated on fetch

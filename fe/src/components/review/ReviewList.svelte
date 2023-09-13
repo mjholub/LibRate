@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import ReviewForm from '../form/Review.svelte';
 	import ReviewCard from './ReviewCard.svelte';
-	import type { Review } from '../../types/review.ts';
+	import type { Review } from '$lib/types/review.ts';
 
 	export let reviews: Review[];
 	const limit = 5;

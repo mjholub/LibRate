@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Album } from '../../types/music.ts';
+	import type { Album } from '$lib/types/music.ts';
 	//import { mediaImageStore } from '../../stores/media/image.ts';
 	let showArtists = false;
 	let showKeywords = false;

@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { UUID } from '../../types/utils.ts';
-import type { Album, Track } from '../../types/music.ts';
+import type { UUID } from '$lib/types/utils.ts';
+import type { Album, Track } from '$lib/types/music.ts';
 
 interface AlbumStoreState {
   album: Album | null;
