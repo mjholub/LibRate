@@ -43,13 +43,24 @@ function createAuthStore(): AuthStore {
       if (typeof localStorage !== 'undefined') {
         const token = localStorage.getItem('token');
         if (token) {
-          const res = await fetch(`/api/authenticate`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
-          res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
-        } else {
+          // using try-cacth to avoid unhandled promise rejection
+          try {
+            const res = await fetch(`/api/authenticate`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+            res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
+          } catch (err) {
+            isAuthenticated.set(false);
+            if (import.meta.env.DEV) {
+              console.error('Error while authenticating', err);
+            }
+          }
+        }
+        else {
           isAuthenticated.set(false);
-          throw new Error('No token found');
+          if (import.meta.env.DEV) {
+            console.error('No token found');
+          }
         }
       }
     },

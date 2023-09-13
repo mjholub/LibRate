@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import axios from 'axios';
 import type { Writable } from 'svelte/store';
 import type { AnyMedia } from '$lib/types/media.ts';
 import type { MediaStoreState } from './media.ts';
@@ -22,39 +23,34 @@ function createRandomStore(): RandomStore {
     update,
     getRandom: async () => {
       try {
-        const response = await fetch(`/api/media/random`, {
-          method: 'GET',
+        const response = await axios.get('/api/media/random/', {
           headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!response.ok) {
-          console.error('Response not ok: ', response);
-          throw new Error(`Response not ok: ${response.status} ${response.statusText}`);
-        }
-
-        const responseBody = await response.json();
-        const mediaData: AnyMedia[] = responseBody.data;
-
-        if (!mediaData) {
+        if (!response.data) {
           console.error('No data returned from the server');
           throw new Error('No data returned from the server');
         }
 
-        console.debug(`mediaData: `, mediaData);
+        console.debug('mediaData:', response.data);
 
+        const mediaData = response.data;
         const mediaTypes = determineMediaTypes(mediaData);
+
         mediaTypes.forEach((mediaType) => {
           set({
-            ...initialRandomState, mediaType, [mediaType.toLowerCase()]: mediaData,
-            isLoading: false
+            ...initialRandomState,
+            mediaType,
+            [mediaType.toLowerCase()]: mediaData,
+            isLoading: false,
           });
         });
       } catch (error) {
-        console.error('Error in getRandom: ', error);
+        console.error('Error in getRandom:', error);
         throw error;
       }
     },
-  };
+  }
 }
 
 const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> => {
