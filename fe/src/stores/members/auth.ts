@@ -42,7 +42,8 @@ function createAuthStore(): AuthStore {
     authenticate: async () => {
       if (typeof localStorage !== 'undefined') {
         const token = localStorage.getItem('token');
-        if (token) {
+        const sessionCookie = document.cookie.includes('session=');
+        if (token || sessionCookie) {
           // using try-cacth to avoid unhandled promise rejection
           try {
             const res = await fetch(`/api/authenticate`, {
