@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import axios from 'axios';
 import type { Writable } from 'svelte/store';
-import type { AnyMedia, Media } from '$lib/types/media.ts';
+import type { AnyMedia } from '$lib/types/media.ts';
 import type { MediaStoreState } from './media.ts';
 
 interface RandomStore extends Writable<MediaStoreState> {
