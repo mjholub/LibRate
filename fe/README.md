@@ -1,38 +1,22 @@
-# create-svelte
+# LibRate frontend
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+This directory contains, as the name suggests, the frontend source code for LibRate. It uses the static adapter 
+(more on it's quirks and limitations and a few hacks to overcome them in [this great blog post](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/)).
 
-## Creating a project
+## Why the static adapter
 
-If you're seeing this, you've probably already done this step. Congrats!
+TL;DR: simplicity – we've tried using Bun and it's kind of a PITA to rewrite API calls and get CORS working with other adapters such as Bun. 
+Besides, the projects strives to follow the KISS ( _Keep it simple, stupid_ ) philosophy – that's also why we chose Svelte in the first place,
+since it doesn't use Virtual DOM, unlike React or Vue and has greater performance than these frameworks while being much simpler to develop than 
+WebAssembly. The lack of an additional JS server in addition to the Go backend reduces the resource usage and improves security by reducing the attack surface.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+While we get that some things might be easier to achieve when using a bundler, we believe that a static adapter will suffice despite some challenges it may pose.
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+## Alternatives
 
-## Developing
+In addition to this frontend, work is underway to create a noscript alternative based on the ported Django templating engine.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+# Building
 
-```bash
-npm run dev
+Just run `pnpm run build`
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
