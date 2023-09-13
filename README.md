@@ -6,41 +6,57 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 **The first public beta instance is expected to launch by the end of September 2023.**
 
+**NOTE**: we're using the term *member* to stress inclusivity and openness, as opposed to the term *user* which is controversial, because it was borrowed from the term drug dealers use to refer to their customers.
+
 ## Roadmap:
 
 ### **Social features**:
   - [x] Basic registration support
   - [x] (**WIP**) Member cards with profile info
   - [x] (**WIP**)Full member profile pages
+  - [ ] Tagging and mentions
+  - [ ] Advanced profile and UI customization
   - [ ] Groups
   - [ ] Direct messages (E2EE)
+  - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
+  - [x] (**WIP**) Member-generated content tagging and categorization
   - [ ] Following
   - [ ] Sharing
-  - [ ] Watching/reading/listening logs
-  - [ ] **ActivityPub support**
+  - [ ] **ActivityPub support**, with selective federation
 ### **Media features**
   - [x] Album cards
   - [x] Carousels showing random media 
   - [x] Relevant DB setup
   - [x] Film and series cards
+    - [ ] Trailers and stills support
+  - [ ] Content filters
   - [ ] Book cards
   - [ ] Anime and manga cards/pages
+  - [ ] Customizable, shareable media collections and logging
   - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
   - [ ] Automated imports from 3rd party sources
+  - [ ] DRM-free audio hosting and streaming, federation with Funkwhale
+  - [ ] Artwork galleries for visual artists(?)
   ### **Reviews**
   - [x] Basic review form
   - [?] Backend logic for submission and fetching of reviews
   - [x] (**WIP**) Review feed
+  - [ ] Commenting and voting on reviews and media items
+  - [ ] Importing from 3rd party sources
 
 ### **Recommendations**
   - [x] Prototype logic
   - [ ] Actual working implementation
+    - [ ] Personalized feeds
+    - [ ] Advanced algorithm powered by ML and **graph-like database structure - already implemented**
+
 
 ### **Other**
   - [ ] Extended configurability
   - [ ] Admin panel
   - [ ] Events, federating with Mobilizon
   - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
+  - [ ] Mobile app (although the frontend is and will be mobile friendly, but also never at the expense of desktop experience. We'll also try to make it work with Fedilab, though the number of distinctive features may make it difficult)
 
 ## Prerequisites:
 
