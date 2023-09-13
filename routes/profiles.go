@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/controllers"
+	"codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/models"
 )
 
@@ -24,7 +24,7 @@ func SetupProfiles(
 	api := app.Group("/api", *fzlog)
 
 	mStor := models.NewMemberStorage(dbConn, logger, conf)
-	memberSvc := controllers.NewMemberController(mStor, logger)
+	memberSvc := members.NewController(mStor, logger)
 	nicknames := mStor.GetNicknames()
 	for i := range nicknames {
 		app.Get("/"+nicknames[i], func(c *fiber.Ctx) error {

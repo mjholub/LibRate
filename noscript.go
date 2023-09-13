@@ -11,7 +11,8 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/controllers"
+
+	"codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/models"
 	"codeberg.org/mjh/LibRate/routes"
 )
@@ -57,7 +58,7 @@ func routeNoScript(app *fiber.App,
 	})
 
 	mStorage := models.NewMemberStorage(db, log, conf)
-	memberCon := controllers.NewMemberController(mStorage, log)
+	memberCon := members.NewController(mStorage, log)
 
 	app.Get("/profiles/:nick", func(c *fiber.Ctx) error {
 		member := memberCon.GetMemberByNick(c)

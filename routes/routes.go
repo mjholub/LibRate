@@ -17,6 +17,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/controllers/form"
+	"codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
@@ -48,7 +49,7 @@ func Setup(
 
 	authSvc := auth.NewAuthService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := controllers.NewMemberController(mStor, logger)
+	memberSvc := members.NewController(mStor, logger)
 	mediaCon := controllers.NewMediaController(*mediaStor)
 	formCon := form.NewFormController(logger, *mediaStor)
 	sc := controllers.NewSearchController(dbConn)
