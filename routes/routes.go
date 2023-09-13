@@ -35,7 +35,6 @@ func Setup(
 	// setup the middleware
 	// NOTE: unsure if this handler is correct
 	api := app.Group("/api", *fzlog)
-	// initialize the reading of the static files in a goroutine
 
 	var (
 		mStor     *models.MemberStorage
@@ -43,10 +42,6 @@ func Setup(
 		mediaStor *models.MediaStorage
 	)
 
-	err := setupStatic(app)
-	if err != nil {
-		return fmt.Errorf("failed to setup static files: %w", err)
-	}
 	mStor = models.NewMemberStorage(dbConn, logger, conf)
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
@@ -98,6 +93,11 @@ func Setup(
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
+	err := setupStatic(app)
+	if err != nil {
+		return fmt.Errorf("failed to setup static files: %w", err)
+	}
+	logger.Debug().Msg("static files initialized")
 	return nil
 }
 
