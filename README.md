@@ -14,18 +14,22 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 ### **Social features**:
   - [x] Basic registration support
   - [x] (**WIP**) Member cards with profile info
-  - [ ] Full member profile pages
+  - [x] (**WIP**)Full member profile pages
   - [ ] Groups
-  - [ ] Direct messages, follows, sharing...
+  - [ ] Direct messages (E2EE)
+  - [ ] Following
+  - [ ] Sharing
+  - [ ] Watching/reading/listening logs
   - [ ] **ActivityPub support**
 ### **Media features**
   - [x] Album cards
   - [x] Carousels showing random media 
   - [x] Relevant DB setup
-  - [x] (**WIP**) Film and series cards
+  - [x] Film and series cards
   - [ ] Book cards
   - [ ] Anime and manga cards/pages
   - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
+  - [ ] Automated imports from 3rd party sources
   ### **Reviews**
   - [x] Basic review form
   - [?] Backend logic for submission and fetching of reviews
@@ -38,6 +42,8 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 ### **Other**
   - [ ] Extended configurability
   - [ ] Admin panel
+  - [ ] Events, federating with Mobilizon
+  - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
 
 ## Prerequisites:
 
