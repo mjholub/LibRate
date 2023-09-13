@@ -1,4 +1,8 @@
-# Tags, branching
+# Foreword
+
+Worry not if you're a functional programming wizard who dreads the imperative pardigm. Even though LibRate's backend is written in Go, in several places it takes advantage of the `mo` and `lo` libraries, which provide monads and iterators using generics, respectively.
+
+#Tags, branching
 
 Create your PRs against the upstream dev branch, where they will be tested and if everything is fine, merged with main.
 
@@ -29,9 +33,10 @@ When introducing a new dependency, consider the following:
 
 ## Go backend
 
-The topmost functions, like those in the _main_ and _routes_ packages,   inject the dependencies (like logger and database connection) into the functions in _models_ and/or _controllers_ packages.  
+The topmost functions, like those in the _main_ and _routes_ packages, inject the dependencies (like logger and database connection) into the functions in _models_ and/or _controllers_ packages.  
 
-Resources intensive operations called inide other functions, should be parallelized with goroutines, but make sure they are properly synchronized if needed. Note however, that it is preferrable to use smaller, dedicated functions with limited or no side effects instead of unnecessarily large ones.
+Resources intensive operations called inside other functions, should be parallelized with goroutines, but make sure they are properly synchronized if needed. For greater predictabilty you can use RxGo, which is a ReactiveX implementation for Go, allowing you to use stuff such as the observer pattern.
+ Note however, that it is preferrable to use smaller, dedicated functions with limited or no side effects instead of unnecessarily large ones.
 
 Long, more complex functions should include a brief comment summarizing their mechanism of action.
 
