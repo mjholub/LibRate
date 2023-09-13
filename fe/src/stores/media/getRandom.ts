@@ -28,13 +28,12 @@ function createRandomStore(): RandomStore {
         });
 
         if (!response.data) {
-          console.error('No data returned from the server');
           throw new Error('No data returned from the server');
         }
 
         console.debug('mediaData:', response.data);
 
-        const mediaData = response.data;
+        const mediaData = Array.isArray(response.data) ? response.data : [response.data];
         const mediaTypes = determineMediaTypes(mediaData);
 
         mediaTypes.forEach((mediaType) => {
@@ -47,15 +46,15 @@ function createRandomStore(): RandomStore {
         });
       } catch (error) {
         console.error('Error in getRandom:', error);
-        throw error;
       }
     },
   }
 }
 
 const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> => {
-  if (mediaData.length === 0) {
-    throw new Error('Empty media data');
+  if (!mediaData || mediaData.length === 0) {
+    // NOTE: not throwing error to have some null safety
+    return ['Unknown'];
   }
 
   const mediaTypes: Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> = [];
