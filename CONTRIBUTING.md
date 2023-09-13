@@ -6,7 +6,7 @@ Once you branch from dev and you're ready to submit a PR, ensure you have all ta
 
 # Commits
 
-For your commits on the feature branch, follow **atomic commits**. These will later undergo a squash merge to clean up the reflog, but for your feature branch you should use the them to make the review process easier and also to make it easier to undo things if anything's wrong.
+For your commits on the feature branch, follow **atomic and conventional commits**. These will later undergo a squash merge to clean up the reflog, but for your feature branch you should use the them to make the review process easier and also to make it easier to undo things if anything's wrong.
 
 # Testing
 
