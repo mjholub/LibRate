@@ -10,6 +10,7 @@
 	import type { Media } from '$lib/types/media.ts';
 	import type { Album, Track } from '$lib/types/music.ts';
 	import type { Book } from '$lib/types/books.ts';
+	import type { Film } from '$lib/types/film_tv.ts';
 
 	let media: (Album | Track | Media)[] = [];
 	let album: Album = {
@@ -24,11 +25,16 @@
 			group_artist: []
 		},
 		creator: null,
+		creators: [],
+		added: new Date(),
 		image_paths: [],
 		release_date: new Date(),
 		genres: [],
 		keywords: [],
-		duration: 0,
+		duration: {
+			Time: '',
+			Valid: false
+		},
 		tracks: []
 	};
 	let al: Album[] = [];
@@ -91,6 +97,8 @@
 						} else if (albumData.album_artists && albumData.album_artists.group_artist.length > 0) {
 							creator = albumData.album_artists.group_artist[0];
 						}
+						const albumCreators = albumData.creators ? albumData.creators : [];
+						const addedDate = albumData.added ? albumData.added : new Date();
 						const releaseDate = albumData.release_date
 							? albumData.release_date.toString().split('T')[0]
 							: null;
@@ -100,6 +108,8 @@
 							title: albumData.name,
 							created: new Date(),
 							creator: creator,
+							creators: albumCreators,
+							added: addedDate,
 							media_id: albumData.media_id,
 							name: albumData.name,
 							album_artists: albumData.album_artists,
@@ -129,6 +139,8 @@
 							title: trackData.name,
 							created: new Date(),
 							creator: null,
+							creators: [],
+							added: new Date(),
 							media_id: trackData.media_id,
 							name: trackData.name,
 							album_id: trackData.album_id,
@@ -144,6 +156,7 @@
 			case 'Book':
 				if (data.book) {
 					const books = Array.isArray(data.book) ? data.book : [data.book];
+					const bookAddedDate = books[0].added ? books[0].added : new Date();
 					books.forEach((bookData) => {
 						let newBook: Book = {
 							UUID: bookData.media_id,
@@ -151,6 +164,8 @@
 							title: bookData.title,
 							created: bookData.publication_date,
 							creator: bookData.authors[0],
+							creators: bookData.authors,
+							added: bookAddedDate,
 							authors: bookData.authors,
 							media_id: bookData.media_id,
 							publisher: bookData.publisher,
@@ -170,8 +185,30 @@
 				}
 				break;
 			case 'Film':
+				if (data.film) {
+					const films = Array.isArray(data.film) ? data.film : [data.film];
+					films.forEach((filmData) => {
+						let newFilm: Film = {
+							UUID: filmData.UUID,
+							kind: 'film',
+							title: filmData.title,
+							created: new Date(),
+							creator: null,
+							creators: [],
+							added: new Date(),
+							castID: filmData.castID,
+							synopsis: filmData.synopsis ? filmData.synopsis : 'No synopsis available.',
+							releaseDate: filmData.releaseDate ? filmData.releaseDate : new Date(),
+							duration: filmData.duration ? filmData.duration : 0,
+							rating: filmData.rating ? filmData.rating : 0
+						};
+
+						media.push(newFilm);
+					});
+				}
 				break;
 			case 'Unknown':
+				console.warn('unknown media type: ', data.mediaType);
 				break;
 			default:
 				console.warn('unknown media type: ', data.mediaType);
@@ -207,21 +244,6 @@
 			subscriptions.push(mediaImgStrSub);
 			console.debug('subscribed to mediaImageStore');
 
-			/*await imageStore.getPaths(mediaImage.imageID);
-			console.debug('image paths for media ID: ', mediaImage.imageID, mediaImage.mediaID);
-
-			console.debug('staring imageStore subscription');
-			let imgStoreSub = imageStore.subscribe((data) => {
-				if (!data || !data.images || data.images.length === 0) {
-					return;
-				}
-				mediaImgPath = data.images[0].source;
-			});
-
-			subscriptions.push(imgStoreSub);
-			console.debug('subscribed to imageStore');
-
-        */
 			const addCreators = (creatorArray: (Person | Group)[]) => {
 				for (const creator of creatorArray) {
 					let newCreator: Creator;

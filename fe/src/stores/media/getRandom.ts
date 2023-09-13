@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import axios from 'axios';
 import type { Writable } from 'svelte/store';
-import type { AnyMedia } from '$lib/types/media.ts';
+import type { AnyMedia, Media } from '$lib/types/media.ts';
 import type { MediaStoreState } from './media.ts';
 
 interface RandomStore extends Writable<MediaStoreState> {
@@ -27,14 +27,19 @@ function createRandomStore(): RandomStore {
           headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!response.data) {
+        const responseData = response.data;
+
+        if (!responseData || !responseData.data || !Array.isArray(responseData.data)) {
           throw new Error('No data returned from the server');
         }
 
         console.debug('mediaData:', response.data);
 
-        const mediaData = Array.isArray(response.data) ? response.data : [response.data];
+        const mediaData = responseData.data;
         const mediaTypes = determineMediaTypes(mediaData);
+
+        // filter media data by type
+        //const albums = mediaData.filter((media) => media.media_id && media.album_artists);
 
         mediaTypes.forEach((mediaType) => {
           set({
