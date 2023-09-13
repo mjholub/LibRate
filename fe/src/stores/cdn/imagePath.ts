@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { Image } from "../../types/cdn";
+import type { Image } from "$lib/types/cdn";
 
 
 interface ImageStoreState {

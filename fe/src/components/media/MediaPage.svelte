@@ -1,8 +1,8 @@
 <script lang="ts">
 	import MediaCard from './MediaCard.svelte';
 	import ReviewList from '../review/ReviewList.svelte';
-	import type { Person } from '../../types/people.ts';
-	import type { Review } from '../../types/review.ts';
+	import type { Person } from '$lib/types/people.ts';
+	import type { Review } from '$lib/types/review.ts';
 
 	export const id = '';
 	export let title = '';

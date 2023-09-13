@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Person, Group, Creator } from '../../types/people.ts';
-	import type { Media } from '../../types/media.ts';
+	import type { Person, Group, Creator } from '$lib/types/people.ts';
+	import type { Media } from '$lib/types/media.ts';
 
 	export let media: Media = {
 		UUID: '',

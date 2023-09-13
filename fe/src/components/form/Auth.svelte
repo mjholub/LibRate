@@ -3,8 +3,8 @@
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
-	import type { Member } from '../../types/member.ts';
-	import type { AuthStoreState } from '../../stores/members/auth.ts';
+	import type { Member } from '$lib/types/member.ts';
+	import type { AuthStoreState } from '$stores/members/auth.ts';
 
 	let isRegistration = false;
 	let member: Member;

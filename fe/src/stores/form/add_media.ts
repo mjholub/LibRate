@@ -6,8 +6,8 @@
 
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { UUID } from '../../types/utils';
-import type { Media } from '../../types/media.ts';
+import type { UUID } from '$lib/types/utils';
+import type { Media } from '$lib/types/media.ts';
 
 export interface submissionFormState extends Media {
   UUID: UUID,

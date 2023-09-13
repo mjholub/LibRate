@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { Member } from '../../types/member.ts';
+import type { Member } from '$lib/types/member.ts';
 
 export const memberID = writable<number>(0);
 export const isAuthenticated = writable(false);

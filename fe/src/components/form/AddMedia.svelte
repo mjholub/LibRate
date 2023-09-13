@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { submitMediaForm } from '../../stores/form/add_media';
-	import type { Media } from '../../types/media';
+	import { submitMediaForm } from '$stores/form/add_media';
+	import type { Media } from '$lib/types/media';
 
 	let media: Media;
 	submitMediaForm.subscribe((value) => {

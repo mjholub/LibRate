@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { memberStore } from '../../stores/members/getInfo';
+	import { memberStore } from '$stores/members/getInfo';
 	import getMemberProps from './MemberCard.svelte';
 	import MemberCard from './MemberCard.svelte';
 	import ReviewList from '../review/ReviewList.svelte';
-	import type { Review } from '../../types/review';
-	import type { Member } from '../../types/member';
+	import type { Review } from '$lib/types/review';
+	import type { Member } from '$lib/types/member';
 
 	export let nickname: string;
 	console.info('fetching member info for', nickname);

@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type { Member } from '../../types/member';
+import type { Member } from '$lib/types/member';
 
 const memberInfo: Member = {
   id: 0,

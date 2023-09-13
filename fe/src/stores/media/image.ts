@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { MediaImage } from "../../types/media";
-import type { UUID } from "../../types/utils";
+import type { MediaImage } from "$lib/types/media";
+import type { UUID } from "$lib/types/utils";
 
 interface MediaImageStoreState {
   mediaID?: UUID;
