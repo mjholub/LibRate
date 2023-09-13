@@ -17,7 +17,6 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// FIXME: blacklist tracks, because they get e.g. improperly parsed as albums at some point
 	media, err := mc.storage.GetRandom(ctx, 2, "track")
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())

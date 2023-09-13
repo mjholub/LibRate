@@ -154,6 +154,9 @@ func generateThumbnail(source string) (string, error) {
 			return "", fmt.Errorf("error generating thumbnail: %w", err)
 		}
 		thumb, err := saveThumbToFile(&thumbProps, source)
+		if err != nil {
+			return "", fmt.Errorf("error generating thumbnail: %w", err)
+		}
 		return thumb, nil
 	}
 }
@@ -161,7 +164,11 @@ func generateThumbnail(source string) (string, error) {
 // saveThumbToFile encodes the thumbnail image properties obtained using the thumbnailer
 // TODO: use mo.Result to simplify error handling when this func is called?
 func saveThumbToFile(thumb *image.Image, outPath string) (string, error) {
-	thumbFile, err := os.Create(filepath.Join("./static", outPath, "thumbnail.jpg"))
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("error saving thumbnail: %w", err)
+	}
+	thumbFile, err := os.Create(filepath.Join(cwd, "static", outPath, "thumbnail.jpg"))
 	if err != nil {
 		return "", fmt.Errorf("error saving thumbnail: %w", err)
 	}

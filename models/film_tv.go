@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	// nolint:musttag
 	Film struct {
 		MediaID     *uuid.UUID     `json:"media_id" db:"media_id,pk,unique"`
 		Title       string         `json:"title" db:"title"`
@@ -116,7 +117,7 @@ func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
 		Created:  film.ReleaseDate.Time,
 		Creators: lo.Interleave(film.Cast.Actors, film.Cast.Directors),
 	}
-	mediaID, err := ms.Add(ctx, media)
+	mediaID, err := ms.Add(ctx, &media)
 	if err != nil {
 		ms.Log.Error().Err(err).Msg("error adding film")
 		return err

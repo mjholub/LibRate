@@ -15,7 +15,7 @@ export interface Film extends Media {
   duration?: number;
   rating?: number;
   created: Date;
-  creator: Person;
+  creator: Person | null;
 }
 
 export interface TVShow extends Media {

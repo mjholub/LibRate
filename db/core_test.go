@@ -116,7 +116,7 @@ func TestInitDB(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS places CASCADE;")
 		assert.NoError(t, err)
-	}(&config)
-	err = db.InitDB()
+	}(config)
+	err = db.InitDB(config)
 	require.NoError(t, err)
 }
