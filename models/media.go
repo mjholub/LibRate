@@ -173,10 +173,6 @@ func (ms *MediaStorage) GetMediaDetails(
 	}
 }
 
-func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
-	return nil, nil
-}
-
 // mwks - media IDs with their corresponding kind
 func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds ...string) (
 	mwks map[uuid.UUID]string, err error,
@@ -232,7 +228,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 // Add is a generic method that adds an object to the media.media table. It needs to be run
 // BEFORE the object is added to its respective table, since it needs the media ID to be
 // generated first.
-func (ms *MediaStorage) Add(ctx context.Context, props Media) (mediaID uuid.UUID, err error) {
+func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID uuid.UUID, err error) {
 	select {
 	case <-ctx.Done():
 		return uuid.Nil, ctx.Err()
@@ -293,8 +289,8 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 		}
 		defer stmt.Close()
 
-		for _, creator := range creators {
-			_, err = stmt.ExecContext(ctx, uuid, creator.ID)
+		for i := range creators {
+			_, err = stmt.ExecContext(ctx, uuid, creators[i].ID)
 			if err != nil {
 				ms.Log.Error().Err(err).Msg("error executing statement")
 				return fmt.Errorf("error executing statement: %w", err)
@@ -302,6 +298,10 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 		}
 		return nil
 	}
+}
+
+func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
+	return nil, nil
 }
 
 func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objType interface{}) error {
