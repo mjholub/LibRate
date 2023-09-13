@@ -4,9 +4,6 @@ This project aims to bring a website combining the functionality of such project
 
 This project is currently in early alpha stage, bugs are expected and PRs are very welcome.
 
-
-**Currently development is mostly happening on [this branch](https://codeberg.org/mjh/LibRate/src/branch/auth-fixes-carousel-improvements).**
-
 **The first public beta instance is expected to launch by the end of September 2023.**
 
 ## Roadmap:
