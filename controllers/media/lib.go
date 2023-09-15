@@ -1,4 +1,4 @@
-package controllers
+package media
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
+	"github.com/rs/zerolog"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
@@ -34,7 +35,7 @@ type (
 	}
 )
 
-func NewMediaController(storage models.MediaStorage) *MediaController {
+func NewController(storage models.MediaStorage) *MediaController {
 	return &MediaController{storage: storage}
 }
 
@@ -62,7 +63,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	detailedMedia, err := mc.storage.
 		GetMediaDetails(ctx, media.Kind, media.ID)
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %w", c.Params("id"), err)
+		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %v", c.Params("id"), err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
 	}
 
@@ -76,49 +77,59 @@ func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
 
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to parse media ID %s", c.Params("id"))
-		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+		return handleBadRequest(mc.storage.Log, c, "Invalid media ID")
 	}
+
 	kind, err := mc.storage.GetKind(ctx, mediaID)
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to get kind for media with ID %s", c.Params("id"))
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to get kind")
+		return handleInternalError(mc.storage.Log, c, "Failed to get kind")
 	}
 
 	path, err := mc.storage.GetImagePath(ctx, mediaID)
 	if err == sql.ErrNoRows {
-		mc.storage.Log.Warn().Msgf("Using placeholder image for media with ID %s", c.Params("id"))
-		switch kind {
-		case "film", "tv_show":
-			err = c.SendString("./static/film/placeholder.png")
-			if err != nil {
-				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
-				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
-			}
-			return c.SendStatus(fiber.StatusOK)
-		case "album", "track":
-			err = c.SendString("./static/music/placeholder.webp")
-			if err != nil {
-				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
-				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
-			}
-			return c.SendStatus(fiber.StatusOK)
-		default:
-			err = c.SendString("./static/placeholder.png")
-			if err != nil {
-				mc.storage.Log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
-				return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
-			}
-			return c.SendStatus(fiber.StatusOK)
-		}
+		return handlePlaceholderImage(mc.storage.Log, c, kind)
 	} else if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to get image paths for media with ID %s", c.Params("id"))
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to get image paths")
+		return handleInternalError(mc.storage.Log, c, "Failed to get image paths")
 	}
-	mc.storage.Log.Debug().Msgf("Got image path %s for media with ID %s", path, c.Params("id"))
-	err = c.SendString("./static/" + path)
+
+	return handleImageResponse(mc.storage.Log, c, path)
+}
+
+func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
+	log.Error().Msgf("Failed to parse media ID %s", c.Params("id"))
+	return h.Res(c, fiber.StatusBadRequest, message)
+}
+
+func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string) error {
+	log.Error().Msgf("Failed to %s", message)
+	return h.Res(c, fiber.StatusInternalServerError, message)
+}
+
+func handlePlaceholderImage(log *zerolog.Logger, c *fiber.Ctx, kind string) error {
+	log.Warn().Msgf("Using placeholder image for media with ID %s", c.Params("id"))
+	var placeholderPath string
+	switch kind {
+	case "film", "tv_show":
+		placeholderPath = "./static/film/placeholder.png"
+	case "album", "track":
+		placeholderPath = "./static/music/placeholder.webp"
+	default:
+		placeholderPath = "./static/placeholder.png"
+	}
+
+	err := c.SendString(placeholderPath)
 	if err != nil {
-		mc.storage.Log.Error().Err(err).Msgf("Failed to send image for media with ID %s", c.Params("id"))
+		log.Error().Err(err).Msgf("Failed to send placeholder image for media with ID %s", c.Params("id"))
+		return h.Res(c, fiber.StatusNotFound, "Failed to send placeholder image")
+	}
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func handleImageResponse(log *zerolog.Logger, c *fiber.Ctx, path string) error {
+	log.Debug().Msgf("Got image path %s for media with ID %s", path, c.Params("id"))
+	err := c.SendString("./static/" + path)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to send image for media with ID %s", c.Params("id"))
 		return h.Res(c, fiber.StatusNotFound, "Failed to send image")
 	}
 	return c.SendStatus(fiber.StatusOK)
