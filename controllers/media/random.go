@@ -9,6 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"codeberg.org/mjh/LibRate/models"
 )
 
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
@@ -17,15 +18,16 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// first, get 2 random media items from the database, blacklisting tracks
+	// It returns a map of media IDs to their kind
 	media, err := mc.storage.GetRandom(ctx, 2, "track")
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get random media: %s", err.Error())
-		return h.Res(c, fiber.StatusInternalServerError,
-			"Failed to get random media: "+err.Error())
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to get random media: "+err.Error())
 	}
 
 	mc.storage.Log.Info().Msgf("Got %d random media items", len(media))
-	mediaItems := make([]interface{}, len(media))
+	mediaItems := make([]models.MediaDetails, len(media))
 
 	errChan := make(chan mediaError, len(media))
 	var wg sync.WaitGroup
@@ -39,6 +41,8 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
+			// then, get the details for each media item
+			// this function uses a switch based on the kind of media item
 			// NOTE:this val. of err must be shadowed, otherwise it will be the same err for all goroutines
 			mDetails, err := mc.storage.
 				GetMediaDetails(ctx, kind, id)
@@ -47,7 +51,11 @@ func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
 				return
 			}
 			mc.storage.Log.Info().Msgf("Got media details for media with ID %s", id.String())
-			mediaItems[i] = mDetails
+			mediaItems[i] = models.MediaDetails{
+				Kind:    kind,
+				Details: mDetails,
+			}
+			// TODO: merge the retrieved struct of models.Book/Track/... into a struct that contains it's fields AND the kind
 		}(i, id, kind)
 		i++
 	}

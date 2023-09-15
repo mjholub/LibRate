@@ -36,6 +36,11 @@ type (
 		Modified sql.NullTime  `json:"modified,omitempty" db:"modified"`
 	}
 
+	MediaDetails struct {
+		Kind    string      `json:"kind" db:"kind"`
+		Details interface{} `json:"details" db:"details"`
+	}
+
 	MediaObject interface {
 		Book | Album | Track | TVShow | Season | Episode
 	}
