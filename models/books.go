@@ -33,8 +33,14 @@ type (
 	}
 )
 
+//nolint:gochecknoglobals //needed for iterative check during addition
+var BookKeys = []string{
+	"media_id", "title", "authors",
+	"genres", "edition", "languages",
+}
+
 func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (Book, error) {
-	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM books WHERE media_id = ?")
+	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM books WHERE media_id = $1")
 	if err != nil {
 		return Book{}, fmt.Errorf("error preparing statement: %w", err)
 	}
@@ -49,7 +55,7 @@ func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (Book, error)
 	return book, nil
 }
 
-func addBook(ctx context.Context, db *sqlx.DB, keys []string, book Book) error {
+func addBook(ctx context.Context, db *sqlx.DB, keys []string, book *Book) error {
 	if !lo.Every(BookKeys, keys) {
 		quoted := make([]string, len(BookKeys))
 		for i, key := range BookKeys {
