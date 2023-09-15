@@ -18,6 +18,8 @@ type DBConfig struct {
 	Password  string `yaml:"password,omitempty" default:"postgres"`
 	SSL       string `yaml:"SSL" default:"unknown"`
 	PG_Config string `yaml:"pg_config,omitempty" default:"/usr/bin/pg_config"`
+	// WARN: might probably need to be changed for containerized environments
+	StartCmd string `yaml:"start_cmd,omitempty" default:"sudo service postgresql start"`
 }
 
 type FiberConfig struct {

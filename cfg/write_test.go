@@ -94,6 +94,7 @@ func TestCorrectWrite(t *testing.T) {
 			Password:  "test_password",
 			SSL:       "unknown",
 			PG_Config: "/usr/bin/pg_config",
+			StartCmd:  "sudo service postgresql start",
 		},
 		Fiber: FiberConfig{
 			Host: "localhost",
@@ -117,6 +118,7 @@ func TestCorrectWrite(t *testing.T) {
     password: test_password
     ssl: unknown
     pg_config: /usr/bin/pg_config
+		start_cmd: sudo service postgresql start
 fiber:
     host: localhost
     port: 3000
