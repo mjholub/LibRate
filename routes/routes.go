@@ -60,7 +60,6 @@ func Setup(
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatestRatings)
 	// TODO: handler for single review based on id
-	reviews.Get("/", reviewSvc.GetRatings)
 	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
 	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
 	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)

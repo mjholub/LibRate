@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import axios from 'axios';
 	import type { Person, Group, Creator } from '$lib/types/people.ts';
 	import type { Media } from '$lib/types/media.ts';
 
@@ -8,7 +9,9 @@
 		kind: '',
 		title: '',
 		created: new Date(),
-		creator: null
+		creator: null,
+		creators: [],
+		added: new Date()
 	};
 	export let title = '';
 	export let image = '';
@@ -36,15 +39,21 @@
 	}
 
 	const getAverageRatings = async () => {
-		const response = await fetch('/api/media/averageRatings', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ mediaId: media.UUID })
-		});
-		const data = await response.json();
-		averageRating = data.averageRating;
+		try {
+			const response = await axios.get('/api/reviews/', {
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				params: {
+					id: media.UUID
+				}
+			});
+
+			averageRating = response.data.averageRating;
+		} catch (error) {
+			// Handle error here
+			console.error('Error fetching average ratings:', error);
+		}
 	};
 
 	onMount(() => {

@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -35,7 +35,7 @@ devDependencies:
     specifier: ^5.45.0
     version: 5.61.0(@typescript-eslint/parser@5.61.0)(eslint@8.44.0)(typescript@5.1.6)
   '@typescript-eslint/parser':
-    specifier: ^5.45.0
+    specifier: ^5.61.0
     version: 5.61.0(eslint@8.44.0)(typescript@5.1.6)
   cross-env:
     specifier: ^7.0.3
@@ -46,8 +46,11 @@ devDependencies:
   eslint-config-prettier:
     specifier: ^8.5.0
     version: 8.8.0(eslint@8.44.0)
+  eslint-plugin-security:
+    specifier: ^1.7.1
+    version: 1.7.1
   eslint-plugin-svelte:
-    specifier: ^2.30.0
+    specifier: ^2.32.2
     version: 2.32.2(eslint@8.44.0)(svelte@4.0.5)
   fp-ts:
     specifier: ^2.16.0
@@ -1177,6 +1180,12 @@ packages:
       eslint: 8.44.0
     dev: true
 
+  /eslint-plugin-security@1.7.1:
+    resolution: {integrity: sha512-sMStceig8AFglhhT2LqlU5r+/fn9OwsA72O5bBuQVTssPCdQAOQzL+oMn/ZcpeUY6KcNfLJArgcrsSULNjYYdQ==}
+    dependencies:
+      safe-regex: 2.1.1
+    dev: true
+
   /eslint-plugin-svelte@2.32.2(eslint@8.44.0)(svelte@4.0.5):
     resolution: {integrity: sha512-Jgbop2fNZsoxxkklZAIbDNhwAPynvnCtUXLsEC6O2qax7N/pfe2cNqT0ZoBbubXKJitQQDEyVDQ1rZs4ZWcrTA==}
     engines: {node: ^14.17.0 || >=16.0.0}
@@ -2013,6 +2022,11 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /regexp-tree@0.1.27:
+    resolution: {integrity: sha512-iETxpjK6YoRWJG5o6hXLwvjYAoW+FEZn9os0PD/b6AP6xQwsa/Y7lCVgIixBbUPMfhu+i2LtdeAqVTgGlQarfA==}
+    hasBin: true
+    dev: true
+
   /resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
@@ -2093,6 +2107,12 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       mri: 1.2.0
+    dev: true
+
+  /safe-regex@2.1.1:
+    resolution: {integrity: sha512-rx+x8AMzKb5Q5lQ95Zoi6ZbJqwCLkqi3XuJXp5P3rT8OEc6sZCJG5AE5dU3lsgRr/F4Bs31jSlVN+j5KrsGu9A==}
+    dependencies:
+      regexp-tree: 0.1.27
     dev: true
 
   /sander@0.5.1:
