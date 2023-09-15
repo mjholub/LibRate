@@ -16,12 +16,9 @@
 	export let title = '';
 	export let image = '';
 	export let averageRating = 0;
-	// implement polymorphism by using Either type
-	// this is needed to match the fields from e.g. the album type
-	// when e.g. the album card renders this component
 	export const creators: Person[] | Group[] | Creator[] = [];
-	// separate arrays for display purposes
 
+	// separate arrays for display purposes
 	let individualCreators: Person[] = [];
 	let groupCreators: Group[] = [];
 	// processCreators checks the type of the creators prop
@@ -39,13 +36,14 @@
 	}
 
 	const getAverageRatings = async () => {
+		console.log('media.UUID', media.UUID);
 		try {
 			const response = await axios.get('/api/reviews/', {
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				params: {
-					id: media.UUID
+					id: JSON.stringify(media.UUID)
 				}
 			});
 

@@ -5,6 +5,7 @@
 	import { formatDuration } from '$stores/time/duration.ts';
 	import MediaCard from './MediaCard.svelte';
 	import AlbumCard from './AlbumCard.svelte';
+	import FilmCard from './FilmCard.svelte';
 	import type { MediaStoreState } from '$stores/media/media.ts';
 	import type { Group, Person, Creator } from '$lib/types/people.ts';
 	import type { Media } from '$lib/types/media.ts';
@@ -44,8 +45,8 @@
 	const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
 		return mediaItem.kind === 'album';
 	};
-	const isTrack = (mediaItem: Media | Track): mediaItem is Track => {
-		return mediaItem.kind === 'track';
+	const isFilm = (mediaItem: Media | Film): mediaItem is Film => {
+		return mediaItem.kind === 'film';
 	};
 	onMount(() => {
 		initialFetch();
@@ -189,7 +190,8 @@
 					const films = Array.isArray(data.film) ? data.film : [data.film];
 					films.forEach((filmData) => {
 						let newFilm: Film = {
-							UUID: filmData.UUID,
+							UUID: filmData.media_id,
+							media_id: filmData.media_id,
 							kind: 'film',
 							title: filmData.title,
 							created: new Date(),
@@ -294,8 +296,8 @@
 						{#each al as album (album)}
 							<AlbumCard {album} imgPath={mediaImgPath} />
 						{/each}
-					{:else if isTrack(mediaItem)}
-						<p>Sorry, track cards are not yet implemented</p>
+					{:else if isFilm(mediaItem)}
+						<FilmCard posterPath={mediaImgPath} film={mediaItem} />
 					{:else}
 						<MediaCard media={mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
 					{/if}
