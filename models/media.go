@@ -59,23 +59,6 @@ type (
 	}
 )
 
-// strictly necessary (not nil keys for each media type)
-var (
-	BookKeys = []string{
-		"media_id", "title", "authors",
-		"genres", "edition", "languages",
-	}
-	AlbumKeys = [7]string{
-		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
-	}
-	TrackKeys = [7]string{
-		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
-	}
-	GenreKeys = [5]string{
-		"id", "name", "desc_short", "desc_long", "keywords",
-	}
-)
-
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
 	ps := NewPeopleStorage(db, l)
