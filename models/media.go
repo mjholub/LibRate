@@ -304,12 +304,61 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objType interface{}) error {
-	return nil
+func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{}, mediaID uuid.UUID) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// early return on faulty db connection
+		if ms.db == nil {
+			return fmt.Errorf("no database connection or nil pointer")
+		}
+		// TODO: add a switch statement to handle different types of values
+		stmt, err := ms.db.PreparexContext(ctx, `
+		UPDATE media.media
+		SET $1 = $2
+		WHERE id = $3
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		_, err = stmt.ExecContext(ctx, key, value, mediaID)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error executing statement")
+			return fmt.Errorf("error executing statement: %w", err)
+		}
+		return nil
+	}
 }
 
-func (ms *MediaStorage) Delete(ctx context.Context, key interface{}, objType interface{}) error {
-	return nil
+func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		if ms.db == nil {
+			return fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, `
+		DELETE FROM media.media
+		WHERE id = $1
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		_, err = stmt.ExecContext(ctx, mediaID)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error executing statement")
+			return fmt.Errorf("error executing statement: %w", err)
+		}
+		return nil
+	}
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
