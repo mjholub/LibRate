@@ -35,8 +35,6 @@
 		unsubscribeFromAll();
 	});
 
-	console.info('mounting MediaCarousel initialized');
-
 	let subscriptions: (() => void)[] = [];
 
 	async function initialFetch() {

@@ -109,6 +109,14 @@ func (a *AuthService) createSession(c *fiber.Ctx, member *models.Member) error {
 		HTTPOnly: true,
 	})
 
+	if member.ID == 0 {
+		memberID, err := a.ms.GetID(c.Context(), member.Email)
+		if err != nil {
+			return h.Res(c, http.StatusInternalServerError, "Failed to validate credentials")
+		}
+		member.ID = memberID
+	}
+
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message":   "Logged in successfully",
 		"token":     token,
