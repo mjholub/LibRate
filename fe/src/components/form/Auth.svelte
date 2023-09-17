@@ -7,8 +7,6 @@
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 
 	let isRegistration = false;
-	let member: Member;
-	let isAuthenticated = authStore.authenticate();
 	let email_or_username = '';
 	if (browser) {
 		email_or_username = localStorage.getItem('email_or_username') || '';
@@ -92,8 +90,8 @@
 		if (browser) {
 			response.ok
 				? (localStorage.setItem('token', data.token),
-				  localStorage.setItem('email_or_username', ''),
 				  await authStore.authenticate(),
+				  localStorage.setItem('email_or_username', ''),
 				  authStore.set(data.member),
 				  (authState.id = member.id),
 				  (window.location.href = '/'),
@@ -118,18 +116,21 @@
 		});
 
 		const data = await response.json();
-		console.debug(data);
-
 		const member = await authStore.getMember(data.member_id);
-		if (browser) {
-			localStorage.setItem('member', JSON.stringify(member));
+		console.debug('member ID: ', data.member_id);
 
+		if (browser) {
 			response.ok
 				? (localStorage.setItem('token', data.token),
-				  localStorage.setItem('email_or_username', ''),
-				  //(authState.id = member.id),
-				  //authStore.set(authState),
 				  await authStore.authenticate(),
+				  authStore.set({
+						...member, // Include existing member properties
+						id: data.member_id,
+						isAuthenticated: true
+				  }),
+				  localStorage.setItem('member', JSON.stringify(member)),
+				  localStorage.setItem('email_or_username', ''),
+				  (authState.id = member.id),
 				  (window.location.href = '/'),
 				  console.info('Login successful'),
 				  alert('Login successful'))

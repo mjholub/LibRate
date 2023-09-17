@@ -49,6 +49,7 @@ function createAuthStore(): AuthStore {
             const res = await fetch(`/api/authenticate`, {
               headers: { 'Authorization': `Bearer ${token}` }
             })
+            console.debug('response from /api/authenticate: ', res);
             res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
           } catch (err) {
             isAuthenticated.set(false);

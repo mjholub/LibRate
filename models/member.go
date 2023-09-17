@@ -30,8 +30,8 @@ type Member struct {
 	ID           uint32         `json:"id" db:"id"`
 	UUID         string         `json:"_key,omitempty" db:"uuid"`
 	PassHash     string         `json:"passhash" db:"passhash"`
-	MemberName   string         `json:"membername" db:"nick"` // i.e. @nick@instance
-	DisplayName  sql.NullString `json:"displayname,omitempty" db:"display_name"`
+	MemberName   string         `json:"memberName" db:"nick"` // i.e. @nick@instance
+	DisplayName  sql.NullString `json:"displayName,omitempty" db:"display_name"`
 	Email        string         `json:"email" db:"email" validate:"required,email"`
 	Bio          sql.NullString `json:"bio,omitempty" db:"bio"`
 	Active       bool           `json:"active" db:"active"`
