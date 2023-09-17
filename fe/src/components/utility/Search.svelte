@@ -8,6 +8,13 @@
 	let error: string | null = null;
 
 	async function searchItems() {
+		// Check if the search field is empty
+		if (search.trim() === '') {
+			// If empty, clear the items and error
+			items = null;
+			error = null;
+			return;
+		}
 		try {
 			const response = await axios.post(
 				'http://127.0.0.1:3000/api/search/',
