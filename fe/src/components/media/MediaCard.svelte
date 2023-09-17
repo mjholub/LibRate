@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import axios from 'axios';
 	import type { Person, Group, Creator } from '$lib/types/people.ts';
 	import type { Media } from '$lib/types/media.ts';
 
@@ -8,17 +9,16 @@
 		kind: '',
 		title: '',
 		created: new Date(),
-		creator: null
+		creator: null,
+		creators: [],
+		added: new Date()
 	};
 	export let title = '';
 	export let image = '';
 	export let averageRating = 0;
-	// implement polymorphism by using Either type
-	// this is needed to match the fields from e.g. the album type
-	// when e.g. the album card renders this component
 	export const creators: Person[] | Group[] | Creator[] = [];
-	// separate arrays for display purposes
 
+	// separate arrays for display purposes
 	let individualCreators: Person[] = [];
 	let groupCreators: Group[] = [];
 	// processCreators checks the type of the creators prop
@@ -36,15 +36,22 @@
 	}
 
 	const getAverageRatings = async () => {
-		const response = await fetch('/api/media/averageRatings', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ mediaId: media.UUID })
-		});
-		const data = await response.json();
-		averageRating = data.averageRating;
+		console.log('media.UUID', media.UUID);
+		try {
+			const response = await axios.get('/api/reviews/', {
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				params: {
+					id: JSON.stringify(media.UUID)
+				}
+			});
+
+			averageRating = response.data.averageRating;
+		} catch (error) {
+			// Handle error here
+			console.error('Error fetching average ratings:', error);
+		}
 	};
 
 	onMount(() => {

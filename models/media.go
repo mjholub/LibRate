@@ -36,11 +36,16 @@ type (
 		Modified sql.NullTime  `json:"modified,omitempty" db:"modified"`
 	}
 
+	MediaDetails struct {
+		Kind    string      `json:"kind" db:"kind"`
+		Details interface{} `json:"details" db:"details"`
+	}
+
 	MediaObject interface {
 		Book | Album | Track | TVShow | Season | Episode
 	}
 
-	// Genre does not hage a UUID due to parent-child relationships
+	// Genre does not hage a UUID due to parent-child relationshiPs
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
 		Name        string   `json:"name" db:"name"`
@@ -55,31 +60,14 @@ type (
 		db  *sqlx.DB
 		Log *zerolog.Logger
 		ks  *KeywordStorage
-		ps  *PeopleStorage
-	}
-)
-
-// strictly necessary (not nil keys for each media type)
-var (
-	BookKeys = []string{
-		"media_id", "title", "authors",
-		"genres", "edition", "languages",
-	}
-	AlbumKeys = [7]string{
-		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
-	}
-	TrackKeys = [7]string{
-		"media_id", "title", "artists", "genres", "keywords", "languages", "cover",
-	}
-	GenreKeys = [5]string{
-		"id", "name", "desc_short", "desc_long", "keywords",
+		Ps  *PeopleStorage
 	}
 )
 
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
-	ps := NewPeopleStorage(db, l)
-	return &MediaStorage{db: db, Log: l, ks: ks, ps: ps}
+	Ps := NewPeopleStorage(db, l)
+	return &MediaStorage{db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
@@ -304,12 +292,61 @@ func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Update(ctx context.Context, key, value interface{}, objType interface{}) error {
-	return nil
+func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{}, mediaID uuid.UUID) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// early return on faulty db connection
+		if ms.db == nil {
+			return fmt.Errorf("no database connection or nil pointer")
+		}
+		// TODO: add a switch statement to handle different types of values
+		stmt, err := ms.db.PreparexContext(ctx, `
+		UPDATE media.media
+		SET $1 = $2
+		WHERE id = $3
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		_, err = stmt.ExecContext(ctx, key, value, mediaID)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error executing statement")
+			return fmt.Errorf("error executing statement: %w", err)
+		}
+		return nil
+	}
 }
 
-func (ms *MediaStorage) Delete(ctx context.Context, key interface{}, objType interface{}) error {
-	return nil
+func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		if ms.db == nil {
+			return fmt.Errorf("no database connection or nil pointer")
+		}
+		stmt, err := ms.db.PreparexContext(ctx, `
+		DELETE FROM media.media
+		WHERE id = $1
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		_, err = stmt.ExecContext(ctx, mediaID)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error executing statement")
+			return fmt.Errorf("error executing statement: %w", err)
+		}
+		return nil
+	}
 }
 
 //nolint:gocritic // we can't use pointer receivers to implement interfaces
