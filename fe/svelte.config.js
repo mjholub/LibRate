@@ -37,6 +37,9 @@ const config = {
       $components: './src/components',
       $stores: './src/stores',
       $lib: './src/lib'
+    },
+    files: {
+      exclude: ['**/*.test.*', '**/__tests__/**'],
     }
   },
 

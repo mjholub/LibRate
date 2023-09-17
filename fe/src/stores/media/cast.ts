@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import axios from "axios";
 import type { Writable } from "svelte/store";
-import type { ActorCast, DirectorCast, Cast } from "$lib/types/film_tv";
+import type { Cast } from "$lib/types/film_tv";
 
 const initialState: Cast = {
   ID: 0,
