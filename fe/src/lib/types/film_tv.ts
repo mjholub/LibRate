@@ -6,7 +6,7 @@ import type { Media } from './media';
 // NOTE: these are (to be?) stored in junction tables in the database
 // like film_genres, film_keywords etc.
 export interface Film extends Media {
-  UUID: UUID;
+  media_id: UUID;
   kind: 'film';
   title: string;
   castID: number;
@@ -19,7 +19,7 @@ export interface Film extends Media {
 }
 
 export interface TVShow extends Media {
-  UUID: UUID;
+  media_id: UUID;
   kind: 'tvshow';
   title: string;
   created: Date;
@@ -27,17 +27,17 @@ export interface TVShow extends Media {
 }
 
 export type ActorCast = {
-  CastID: number;
-  PersonID: number;
+  castID: number;
+  personID: number;
 };
 
 export type DirectorCast = {
-  CastID: number;
-  PersonID: number;
+  castID: number;
+  personID: number;
 };
 
 export type Cast = {
   ID: number;
-  Actors: ActorCast[];
-  Directors: DirectorCast[];
+  actors: ActorCast[];
+  directors: DirectorCast[];
 }

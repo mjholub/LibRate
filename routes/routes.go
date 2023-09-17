@@ -60,15 +60,14 @@ func Setup(
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatestRatings)
 	// TODO: handler for single review based on id
-	reviews.Get("/", reviewSvc.GetRatings)
 	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
 	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
 	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
 	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
 	reviews.Get("/:id", reviewSvc.GetRatings)
 
-	authApi := api.Group("/authenticate")
-	authApi.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {
+	authAPI := api.Group("/authenticate")
+	authAPI.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
@@ -84,11 +83,13 @@ func Setup(
 	media.Get("/random", mediaCon.GetRandom)
 	media.Get("/:id/images", mediaCon.GetImagePaths)
 	media.Get("/:id", mediaCon.GetMedia)
+	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
+	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
 
-	formApi := api.Group("/form")
+	formAPI := api.Group("/form")
 	// TODO: make the timeouts configurable
-	formApi.Post("/add_media/:type", middleware.Protected(nil, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formApi.Post("/update_media/:type", middleware.Protected(nil, conf), formCon.UpdateMedia)
+	formAPI.Post("/add_media/:type", middleware.Protected(nil, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formAPI.Post("/update_media/:type", middleware.Protected(nil, conf), formCon.UpdateMedia)
 
 	search := api.Group("/search")
 	search.Post("/", sc.Search)

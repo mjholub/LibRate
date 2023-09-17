@@ -7,6 +7,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/abdelrahmanmostafa21/go-thumbnailer/v2 v2.0.0-20230429064819-52fd436cd51a
 	github.com/avast/retry-go/v4 v4.5.0
+	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/contrib/fiberzerolog v0.2.0
 	github.com/gofiber/contrib/jwt v1.0.4
 	github.com/gofiber/fiber/v2 v2.49.1

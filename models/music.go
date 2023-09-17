@@ -134,13 +134,13 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	}
 
 	for rows.Next() {
-		var personID int32
+		var personID int64
 		err = rows.Scan(&personID)
 		if err != nil {
 			return Album{}, err
 		}
 		var person Person
-		person, err = ms.ps.GetPerson(ctx, personID)
+		person, err = ms.Ps.GetPerson(ctx, personID)
 		if err != nil {
 			return Album{}, fmt.Errorf("error getting person names: %w", err)
 		}
@@ -160,7 +160,7 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 			return Album{}, fmt.Errorf("error scanning row: %w", err)
 		}
 		var group Group
-		group, err = ms.ps.GetGroup(ctx, groupID)
+		group, err = ms.Ps.GetGroup(ctx, groupID)
 		if err != nil {
 			return Album{}, fmt.Errorf("error getting group name: %w", err)
 		}

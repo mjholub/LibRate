@@ -8,7 +8,7 @@
 	import MemberCard from '$components/member/MemberCard.svelte';
 	import Footer from '$components/footer/footer.svelte';
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
-	import type { Member } from '$types/member.ts';
+	import type { Member } from '$lib/types/member.ts';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 
 	let windowWidth: number;
@@ -16,22 +16,24 @@
 	let member: Member;
 	if (browser) {
 		member = JSON.parse(localStorage.getItem('member') || '{}');
+		authState = $authStore;
 		onMount(() => {
 			windowWidth = window.innerWidth;
 			const handleResize = () => {
 				windowWidth = window.innerWidth;
 			};
-			const handleAuth = async () => {
-				await authStore.authenticate();
-				console.debug('authState', authState);
-			};
-			handleAuth();
 			window.addEventListener('resize', handleResize);
 
 			return () => {
 				window.removeEventListener('resize', handleResize);
 			};
 		});
+
+		if (!authState.isAuthenticated) {
+			authStore.authenticate().then(() => {
+				console.debug('authState', authState);
+			});
+		}
 	}
 
 	//let reviews: Review[] = [];

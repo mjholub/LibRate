@@ -11,6 +11,7 @@ database:
     test_database: "librate_test"
     user: "postgres"
     password: "postgres"
+    start_cmd: "sudo systemctl start postgresql"
 logging:
   level: "info"
   output: "stdout"

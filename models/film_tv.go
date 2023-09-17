@@ -55,17 +55,17 @@ type (
 	}
 
 	ActorCast struct {
-		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
-		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+		CastID   int64 `json:"castID" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"personID" db:"person_id,pk"`
 	}
 
 	DirectorCast struct {
-		CastID   int64 `json:"cast_id" db:"cast_id,pk,unique"`
-		PersonID int64 `json:"person_id" db:"person_id,pk,unique"`
+		CastID   int64 `json:"castID" db:"cast_id,pk,unique"`
+		PersonID int64 `json:"personID" db:"person_id,pk"`
 	}
 
 	Cast struct {
-		ID        int64    `json:"cast_id" db:"cast_id,pk,unique"`
+		ID        int64    `json:"ID" db:"cast_id,pk,unique"`
 		Actors    []Person `json:"actors" db:"actors"`
 		Directors []Person `json:"directors" db:"directors"`
 	}
@@ -156,7 +156,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 		// create cast for actors
 		// WARN: unsure if the value of castID will be correctly copied in the callback
 		// TODO: test this
-		lo.ForEach(actors, func(actor Person, i int) {
+		lo.ForEach(actors, func(actor Person, _ int) {
 			_, err = ms.db.ExecContext(ctx, `
 			INSERT INTO people.actor_cast (
 				cast_id, person_id
@@ -168,7 +168,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 			}
 		})
 		// create cast for directors
-		lo.ForEach(directors, func(director Person, i int) {
+		lo.ForEach(directors, func(director Person, _ int) {
 			_, err = ms.db.ExecContext(ctx, `
 			INSERT INTO people.director_cast (
 				cast_id, person_id
@@ -180,6 +180,58 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 			}
 		})
 		return castID, nil
+	}
+}
+
+func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, err error) {
+	select {
+	case <-ctx.Done():
+		return Cast{}, ctx.Err()
+	default:
+		if ms.db == nil {
+			return Cast{}, fmt.Errorf("no database connection or nil pointer")
+		}
+		// first get the actors ids
+		actorIDs := []int64{}
+		castQuery := `SELECT id FROM people.cast WHERE media_id = $1`
+		err = ms.db.GetContext(ctx, &cast.ID, castQuery, mediaID)
+		if err != nil {
+			return Cast{}, fmt.Errorf("error getting cast ID for media with ID %s: %w", mediaID.String(), err)
+		}
+		query := `SELECT person_id
+			FROM people.cast
+			JOIN people.actor_cast ON people.actor_cast.cast_id = people.cast.id
+			WHERE people.cast.media_id = $1`
+		err = ms.db.SelectContext(ctx, &actorIDs, query, mediaID)
+		if err != nil {
+			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
+		}
+		for i := range actorIDs {
+			actor, err := ms.Ps.GetPerson(ctx, actorIDs[i])
+			if err != nil {
+				return Cast{}, fmt.Errorf("error getting actor with id %d: %w", actorIDs[i], err)
+			}
+			cast.Actors = append(cast.Actors, actor)
+		}
+		// then get the directors ids
+		directorIDs := []int64{}
+		query = `SELECT person_id
+			FROM people.cast
+			JOIN people.director_cast ON people.director_cast.cast_id = people.cast.id
+			WHERE people.cast.media_id = $1
+		`
+		err = ms.db.SelectContext(ctx, &directorIDs, query, mediaID)
+		if err != nil {
+			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
+		}
+		for i := range directorIDs {
+			director, err := ms.Ps.GetPerson(ctx, directorIDs[i])
+			if err != nil {
+				return Cast{}, fmt.Errorf("error getting director with id %d: %w", directorIDs[i], err)
+			}
+			cast.Directors = append(cast.Directors, director)
+		}
+		return cast, nil
 	}
 }
 

@@ -14,6 +14,7 @@ var DefaultConfig = Config{
 		Password:  "postgres",
 		SSL:       "unknown",
 		PG_Config: "/usr/bin/pg_config",
+		StartCmd:  "sudo service postgresql start",
 	},
 	Fiber: FiberConfig{
 		Host: "localhost",

@@ -65,18 +65,22 @@ const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'B
   const mediaTypes: Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> = [];
 
   mediaData.forEach((media) => {
-    if ('media_id' in media && 'album_artists' in media) {
-      mediaTypes.push('Album');
-    } else if ('media_id' in media && 'track_number' in media && 'album_id' in media) {
-      mediaTypes.push('Track');
-    } else if ('publication_date' in media && 'authors' in media && 'pages' in media) {
-      mediaTypes.push('Book');
-    } else if (media.kind === 'film') {
-      mediaTypes.push('Film');
-    } else if (media.kind === 'tvshow') {
-      mediaTypes.push('TVShow');
-    } else {
-      mediaTypes.push('Unknown');
+    switch (media.kind) {
+      case 'album':
+        mediaTypes.push('Album');
+        break;
+      case 'track':
+        mediaTypes.push('Track');
+        break;
+      case 'film':
+        mediaTypes.push('Film');
+        break;
+      case 'tvshow':
+        mediaTypes.push('TVShow');
+        break;
+      default:
+        mediaTypes.push('Unknown');
+        break;
     }
   });
 

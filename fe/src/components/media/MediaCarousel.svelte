@@ -5,6 +5,7 @@
 	import { formatDuration } from '$stores/time/duration.ts';
 	import MediaCard from './MediaCard.svelte';
 	import AlbumCard from './AlbumCard.svelte';
+	import FilmCard from './FilmCard.svelte';
 	import type { MediaStoreState } from '$stores/media/media.ts';
 	import type { Group, Person, Creator } from '$lib/types/people.ts';
 	import type { Media } from '$lib/types/media.ts';
@@ -12,31 +13,7 @@
 	import type { Book } from '$lib/types/books.ts';
 	import type { Film } from '$lib/types/film_tv.ts';
 
-	let media: (Album | Track | Media)[] = [];
-	let album: Album = {
-		UUID: '',
-		kind: 'album',
-		title: '',
-		created: new Date(),
-		media_id: '',
-		name: '',
-		album_artists: {
-			person_artist: [],
-			group_artist: []
-		},
-		creator: null,
-		creators: [],
-		added: new Date(),
-		image_paths: [],
-		release_date: new Date(),
-		genres: [],
-		keywords: [],
-		duration: {
-			Time: '',
-			Valid: false
-		},
-		tracks: []
-	};
+	let media: (Album | Track | Film | Book)[] = [];
 	let al: Album[] = [];
 	let mediaImgPath = '';
 	let creators: Creator[] = [];
@@ -44,8 +21,8 @@
 	const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
 		return mediaItem.kind === 'album';
 	};
-	const isTrack = (mediaItem: Media | Track): mediaItem is Track => {
-		return mediaItem.kind === 'track';
+	const isFilm = (mediaItem: Media | Film): mediaItem is Film => {
+		return mediaItem.kind === 'film';
 	};
 	onMount(() => {
 		initialFetch();
@@ -102,7 +79,7 @@
 						const releaseDate = albumData.release_date
 							? albumData.release_date.toString().split('T')[0]
 							: null;
-						let newAlbum: Album = {
+						const newAlbum: Album = {
 							UUID: albumData.media_id,
 							kind: 'album',
 							title: albumData.name,
@@ -112,17 +89,32 @@
 							added: addedDate,
 							media_id: albumData.media_id,
 							name: albumData.name,
-							album_artists: albumData.album_artists,
+							album_artists: albumData.album_artists || [],
 							image_paths: albumData.image_paths,
 							release_date: releaseDate,
 							genres: albumData.genres,
 							keywords: albumData.keywords,
 							duration: albumData.duration,
-							tracks: albumData.tracks
+							tracks: albumData.tracks || []
 						};
 
-						newAlbum.tracks.forEach((track) => {
-							track.duration = formatDuration(track.duration as string);
+						newAlbum.tracks = (albumData.tracks || []).map((track) => {
+							return {
+								UUID: track.media_id,
+								kind: 'track',
+								title: track.name,
+								created: new Date(),
+								creator: null,
+								creators: [],
+								album_artists: creators || [],
+								added: new Date(),
+								media_id: track.media_id,
+								name: track.name,
+								album_id: track.album_id,
+								duration: formatDuration(track.duration as string),
+								lyrics: track.lyrics,
+								track_number: track.track_number
+							};
 						});
 						media.push(newAlbum);
 						al.push(newAlbum);
@@ -189,7 +181,8 @@
 					const films = Array.isArray(data.film) ? data.film : [data.film];
 					films.forEach((filmData) => {
 						let newFilm: Film = {
-							UUID: filmData.UUID,
+							UUID: filmData.media_id,
+							media_id: filmData.media_id,
 							kind: 'film',
 							title: filmData.title,
 							created: new Date(),
@@ -225,10 +218,13 @@
 		subscriptions = [];
 	}
 
-	async function processMediaItems(mediaItems: (Media | Album)[], subscriptions: (() => void)[]) {
+	async function processMediaItems(
+		mediaItems: (Album | Film | Track | Book)[],
+		subscriptions: (() => void)[]
+	) {
 		for (const mediaItem of mediaItems) {
 			console.debug('mediaItem: ', mediaItem);
-			await mediaImageStore.getImageByMedia(mediaItem.UUID);
+			await mediaImageStore.getImageByMedia(mediaItem.media_id);
 
 			console.debug('staring mediaImageStore subscription');
 			let mediaImgStrSub = mediaImageStore.subscribe((data) => {
@@ -262,19 +258,37 @@
 				}
 			};
 
-			if (isAlbum(mediaItem)) {
-				console.debug('mediaItem is an album');
-				const album = mediaItem as Album;
+			switch (mediaItem.kind) {
+				case 'album':
+					console.debug('mediaItem is an album');
+					const album = mediaItem as Album;
 
-				addCreators(album.album_artists.person_artist);
-				addCreators(album.album_artists.group_artist);
-			} else {
-				console.debug('mediaItem is not an album');
-				const media = mediaItem as Media;
+					addCreators(album.album_artists.person_artist);
+					addCreators(album.album_artists.group_artist);
+				case 'film':
+					console.debug('mediaItem is a film');
+					const film = mediaItem as Film;
 
-				if (media.creator) {
-					creators.push(media.creator);
-				}
+					if (film.castID) {
+						// TODO: subscribe to cast store
+					}
+					break;
+				case 'track':
+					console.debug('mediaItem is a track. No creators to add.');
+					break;
+				case 'book':
+					console.debug('mediaItem is a book');
+					const book = mediaItem as Book;
+
+					addCreators(book.authors);
+					break;
+				default:
+					console.debug('mediaItem is not an album');
+					const media = mediaItem as Media;
+
+					if (media.creator) {
+						creators.push(media.creator);
+					}
 			}
 		}
 	}
@@ -294,8 +308,8 @@
 						{#each al as album (album)}
 							<AlbumCard {album} imgPath={mediaImgPath} />
 						{/each}
-					{:else if isTrack(mediaItem)}
-						<p>Sorry, track cards are not yet implemented</p>
+					{:else if isFilm(mediaItem)}
+						<FilmCard posterPath={mediaImgPath} film={mediaItem} />
 					{:else}
 						<MediaCard media={mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
 					{/if}

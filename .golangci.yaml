@@ -65,9 +65,6 @@ linters-settings:
     enabled-tags:
       - diagnostic
       - performance
-    disabled-checks:
-      - unnamedResult
-      - whyNoLint
   interfacebloat:
     max: 12 # default is 10
   revive:
