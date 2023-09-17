@@ -38,9 +38,6 @@ const config = {
       $stores: './src/stores',
       $lib: './src/lib'
     },
-    files: {
-      exclude: ['**/*.test.*', '**/__tests__/**'],
-    }
   },
 
   vitePlugin: {
