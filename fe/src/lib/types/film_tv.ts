@@ -27,17 +27,17 @@ export interface TVShow extends Media {
 }
 
 export type ActorCast = {
-  CastID: number;
-  PersonID: number;
+  castID: number;
+  personID: number;
 };
 
 export type DirectorCast = {
-  CastID: number;
-  PersonID: number;
+  castID: number;
+  personID: number;
 };
 
 export type Cast = {
   ID: number;
-  Actors: ActorCast[];
-  Directors: DirectorCast[];
+  actors: ActorCast[];
+  directors: DirectorCast[];
 }

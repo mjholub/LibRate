@@ -111,7 +111,7 @@ func (p *PeopleStorage) GetPersonNames(ctx context.Context, id int32) (Person, e
 	}
 }
 
-func (p *PeopleStorage) GetPerson(ctx context.Context, id int32) (Person, error) {
+func (p *PeopleStorage) GetPerson(ctx context.Context, id int64) (Person, error) {
 	var person Person
 	select {
 	case <-ctx.Done():

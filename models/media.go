@@ -45,7 +45,7 @@ type (
 		Book | Album | Track | TVShow | Season | Episode
 	}
 
-	// Genre does not hage a UUID due to parent-child relationships
+	// Genre does not hage a UUID due to parent-child relationshiPs
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
 		Name        string   `json:"name" db:"name"`
@@ -60,14 +60,14 @@ type (
 		db  *sqlx.DB
 		Log *zerolog.Logger
 		ks  *KeywordStorage
-		ps  *PeopleStorage
+		Ps  *PeopleStorage
 	}
 )
 
 func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
-	ps := NewPeopleStorage(db, l)
-	return &MediaStorage{db: db, Log: l, ks: ks, ps: ps}
+	Ps := NewPeopleStorage(db, l)
+	return &MediaStorage{db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
