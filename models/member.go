@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-ap/activitypub"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -27,23 +28,39 @@ const (
 
 // Member holds the core information about a member
 type Member struct {
-	ID           uint32         `json:"id" db:"id"`
-	UUID         string         `json:"_key,omitempty" db:"uuid"`
-	PassHash     string         `json:"passhash" db:"passhash"`
-	MemberName   string         `json:"memberName" db:"nick"` // i.e. @nick@instance
-	DisplayName  sql.NullString `json:"displayName,omitempty" db:"display_name"`
-	Email        string         `json:"email" db:"email" validate:"required,email"`
-	Bio          sql.NullString `json:"bio,omitempty" db:"bio"`
-	Active       bool           `json:"active" db:"active"`
-	Roles        []uint8        `json:"roles,omitempty" db:"roles"`
-	RegTimestamp time.Time      `json:"regdate" db:"reg_timestamp"`
-	ProfilePic   *Image         `json:"profilepic,omitempty" db:"profilepic_id"`
-	Homepage     sql.NullString `json:"homepage,omitempty" db:"homepage"`
-	IRC          sql.NullString `json:"irc,omitempty" db:"irc"`
-	XMPP         sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
-	Matrix       sql.NullString `json:"matrix,omitempty" db:"matrix"`
+	ID           uint32                 `json:"id" db:"id"`
+	UUID         string                 `json:"_key,omitempty" db:"uuid"`
+	PassHash     string                 `json:"passhash" db:"passhash"`
+	MemberName   string                 `json:"memberName" db:"nick"` // i.e. @nick@instance
+	DisplayName  sql.NullString         `json:"displayName,omitempty" db:"display_name"`
+	Email        string                 `json:"email" db:"email" validate:"required,email"`
+	Bio          sql.NullString         `json:"bio,omitempty" db:"bio"`
+	Active       bool                   `json:"active" db:"active"`
+	Roles        []uint8                `json:"roles,omitempty" db:"roles"`
+	RegTimestamp time.Time              `json:"regdate" db:"reg_timestamp"`
+	ProfilePic   *Image                 `json:"profilepic,omitempty" db:"profilepic_id"`
+	Homepage     sql.NullString         `json:"homepage,omitempty" db:"homepage"`
+	IRC          sql.NullString         `json:"irc,omitempty" db:"irc"`
+	XMPP         sql.NullString         `json:"xmpp,omitempty" db:"xmpp"`
+	Matrix       sql.NullString         `json:"matrix,omitempty" db:"matrix"`
+	Visibility   string                 `json:"visibility" db:"visibility"`
+	Followers    activitypub.Collection `json:"followers,omitempty" db:"followers"`
 }
 
+type FollowRequest struct {
+	ID        int64  `json:"id" db:"id"`
+	ActorID   string `json:"actor_id" db:"actor_id"`
+	FollowsID string `json:"follows_id" db:"follows_id"`
+}
+
+// Follower represents a follower-followee relationship
+type Follower struct {
+	ID       uint32 `json:"id" db:"id"`
+	Follower uint32 `json:"follower" db:"follower"`
+	Followee uint32 `json:"followee" db:"followee"`
+}
+
+// MemberInput holds the information required to create a new member account
 type MemberInput struct {
 	MemberName string `json:"membername"`
 	Email      string `json:"email"`
@@ -138,7 +155,7 @@ func (s *MemberStorage) Delete(ctx context.Context, member *Member) error {
 }
 
 func (s *MemberStorage) Read(ctx context.Context, keyName, key string) (*Member, error) {
-	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1", keyName)
+	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1 LIMIT 1", keyName)
 	member := &Member{}
 	err := s.client.GetContext(ctx, member, query, key)
 	if err != nil {
@@ -159,6 +176,8 @@ func (s *MemberStorage) GetID(ctx context.Context, credential string) (uint32, e
 	return id, nil
 }
 
+// GetPassHash retrieves the password hash required for JWT on the basis of one of the credentials,
+// i.e. email or login
 func (s *MemberStorage) GetPassHash(email, login string) (string, error) {
 	query := `SELECT passhash FROM members WHERE email = $1 OR nick = $2`
 	var passHash string
@@ -169,6 +188,7 @@ func (s *MemberStorage) GetPassHash(email, login string) (string, error) {
 	return passHash, nil
 }
 
+// CreateSession creates a JWT token for the member
 func (s *MemberStorage) CreateSession(ctx context.Context, m Member) (t string, err error) {
 	token := *jwt.New(jwt.SigningMethodHS512)
 	claims := token.Claims.(jwt.MapClaims)
@@ -185,4 +205,19 @@ func (s *MemberStorage) CreateSession(ctx context.Context, m Member) (t string, 
 		return "", fmt.Errorf("failed to sign token: %v", err)
 	}
 	return t, nil
+}
+
+// RequestFollow creates a follow request in the local database
+// upon the reception of a request into the inbox
+func (s *MemberStorage) RequestFollow(ctx context.Context, fr *FollowRequest) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		_, err := s.client.NamedExecContext(ctx, `INSERT INTO follow_requests (actor_id, follows_id) VALUES (:actor_id, :follows_id)`, fr)
+		if err != nil {
+			return fmt.Errorf("failed to save follow request: %v", err)
+		}
+		return nil
+	}
 }

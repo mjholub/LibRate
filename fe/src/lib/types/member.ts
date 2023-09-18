@@ -12,4 +12,6 @@ export type Member = {
   //bookwyrm: "",
   regdate: number | Date,
   roles: string[],
+  // private means federated, but visible only if authenticated
+  visibility: 'public' | 'followers_only' | 'local' | 'private',
 };
