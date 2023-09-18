@@ -29,9 +29,13 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [x] Relevant DB setup
   - [x] Film and series cards
     - [ ] Trailers and stills support
+  - [ ] Release notifications
+    - [ ] Sending them as DMs to federated service accounts
   - [ ] Content filters
-  - [ ] Book cards
+  - [ ] Book cards and pages
+    - [ ] Bookwyrm federation
   - [ ] Anime and manga cards/pages
+  - [ ] Games support
   - [ ] Customizable, shareable media collections and logging
   - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
   - [ ] Automated imports from 3rd party sources
