@@ -12,7 +12,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ### **Social features**:
   - [x] Basic registration support
-  - [x] (**WIP**) Member cards with profile info
+  - [x] Member cards with profile info
   - [x] (**WIP**)Full member profile pages
   - [ ] Tagging and mentions
   - [ ] Advanced profile and UI customization
@@ -20,9 +20,9 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [ ] Direct messages (E2EE)
   - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
   - [x] (**WIP**) Member-generated content tagging and categorization
-  - [ ] Following
+  - [x] (**WIP**) Following
   - [ ] Sharing
-  - [ ] **ActivityPub support**, with selective federation
+  - [x] (**WIP**) **ActivityPub support**, with selective federation
 ### **Media features**
   - [x] Album cards
   - [x] Carousels showing random media 
@@ -53,6 +53,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ### **Other**
   - [ ] Extended configurability
+  - [ ] Signed builds and security mechanisms preventing federation with modified versions of LibRate
   - [ ] Admin panel
   - [ ] Events, federating with Mobilizon
   - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
