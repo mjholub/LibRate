@@ -1,20 +1,23 @@
 fiber:
   host: "localhost"
   port: 3000
+  prefork: true
+  reduceMemUsage: false
+  staticDir: "./static"
 secret: "librate-secret-key"
 database:
   - engine: "postgres"
-    pg_config: "/usr/bin/pg_config"
+    pgConfig: "/usr/bin/pg_config"
     host: "localhost"
     port: 5432
     database: "librate"
-    test_database: "librate_test"
+    testDatabase: "librate_test"
     user: "postgres"
     password: "postgres"
-    start_cmd: "sudo systemctl start postgresql"
+    startCmd: "sudo systemctl start postgresql"
 logging:
   level: "info"
   output: "stdout"
   format: "json"
 # dev or production
-librate_env: "production"
+librateEnv: "production"
