@@ -75,7 +75,16 @@ func main() {
 		},
 	})
 	// Create a new Fiber instance
-	app := fiber.New()
+	tag, err := getLatestTag()
+	if err != nil {
+		tag = "unknown"
+	}
+	app := fiber.New(fiber.Config{
+		AppName:           fmt.Sprintf("LibRate %s", tag),
+		Prefork:           conf.Fiber.Prefork,
+		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
+	},
+	)
 	app.Use(recover.New())
 
 	profilesApp := fiber.New()
@@ -92,6 +101,7 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}
+	noscript.Use(fiberlog)
 	app.Mount("/noscript", noscript)
 	err = routeNoScript(noscript, dbConn, &log, conf)
 	if err != nil {
@@ -111,7 +121,16 @@ func main() {
 	}
 
 	// Listen on port 3000
-	err = app.Listen(":3000")
+	listenPort := strconv.Itoa(conf.Fiber.Port)
+	if listenPort == "" {
+		listenPort = "3000"
+	}
+	listenHost := conf.Fiber.Host
+	if listenHost == "" {
+		listenHost = "127.0.0.1"
+	}
+	listenAddr := fmt.Sprintf("%s:%s", listenHost, listenPort)
+	err = app.Listen(listenAddr)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen on port 3000")
 	}

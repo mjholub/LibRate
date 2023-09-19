@@ -32,8 +32,11 @@ func TestWriteConfig(t *testing.T) {
 				PG_Config: "/usr/bin/pg_config",
 			},
 			Fiber: FiberConfig{
-				Host: "localhost",
-				Port: 3000,
+				Host:           "localhost",
+				Port:           3000,
+				Prefork:        true,
+				ReduceMemUsage: true,
+				StaticDir:      "./static",
 			},
 			Secret:     "test_secret",
 			LibrateEnv: "test",
@@ -97,8 +100,11 @@ func TestCorrectWrite(t *testing.T) {
 			StartCmd:  "sudo service postgresql start",
 		},
 		Fiber: FiberConfig{
-			Host: "localhost",
-			Port: 3000,
+			Host:           "localhost",
+			Port:           3000,
+			Prefork:        true,
+			ReduceMemUsage: true,
+			StaticDir:      "./static",
 		},
 		Secret:     "test_secret",
 		LibrateEnv: "test",
@@ -122,6 +128,9 @@ func TestCorrectWrite(t *testing.T) {
 fiber:
     host: localhost
     port: 3000
+		prefork: true
+		reduce_mem_usage: true
+		static_dir: ./static
 secret: test_secret
 librate_env: test
 `, string(yamlFile))
