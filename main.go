@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
@@ -51,11 +53,25 @@ func main() {
 			if err = db.InitDB(conf); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
 			}
-			log.Info().Msg("Database initialized")
+			log.Info().Msg(`Database initialized.
+			If you're seeing this when running from a container,
+			necessary migrations will be run automatically.\n
+			Otherwise you need to run them manually, either with -auto-migrate
+			or by running "migrate -path db/migrations -database <your db connection string>\n
+			(use -exit to exit after migrations are run)"
+			`)
+			os.Exit(0)
 		}
 	} else {
 		log.Warn().
 			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
+	}
+
+	if lo.Contains(os.Args, "migrate") {
+		if err = db.Migrate(conf); err != nil {
+			log.Panic().Err(err).Msg("Failed to migrate database")
+		}
+		log.Info().Msg("Database migrated")
 	}
 
 	// Connect to database
