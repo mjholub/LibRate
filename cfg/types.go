@@ -7,7 +7,8 @@ type Config struct {
 	Fiber    FiberConfig `json:"fiber,omitempty" yaml:"fiber" mapstructure:"fiber"`
 	Secret   string      `json:"secret,omitempty" yaml:"secret" mapstructure:"secret"`
 	// default to production for security reasons
-	LibrateEnv string `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librate_env"`
+	LibrateEnv string      `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librate_env"`
+	Redis      RedisConfig `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 }
 
 type DBConfig struct {
@@ -23,6 +24,14 @@ type DBConfig struct {
 	StartCmd string `yaml:"startCmd,omitempty" default:"sudo service postgresql start"`
 }
 
+type RedisConfig struct {
+	Host     string `yaml:"host,omitempty" default:"localhost"`
+	Port     int    `yaml:"port,omitempty" default:"6379"`
+	Username string `yaml:"username,omitempty" default:""`
+	Password string `yaml:"password,omitempty" default:""`
+	Database int    `yaml:"database,omitempty" default:"0"`
+}
+
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
 	Host           string `yaml:"host" default:"localhost"`
@@ -30,4 +39,6 @@ type FiberConfig struct {
 	Prefork        bool   `yaml:"prefork" default:"false"`
 	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false"`
 	StaticDir      string `yaml:"staticDir" default:"./static"`
+	PowInterval    int    `yaml:"powInterval" default:"300"`
+	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
 }

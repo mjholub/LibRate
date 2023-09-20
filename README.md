@@ -62,14 +62,14 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
 - Python 3 for setting up the uint Postgres extension
-- a working Postgres instance. You'll also need to install the development files package
+- working **Postgres** and **Redis** instances. You'll also need to install the development files package
   since LibRate uses Postgres extensions
 
 ## Development prerequisites
 
 To develop the recommendations feature, you'll need:
 
-- `protoc` and `protoc-gen-go` for generating the protobufs
+- `protoc` and `protoc-gen-go` for generating code from the protocol buffers files.
 - Rust and Go toolchains
 
 ## Building and installing

@@ -14,6 +14,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/storage/redis/v3"
+	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -85,7 +87,23 @@ func main() {
 		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
 	},
 	)
+
+	// proof of work based anti-spam/anti-ddos
 	app.Use(recover.New())
+	app.Use(fiberpow.New(fiberpow.Config{
+		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
+		Difficulty:  conf.Fiber.PowDifficulty,
+		Filter: func(c *fiber.Ctx) bool {
+			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "dev"
+		},
+		Storage: redis.New(redis.Config{
+			Host:     conf.Redis.Host,
+			Port:     conf.Redis.Port,
+			Username: conf.Redis.Username,
+			Password: conf.Redis.Password,
+			Database: conf.Redis.Database,
+		}),
+	}))
 
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
