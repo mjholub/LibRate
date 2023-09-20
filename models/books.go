@@ -2,30 +2,29 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/jmoiron/sqlx"
-	"github.com/samber/lo"
+	"github.com/lib/pq"
 )
 
 type (
 	Book struct {
-		MediaID         *uuid.UUID `json:"media_id" db:"media_id,pk,unique"`
-		Title           string     `json:"title" db:"title"`
-		Authors         []Person   `json:"author" db:"author"`
-		Publisher       string     `json:"publisher" db:"publisher"`
-		PublicationDate time.Time  `json:"publication_date" db:"publication_date"`
-		Genres          []string   `json:"genres" db:"genres"`
-		Keywords        []string   `json:"keywords,omitempty" db:"keywords,omitempty"`
-		Languages       []string   `json:"languages" db:"languages"`
-		Pages           int16      `json:"pages" db:"pages"`
-		ISBN            string     `json:"isbn,omitempty" db:"isbn,unique,omitempty"`
-		ASIN            string     `json:"asin,omitempty" db:"asin,unique,omitempty"`
-		Cover           string     `json:"cover,omitempty" db:"cover,omitempty"`
-		Summary         string     `json:"summary" db:"summary"`
+		MediaID         *uuid.UUID     `json:"media_id" db:"media_id,pk,unique"`
+		Title           string         `json:"title" db:"title"`
+		Authors         []Person       `json:"author" db:"author"`
+		Publisher       Studio         `json:"publisher" db:"publisher"`
+		PublicationDate sql.NullTime   `json:"publication_date" db:"publication_date"`
+		Genres          []Genre        `json:"genres" db:"genres"`
+		Keywords        pq.StringArray `json:"keywords,omitempty" db:"keywords,omitempty"`
+		Languages       []string       `json:"languages" db:"languages"`
+		Pages           int16          `json:"pages" db:"pages"`
+		ISBN            sql.NullString `json:"isbn,omitempty" db:"isbn,unique,omitempty"`
+		ASIN            sql.NullString `json:"asin,omitempty" db:"asin,unique,omitempty"`
+		Cover           sql.NullString `json:"cover,omitempty" db:"cover,omitempty"`
+		Summary         string         `json:"summary" db:"summary"`
 	}
 
 	BookValues interface {
@@ -55,39 +54,107 @@ func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (Book, error)
 	return book, nil
 }
 
-func addBook(ctx context.Context, db *sqlx.DB, keys []string, book *Book) error {
-	if !lo.Every(BookKeys, keys) {
-		quoted := make([]string, len(BookKeys))
-		for i, key := range BookKeys {
-			quoted[i] = fmt.Sprintf("'%s'", key)
+func (ms *MediaStorage) AddBook(
+	ctx context.Context,
+	book *Book,
+	publisher *Studio,
+) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		if publisher == nil {
+			return fmt.Errorf("publisher cannot be nil")
 		}
-		return fmt.Errorf("keys not a subset of book keys (%s)", strings.Join(quoted, ", "))
-	}
-
-	kvs := lo.Associate(keys, func(key string) (keys string, values interface{}) {
-		switch key {
-		case "media_id":
-			return uuid.Must(uuid.NewV4()).String(), book.MediaID
-		case "authors":
-			return "authors", book.Authors
-		default:
-			return key, values
+		var err error
+		publisher.ID, err = ms.Ps.GetID(ctx, publisher.Name, "studio")
+		if err != nil {
+			return fmt.Errorf("error getting publisher ID: %w", err)
 		}
-	})
-	_, err := db.NamedExecContext(ctx, "INSERT INTO books (:keys) VALUES (:values)", kvs)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func (b *Book) GetMedia(db *sqlx.DB) (m *Media, err error) {
-	if b.MediaID == nil {
-		return nil, fmt.Errorf("book has no media id")
+		var created time.Time
+		if book.PublicationDate.Valid {
+			created = book.PublicationDate.Time
+		} else {
+			created = time.Now()
+		}
+
+		media := Media{
+			Title:    book.Title,
+			Kind:     "book",
+			Created:  created,
+			Creators: book.Authors,
+		}
+
+		mediaID, err := ms.Add(ctx, &media)
+		if err != nil {
+			return fmt.Errorf("error adding media: %w", err)
+		}
+		ms.Log.Info().Msgf("added media with ID %s", mediaID)
+
+		_, err = ms.db.NamedExecContext(ctx, `
+		INSERT INTO media.books (
+		title, publisher, publication_date,
+		keywords, pages, isbn, asin, cover, summary
+		) VALUES (
+		:title, :publisher, :publication_date,
+		:keywords, :pages, :isbn, :asin, :cover, :summary
+		`, book)
+		if err != nil {
+			return fmt.Errorf("error adding book: %w", err)
+		}
+		authorIDs := make([]int32, len(book.Authors))
+		for i := range book.Authors {
+			authorID := book.Authors[i].ID
+			authorIDs = append(authorIDs, authorID)
+		}
+
+		for i := range authorIDs {
+			_, err = ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_authors (
+		book, person
+		) VALUES (
+		$1, $2
+		)`, mediaID, authorIDs[i])
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding author %s to book with ID %s", authorIDs[i], mediaID)
+			}
+		}
+
+		genres := make([]int16, len(book.Genres))
+		for i := range book.Genres {
+			genreID := book.Genres[i].ID
+			genres = append(genres, genreID)
+		}
+		for i := range genres {
+			_, err = ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_genres (
+		book, genre
+		) VALUES (
+		$1, $2
+		)`, mediaID, genres[i])
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding genre %s to book with ID %s", genres[i], mediaID)
+			}
+		}
+
+		for i := range book.Languages {
+			langID, err := ReverseLookupLangID(book.Languages[i])
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", book.Languages[i], mediaID)
+			}
+			_, err = ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_languages (
+		book, lang
+		) VALUES (
+		$1, $2
+		)`, mediaID, langID)
+			if err != nil {
+				ms.Log.Error().Err(err).
+					Msgf("error adding language %s to book with ID %s", book.Languages[i], mediaID)
+			}
+		}
+
+		return nil
 	}
-	err = db.Get(m, "SELECT * FROM media WHERE uuid = $1", b.MediaID)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }
