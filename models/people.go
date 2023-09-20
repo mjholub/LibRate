@@ -174,17 +174,40 @@ func (g *Group) Validate() error {
 	return fmt.Errorf("invalid group kind: %s, must be one of %s", g.Kind, strings.Join(GroupKinds, ", "))
 }
 
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (p Person) GetID() int32 {
-	return p.ID
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (g Group) GetID() int32 {
-	return g.ID
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (s Studio) GetID() int32 {
-	return s.ID
+func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (ID int32, err error) {
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		switch kind {
+		case "group":
+			err := p.dbConn.GetContext(ctx, &ID,
+				"SELECT id FROM people.group WHERE name = $1 AND kind = $2 LIMIT 1",
+				name, kind)
+			if err != nil {
+				return 0, err
+			}
+			return ID, nil
+		case "person":
+			first_name := strings.Split(name, " ")[0]
+			last_name := strings.Split(name, " ")[1]
+			err := p.dbConn.GetContext(ctx, &ID,
+				"SELECT id FROM people.person WHERE first_name = $1 AND last_name = $2 LIMIT 1",
+				first_name, last_name)
+			if err != nil {
+				return 0, err
+			}
+			return ID, nil
+		case "studio":
+			err := p.dbConn.GetContext(ctx, &ID,
+				"SELECT id FROM people.studio WHERE name = $1 LIMIT 1",
+				name)
+			if err != nil {
+				return 0, err
+			}
+			return ID, nil
+		default:
+			return 0, fmt.Errorf("invalid kind: %s", kind)
+		}
+	}
 }
