@@ -3,10 +3,7 @@ package cfg
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v3"
-
 	"codeberg.org/mjh/LibRate/cfg/parser"
-	"codeberg.org/mjh/LibRate/internal/clitools"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
 	"github.com/imdario/mergo"
@@ -57,38 +54,6 @@ func LoadConfig() mo.Result[*Config] {
 
 		return conf, nil
 	})
-}
-
-func tryGettingConfig(tryPaths []string) (string, error) {
-	defaultConfigPath, err := getDefaultConfigPath()
-	if err != nil {
-		return "", err
-	}
-	customPath, err := clitools.AskPath("config", defaultConfigPath, tryPaths)
-	if err != nil {
-		return defaultConfigPath, err
-	}
-
-	return customPath, nil
-}
-
-// Generic function to marshal and unmarshal configuration
-func marshalUnmarshalConfig[T any](configRaw map[string]interface{}, fieldName string, target *T) error {
-	fieldData, exists := configRaw[fieldName]
-	if !exists {
-		return fmt.Errorf("field %s not found in configuration", fieldName)
-	}
-
-	fieldYAML, err := yaml.Marshal(fieldData)
-	if err != nil {
-		return fmt.Errorf("failed to marshal %s config: %w", fieldName, err)
-	}
-
-	if err = yaml.Unmarshal(fieldYAML, target); err != nil {
-		return fmt.Errorf("failed to unmarshal %s config: %w", fieldName, err)
-	}
-
-	return nil
 }
 
 func parseRaw(configLocation string) (conf *Config, err error) {

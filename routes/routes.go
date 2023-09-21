@@ -52,7 +52,7 @@ func Setup(
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := members.NewController(mStor, logger)
 	mediaCon := media.NewController(*mediaStor)
-	formCon := form.NewFormController(logger, *mediaStor)
+	formCon := form.NewController(logger, *mediaStor, conf)
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)

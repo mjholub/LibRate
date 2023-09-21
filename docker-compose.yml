@@ -1,4 +1,3 @@
-
 version: '3.8'
 
 services:
@@ -12,27 +11,21 @@ services:
       - LIBRATE_ENV="dev"
     depends_on:
       - db
-    command: sh -c "./LibRate -init && ./LibRate"
+      - redis
     ports:
       - 3000:3000
-
+    networks:
+      - app-network
   db:
-    image: postgres:15
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=librate
-      - POSTGRES_PASSWORD=librate
-      - POSTGRES_DB=librate
-
-  frontend:
     build:
-      context: ./fe
+      context: db
       dockerfile: Dockerfile
-    volumes:
-      - ./fe:/app
-    ports:
-      - 8080:8080
-
-volumes:
-  db-data:
+    networks:
+      - app-network
+  redis:
+    image: redis:7-alpine
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge

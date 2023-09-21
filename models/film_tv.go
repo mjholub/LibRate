@@ -111,7 +111,6 @@ func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
 		film.ReleaseDate.Valid = true
 	}
 	media := Media{
-		ID:       *film.MediaID,
 		Title:    film.Title,
 		Kind:     "film",
 		Created:  film.ReleaseDate.Time,

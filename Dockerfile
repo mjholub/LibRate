@@ -1,8 +1,22 @@
-FROM golang:1.20-alpine AS app
+FROM golang:1.21-alpine AS app
 
-FROM node:alpine AS fronend
+RUN addgroup -S librate && adduser -S librate -G librate
 
-ADD . .
+WORKDIR /app
 
+COPY . .
+
+RUN apk add --no-cache \
+  nodejs-lts \
+  npm 
+
+RUN chown -R librate:librate /app
+USER librate 
 RUN cd fe && npm install && npm run build
 RUN go mod tidy && go build
+
+RUN ./LibRate -init && ./LibRate migrate -auto -exit
+
+CMD ["./LibRate"]
+
+EXPOSE 3000
