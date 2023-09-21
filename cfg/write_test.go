@@ -21,19 +21,22 @@ func TestWriteConfig(t *testing.T) {
 		{"NoConfigFileSpecified", args{"", &Config{}}, true},
 		{"ValidConfigFile", args{"config_tmp.yml", &Config{
 			DBConfig: DBConfig{
-				Engine:    "postgres",
-				Host:      "localhost",
-				Port:      uint16(5432),
-				Database:  "write_test",
-				TestDB:    "write_test_test",
-				User:      "test_user",
-				Password:  "test_password",
-				SSL:       "unknown",
-				PG_Config: "/usr/bin/pg_config",
+				Engine:   "postgres",
+				Host:     "localhost",
+				Port:     uint16(5432),
+				Database: "write_test",
+				TestDB:   "write_test_test",
+				User:     "test_user",
+				Password: "test_password",
+				SSL:      "unknown",
+				PGConfig: "/usr/bin/pg_config",
 			},
 			Fiber: FiberConfig{
-				Host: "localhost",
-				Port: 3000,
+				Host:           "localhost",
+				Port:           3000,
+				Prefork:        true,
+				ReduceMemUsage: true,
+				StaticDir:      "./static",
 			},
 			Secret:     "test_secret",
 			LibrateEnv: "test",
@@ -85,20 +88,25 @@ func TestCorrectWrite(t *testing.T) {
 	configPath := "config_tmp.yml"
 	c := &Config{
 		DBConfig: DBConfig{
-			Engine:    "postgres",
-			Host:      "localhost",
-			Port:      uint16(5432),
-			Database:  "write_test",
-			TestDB:    "write_test_test",
-			User:      "test_user",
-			Password:  "test_password",
-			SSL:       "unknown",
-			PG_Config: "/usr/bin/pg_config",
-			StartCmd:  "sudo service postgresql start",
+			Engine:   "postgres",
+			Host:     "localhost",
+			Port:     uint16(5432),
+			Database: "write_test",
+			TestDB:   "write_test_test",
+			User:     "test_user",
+			Password: "test_password",
+			SSL:      "unknown",
+			PGConfig: "/usr/bin/pg_config",
+			StartCmd: "sudo service postgresql start",
 		},
 		Fiber: FiberConfig{
-			Host: "localhost",
-			Port: 3000,
+			Host:           "localhost",
+			Port:           3000,
+			Prefork:        true,
+			ReduceMemUsage: true,
+			StaticDir:      "./static",
+			PowInterval:    300,
+			PowDifficulty:  30000,
 		},
 		Secret:     "test_secret",
 		LibrateEnv: "test",
@@ -122,8 +130,12 @@ func TestCorrectWrite(t *testing.T) {
 fiber:
     host: localhost
     port: 3000
+		prefork: true
+		ReduceMemUsage: true
+		staticDir: ./static
+		powInterval: 300
 secret: test_secret
-librate_env: test
+librateEnv: test
 `, string(yamlFile))
 	os.Remove(configPath)
 }

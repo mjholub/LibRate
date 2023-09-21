@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/storage/redis/v3"
+	"github.com/samber/lo"
+	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -49,11 +53,25 @@ func main() {
 			if err = db.InitDB(conf); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
 			}
-			log.Info().Msg("Database initialized")
+			log.Info().Msg(`Database initialized.
+			If you're seeing this when running from a container,
+			necessary migrations will be run automatically.\n
+			Otherwise you need to run them manually, either with -auto-migrate
+			or by running "migrate -path db/migrations -database <your db connection string>\n
+			(use -exit to exit after migrations are run)"
+			`)
+			os.Exit(0)
 		}
 	} else {
 		log.Warn().
 			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
+	}
+
+	if lo.Contains(os.Args, "migrate") {
+		if err = db.Migrate(conf); err != nil {
+			log.Panic().Err(err).Msg("Failed to migrate database")
+		}
+		log.Info().Msg("Database migrated")
 	}
 
 	// Connect to database
@@ -75,8 +93,33 @@ func main() {
 		},
 	})
 	// Create a new Fiber instance
-	app := fiber.New()
+	tag, err := getLatestTag()
+	if err != nil {
+		tag = "unknown"
+	}
+	app := fiber.New(fiber.Config{
+		AppName:           fmt.Sprintf("LibRate %s", tag),
+		Prefork:           conf.Fiber.Prefork,
+		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
+	},
+	)
+
+	// proof of work based anti-spam/anti-ddos
 	app.Use(recover.New())
+	app.Use(fiberpow.New(fiberpow.Config{
+		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
+		Difficulty:  conf.Fiber.PowDifficulty,
+		Filter: func(c *fiber.Ctx) bool {
+			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "dev"
+		},
+		Storage: redis.New(redis.Config{
+			Host:     conf.Redis.Host,
+			Port:     conf.Redis.Port,
+			Username: conf.Redis.Username,
+			Password: conf.Redis.Password,
+			Database: conf.Redis.Database,
+		}),
+	}))
 
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
@@ -92,6 +135,7 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript app")
 	}
+	noscript.Use(fiberlog)
 	app.Mount("/noscript", noscript)
 	err = routeNoScript(noscript, dbConn, &log, conf)
 	if err != nil {
@@ -111,7 +155,16 @@ func main() {
 	}
 
 	// Listen on port 3000
-	err = app.Listen(":3000")
+	listenPort := strconv.Itoa(conf.Fiber.Port)
+	if listenPort == "" {
+		listenPort = "3000"
+	}
+	listenHost := conf.Fiber.Host
+	if listenHost == "" {
+		listenHost = "127.0.0.1"
+	}
+	listenAddr := fmt.Sprintf("%s:%s", listenHost, listenPort)
+	err = app.Listen(listenAddr)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen on port 3000")
 	}

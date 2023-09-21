@@ -4,9 +4,12 @@ fiber:
   prefork: true
   reduceMemUsage: false
   staticDir: "./static"
+  # in seconds
+  powInterval: 300
+  powDifficulty: 30000
 secret: "librate-secret-key"
 database:
-  - engine: "postgres"
+    engine: "postgres"
     pgConfig: "/usr/bin/pg_config"
     host: "localhost"
     port: 5432
@@ -15,6 +18,12 @@ database:
     user: "postgres"
     password: "postgres"
     startCmd: "sudo systemctl start postgresql"
+redis:
+  host: "localhost"
+  port: 6379
+  username: ""
+  password: ""
+  database: 0
 logging:
   level: "info"
   output: "stdout"
