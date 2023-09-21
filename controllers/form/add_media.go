@@ -89,7 +89,7 @@ func (fc *Controller) addBook(c *fiber.Ctx) (err error) {
 		return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
 	}
 
-	err = fc.storage.AddBook(c.UserContext(), book)
+	err = fc.storage.AddBook(c.UserContext(), book, &book.Publisher)
 	if err != nil {
 		fc.log.Error().Err(err).Msgf("Failed to add book: %s", err.Error())
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to add book")
