@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Search from '$components/utility/Search.svelte';
 	import MemberPage from '$components/member/MemberPage.svelte';
-	import type { Member } from '$types/member.ts';
+	import type { Member } from '$lib/types/member.ts';
 
 	// we get the nickname from the last part of the URL
 	export let data: { props: { nickname: string } };
