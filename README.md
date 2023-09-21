@@ -12,7 +12,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ### **Social features**:
   - [x] Basic registration support
-  - [x] (**WIP**) Member cards with profile info
+  - [x] Member cards with profile info
   - [x] (**WIP**)Full member profile pages
   - [ ] Tagging and mentions
   - [ ] Advanced profile and UI customization
@@ -20,18 +20,22 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [ ] Direct messages (E2EE)
   - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
   - [x] (**WIP**) Member-generated content tagging and categorization
-  - [ ] Following
+  - [x] (**WIP**) Following
   - [ ] Sharing
-  - [ ] **ActivityPub support**, with selective federation
+  - [x] (**WIP**) **ActivityPub support**, with selective federation
 ### **Media features**
   - [x] Album cards
   - [x] Carousels showing random media 
   - [x] Relevant DB setup
   - [x] Film and series cards
     - [ ] Trailers and stills support
+  - [ ] Release notifications
+    - [ ] Sending them as DMs to federated service accounts
   - [ ] Content filters
-  - [ ] Book cards
+  - [ ] Book cards and pages
+    - [ ] Bookwyrm federation
   - [ ] Anime and manga cards/pages
+  - [ ] Games support
   - [ ] Customizable, shareable media collections and logging
   - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
   - [ ] Automated imports from 3rd party sources
@@ -53,6 +57,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ### **Other**
   - [ ] Extended configurability
+  - [ ] Signed builds and security mechanisms preventing federation with modified versions of LibRate
   - [ ] Admin panel
   - [ ] Events, federating with Mobilizon
   - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
