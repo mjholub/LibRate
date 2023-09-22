@@ -2,7 +2,7 @@
 
 Worry not if you're a functional programming wizard who dreads the imperative pardigm. Even though LibRate's backend is written in Go, in several places it takes advantage of the `mo` and `lo` libraries, which provide monads and iterators using generics, respectively.
 
-#Tags, branching
+# Tags, branching
 
 Create your PRs against the upstream dev branch, where they will be tested and if everything is fine, merged with main.
 
@@ -40,7 +40,11 @@ Resources intensive operations called inside other functions, should be parallel
 
 Long, more complex functions should include a brief comment summarizing their mechanism of action.
 
-For error messages, prefer to use the status codes provided by fiber, to avoid unnecessary overlap with _net/http_
+For error messages, prefer to use the status codes provided by fiber, to avoid unnecessary overlap with _net/http_.
+
+Also, a general advice: if you're not sure how to implement something in the frontend, 
+just submit a PR with the backend functionality, as long as it returns the expected data 
+in the unit tests or to `curl`.
 
 ## Frontend
 
