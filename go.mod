@@ -11,7 +11,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/contrib/fiberzerolog v0.2.0
 	github.com/gofiber/contrib/jwt v1.0.4
-	github.com/gofiber/fiber/v2 v2.49.1
+	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/gofiber/storage/redis/v3 v3.0.0
 	github.com/gofiber/template/django/v3 v3.1.6
 	github.com/gofrs/uuid/v5 v5.0.0
@@ -56,7 +56,7 @@ require (
 	github.com/gookit/goutil v0.6.12 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.49.0 // indirect
+	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect

@@ -101,6 +101,14 @@ func Setup(
 		return fmt.Errorf("failed to setup static files: %w", err)
 	}
 	logger.Debug().Msg("static files initialized")
+
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		if dbConn.Ping() == nil {
+			return c.SendStatus(fiber.StatusOK)
+		}
+		return c.SendStatus(fiber.StatusServiceUnavailable)
+	})
+
 	return nil
 }
 
