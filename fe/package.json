@@ -1,6 +1,6 @@
 {
   "name": "librate",
-  "version": "v0.6.0-RC-1",
+  "version": "v0.6.0",
   "private": true,
   "scripts": {
     "dev": "vite dev",

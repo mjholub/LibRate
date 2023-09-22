@@ -42,8 +42,40 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(conf *cfg.Config) (*sqlx.DB, error) {
+func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
 	// create a whitelist of launch commands to avond arbitrary code execution
+
+	data := CreateDsn(&conf.DBConfig)
+	var db *sqlx.DB
+
+	err := retry.Do(
+		func() error {
+			var err error
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
+			return err
+		},
+		retry.Attempts(5),
+		retry.Delay(1*time.Second), // Delay between retries
+		retry.OnRetry(func(n uint, _ error) {
+			fmt.Printf("Attempt %d failed; retrying...", n)
+			if !noSubProcess {
+				err := launch(conf)
+				if err != nil {
+					return
+				}
+			}
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func launch(conf *cfg.Config) error {
 	whitelist := []string{
 		// standalone
 		"pg_ctl start -D /var/lib/postgresql/data",
@@ -87,50 +119,30 @@ func Connect(conf *cfg.Config) (*sqlx.DB, error) {
 		})
 	})
 
-	data := CreateDsn(&conf.DBConfig)
-	var db *sqlx.DB
-
-	err := retry.Do(
-		func() error {
-			var err error
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
-			return err
-		},
-		retry.Attempts(5),
-		retry.Delay(1*time.Second), // Delay between retries
-		retry.OnRetry(func(n uint, _ error) {
-			fmt.Printf("Attempt %d failed; retrying...", n)
-			if conf.StartCmd == "" {
-				err := errors.New(`no start command provided for database server\n
+	if conf.StartCmd == "" {
+		err := errors.New(`no start command provided for database server\n
 				Please provide one under a 'start_cmd' key in the database section of the config file.\n
 				Waiting for manual start of database server for 10 seconds.
 				`)
-				fmt.Printf("failed to start postgresql service: %v", err)
-				time.Sleep(10 * time.Second)
-			}
-			if !lo.Contains(allcmds, conf.StartCmd) {
-				err := errors.New(`start command not in whitelist\n
+		fmt.Printf("failed to start postgresql service: %v", err)
+		time.Sleep(10 * time.Second)
+	}
+
+	if !lo.Contains(allcmds, conf.StartCmd) {
+		err := errors.New(`start command not in whitelist\n
 				Aborting to prevent arbitrary code execution.\n
 				Please use a command from the whitelist provided in db/core.go
 				`)
-				fmt.Printf("failed to start postgresql service: %v", err)
-				return
-			} else if conf.StartCmd != "" {
-				cmd := exec.CommandContext(context.Background(), conf.StartCmd)
-				err := cmd.Run()
-				if err != nil {
-					fmt.Println("Failed to start postgresql service")
-				}
-			}
-		}),
-	)
-	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to start postgresql service: %w", err)
+	} else if conf.StartCmd != "" && lo.Contains(allcmds, conf.StartCmd) {
+		cmd := exec.CommandContext(context.Background(), conf.StartCmd+" &")
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("failed to start postgresql service: %w", err)
+		}
 	}
 
-	return db, nil
+	return nil
 }
 
 func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
@@ -153,7 +165,7 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 		}
 		for i := range extNames {
 			_, err = db.ExecContext(ctx,
-				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA "%s";`, extNames[i], schemaName))
+				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%q" SCHEMA "%q";`, extNames[i], schemaName))
 			if err != nil {
 				return fmt.Errorf("failed to create extension %s in schema %s: %w", extNames[i], schemaName, err)
 			}
@@ -167,8 +179,8 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.Config) error {
-	db, err := Connect(conf)
+func InitDB(conf *cfg.Config, noSubProcess bool) error {
+	db, err := Connect(conf, noSubProcess)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
