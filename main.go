@@ -25,6 +25,10 @@ import (
 
 func main() {
 	init := flag.Bool("init", false, "Initialize database")
+	NoDBSubprocess := flag.Bool("no-db-subprocess", false,
+		"Do not launching database as subprocess if not running. Not recommended in containers.")
+	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
+		"Skips calling the built-in database health check. Useful for containers with external databases, where pg_isready is used instead.")
 	flag.Parse()
 
 	// TODO: get logging config from config file
@@ -48,9 +52,14 @@ func main() {
 	}
 
 	// database first-run initialization
-	if DBRunning(conf.Port) {
+	dbRunning := lo.TernaryF(ExternalDBHealthCheck == nil || !*ExternalDBHealthCheck,
+		func() bool { return DBRunning(conf.Port) },
+		func() bool { return true },
+	)
+
+	if dbRunning {
 		if *init {
-			if err = db.InitDB(conf); err != nil {
+			if err = db.InitDB(conf, *NoDBSubprocess); err != nil {
 				log.Panic().Err(err).Msg("Failed to initialize database")
 			}
 			log.Info().Msg(`Database initialized.
@@ -75,7 +84,7 @@ func main() {
 	}
 
 	// Connect to database
-	dbConn, err := db.Connect(conf)
+	dbConn, err := db.Connect(conf, *NoDBSubprocess)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}

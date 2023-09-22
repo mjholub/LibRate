@@ -83,7 +83,7 @@ func TestConnect(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			got, err := db.Connect(tc.Inputs)
+			got, err := db.Connect(tc.Inputs, true)
 			if tc.WantErr {
 				assert.Error(t, err)
 				return
@@ -117,6 +117,6 @@ func TestInitDB(t *testing.T) {
 		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS places CASCADE;")
 		assert.NoError(t, err)
 	}(config)
-	err = db.InitDB(config)
+	err = db.InitDB(config, true)
 	require.NoError(t, err)
 }

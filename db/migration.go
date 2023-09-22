@@ -20,12 +20,12 @@ func Migrate(conf *cfg.Config) (err error) {
 
 	if *autoMigrate {
 		// run migrations	in db/migrations
-		// NOTE: paral
-		if err := runMigrations(conf, true); err != nil {
+		if err = runMigrations(conf, true); err != nil {
 			return fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		if *exit {
+			// nolint:revive
 			os.Exit(0)
 		}
 	}
@@ -36,6 +36,7 @@ func Migrate(conf *cfg.Config) (err error) {
 	return nil
 }
 
+// TODO: find use for the auto parameter or remove it
 func runMigrations(conf *cfg.Config, auto bool) error {
 	dbConn := CreateDsn(&conf.DBConfig)
 	path := flag.String("path", "db/migrations", "Path to migrations")

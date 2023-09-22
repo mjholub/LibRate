@@ -15,8 +15,9 @@ USER librate
 RUN cd fe && npm install && npm run build
 RUN go mod tidy && go build
 
-RUN ./LibRate -init && ./LibRate migrate -auto -exit
+# initialize the database, don't launch the database subprocess and rely solely on pg_isready, run the migrations and exit
+RUN ./LibRate -init -no-db-subprocess -hc-extern && ./LibRate migrate -auto -exit -no-db-subprocess -hc-extern
 
-CMD ["./LibRate"]
+CMD ["./LibRate", "-no-db-subprocess", "-hc-extern"]
 
 EXPOSE 3000
