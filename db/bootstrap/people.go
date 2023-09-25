@@ -19,12 +19,14 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people schema: %w", err)
 		}
-		_, err = db.Exec(`
-		CREATE TYPE people.role AS ENUM ('actor', 'director', 'producer', 'writer',
-			'composer', 'artist', 'author', 'publisher', 'editor', 'photographer',
-			'illustrator', 'narrator', 'performer', 'host', 'guest', 'other');`)
+		peopleRoles := []string{
+			"actor", "director", "producer", "writer",
+			"composer", "artist", "author", "publisher", "editor", "photographer",
+			"illustrator", "narrator", "performer", "host", "guest", "other",
+		}
+		err = createEnumType(ctx, db, "roles", "people", peopleRoles...)
 		if err != nil {
-			return fmt.Errorf("failed to create people role enum: %w", err)
+			return err
 		}
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.person (
@@ -63,9 +65,14 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people works table: %w", err)
 		}
+		groupTypes := []string{"band", "orchestra", "choir", "ensemble", "troupe", "collective", "other"}
+		err = createEnumType(ctx, db, "group_kind", "people", groupTypes...)
+		if err != nil {
+			return err
+		}
 		_, err = db.Exec(`
 			CREATE TYPE people.group_kind AS ENUM (
-		'band', 'orchestra', 'choir', 'ensemble', 'troupe', 'collective', 'other');`)
+		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create people group kind enum: %w", err)
 		}

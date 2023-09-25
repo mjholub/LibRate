@@ -3,7 +3,9 @@ package db
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -165,7 +167,7 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 		}
 		for i := range extNames {
 			_, err = db.ExecContext(ctx,
-				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%q" SCHEMA "%q";`, extNames[i], schemaName))
+				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA %s;`, extNames[i], schemaName))
 			if err != nil {
 				return fmt.Errorf("failed to create extension %s in schema %s: %w", extNames[i], schemaName, err)
 			}
@@ -180,6 +182,15 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 }
 
 func InitDB(conf *cfg.Config, noSubProcess bool) error {
+	exit := flag.Bool("exit", false, "Exit after running migrations")
+	flag.Parse()
+	if *exit {
+		// nolint:revive
+		defer func() {
+			fmt.Println("Database initialized. Exiting...")
+			os.Exit(0)
+		}()
+	}
 	db, err := Connect(conf, noSubProcess)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)

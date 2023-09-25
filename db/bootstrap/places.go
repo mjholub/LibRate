@@ -17,10 +17,10 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create places schema: %w", err)
 		}
-		_, err = db.Exec(`
-		CREATE TYPE places.place_kind AS ENUM ('country', 'city', 'venue', 'other');`)
+		placeTypes := []string{"country", "city", "venue", "other"}
+		err = createEnumType(ctx, db, "place_kind", "places", placeTypes...)
 		if err != nil {
-			return fmt.Errorf("failed to create places kind enum: %w", err)
+			return err
 		}
 
 		_, err = db.Exec(`
