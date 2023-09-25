@@ -1,5 +1,8 @@
 alias b := build
 alias a := all
+alias deps := update_deps
+alias fe := build_frontend
+alias t := test
 
 target_dir := "$HOME/.local/share/LibRate"
 
@@ -9,7 +12,8 @@ copy_libs:
 	mkdir -p {{ target_dir }}/lib
 	cp -rf lib/* {{ target_dir }}/lib
 
-first_run: all 
+first_run: all
+	sh copy_config.sh
 	./LibRate -init -exit
 	./Librate migrate -auto-migrate
 

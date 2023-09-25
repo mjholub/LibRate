@@ -79,7 +79,12 @@ To develop the recommendations feature, you'll need:
 
 ## Building and installing
 
+If you have installed [just](https://github.com/casey/just), you can simply run:
+```sh
+just first_run
 ```
+Alternatively, edit the example config file and run:
+```sh
 go mod tidy  && \
 cd fe && pnpm install \
 && pnpm run build && \
