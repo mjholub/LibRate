@@ -24,7 +24,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 			return fmt.Errorf("failed to create media table: %w", err)
 		}
 		_, err = connection.ExecContext(ctx,
-			`CREATE TABLE media.media (
+			`CREATE TABLE IF NOT EXISTS media.media (
 	id uuid NOT NULL DEFAULT reviews.uuid_time_nextval(),
 	title varchar(255) NOT NULL,
 	"kind" media."kind" NOT NULL,
