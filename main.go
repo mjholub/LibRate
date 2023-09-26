@@ -29,6 +29,7 @@ func main() {
 		"Do not launching database as subprocess if not running. Not recommended in containers.")
 	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
 		"Skips calling the built-in database health check. Useful for containers with external databases, where pg_isready is used instead.")
+	configFile := flag.String("config", "config.yml", "Path to config file")
 	flag.Parse()
 
 	// TODO: get logging config from config file
@@ -45,10 +46,17 @@ func main() {
 	log := logging.Init(&logConf)
 
 	// Load config
-	conf, err := cfg.LoadConfig().Get()
-	if err != nil {
-		log.Warn().Msgf("failed to load config, using defaults: %v", err)
-		conf = &cfg.DefaultConfig
+	var (
+		err  error
+		conf *cfg.Config
+	)
+	if *configFile == "" {
+		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
+	} else {
+		conf, err = cfg.LoadFromFile(*configFile)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", *configFile, err)
+		}
 	}
 
 	// database first-run initialization
