@@ -14,10 +14,9 @@ services:
       - db
       - redis
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     networks:
       - app-network
-      #- external-network
     dns:
       - 9.9.9.9
     healthcheck:
@@ -65,7 +64,6 @@ networks:
     ipam:
       config:
         - subnet: 10.5.0.0/16
-
 volumes:
   pg-data:
   redis-data:

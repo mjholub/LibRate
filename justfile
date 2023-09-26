@@ -17,6 +17,10 @@ first_run: all
 	./LibRate -init -exit
 	./LibRate migrate -auto-migrate
 
+write_tags:
+	git fetch --tags
+	git describe --tags --abbrev=0 > .env
+
 tidy:
 	go mod tidy -v
 

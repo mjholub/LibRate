@@ -67,8 +67,8 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 Just run
 ```
-git fetch --tags
-docker compose up -d --build-arg GIT_TAG=$(git describe --tags --always --dirty)
+just write_tags
+docker compose up -d
 ```
 
 The git tag part is needed only for displaying the version in the footer
