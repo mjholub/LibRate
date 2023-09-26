@@ -15,7 +15,7 @@ copy_libs:
 first_run: all
 	sh copy_config.sh
 	./LibRate -init -exit
-	./Librate migrate -auto-migrate
+	./LibRate migrate -auto-migrate
 
 tidy:
 	go mod tidy -v
@@ -24,10 +24,19 @@ update_deps:
 	go get -u ./...
 
 build_frontend:
-	cd frontend && pnpm run build
+	# prefer pnpm and use npm as fallback
+	if [ -x "$(command -v pnpm)" ]; then \
+		cd fe; \
+		pnpm install; \
+		pnpm run build; \
+	else \
+		cd fe; \
+		npm install; \
+		npm run build; \
+	fi
 
 build:
-  go build
+  go build -o LibRate
 
 test:
 	go test -v ./...
