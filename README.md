@@ -65,10 +65,13 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
 
 ## Deploying
 
-Just run 
+Just run
 ```
-docker compose up -d
+git fetch --tags
+docker compose up -d --build-arg GIT_TAG=$(git describe --tags --always --dirty)
 ```
+
+The git tag part is needed only for displaying the version in the footer
 
 ## Prerequisites for running natively:
 
