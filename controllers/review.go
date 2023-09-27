@@ -51,6 +51,7 @@ func (rc *ReviewController) GetRatings(c *fiber.Ctx) error {
 	return c.JSON(reviews)
 }
 
+// GetLatestRatings retrieves the latest reviews for a specific media item based on the media ID
 func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
 	// Extract limit and offset parameters from the query string.
 	limit, err := strconv.Atoi(ctx.Query("limit", "5"))
@@ -140,6 +141,7 @@ func (rc *ReviewController) UpdateRating(c *fiber.Ctx) error {
 	})
 }
 
+// DeleteRating handles the deletion of a user's review for a specific media item
 func (rc *ReviewController) DeleteRating(c *fiber.Ctx) error {
 	ratingID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {

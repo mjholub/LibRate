@@ -14,7 +14,7 @@ import (
 // 2. Validate the input (check for empty fields, valid email, etc.)
 // 3. Pass the email to the database, get the password hash for the email or nickname
 // 4. Compare the password hash with the password hash from the database
-func (a *AuthService) Login(c *fiber.Ctx) error {
+func (a *Service) Login(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Login request")
 	input, err := parseInput("login", c)
 	if err != nil {
@@ -84,7 +84,7 @@ func (l LoginInput) Validate() (*models.MemberInput, error) {
 	}, nil
 }
 
-func (a *AuthService) validatePassword(email, login, password string) error {
+func (a *Service) validatePassword(email, login, password string) error {
 	passhash, err := a.ms.GetPassHash(email, login)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (a *AuthService) validatePassword(email, login, password string) error {
 }
 
 // TODO: move to a dedicated file?
-func (a *AuthService) createSession(c *fiber.Ctx, member *models.Member) error {
+func (a *Service) createSession(c *fiber.Ctx, member *models.Member) error {
 	token, err := a.ms.CreateSession(c.Context(), *member)
 	if err != nil {
 		return h.Res(c, http.StatusInternalServerError, "Internal server error")

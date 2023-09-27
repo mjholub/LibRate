@@ -2,21 +2,11 @@ package cfg
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/samber/lo"
 )
-
-func getDefaultConfigPath() (string, error) {
-	confDir, err := os.UserConfigDir()
-	if err != nil {
-		return "", fmt.Errorf("error getting user config dir: %w", err)
-	}
-	defaultConfigPath := filepath.Join(confDir, "librate", "config.yaml")
-	return defaultConfigPath, nil
-}
 
 // tryLocations returns a list of possible config file locations
 func tryLocations() []string {

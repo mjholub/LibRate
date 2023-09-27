@@ -32,9 +32,9 @@ type (
 		Password   string `json:"password"`
 	}
 
-	// AuthService allows dependency injection for the controller methods,
+	// Service allows dependency injection for the controller methods,
 	// so that the db connection needn't be created in the controller methods
-	AuthService struct {
+	Service struct {
 		conf *cfg.Config
 		log  *zerolog.Logger
 		ms   *models.MemberStorage
@@ -50,12 +50,12 @@ type (
 	}
 )
 
-// NewAuthService creates an instance of the AuthService struct
+// NewService creates an instance of the Service struct
 // and returns a pointer to it
 // It should be used within the routes package
 // where the db connection and config are passed from the main package
-func NewAuthService(conf *cfg.Config, ms *models.MemberStorage, log *zerolog.Logger) *AuthService {
-	return &AuthService{conf, log, ms}
+func NewService(conf *cfg.Config, ms *models.MemberStorage, log *zerolog.Logger) *Service {
+	return &Service{conf, log, ms}
 }
 
 func isEmail(email string) bool {
