@@ -11,11 +11,13 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/routes"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
@@ -29,6 +31,7 @@ func main() {
 		"Do not launching database as subprocess if not running. Not recommended in containers.")
 	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
 		"Skips calling the built-in database health check. Useful for containers with external databases, where pg_isready is used instead.")
+	configFile := flag.String("config", "config.yml", "Path to config file")
 	flag.Parse()
 
 	// TODO: get logging config from config file
@@ -45,10 +48,17 @@ func main() {
 	log := logging.Init(&logConf)
 
 	// Load config
-	conf, err := cfg.LoadConfig().Get()
-	if err != nil {
-		log.Warn().Msgf("failed to load config, using defaults: %v", err)
-		conf = &cfg.DefaultConfig
+	var (
+		err  error
+		conf *cfg.Config
+	)
+	if *configFile == "" {
+		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
+	} else {
+		conf, err = cfg.LoadFromFile(*configFile)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", *configFile, err)
+		}
 	}
 
 	// database first-run initialization
@@ -57,23 +67,14 @@ func main() {
 		func() bool { return true },
 	)
 
-	if dbRunning {
-		if *init {
-			if err = db.InitDB(conf, *NoDBSubprocess); err != nil {
-				log.Panic().Err(err).Msg("Failed to initialize database")
-			}
-			log.Info().Msg(`Database initialized.
-			If you're seeing this when running from a container,
-			necessary migrations will be run automatically.\n
-			Otherwise you need to run them manually, either with -auto-migrate
-			or by running "migrate -path db/migrations -database <your db connection string>\n
-			(use -exit to exit after migrations are run)"
-			`)
-			os.Exit(0)
+	if *init {
+		if dbRunning || *ExternalDBHealthCheck {
+			log.Warn().
+				Msgf("Database not running on port %d.", conf.Port)
 		}
-	} else {
-		log.Warn().
-			Msgf("Database not running on port %d. Skipping initialization.", conf.Port)
+		if err = initDB(conf, *NoDBSubprocess, &log); err != nil {
+			log.Fatal().Err(err).Msg("Failed to initialize database")
+		}
 	}
 
 	if lo.Contains(os.Args, "migrate") {
@@ -91,16 +92,8 @@ func main() {
 	log.Info().Msg("Connected to database")
 	defer dbConn.Close()
 
-	fiberlog := fiberzerolog.New(fiberzerolog.Config{
-		Logger: &log,
-		// skip logging for static files, there's too many of them
-		SkipURIs: []string{
-			"/_app/immutable",
-			"/_app/chunks",
-			"/profiles/_app",
-			"/_app/immutable/chunks/",
-		},
-	})
+	fiberlog := setupLogger(&log)
+
 	// Create a new Fiber instance
 	tag, err := getLatestTag()
 	if err != nil {
@@ -115,20 +108,7 @@ func main() {
 
 	// proof of work based anti-spam/anti-ddos
 	app.Use(recover.New())
-	app.Use(fiberpow.New(fiberpow.Config{
-		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
-		Difficulty:  conf.Fiber.PowDifficulty,
-		Filter: func(c *fiber.Ctx) bool {
-			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "dev"
-		},
-		Storage: redis.New(redis.Config{
-			Host:     conf.Redis.Host,
-			Port:     conf.Redis.Port,
-			Username: conf.Redis.Username,
-			Password: conf.Redis.Password,
-			Database: conf.Redis.Database,
-		}),
-	}))
+	setupPOW(conf, app)
 
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
@@ -155,11 +135,12 @@ func main() {
 	app.Use(idempotency.New())
 
 	// CORS
-	setupCors(app, conf)
-
+	setupCors(app)
 	// Setup routes
 	err = routes.Setup(&log, conf, dbConn, app, &fiberlog)
 	if err != nil {
+		dbConn.Close()
+		//nolint:gocritic // it warns about exiting after a defer statement, but we close the db connection first
 		log.Fatal().Err(err).Msg("Failed to setup routes")
 	}
 
@@ -185,10 +166,66 @@ func main() {
 	}
 }
 
-func setupCors(app *fiber.App, conf *cfg.Config) {
+func setupPOW(conf *cfg.Config, app *fiber.App) {
+	app.Use(fiberpow.New(fiberpow.Config{
+		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
+		Difficulty:  conf.Fiber.PowDifficulty,
+		Filter: func(c *fiber.Ctx) bool {
+			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "dev"
+		},
+		Storage: redis.New(redis.Config{
+			Host:     conf.Redis.Host,
+			Port:     conf.Redis.Port,
+			Username: conf.Redis.Username,
+			Password: conf.Redis.Password,
+			Database: conf.Redis.Database,
+		}),
+	}))
+}
+
+func setupLogger(logger *zerolog.Logger) fiber.Handler {
+	fiberlog := fiberzerolog.New(fiberzerolog.Config{
+		Logger: logger,
+		// skip logging for static files, there's too many of them
+		SkipURIs: []string{
+			"/_app/immutable",
+			"/_app/chunks",
+			"/profiles/_app",
+			"/_app/immutable/chunks/",
+		},
+	})
+	return fiberlog
+}
+
+func initDB(conf *cfg.Config, noSubprocess bool, logger *zerolog.Logger) error {
+	// retry connecting to database
+	err := retry.Do(
+		func() error {
+			return db.InitDB(conf, noSubprocess)
+		},
+		retry.Attempts(5),
+		retry.Delay(3*time.Second), // Delay between retries
+		retry.OnRetry(func(n uint, _ error) {
+			logger.Info().Msgf("Attempt %d failed; retrying...", n)
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	logger.Info().Msg(`Database initialized.
+			If you're seeing this when running from a container,
+			necessary migrations will be run automatically.\n
+			Otherwise you need to run them manually, either with -auto-migrate
+			or by running "migrate -path db/migrations -database <your db connection string>\n
+			(use -exit to exit after migrations are run)"
+			`)
+	return nil
+}
+
+func setupCors(app *fiber.App) {
 	app.Use("/api", func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", fmt.Sprintf("http://%s:%d", conf.Host, conf.Port))
-		c.Set("Access-Control-Allow-Origin", fmt.Sprintf("http://localhost:%d", conf.Port))
+		c.Set("Access-Control-Allow-Origin", "*")
 		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		return c.Next()

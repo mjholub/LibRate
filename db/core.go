@@ -3,7 +3,9 @@ package db
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -51,7 +53,7 @@ func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
 	err := retry.Do(
 		func() error {
 			var err error
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
 			return err
@@ -76,6 +78,10 @@ func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
 }
 
 func launch(conf *cfg.Config) error {
+	if conf.StartCmd == "skip" {
+		return nil
+	}
+
 	whitelist := []string{
 		// standalone
 		"pg_ctl start -D /var/lib/postgresql/data",
@@ -165,7 +171,7 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 		}
 		for i := range extNames {
 			_, err = db.ExecContext(ctx,
-				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%q" SCHEMA "%q";`, extNames[i], schemaName))
+				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA %s;`, extNames[i], schemaName))
 			if err != nil {
 				return fmt.Errorf("failed to create extension %s in schema %s: %w", extNames[i], schemaName, err)
 			}
@@ -180,6 +186,15 @@ func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
 }
 
 func InitDB(conf *cfg.Config, noSubProcess bool) error {
+	exit := flag.Bool("exit", false, "Exit after running migrations")
+	flag.Parse()
+	if *exit {
+		// nolint:revive
+		defer func() {
+			fmt.Println("Database initialized. Exiting...")
+			os.Exit(0)
+		}()
+	}
 	db, err := Connect(conf, noSubProcess)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
@@ -196,17 +211,6 @@ func InitDB(conf *cfg.Config, noSubProcess bool) error {
 	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"); err != nil {
 		return fmt.Errorf("failed to create database extensions: %w", err)
 	}
-	/* TODO: verify whether use sequential UUIDs or just ints
-	* if err = createUniversalExtension(db, "pgsequentialuuid"); err != nil {
-	* return fmt.Errorf("failed to create database extensions: %w", err)
-	* }
-	 */
-	/* postgres 15 no longer supports pg_atoi
-	_, err = db.ExecContext(ctx, "CREATE EXTENSION uint;")
-	if err != nil {
-		return fmt.Errorf("failed to create uint extension: %w", err)
-	}
-	*/
 	err = bootstrap.CDN(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create cdn tables: %w", err)

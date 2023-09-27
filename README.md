@@ -63,12 +63,21 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
   - [ ] Mobile app (although the frontend is and will be mobile friendly, but also never at the expense of desktop experience. We'll also try to make it work with Fedilab, though the number of distinctive features may make it difficult)
 
-## Prerequisites:
+## Deploying
+
+Just run
+```
+just write_tags
+docker compose up -d
+```
+
+The git tag part is needed only for displaying the version in the footer
+
+## Prerequisites for running natively:
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
 - Python 3 for setting up the uint Postgres extension
-- working **Postgres** and **Redis** instances. You'll also need to install the development files package
-  since LibRate uses Postgres extensions
+- working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 ## Development prerequisites
 
@@ -79,18 +88,22 @@ To develop the recommendations feature, you'll need:
 
 ## Building and installing
 
+If you have installed [just](https://github.com/casey/just), you can simply run:
+```sh
+just first_run
 ```
+Alternatively, edit the example config file and run:
+```sh
 go mod tidy  && \
 cd fe && pnpm install \
 && pnpm run build && \
-go run . -init 
+go run . -init -exit && \
+go run . migrate -auto-migrate
 ```
 
 For subsequent runs of course you shouldn't use the `init` flag.
 
-Additionally, for now you'll also have to run each of the migrations in the _db/migrations_ folder.
-
-You can then test your instance at [http://127.0.0.1:3000](127.0.0.1:3000)
+You can then test your instance at [http://127.0.0.1:3000](127.0.0.1:3000) (or the other port you've specified)
 
 # Testing
 

@@ -1,32 +1,10 @@
 package form
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
-
-	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
+	"github.com/gofiber/fiber/v2"
 )
-
-type (
-	Controller struct {
-		log     *zerolog.Logger
-		storage models.MediaStorage
-		conf    *cfg.Config
-	}
-)
-
-func NewController(log *zerolog.Logger,
-	storage models.MediaStorage,
-	conf *cfg.Config,
-) *Controller {
-	return &Controller{
-		log:     log,
-		storage: storage,
-		conf:    conf,
-	}
-}
 
 func (fc *Controller) AddMedia(c *fiber.Ctx) error {
 	mediaType := c.Params("type")
@@ -37,7 +15,10 @@ func (fc *Controller) AddMedia(c *fiber.Ctx) error {
 			return err
 		}
 	case "book":
-
+		err := fc.addBook(c)
+		if err != nil {
+			return err
+		}
 	default:
 		return h.Res(c, fiber.StatusNotImplemented,
 			"Sorry, adding this media type via Web UI is not supported yet")
