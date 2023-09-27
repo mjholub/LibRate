@@ -18,15 +18,22 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media schema: %w", err)
 		}
-		_, err = connection.ExecContext(ctx, `
-		CREATE TYPE media.kind AS ENUM ('album', 'track', 'film', 'tv_show', 'book', 'anime', 'manga', 'comic', 'game');
-		CREATE TABLE IF NOT EXISTS media.media (
-			id UUID PRIMARY KEY DEFAULT uuid_time_nextval(),
-			title VARCHAR(255) NOT NULL,
-			kind media.kind NOT NULL,
-			created TIMESTAMP DEFAULT NOW() NOT NULL,
-			creator INTEGER NOT NULL references people.person(id);
-		);`)
+		mediaKinds := []string{"album", "track", "film", "tv_show", "book", "anime", "manga", "comic", "game"}
+		err = createEnumType(ctx, connection, "kind", "media", mediaKinds...)
+		if err != nil {
+			return fmt.Errorf("failed to create media table: %w", err)
+		}
+		_, err = connection.ExecContext(ctx,
+			`CREATE TABLE IF NOT EXISTS media.media (
+	id uuid NOT NULL DEFAULT reviews.uuid_time_nextval(),
+	title varchar(255) NOT NULL,
+	"kind" media."kind" NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
+	creator int4 NULL DEFAULT nextval('media.media_creators_seq'::regclass),
+	added timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified timetz NULL,
+	CONSTRAINT media_pkey PRIMARY KEY (id)
+);`)
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
 		}

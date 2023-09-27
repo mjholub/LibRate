@@ -1,0 +1,29 @@
+fiber:
+  host: "0.0.0.0"
+  port: 3000
+  staticDir: "./static"
+  prefork: false
+  reduceMemUsage: true 
+  powInterval: 300
+  powDifficulty: 30000
+secret: "librate-secret-key"
+database:
+    engine: "postgres"
+    host: "db"
+    port: 5432
+    database: "librate"
+    user: "postgres"
+    password: "postgres"
+    SSL: "disable"
+    startCmd: "skip"
+redis:
+  host: "redis"
+  port: 6379
+  username: ""
+  password: ""
+  database: 0
+logging:
+    level: "info"
+    output: "stdout"
+    format: "json"
+librateEnv: "dev"

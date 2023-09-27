@@ -48,7 +48,7 @@ func Setup(
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
-	authSvc := auth.NewAuthService(conf, mStor, logger)
+	authSvc := auth.NewService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := members.NewController(mStor, logger)
 	mediaCon := media.NewController(*mediaStor)

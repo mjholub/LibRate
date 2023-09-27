@@ -14,7 +14,7 @@ import (
 )
 
 // Register handles the creation of a new user
-func (a *AuthService) Register(c *fiber.Ctx) error {
+func (a *Service) Register(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Registration request")
 	input, err := parseInput("register", c)
 	if err != nil {
@@ -122,7 +122,7 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 	return member, nil
 }
 
-func (a *AuthService) saveMember(member *models.Member) error {
+func (a *Service) saveMember(member *models.Member) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
