@@ -9,16 +9,14 @@ services:
     environment:
       - LIBRATE_ENV="dev"
       - HOME="/app"
-      - PATH="/app/bin:$PATH"
+      - GIT_TAG="0.6.1"
     depends_on:
       - db
       - redis
     ports:
-      - "3000:3000"
-    networks:
-      - app-network
-    dns:
-      - 9.9.9.9
+      - target: 3000
+        published: 3000 
+        protocol: tcp
     healthcheck:
       test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:3000/api/health"]
       interval: 10s
@@ -29,8 +27,6 @@ services:
     build:
       context: db
       dockerfile: Dockerfile
-    networks:
-      - app-network
     ports:
       - 5432:5432
     shm_size: 256mb
@@ -48,8 +44,6 @@ services:
   redis:
     restart: always
     image: redis:7-alpine
-    networks:
-      - app-network
     volumes:
       - redis-data:/data
     healthcheck:
@@ -57,13 +51,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-networks:
-  app-network:
-    internal: true
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.5.0.0/16
 volumes:
   pg-data:
   redis-data:

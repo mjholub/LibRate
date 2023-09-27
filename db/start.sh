@@ -11,7 +11,8 @@ echo "host    all             all             127.0.0.1/32            trust" >/v
 echo "host    all             all             10.5.0.0/16             trust" >>/var/lib/postgresql/data/pg_hba.conf
 echo "host    all             all             [local]                 trust" >>/var/lib/postgresql/data/pg_hba.conf
 echo "local   all             all                                     trust" >>/var/lib/postgresql/data/pg_hba.conf
-echr "host    all             all             ::1/128                 trust" >>/var/lib/postgresql/data/pg_hba.conf
+echo "host    all             all             ::1/128                 trust" >>/var/lib/postgresql/data/pg_hba.conf
+echo "host    all             all             0.0.0.0/0               trust" >>/var/lib/postgresql/data/pg_hba.conf
 echo "listen_addresses = '*'" >/var/lib/postgresql/data/postgresql.conf
 echo "port = 5432" >>/var/lib/postgresql/data/postgresql.conf
 
