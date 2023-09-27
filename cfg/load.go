@@ -18,6 +18,24 @@ var log = logging.Init(&logging.Config{
 	Format: "json",
 })
 
+// LoadFromFile loads the config from the config file, or tries to call LoadConfig.
+func LoadFromFile(path string) (conf *Config, err error) {
+	conf = &Config{}
+	if path == "" {
+		return LoadConfig().OrElse(&DefaultConfig), nil
+	}
+	loaded, err := parseRaw(path)
+	if err != nil {
+		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to parse config: %w", err)
+	}
+	if err = mergo.Merge(conf, loaded); err != nil {
+		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to merge config structs: %w", err)
+	}
+	return conf, nil
+}
+
+// LoadConfig loads the config from the config file, or falls back to defaults.
+// It is used only when no --config flag is passed.
 func LoadConfig() mo.Result[*Config] {
 	return mo.Try(func() (conf *Config, err error) {
 		// first, look for an existing config file
@@ -41,21 +59,11 @@ func LoadConfig() mo.Result[*Config] {
 				Msgf("After merge: %+v", conf)
 			return conf, nil
 		}
-		// if not found, fall back to defaults
-		defaultConfig, err := parseRaw("example_config.yml")
-		if err != nil {
-			return conf, fmt.Errorf("failed to parse default config: %w", err)
-		}
-		log.Info().Msgf("using default config: %v", defaultConfig)
-
-		if err := mergo.Merge(&conf, defaultConfig); err != nil {
-			return conf, fmt.Errorf("failed to merge config structs: %w", err)
-		}
-
-		return conf, nil
+		return nil, fmt.Errorf("failed to find config file: %w", err)
 	})
 }
 
+// parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
 	conf = &Config{}
 

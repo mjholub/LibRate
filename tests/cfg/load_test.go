@@ -23,7 +23,6 @@ func TestLoadConfig(t *testing.T) {
 			Host:     "localhost",
 			Port:     uint16(5432),
 			Database: "librate",
-			TestDB:   "librate_test",
 			User:     "postgres",
 			Password: "postgres",
 			SSL:      "unknown",
