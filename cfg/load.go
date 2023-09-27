@@ -63,6 +63,7 @@ func LoadConfig() mo.Result[*Config] {
 	})
 }
 
+// parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
 	conf = &Config{}
 

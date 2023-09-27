@@ -56,6 +56,7 @@ func (sc *SearchController) Search(c *fiber.Ctx) error {
 	return c.JSON(results)
 }
 
+// performSearch performs a full text search on the database
 func performSearch(ctx context.Context, db *sqlx.DB, searchTerm string) (res []SearchResult, err error) {
 	// Define the SQL query
 	stmt, err := db.PreparexContext(ctx, `
