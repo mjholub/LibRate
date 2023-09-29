@@ -23,7 +23,6 @@ func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, v
 		return errors.New("no values for the enum type were provided, but are required")
 	}
 
-	// WARN: verify the security of this
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get home directory %v", err)
@@ -65,6 +64,11 @@ func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, v
 
 	_, err = sqlx.LoadFileContext(ctx, db, tempFile.Name())
 	if err != nil {
+		pgErr, ok := err.(*pq.Error)
+		// skip if the type already exists
+		if ok && pgErr.Code == "42710" {
+			return nil
+		}
 		return fmt.Errorf(
 			"failed to create ENUM type %s on schema %s: %w", typeName, schema, err)
 	}

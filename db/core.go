@@ -240,7 +240,39 @@ func InitDB(conf *cfg.Config, noSubProcess bool) error {
 	if err != nil {
 		return err
 	}
+	err = bootstrap.Roles(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.MediaCreators(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.PeopleMeta(ctx, db)
+	if err != nil {
+		return err
+	}
 	err = bootstrap.Media(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.CreatorGroups(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.AlbumArtists(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Studio(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Books(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Cast(ctx, db)
 	if err != nil {
 		return err
 	}
