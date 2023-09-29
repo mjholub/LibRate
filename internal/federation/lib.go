@@ -5,7 +5,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // FedHandler is the interface for the federation handler
@@ -20,7 +20,7 @@ type FedHandler interface {
 type FedController struct {
 	log     zerolog.Logger
 	storage *sqlx.DB
-	members *models.MemberStorage
+	members member.MemberStorer
 }
 
 // NewFedController returns a new FedController

@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -18,10 +19,11 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/controllers/form"
 	"codeberg.org/mjh/LibRate/controllers/media"
-	"codeberg.org/mjh/LibRate/controllers/members"
+	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // Setup handles all the routes for the application
@@ -31,6 +33,7 @@ func Setup(
 	logger *zerolog.Logger,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
+	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
 	fzlog *fiber.Handler,
 ) error {
@@ -39,18 +42,25 @@ func Setup(
 	api := app.Group("/api", *fzlog)
 
 	var (
-		mStor     *models.MemberStorage
+		mStor     member.MemberStorer
 		rStor     *models.RatingStorage
 		mediaStor *models.MediaStorage
 	)
 
-	mStor = models.NewMemberStorage(dbConn, logger, conf)
+	switch conf.Engine {
+	case "postgres", "sqlite", "mariadb":
+		mStor = member.NewSQLStorage(dbConn, logger, conf)
+	case "neo4j":
+		mStor = member.NewNeo4jStorage(*neo4jConn, logger, conf)
+	default:
+		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
+	}
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
 	authSvc := auth.NewService(conf, mStor, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := members.NewController(mStor, logger)
+	memberSvc := memberCtrl.NewController(mStor, logger, conf)
 	mediaCon := media.NewController(*mediaStor)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	sc := controllers.NewSearchController(dbConn)
@@ -71,11 +81,11 @@ func Setup(
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	member := api.Group("/members")
-	member.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
-	member.Post("/register", authSvc.Register)
-	member.Get("/:id", memberSvc.GetMember)
-	member.Get("/:nickname/info", memberSvc.GetMemberByNick)
+	members := api.Group("/members")
+	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	members.Post("/register", authSvc.Register)
+	members.Get("/:id", memberSvc.GetMember)
+	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
 
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 

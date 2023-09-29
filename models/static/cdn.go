@@ -1,4 +1,4 @@
-package models
+package static
 
 import (
 	"context"
@@ -29,7 +29,7 @@ type (
 		Alt       sql.NullString `json:"alt" db:"alt"`
 	}
 
-	StaticStorage struct {
+	Storage struct {
 		db  *sqlx.DB
 		Log *zerolog.Logger
 	}
@@ -75,14 +75,14 @@ func saveThumbToFile(thumb *image.Image, outPath string) (string, error) {
 	return outPath, nil
 }
 
-func (ss *StaticStorage) AddVideo(v *Video) error {
+func (s *Storage) AddVideo(v *Video) error {
 	thumb, err := generateThumbnail(v.Source)
 	if err != nil {
 		return fmt.Errorf("error adding video: %w", err)
 	}
-	ss.Log.Info().Msgf("Generated thumbnail for video %s, \nPath: %s", v.Source, thumb)
+	s.Log.Info().Msgf("Generated thumbnail for video %s, \nPath: %s", v.Source, thumb)
 
-	_, err = ss.db.ExecContext(context.Background(), `INSERT INTO cdn.videos (source, thumbnail, alt)
+	_, err = s.db.ExecContext(context.Background(), `INSERT INTO cdn.videos (source, thumbnail, alt)
 		VALUES ($1, $2, $3)`, v.Source, thumb, v.Alt)
 	if err != nil {
 		return fmt.Errorf("error adding video: %w", err)
