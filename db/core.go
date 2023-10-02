@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j/config"
 	"github.com/samber/lo"
 
 	"github.com/avast/retry-go/v4"
@@ -75,6 +77,17 @@ func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+func ConnectNeo4j(conf *cfg.Config) (neo4j.DriverWithContext, error) {
+	dsn := fmt.Sprintf("bolt://%s:%d",
+		conf.Host, conf.Port)
+	auth := neo4j.BasicAuth(conf.User, conf.Password, "")
+	neo4jConf := func(cf *config.Config) {
+		cf.TelemetryDisabled = true
+	}
+	return neo4j.NewDriverWithContext(dsn,
+		auth, neo4jConf)
 }
 
 func launch(conf *cfg.Config) error {
@@ -227,7 +240,39 @@ func InitDB(conf *cfg.Config, noSubProcess bool) error {
 	if err != nil {
 		return err
 	}
+	err = bootstrap.Roles(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.MediaCreators(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.PeopleMeta(ctx, db)
+	if err != nil {
+		return err
+	}
 	err = bootstrap.Media(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.CreatorGroups(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.AlbumArtists(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Studio(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Books(ctx, db)
+	if err != nil {
+		return err
+	}
+	err = bootstrap.Cast(ctx, db)
 	if err != nil {
 		return err
 	}

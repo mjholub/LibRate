@@ -96,9 +96,8 @@ func TestConnect(t *testing.T) {
 
 // TestInitDB bootstraps, then cleans up on the test database
 func TestInitDB(t *testing.T) {
-	os.Setenv("LIBRATE_ENV", "test")
-	config, err := cfg.LoadConfig().Get()
-	assert.NoError(t, err)
+	config := cfg.TestConfig
+
 	require.Equal(t, config.Database, "librate_test")
 	defer func(conf *cfg.Config) {
 		if os.Getenv("CLEANUP_TEST_DB") == "0" {
@@ -107,6 +106,7 @@ func TestInitDB(t *testing.T) {
 		database := conf.DBConfig
 		dsn := db.CreateDsn(&database)
 		var cleanTables *sqlx.DB
+		var err error
 		cleanTables, err = sqlx.Open("postgres", dsn)
 		assert.NoError(t, err)
 		defer cleanTables.Close()
@@ -116,7 +116,11 @@ func TestInitDB(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS places CASCADE;")
 		assert.NoError(t, err)
-	}(config)
-	err = db.InitDB(config, true)
+		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS media CASCADE;")
+		assert.NoError(t, err)
+		_, err = cleanTables.Exec("DROP SCHEMA IF EXISTS people CASCADE;")
+		assert.NoError(t, err)
+	}(&config)
+	err := db.InitDB(&config, true)
 	require.NoError(t, err)
 }

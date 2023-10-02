@@ -6,13 +6,13 @@ import (
 	"time"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 	"github.com/gofiber/fiber/v2"
 )
 
 // UpdateMember handles the updating of user information
 func (mc *MemberController) UpdateMember(c *fiber.Ctx) error {
-	var input models.MemberInput
+	var input member.Input
 	err := json.Unmarshal(c.Body(), &input)
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid input")

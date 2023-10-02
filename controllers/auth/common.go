@@ -12,7 +12,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 type (
@@ -37,7 +37,7 @@ type (
 	Service struct {
 		conf *cfg.Config
 		log  *zerolog.Logger
-		ms   *models.MemberStorage
+		ms   member.MemberStorer
 	}
 
 	// RegLoginInput is an union (feature introduced in Go 1.18) of RegisterInput and LoginInput
@@ -46,7 +46,7 @@ type (
 	}
 
 	Validator interface {
-		Validate() (*models.MemberInput, error)
+		Validate() (*member.Input, error)
 	}
 )
 
@@ -54,7 +54,7 @@ type (
 // and returns a pointer to it
 // It should be used within the routes package
 // where the db connection and config are passed from the main package
-func NewService(conf *cfg.Config, ms *models.MemberStorage, log *zerolog.Logger) *Service {
+func NewService(conf *cfg.Config, ms member.MemberStorer, log *zerolog.Logger) *Service {
 	return &Service{conf, log, ms}
 }
 
@@ -99,7 +99,7 @@ func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 }
 
 // cleanRegInput cleans the input from non-ASCII and unsafe characters
-func cleanInput(input *models.MemberInput) *models.MemberInput {
+func cleanInput(input *member.Input) *member.Input {
 	input.MemberName = strings.TrimSpace(input.MemberName)
 	re := regexp.MustCompile("[^a-zA-Z0-9]+")
 	mailRe := regexp.MustCompile("[^a-zA-Z0-9@.]+")

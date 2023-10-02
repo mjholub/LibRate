@@ -9,12 +9,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/django/v3"
 	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/models/member"
 
 	"codeberg.org/mjh/LibRate/controllers/members"
-	"codeberg.org/mjh/LibRate/models"
 	"codeberg.org/mjh/LibRate/routes"
 )
 
@@ -42,9 +43,10 @@ func setupNoscript() (*fiber.App, error) {
 }
 
 func routeNoScript(app *fiber.App,
-	db *sqlx.DB,
+	sqlDriver *sqlx.DB,
 	log *zerolog.Logger,
 	conf *cfg.Config,
+	neo4jDriver neo4j.DriverWithContext,
 ) error {
 	latestTag, err := getLatestTag()
 	if err != nil {
@@ -57,8 +59,19 @@ func routeNoScript(app *fiber.App,
 		})
 	})
 
-	mStorage := models.NewMemberStorage(db, log, conf)
-	memberCon := members.NewController(mStorage, log)
+	// setup member storage
+	var mStorage member.MemberStorer
+	switch conf.Engine {
+	// note that only postgres is actually supported currently
+	case "postgres", "mariadb", "sqlite":
+		mStorage = member.NewSQLStorage(sqlDriver, log, conf)
+	case "neo4j":
+		mStorage = member.NewNeo4jStorage(neo4jDriver, log, conf)
+	default:
+		return fmt.Errorf("unsupported database engine: %s", conf.Engine)
+	}
+
+	memberCon := members.NewController(mStorage, log, conf)
 
 	app.Get("/profiles/:nick", func(c *fiber.Ctx) error {
 		member := memberCon.GetMemberByNick(c)
