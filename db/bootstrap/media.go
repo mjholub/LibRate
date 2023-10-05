@@ -12,20 +12,14 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err = connection.ExecContext(ctx, `
-		CREATE SCHEMA IF NOT EXISTS media;`,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create media schema: %w", err)
-		}
 		mediaKinds := []string{"album", "track", "film", "tv_show", "book", "anime", "manga", "comic", "game"}
-		err = createEnumType(ctx, connection, "kind", "media", mediaKinds...)
+		err := createEnumType(ctx, connection, "kind", "media", mediaKinds...)
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
 		}
 		_, err = connection.ExecContext(ctx,
 			`CREATE TABLE IF NOT EXISTS media.media (
-	id uuid NOT NULL DEFAULT uuid_time_nextval(),
+	id uuid NOT NULL DEFAULT uuid_time_nextval(30,65536),
 	title varchar(255) NOT NULL,
 	"kind" media."kind" NOT NULL,
 	created timestamp NOT NULL DEFAULT now(),
@@ -141,7 +135,7 @@ func bootstrapMediaImages(ctx context.Context, connection *sqlx.DB) (err error) 
 func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
 	_, err = connection.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.albums (
-			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
+			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_time_nextval(30,65536),
 			name VARCHAR(255) NOT NULL,
 			release_date TIMESTAMP NOT NULL,
 			duration TIME NOT NULL

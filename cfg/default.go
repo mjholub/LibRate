@@ -34,15 +34,17 @@ var (
 	// TestConfig is a convenience config for testing, so that the test functions are terser, avoiding unnecessary repetition.
 	TestConfig = Config{
 		DBConfig: DBConfig{
-			Engine:   "postgres",
-			Host:     "localhost",
-			Port:     uint16(5432),
-			Database: "librate_test",
-			User:     "postgres",
-			Password: "postgres",
-			SSL:      "disable",
-			PGConfig: "/usr/bin/pg_config",
-			StartCmd: "skip",
+			Engine:             "postgres",
+			Host:               "localhost",
+			Port:               uint16(5432),
+			Database:           "librate_test",
+			User:               "postgres",
+			Password:           "postgres",
+			SSL:                "disable",
+			PGConfig:           "/usr/bin/pg_config",
+			StartCmd:           "skip",
+			AutoMigrate:        true,
+			ExitAfterMigration: false,
 		},
 		Fiber: FiberConfig{
 			Host:    "0.0.0.0",

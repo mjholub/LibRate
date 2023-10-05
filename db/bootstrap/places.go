@@ -12,13 +12,8 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`
-		CREATE SCHEMA IF NOT EXISTS places;`)
-		if err != nil {
-			return fmt.Errorf("failed to create places schema: %w", err)
-		}
 		placeTypes := []string{"country", "city", "venue", "other"}
-		err = createEnumType(ctx, db, "place_kind", "places", placeTypes...)
+		err := createEnumType(ctx, db, "place_kind", "places", placeTypes...)
 		if err != nil {
 			return err
 		}

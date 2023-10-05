@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -26,22 +26,18 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	case "require", "verify-ca", "verify-full", "disable":
 		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=%s",
 			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, dsn.SSL)
-		fmt.Println(data)
 		return data
 	case "prefer":
 		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=%s",
 			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, "require")
-		fmt.Println(data)
 		return data
 	case "unknown":
 		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
 			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
-		fmt.Println(data)
 		return data
 	default:
 		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=disable",
 			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
-		fmt.Println(data)
 		return data
 	}
 }
@@ -164,44 +160,20 @@ func launch(conf *cfg.Config) error {
 	return nil
 }
 
-func createUniversalExtension(db *sqlx.DB, extNames ...string) error {
+func createExtension(db *sqlx.DB, extName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	rows, err := db.QueryContext(ctx, `SELECT schema_name
-	FROM information_schema.schemata
-	WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema';`)
+	_, err := db.ExecContext(ctx,
+		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA public;`, extName))
 	if err != nil {
-		return fmt.Errorf("failed to query schema names: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var schemaName string
-		err = rows.Scan(&schemaName)
-		if err != nil {
-			return fmt.Errorf("failed to scan schema name: %w", err)
-		}
-		for i := range extNames {
-			_, err = db.ExecContext(ctx,
-				fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA %s;`, extNames[i], schemaName))
-			if err != nil {
-				return fmt.Errorf("failed to create extension %s in schema %s: %w", extNames[i], schemaName, err)
-			}
-		}
-	}
-
-	if err = rows.Err(); err != nil {
-		return fmt.Errorf("failed to iterate over schema names: %w", err)
+		return fmt.Errorf("failed to create extension %s: %w", extName, err)
 	}
 
 	return nil
 }
 
-func InitDB(conf *cfg.Config, noSubProcess bool) error {
-	exit := flag.Bool("exit", false, "Exit after running migrations")
-	flag.Parse()
-	if *exit {
+func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool) error {
+	if exitAfter {
 		// nolint:revive
 		defer func() {
 			fmt.Println("Database initialized. Exiting...")
@@ -220,10 +192,28 @@ func InitDB(conf *cfg.Config, noSubProcess bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to create public schema: %w", err)
 	}
-	// set up the extensions
-	if err = createUniversalExtension(db, "pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"); err != nil {
-		return fmt.Errorf("failed to create database extensions: %w", err)
+	err = bootstrap.Schemas(ctx, db)
+	if err != nil {
+		return err
 	}
+	// set up the extensions
+	var mu sync.Mutex
+	errChan := make(chan error)
+	mu.Lock()
+	extNames := []string{"pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"}
+	for i := range extNames {
+		go func(i int) {
+			errChan <- createExtension(db, extNames[i])
+		}(i)
+	}
+	for i := 0; i < len(extNames); i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	close(errChan)
+	mu.Unlock()
 	err = bootstrap.CDN(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create cdn tables: %w", err)

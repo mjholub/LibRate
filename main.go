@@ -34,6 +34,8 @@ func main() {
 	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
 		"Skips calling the built-in database health check. Useful for containers with external databases, where pg_isready is used instead.")
 	configFile := flag.String("config", "config.yml", "Path to config file")
+	path := flag.String("path", "db/migrations", "Path to migrations")
+	exit := flag.Bool("exit", false, "Exit after running migrations")
 	flag.Parse()
 
 	// TODO: get logging config from config file
@@ -74,13 +76,13 @@ func main() {
 			log.Warn().
 				Msgf("Database not running on port %d.", conf.Port)
 		}
-		if err = initDB(conf, *NoDBSubprocess, &log); err != nil {
+		if err = initDB(conf, *NoDBSubprocess, *exit, &log); err != nil {
 			log.Fatal().Err(err).Msg("Failed to initialize database")
 		}
 	}
 
 	if lo.Contains(os.Args, "migrate") {
-		if err = db.Migrate(conf); err != nil {
+		if err = db.Migrate(conf, *path); err != nil {
 			log.Panic().Err(err).Msg("Failed to migrate database")
 		}
 		log.Info().Msg("Database migrated")
@@ -220,11 +222,11 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 	return fiberlog
 }
 
-func initDB(conf *cfg.Config, noSubprocess bool, logger *zerolog.Logger) error {
+func initDB(conf *cfg.Config, noSubprocess, exitAfter bool, logger *zerolog.Logger) error {
 	// retry connecting to database
 	err := retry.Do(
 		func() error {
-			return db.InitDB(conf, noSubprocess)
+			return db.InitDB(conf, noSubprocess, exitAfter)
 		},
 		retry.Attempts(5),
 		retry.Delay(3*time.Second), // Delay between retries

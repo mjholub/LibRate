@@ -24,4 +24,4 @@ RUN just copy_libs tidy build_frontend && \
 # initialize the database, don't launch the database subprocess and rely solely on pg_isready, run the migrations
 
 EXPOSE 3000
-CMD ["/app/bin/librate", "migrate", "-auto", "-no-db-subprocess", "-hc-extern", "-init", "--config", "/app/config.yml"]
+CMD ["/app/bin/librate", "migrate", "-no-db-subprocess", "-hc-extern", "-init", "--config", "/app/config.yml"]

@@ -16,6 +16,8 @@ database:
     password: "postgres"
     SSL: "disable"
     startCmd: "skip"
+    autoMigrate: true
+    exitAfterMigration: false 
 redis:
   host: "redis"
   port: 6379

@@ -12,12 +12,6 @@ func Review(ctx context.Context, connection *sqlx.DB) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err = connection.ExecContext(ctx, `
-		CREATE SCHEMA IF NOT EXISTS reviews;`,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create reviews schema: %w", err)
-		}
 		_, err = connection.ExecContext(ctx, ` 
 		CREATE TABLE IF NOT EXISTS reviews.ratings (
 		id BIGSERIAL PRIMARY KEY,

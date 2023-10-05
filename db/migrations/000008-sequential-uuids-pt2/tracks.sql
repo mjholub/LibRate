@@ -1,4 +1,4 @@
-ALTER TABLE media.tracks ALTER COLUMN media_id SET DEFAULT reviews.uuid_time_nextval();
+ALTER TABLE media.tracks ALTER COLUMN media_id SET DEFAULT uuid_time_nextval();
 ALTER TABLE media.tracks
 ADD CONSTRAINT fk_tracks_album
 FOREIGN KEY ("album")
