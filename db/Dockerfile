@@ -15,14 +15,6 @@ RUN apk update && \
   postgresql15-contrib
 
 
-USER postgres
-
-# Bootstrap the database
-RUN initdb -D /var/lib/postgresql/data && \
-  pg_ctl -D /var/lib/postgresql/data -l /var/lib/postgresql/data/logfile start && \
-  createdb -U postgres librate && \
-  createdb -U postgres librate_test 
-
 USER root
 
 # install the 'sequential-uuids' extension

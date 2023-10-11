@@ -3,7 +3,7 @@ fiber:
   port: 3000
   staticDir: "./static"
   prefork: false
-  reduceMemUsage: true 
+  reduceMemUsage: true
   powInterval: 300
   powDifficulty: 30000
 secret: "librate-secret-key"
@@ -25,7 +25,7 @@ redis:
   password: ""
   database: 0
 logging:
-    level: "info"
-    output: "stdout"
-    format: "json"
+  level: "info"
+  output: "stdout"
+  format: "json"
 librateEnv: "dev"

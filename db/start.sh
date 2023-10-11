@@ -1,7 +1,11 @@
 #!/usr/bin/sh
 
-initdb -D /var/lib/postgresql/data &&
-	createdb -U postgres librate &&
+if test ! -d /var/lib/postgresql/data; then
+	mkdir -p /var/lib/postgresql/data
+	chown -R postgres:postgres /var/lib/postgresql/data
+	initdb -D /var/lib/postgresql/data
+fi
+createdb -U postgres librate &&
 	createdb -U portgres test_librate &&
 	pg_ctl -D /var/lib/postgresql/data -o "-c listen_addresses='localhost'" -l /var/lib/postgresql/logfile start &&
 	psql -U postgres -d librate -c "CREATE EXTENSION IF NOT EXISTS \"sequential-uuids\""
