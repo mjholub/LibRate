@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -14,9 +14,7 @@ services:
       - db
       - redis
     ports:
-      - target: 3000
-        published: 3000 
-        protocol: tcp
+      - "3000:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:3000/api/health"]
       interval: 10s
@@ -25,8 +23,7 @@ services:
   db:
     restart: always
     build:
-      context: db
-      dockerfile: Dockerfile
+      context: ./db
     ports:
       - 5432:5432
     shm_size: 256mb
@@ -36,9 +33,9 @@ services:
       timeout: 5s
       retries: 5
     environment:
-      - 'POSTGRES_DB=librate'
-      - 'POSTGRES_USER=postgres'
-      - 'POSTGRES_PASSWORD=postgres'
+      - "POSTGRES_DB=librate"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
     volumes:
       - pg-data:/var/lib/postgresql/data
   redis:
