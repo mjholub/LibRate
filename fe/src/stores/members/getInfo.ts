@@ -15,11 +15,13 @@ const memberInfo: Member = {
   homepage: null,
   regdate: 0,
   roles: [],
+  visibility: "private",
 };
 
 interface MemberStore extends Writable<Member> {
   getMemberByNick: (nick: string) => Promise<Member>;
-  getMemberByID: (id: number) => Promise<Member>;
+  getMemberIDByNick: (nick: string) => Promise<number>;
+  //getMemberByID: (id: number) => Promise<Member>;
 }
 
 function createMemberStore(): MemberStore {
@@ -36,11 +38,19 @@ function createMemberStore(): MemberStore {
       console.debug('memberStore.getMemberByNick', member);
       return member;
     },
-    getMemberByID: async (id: number) => {
-      const res = await fetch(`/api/members/${id}`);
+    getMemberIDByNick: async (nick: string) => {
+      const res = await fetch(`/api/members/id/${nick}`);
+      res.ok || console.error(res.statusText);
       const member = await res.json();
+      console.debug('memberStore.getMemberIDByNick', member);
       return member;
-    }
+    },
+    /* getMemberByID: async (id: number) => {
+       const res = await fetch(`/api/members/${id}`);
+       const member = await res.json();
+       return member;
+     }
+     */
   };
 }
 

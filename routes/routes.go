@@ -84,8 +84,8 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
 	members.Post("/register", authSvc.Register)
-	members.Get("/:id", memberSvc.GetMember)
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
+	members.Get("/id/:nickname", memberSvc.GetID)
 
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 
