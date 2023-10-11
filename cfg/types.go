@@ -7,7 +7,7 @@ type Config struct {
 	Fiber    FiberConfig `json:"fiber,omitempty" yaml:"fiber" mapstructure:"fiber"`
 	Secret   string      `json:"secret,omitempty" yaml:"secret" mapstructure:"secret"`
 	// default to production for security reasons
-	LibrateEnv string      `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librate_env"`
+	LibrateEnv string      `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv"`
 	Redis      RedisConfig `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 }
 

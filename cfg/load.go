@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"fmt"
+	"os"
 
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -24,9 +25,13 @@ func LoadFromFile(path string) (conf *Config, err error) {
 	if path == "" {
 		return LoadConfig().OrElse(&DefaultConfig), nil
 	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to get current working directory: %w", err)
+	}
 	loaded, err := parseRaw(path)
 	if err != nil {
-		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to parse config: %w", err)
+		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to parse config: %w. Current workdir: %s", err, cwd)
 	}
 	if err = mergo.Merge(conf, loaded); err != nil {
 		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to merge config structs: %w", err)
