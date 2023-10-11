@@ -47,6 +47,7 @@ function createMediaStore(): MediaStore {
     getMedia: async (mediaID: UUID) => {
       const response = await fetch(`/api/media/${mediaID}`);
       const media = await response.json();
+      console.log(media);
       update((state: MediaStoreState) => ({ ...state, ...media }));
     },
   };

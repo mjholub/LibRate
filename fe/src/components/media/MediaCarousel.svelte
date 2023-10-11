@@ -3,7 +3,6 @@
 	import { randomStore } from '$stores/media/getRandom.ts';
 	import { mediaImageStore } from '$stores/media/image.ts';
 	import { formatDuration } from '$stores/time/duration.ts';
-	import MediaCard from './MediaCard.svelte';
 	import AlbumCard from './AlbumCard.svelte';
 	import FilmCard from './FilmCard.svelte';
 	import type { MediaStoreState } from '$stores/media/media.ts';
@@ -220,23 +219,20 @@
 		mediaItems: (Album | Film | Track | Book)[],
 		subscriptions: (() => void)[]
 	) {
+		console.debug('staring mediaImageStore subscription');
+		let mediaImgStrSub = mediaImageStore.subscribe((data) => {
+			if (!data || data.mainImagePath === '') {
+				return;
+			}
+			if (data.mainImagePath) {
+				mediaImgPath = '.' + data.mainImagePath;
+			}
+		});
+
+		subscriptions.push(mediaImgStrSub);
+		console.debug('subscribed to mediaImageStore');
 		for (const mediaItem of mediaItems) {
-			console.debug('mediaItem: ', mediaItem);
 			await mediaImageStore.getImageByMedia(mediaItem.media_id);
-
-			console.debug('staring mediaImageStore subscription');
-			let mediaImgStrSub = mediaImageStore.subscribe((data) => {
-				if (!data || data.mainImagePath === '') {
-					return;
-				}
-				if (data.mainImagePath) {
-					mediaImgPath = '.' + data.mainImagePath;
-					console.debug('mediaImgPath: ', mediaImgPath);
-				}
-			});
-
-			subscriptions.push(mediaImgStrSub);
-			console.debug('subscribed to mediaImageStore');
 
 			const addCreators = (creatorArray: (Person | Group)[]) => {
 				for (const creator of creatorArray) {
@@ -309,7 +305,7 @@
 					{:else if isFilm(mediaItem)}
 						<FilmCard posterPath={mediaImgPath} film={mediaItem} />
 					{:else}
-						<MediaCard media={mediaItem} title={mediaItem.title} image={mediaImgPath} {creators} />
+						<div class="hidden" />
 					{/if}
 				</div>
 			{/each}
@@ -337,5 +333,8 @@
 		width: 30%;
 		height: 40%;
 		padding: 1em;
+	}
+	.hidden {
+		visibility: hidden;
 	}
 </style>

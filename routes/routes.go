@@ -91,7 +91,7 @@ func Setup(
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
-	media.Get("/:id/images", mediaCon.GetImagePaths)
+	media.Get("/:media_id/images", mediaCon.GetImagePaths)
 	media.Get("/:id", mediaCon.GetMedia)
 	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
 	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))

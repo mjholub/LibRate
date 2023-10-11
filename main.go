@@ -164,6 +164,7 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 		SkipURIs: []string{
 			"/_app/immutable",
 			"/_app/chunks",
+			"/_app/*",
 			"/profiles/_app",
 			"/_app/immutable/chunks/",
 		},
