@@ -1,9 +1,11 @@
 package members
 
 import (
-	"codeberg.org/mjh/LibRate/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+
+	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // MemberController allows for the retrieval of user information
@@ -19,11 +21,16 @@ type (
 
 	// MemberController is the controller for member endpoints
 	MemberController struct {
-		storage *models.MemberStorage
+		storage member.MemberStorer
 		log     *zerolog.Logger
+		conf    *cfg.Config
 	}
 )
 
-func NewController(storage *models.MemberStorage, logger *zerolog.Logger) *MemberController {
-	return &MemberController{storage: storage, log: logger}
+func NewController(
+	storage member.MemberStorer,
+	logger *zerolog.Logger,
+	conf *cfg.Config,
+) *MemberController {
+	return &MemberController{storage: storage, log: logger, conf: conf}
 }

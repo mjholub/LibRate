@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // In handles incoming messages, then routes them to the appropriate handler
@@ -41,7 +41,7 @@ func (fc *FedController) Follow(c *fiber.Ctx) error {
 	follows := activity.Object.GetLink()
 	fc.log.Info().Msgf("Follow request from %s to %s", actor, follows)
 
-	err := fc.members.RequestFollow(c.Context(), &models.FollowRequest{
+	err := fc.members.RequestFollow(c.Context(), &member.FollowRequest{
 		ActorID:   actor.String(),
 		FollowsID: follows.String(),
 	})

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,39 +12,22 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 )
 
-func Migrate(conf *cfg.Config) (err error) {
-	autoMigrate := flag.Bool("auto-migrate", false, "Automatically run migrations")
-	exit := flag.Bool("exit", false, "Exit after running migrations")
-	flag.Parse()
-
-	if *autoMigrate {
-		// run migrations	in db/migrations
-		if err = runMigrations(conf, true); err != nil {
+func Migrate(conf *cfg.Config, path string) error {
+	if conf.AutoMigrate || !conf.AutoMigrate {
+		if err := runMigrations(conf, path); err != nil {
 			return fmt.Errorf("failed to run migrations: %w", err)
 		}
-
-		if *exit {
+		if conf.ExitAfterMigration {
 			// nolint:revive
 			os.Exit(0)
 		}
-	}
-
-	if err != nil {
-		return err
 	}
 	return nil
 }
 
 // TODO: find use for the auto parameter or remove it
-func runMigrations(conf *cfg.Config, auto bool) error {
+func runMigrations(conf *cfg.Config, path string) error {
 	dbConn := CreateDsn(&conf.DBConfig)
-	path := flag.String("path", "db/migrations", "Path to migrations")
-	dsn := flag.String("database", dbConn, "Database connection string")
-	flag.Parse()
-
-	if *dsn != "" {
-		dbConn = *dsn
-	}
 
 	// connect to database
 	conn, err := sqlx.Connect("postgres", dbConn)
@@ -56,7 +38,7 @@ func runMigrations(conf *cfg.Config, auto bool) error {
 
 	// map of migration files and their queries
 	faultyQueries := make([]map[string]string, 0)
-	err = filepath.Walk(*path, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

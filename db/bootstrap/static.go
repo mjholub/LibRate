@@ -12,9 +12,7 @@ func CDN(ctx context.Context, db *sqlx.DB) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`
-		CREATE SCHEMA IF NOT EXISTS cdn;
-		CREATE TABLE IF NOT EXISTS cdn.images (
+		_, err := db.Exec(`CREATE TABLE IF NOT EXISTS cdn.images (
 			id BIGSERIAL PRIMARY KEY,
 			source VARCHAR(255) NOT NULL,
 			thumbnail VARCHAR(255) NOT NULL,

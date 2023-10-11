@@ -18,6 +18,8 @@ database:
     user: "postgres"
     password: "postgres"
     startCmd: "sudo systemctl start postgresql"
+    autoMigrate: true
+    exitAfterMigration: false
 redis:
   # same as database.host if you use docker-compose
   host: "localhost"

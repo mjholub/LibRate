@@ -17,6 +17,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
@@ -32,6 +34,8 @@ func main() {
 	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
 		"Skips calling the built-in database health check. Useful for containers with external databases, where pg_isready is used instead.")
 	configFile := flag.String("config", "config.yml", "Path to config file")
+	path := flag.String("path", "db/migrations", "Path to migrations")
+	exit := flag.Bool("exit", false, "Exit after running migrations")
 	flag.Parse()
 
 	// TODO: get logging config from config file
@@ -72,25 +76,39 @@ func main() {
 			log.Warn().
 				Msgf("Database not running on port %d.", conf.Port)
 		}
-		if err = initDB(conf, *NoDBSubprocess, &log); err != nil {
+		if err = initDB(conf, *NoDBSubprocess, *exit, &log); err != nil {
 			log.Fatal().Err(err).Msg("Failed to initialize database")
 		}
 	}
 
 	if lo.Contains(os.Args, "migrate") {
-		if err = db.Migrate(conf); err != nil {
+		if err = db.Migrate(conf, *path); err != nil {
 			log.Panic().Err(err).Msg("Failed to migrate database")
 		}
 		log.Info().Msg("Database migrated")
 	}
 
 	// Connect to database
-	dbConn, err := db.Connect(conf, *NoDBSubprocess)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
+	var (
+		dbConn    *sqlx.DB
+		neo4jConn neo4j.DriverWithContext
+	)
+	switch conf.Engine {
+	case "postgres", "mariadb", "sqlite":
+		dbConn, err = db.Connect(conf, *NoDBSubprocess)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to connect to database")
+		}
+		log.Info().Msg("Connected to database")
+		defer dbConn.Close()
+	case "neo4j":
+		neo4jConn, err = db.ConnectNeo4j(conf)
+		if err != nil {
+			log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
+		}
+	default:
+		log.Fatal().Err(err).Msgf("Unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	log.Info().Msg("Connected to database")
-	defer dbConn.Close()
 
 	fiberlog := setupLogger(&log)
 
@@ -115,7 +133,7 @@ func main() {
 	app.Mount("/profiles", profilesApp)
 	profilesApp.Use(fiberlog)
 	// redirect GET requests to /profiles/_app one directory up
-	err = routes.SetupProfiles(&log, conf, dbConn, profilesApp, &fiberlog)
+	err = routes.SetupProfiles(&log, conf, dbConn, &neo4jConn, profilesApp, &fiberlog)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup profiles routes")
 	}
@@ -126,7 +144,14 @@ func main() {
 	}
 	noscript.Use(fiberlog)
 	app.Mount("/noscript", noscript)
-	err = routeNoScript(noscript, dbConn, &log, conf)
+	switch conf.Engine {
+	case "postgres", "sqlite", "mariadb":
+		err = routeNoScript(noscript, dbConn, &log, conf, nil)
+	case "neo4j":
+		err = routeNoScript(noscript, nil, &log, conf, neo4jConn)
+	default:
+		log.Fatal().Err(err).Msgf("Unsupported database engine \"%q\" or error reading config", conf.Engine)
+	}
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to setup noscript routes")
 	}
@@ -137,7 +162,7 @@ func main() {
 	// CORS
 	setupCors(app)
 	// Setup routes
-	err = routes.Setup(&log, conf, dbConn, app, &fiberlog)
+	err = routes.Setup(&log, conf, dbConn, &neo4jConn, app, &fiberlog)
 	if err != nil {
 		dbConn.Close()
 		//nolint:gocritic // it warns about exiting after a defer statement, but we close the db connection first
@@ -197,11 +222,11 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 	return fiberlog
 }
 
-func initDB(conf *cfg.Config, noSubprocess bool, logger *zerolog.Logger) error {
+func initDB(conf *cfg.Config, noSubprocess, exitAfter bool, logger *zerolog.Logger) error {
 	// retry connecting to database
 	err := retry.Do(
 		func() error {
-			return db.InitDB(conf, noSubprocess)
+			return db.InitDB(conf, noSubprocess, exitAfter)
 		},
 		retry.Attempts(5),
 		retry.Delay(3*time.Second), // Delay between retries

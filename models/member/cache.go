@@ -1,11 +1,11 @@
-package models
+package member
 
 import (
 	"context"
 	"fmt"
 )
 
-func (s *MemberStorage) CacheNicknames(ctx context.Context) error {
+func (s *PgMemberStorage) CacheNicknames(ctx context.Context) error {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
@@ -24,7 +24,7 @@ func (s *MemberStorage) CacheNicknames(ctx context.Context) error {
 	return nil
 }
 
-func (s *MemberStorage) GetNicknames() []string {
+func (s *PgMemberStorage) GetNicknames() []string {
 	s.cacheMutex.RLock()
 	defer s.cacheMutex.RUnlock()
 

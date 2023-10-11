@@ -57,9 +57,8 @@ func MembersProfilePic(ctx context.Context, db *sqlx.DB) error {
 	default:
 		_, err := db.Exec(`
 			ALTER TABLE public.members
-			ADD CONSTRAINT members_profilepic_fkey FOREIGN KEY (profilepic)
+			ADD CONSTRAINT members_profilepic_fkey FOREIGN KEY (profilepic_id)
 			REFERENCES cdn.images(id);
-			);
 	`)
 		if err != nil {
 			return fmt.Errorf("failed to create images table: %w", err)
