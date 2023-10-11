@@ -10,7 +10,7 @@ import (
 	validator "github.com/wagslane/go-password-validator"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // Register handles the creation of a new user
@@ -49,7 +49,7 @@ func checkPasswordEntropy(password string) (entropy float64, err error) {
 	return validator.GetEntropy(password), validator.Validate(password, 50.0)
 }
 
-func (r RegisterInput) Validate() (*models.MemberInput, error) {
+func (r RegisterInput) Validate() (*member.Input, error) {
 	if r.Email == "" && r.MemberName == "" {
 		return nil, fmt.Errorf("email or nickname required")
 	}
@@ -67,7 +67,7 @@ func (r RegisterInput) Validate() (*models.MemberInput, error) {
 		return nil, err
 	}
 
-	return &models.MemberInput{
+	return &member.Input{
 		Email:      r.Email,
 		MemberName: r.MemberName,
 		Password:   r.Password,
@@ -102,7 +102,7 @@ func ValidatePassword() fiber.Handler {
 	}
 }
 
-func createMember(input *models.MemberInput) (*models.Member, error) {
+func createMember(input *member.Input) (*member.Member, error) {
 	in := cleanInput(input)
 
 	passhash, err := hashWithArgon(input.Password)
@@ -110,7 +110,7 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 		return nil, err
 	}
 
-	member := &models.Member{
+	member := &member.Member{
 		UUID:         uuid.Must(uuid.NewV4()).String(),
 		PassHash:     passhash,
 		MemberName:   in.MemberName,
@@ -122,7 +122,7 @@ func createMember(input *models.MemberInput) (*models.Member, error) {
 	return member, nil
 }
 
-func (a *Service) saveMember(member *models.Member) error {
+func (a *Service) saveMember(member *member.Member) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

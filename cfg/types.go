@@ -12,15 +12,17 @@ type Config struct {
 }
 
 type DBConfig struct {
-	Engine   string `yaml:"engine" default:"postgres"`
-	Host     string `yaml:"host" default:"localhost"`
-	Port     uint16 `yaml:"port" default:"5432"`
-	Database string `yaml:"database" default:"librate"`
-	User     string `yaml:"user" default:"postgres"`
-	Password string `yaml:"password,omitempty" default:"postgres"`
-	SSL      string `yaml:"SSL" default:"unknown"`
-	PGConfig string `yaml:"pgConfig,omitempty" default:"/usr/bin/pg_config"`
-	StartCmd string `yaml:"startCmd,omitempty" default:"sudo service postgresql start"`
+	Engine             string `yaml:"engine" default:"postgres"`
+	Host               string `yaml:"host" default:"localhost"`
+	Port               uint16 `yaml:"port" default:"5432"`
+	Database           string `yaml:"database" default:"librate"`
+	User               string `yaml:"user" default:"postgres"`
+	Password           string `yaml:"password,omitempty" default:"postgres"`
+	SSL                string `yaml:"SSL" default:"unknown"`
+	PGConfig           string `yaml:"pgConfig,omitempty" default:"/usr/bin/pg_config"`
+	StartCmd           string `yaml:"startCmd,omitempty" default:"sudo service postgresql start"`
+	AutoMigrate        bool   `yaml:"autoMigrate,omitempty" default:"true"`
+	ExitAfterMigration bool   `yaml:"exitAfterMigration,omitempty" default:"false"`
 }
 
 type RedisConfig struct {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/member"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"github.com/gofiber/fiber/v2"
@@ -37,7 +37,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 		validatedInput.Password,
 	)
 
-	member := models.Member{
+	member := member.Member{
 		ID:         0,
 		Email:      validatedInput.Email,
 		MemberName: validatedInput.MemberName,
@@ -68,7 +68,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	}
 }
 
-func (l LoginInput) Validate() (*models.MemberInput, error) {
+func (l LoginInput) Validate() (*member.Input, error) {
 	if l.Email == "" && l.MemberName == "" {
 		return nil, errors.New("email or nickname required")
 	}
@@ -77,7 +77,7 @@ func (l LoginInput) Validate() (*models.MemberInput, error) {
 		return nil, errors.New("password required")
 	}
 
-	return &models.MemberInput{
+	return &member.Input{
 		Email:      l.Email,
 		MemberName: l.MemberName,
 		Password:   l.Password,
@@ -97,8 +97,8 @@ func (a *Service) validatePassword(email, login, password string) error {
 }
 
 // TODO: move to a dedicated file?
-func (a *Service) createSession(c *fiber.Ctx, member *models.Member) error {
-	token, err := a.ms.CreateSession(c.Context(), *member)
+func (a *Service) createSession(c *fiber.Ctx, member *member.Member) error {
+	token, err := a.ms.CreateSession(c.Context(), member)
 	if err != nil {
 		return h.Res(c, http.StatusInternalServerError, "Internal server error")
 	}

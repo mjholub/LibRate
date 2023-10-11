@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -12,22 +13,47 @@ func People(ctx context.Context, db *sqlx.DB) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people", err)
+		}
+		defer tx.Rollback()
+
+		_, err = db.Exec(`
 			CREATE SCHEMA IF NOT EXISTS people;
 			SET search_path TO people, public;
 		`)
 		if err != nil {
 			return fmt.Errorf("failed to create people schema: %w", err)
 		}
-		peopleRoles := []string{
-			"actor", "director", "producer", "writer",
-			"composer", "artist", "author", "publisher", "editor", "photographer",
-			"illustrator", "narrator", "performer", "host", "guest", "other",
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
-		err = createEnumType(ctx, db, "roles", "people", peopleRoles...)
+		return nil
+	}
+}
+
+// Roles creates the people.roles enum type and the people.person table
+// Supported roles are:
+// actor, director, producer, writer, composer, artist, author, publisher, editor, photographer, illustrator, narrator, performer, host, guest, other
+func Roles(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.roles", err)
+		}
+		defer tx.Rollback()
+		var mu sync.Mutex
+		mu.Lock()
+		err = roleTypes(ctx, db)
 		if err != nil {
 			return err
 		}
+		mu.Unlock()
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.person (
 			id SERIAL PRIMARY KEY,
@@ -47,6 +73,117 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people table: %w", err)
 		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+		return nil
+	}
+}
+
+func roleTypes(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.role_types", err)
+		}
+		defer tx.Rollback()
+		peopleRoles := []string{
+			"actor", "director", "producer", "writer",
+			"composer", "artist", "author", "publisher", "editor", "photographer",
+			"illustrator", "narrator", "performer", "host", "guest", "other",
+		}
+		err = createEnumType(ctx, db, "role", "people", peopleRoles...)
+		if err != nil {
+			return err
+		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+		return nil
+	}
+}
+
+// MediaCreators creates the media.media_creators table
+func MediaCreators(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("media.media_creators", err)
+		}
+		defer tx.Rollback()
+		// junction table for additional media creators
+		_, err = db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS media.media_creators (
+			media_id UUID NOT NULL references media.media(id),
+			creator_id INTEGER NOT NULL references people.person(id),
+			PRIMARY KEY (media_id, creator_id)
+		);`)
+		if err != nil {
+			return fmt.Errorf("failed to create media creators table: %w", err)
+		}
+
+		_, err = db.ExecContext(ctx, `CREATE SEQUENCE media.media_creators_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;`)
+		if err != nil {
+			return fmt.Errorf("failed to create media creators sequence: %w", err)
+		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		err = mediaFkey(ctx, db)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func mediaFkey(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		_, err := db.ExecContext(ctx, `
+		ALTER TABLE media.media
+			ADD COLUMN IF NOT EXISTS creator int4
+			DEFAULT nextval('media.media_creators_seq'::regclass),
+			ADD CONSTRAINT media_creator_fkey FOREIGN KEY (creator) REFERENCES people.person(id);
+		`)
+		if err != nil {
+			return fmt.Errorf("failed to add foreign key constraints to media table: %w", err)
+		}
+		return nil
+	}
+}
+
+// PeopleMeta creates the tables that store the artists' photos and works
+func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.person", err)
+		}
+		defer tx.Rollback()
+
 		_, err = db.Exec(`
 			CREATE TABLE IF NOT EXISTS people.person_photos (
 				person_id SERIAL REFERENCES people.person(id),
@@ -65,14 +202,30 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people works table: %w", err)
 		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return nil
+	}
+}
+
+// CreatorGroups creates the people.group table and its associated tables
+func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.group", err)
+		}
+
+		defer tx.Rollback()
+
 		groupTypes := []string{"band", "orchestra", "choir", "ensemble", "troupe", "collective", "other"}
 		err = createEnumType(ctx, db, "group_kind", "people", groupTypes...)
-		if err != nil {
-			return err
-		}
-		_, err = db.Exec(`
-			CREATE TYPE people.group_kind AS ENUM (
-		);`)
 		if err != nil {
 			return fmt.Errorf("failed to create people group kind enum: %w", err)
 		}
@@ -86,7 +239,7 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			website VARCHAR(255),
 			kind people.group_kind,
 			added TIMESTAMP DEFAULT NOW() NOT NULL,
-			modified TIMESTAMP DEFAULT NOW()
+			modified TIMESTAMP DEFAULT NOW(),
 			wikipedia VARCHAR(255),
 			bandcamp VARCHAR(255),
 			soundcloud VARCHAR(255),
@@ -126,8 +279,7 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			CREATE TABLE IF NOT EXISTS people.group_genres (
 				group_id SERIAL REFERENCES people.group(id),
 				primary_genre_id SMALLINT REFERENCES media.genres(id),
-				secondary_genres SMALLINT[] REFERENCES media.genres(id),
-				PRIMARY KEY (group_id, genre_id)
+				PRIMARY KEY (group_id, primary_genre_id)
 			);`)
 		if err != nil {
 			return fmt.Errorf("failed to create people group genres table: %w", err)
@@ -141,6 +293,29 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people group works table: %w", err)
 		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return nil
+	}
+}
+
+// Studios creates the people.studio table and its associated tables
+// By studio we mean an entity that produces media, such as a film studio, a record label, a publishing house, etc.
+
+func Studio(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.studio", err)
+		}
+		defer tx.Rollback()
+
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.studio (
 			id SERIAL PRIMARY KEY,
@@ -175,17 +350,40 @@ func People(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people studio works table: %w", err)
 		}
 
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+		return nil
+	}
+}
+
+// Cast creates the people.cast table and its associated tables
+func Cast(ctx context.Context, db *sqlx.DB) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			return txErr("people.cast", err)
+		}
+		defer tx.Rollback()
+
 		_, err = db.Exec(`
 CREATE TABLE IF NOT EXISTS people.cast (
   id BIGSERIAL PRIMARY KEY,
   media_id uuid NOT NULL REFERENCES media.media(id),
   actors INTEGER[] NOT NULL,
   directors INTEGER[] NOT NULL
-);
 );`)
 		if err != nil {
 			return fmt.Errorf("failed to create people cast table: %w", err)
 		}
+
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
 		errChan := make(chan error)
 		// don't defer closing the channel, let the GC handle it
 		defer func() {
@@ -225,4 +423,8 @@ FOR EACH ROW EXECUTE FUNCTION check_actor_director_roles();
 	}
 
 	return nil
+}
+
+func txErr(table string, err error) error {
+	return fmt.Errorf("failed to create %s schema/table: %w", table, err)
 }

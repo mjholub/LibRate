@@ -1,7 +1,9 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{{typeName}}') THEN
+  BEGIN 
         CREATE TYPE {{schema}}.{{typeName}} AS ENUM ({{enum_values}});
-    END IF;
-END
-$$;
+EXCEPTION
+        WHEN duplicate_object THEN
+          RAISE EXCEPTION 'type_exists';
+    END;
+END $$;
