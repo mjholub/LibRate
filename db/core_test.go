@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -104,7 +105,8 @@ func TestInitDB(t *testing.T) {
 		err := DBTearDown(config)
 		require.NoError(t, err)
 	}(&config)
-	err := InitDB(&config, true, false)
+	log := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	err := InitDB(&config, true, false, &log)
 	require.NoError(t, err)
 }
 

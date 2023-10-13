@@ -38,14 +38,18 @@ function createRandomStore(): RandomStore {
         const mediaData = responseData.data;
         const mediaTypes = determineMediaTypes(mediaData);
 
-        // filter media data by type
-        //const albums = mediaData.filter((media) => media.media_id && media.album_artists);
+        const processedMediaData = mediaData.map((media: any) => {
+          const kind = media.kind;
+          const details = media.details;
+
+          return { kind, ...details };
+        });
 
         mediaTypes.forEach((mediaType) => {
           set({
             ...initialRandomState,
             mediaType,
-            [mediaType.toLowerCase()]: mediaData,
+            [mediaType.toLowerCase()]: processedMediaData,
             isLoading: false,
           });
         });

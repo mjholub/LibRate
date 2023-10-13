@@ -1,5 +1,5 @@
 import type { Person, Group } from './people';
-import type { Genre, Media } from './media';
+import type { Genre, Media, Keyword } from './media';
 import type { UUID, NullableDuration } from './utils';
 
 export interface Album extends Media {
@@ -10,7 +10,7 @@ export interface Album extends Media {
   release_date: Date | string | null;
   genres?: Genre[];
   //  studio?: Studio;
-  keywords?: string[];
+  keywords?: Keyword[];
   duration: NullableDuration | null;
   tracks: Track[];
   //languages?: string[];

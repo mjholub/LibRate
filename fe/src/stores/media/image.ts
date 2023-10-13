@@ -11,7 +11,7 @@ interface MediaImageStoreState {
 };
 
 interface MediaImageStore extends Writable<MediaImageStoreState> {
-  getImageByMedia: (mediaID: UUID) => Promise<void>;
+  getImageByMedia: (media_id: UUID) => Promise<void>;
   setMainImage: (image: MediaImage) => void;
 };
 
@@ -33,8 +33,8 @@ function createMediaImageStore() {
     update,
     reset: () => set(initialState),
 
-    getImageByMedia: async (mediaID: UUID) => {
-      const response = await fetch(`/api/media/${mediaID}/images`);
+    getImageByMedia: async (media_id: UUID) => {
+      const response = await fetch(`/api/media/${media_id}/images`);
       const image = await response.text();
       update((state: MediaImageStoreState) => ({ ...state, mainImagePath: image }));
     },

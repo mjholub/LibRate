@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -12,21 +13,22 @@ func Schemas(ctx context.Context, db *sqlx.DB) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		fmt.Println("Creating schemes...")
-		errChan := make(chan error)
+		fmt.Println("Creating schemas...")
+		var wg sync.WaitGroup
 		schemaNames := []string{"media", "people", "places", "reviews", "cdn", "members"}
 		for i := range schemaNames {
+			wg.Add(1)
 			go func(i int) {
-				errChan <- createSchema(ctx, schemaNames[i], db)
+				defer wg.Done()
+				err := createSchema(ctx, schemaNames[i], db)
+				if err != nil {
+					fmt.Printf("Error creating schema %s: %v\n", schemaNames[i], err)
+				} else {
+					fmt.Printf("Created schema %s\n", schemaNames[i])
+				}
 			}(i)
 		}
-		for i := 0; i < len(schemaNames); i++ {
-			err = <-errChan
-			if err != nil {
-				return err
-			}
-		}
-		close(errChan)
+		wg.Wait()
 
 		return nil
 	}

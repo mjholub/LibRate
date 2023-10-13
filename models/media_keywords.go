@@ -13,7 +13,7 @@ import (
 
 type (
 	Keyword struct {
-		ID         int32           `json:"_key" db:"id,pk"`
+		ID         int32           `json:"id" db:"id,pk"`
 		Keyword    string          `json:"keyword" db:"keyword"`
 		TotalStars int32           `json:"stars" db:"total_stars"`
 		VoteCount  int32           `json:"vote_count" db:"vote_count"`

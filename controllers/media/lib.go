@@ -75,7 +75,7 @@ func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	mediaID, err := uuid.FromString(c.Params("id"))
+	mediaID, err := uuid.FromString(c.Params("media_id"))
 	if err != nil {
 		return handleBadRequest(mc.storage.Log, c, "Invalid media ID")
 	}
@@ -96,7 +96,7 @@ func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
 }
 
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msgf("Failed to parse media ID %s", c.Params("id"))
+	log.Error().Msgf("Failed to parse media ID %s", c.Params("media_id"))
 	return h.Res(c, fiber.StatusBadRequest, message)
 }
 

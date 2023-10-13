@@ -90,3 +90,11 @@ func lookForExisting(configLocations []string) (string, error) {
 
 	return result.Path, result.Err
 }
+
+// FileExists checks whether the config file exists. It is useful for the fallback mechanism of using default config
+func FileExists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+	return false
+}

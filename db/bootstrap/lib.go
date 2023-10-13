@@ -65,12 +65,14 @@ func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, v
 	_, err = sqlx.LoadFileContext(ctx, db, tempFile.Name())
 	if err != nil {
 		pgErr, ok := err.(*pq.Error)
-		// skip if the type already exists
-		if ok && pgErr.Code == "42710" {
+		// skip if the type already exists (we're using a custom exception)
+		// TODO: check if we can get rid of an external PL/pgSQL and just check here
+		// if the pgErr.Code == "42P07" || pgErr.Code == "42710"
+		if ok && pgErr.Error() == "pq: type_exists" {
 			return nil
 		}
 		return fmt.Errorf(
-			"failed to create ENUM type %s on schema %s: %w", typeName, schema, err)
+			"failed to create ENUM type %s on schema %s: %s", typeName, schema, pgErr.Error())
 	}
 
 	return nil
