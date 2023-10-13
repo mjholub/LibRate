@@ -26,4 +26,4 @@ USER librate:librate
 # initialize the database, don't launch the database subprocess and rely solely on pg_isready, run the migrations
 
 EXPOSE 3000
-CMD ["/app/bin/librate", "migrate", "-no-db-subprocess", "-hc-extern", "-init", "-config", "/app/data/config.yml"]
+CMD ["/app/bin/librate", "-no-db-subprocess", "-hc-extern", "-init", "migrate", "-config", "/app/data/config.yml"]

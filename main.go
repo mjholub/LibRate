@@ -49,11 +49,8 @@ func main() {
 	}
 
 	// database first-run initialization
-	dbRunning := lo.TernaryF(ExternalDBHealthCheck == nil || !*ExternalDBHealthCheck,
-		func() bool { return DBRunning(conf.Port) },
-		func() bool { return true },
-	)
-
+	// If the healtheck is to be handled externally, skip it
+	dbRunning := DBRunning(*ExternalDBHealthCheck, conf.Port)
 	dbConn, neo4jConn, err := connectDB(conf, *NoDBSubprocess)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
@@ -71,9 +68,9 @@ func main() {
 	}()
 
 	if *init {
-		if dbRunning || *ExternalDBHealthCheck {
+		if !dbRunning {
 			log.Warn().
-				Msgf("Database not running on port %d.", conf.Port)
+				Msgf("Database not running on port %d. Not initializing.", conf.Port)
 		}
 		if err = initDB(conf, *NoDBSubprocess, *exit, &log); err != nil {
 			log.Panic().Err(err).Msg("Failed to initialize database")
@@ -176,12 +173,12 @@ func initDB(conf *cfg.Config, noSubprocess, exitAfter bool, logger *zerolog.Logg
 	// retry connecting to database
 	err := retry.Do(
 		func() error {
-			return db.InitDB(conf, noSubprocess, exitAfter)
+			return db.InitDB(conf, noSubprocess, exitAfter, logger)
 		},
 		retry.Attempts(5),
 		retry.Delay(3*time.Second), // Delay between retries
-		retry.OnRetry(func(n uint, _ error) {
-			logger.Info().Msgf("Attempt %d failed; retrying...", n)
+		retry.OnRetry(func(n uint, err error) {
+			logger.Info().Msgf("Attempt %d in initDB() failed: %v; retrying...", n, err)
 		}),
 	)
 	if err != nil {
@@ -209,7 +206,10 @@ func setupCors(apps []*fiber.App) {
 	}
 }
 
-func DBRunning(port uint16) bool {
+func DBRunning(skipCheck bool, port uint16) bool {
+	if skipCheck {
+		return true
+	}
 	conn, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		return true // port in use => db running
