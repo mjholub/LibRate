@@ -7,9 +7,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	uuid "github.com/gofrs/uuid/v5"
-	validator "github.com/wagslane/go-password-validator"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
@@ -45,10 +45,6 @@ func (a *Service) Register(c *fiber.Ctx) error {
 	})
 }
 
-func checkPasswordEntropy(password string) (entropy float64, err error) {
-	return validator.GetEntropy(password), validator.Validate(password, 50.0)
-}
-
 func (r RegisterInput) Validate() (*member.Input, error) {
 	if r.Email == "" && r.MemberName == "" {
 		return nil, fmt.Errorf("email or nickname required")
@@ -62,7 +58,7 @@ func (r RegisterInput) Validate() (*member.Input, error) {
 		return nil, fmt.Errorf("passwords do not match")
 	}
 
-	_, err := checkPasswordEntropy(r.Password)
+	_, err := redist.CheckPasswordEntropy(r.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +84,7 @@ func ValidatePassword() fiber.Handler {
 		}
 
 		// Validate the password
-		entropy, err := checkPasswordEntropy(input.Password)
+		entropy, err := redist.CheckPasswordEntropy(input.Password)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": fmt.Sprintf("password too weak: want entropy > %f, got %f", minEntropy, entropy),

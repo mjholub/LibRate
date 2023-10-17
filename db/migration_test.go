@@ -98,7 +98,6 @@ func TestRunMigrations(t *testing.T) {
 				conn, err := Connect(&config, true)
 				require.NoErrorf(t, err, "Error connecting to database: %v", err)
 				defer conn.Close()
-				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 				// create a test member so that fkey constraints are satisfied
 				ms := member.NewSQLStorage(conn, &log, &config)
