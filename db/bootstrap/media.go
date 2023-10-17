@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
@@ -48,7 +49,15 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 				ADD CONSTRAINT genres_parent_fkey FOREIGN KEY (parent) REFERENCES media.genres(id)
 		`)
 		if err != nil {
-			return fmt.Errorf("failed to add foreign key constraints to media genres table: %w", err)
+			pqErr, ok := err.(*pq.Error)
+			if !ok {
+				return fmt.Errorf("error occurred while adding foreign key constraints to media genres table: %w", err)
+			}
+
+			// Check if the error code indicates a duplicate constraint
+			if pqErr.Code.Name() != "duplicate_object" {
+				return fmt.Errorf("failed to add foreign key constraints to media genres table: %w", err)
+			}
 		}
 
 		return nil
@@ -191,7 +200,7 @@ func albumTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 
 func AlbumArtists(ctx context.Context, connection *sqlx.DB) (err error) {
 	_, err = connection.ExecContext(ctx, `	
-	CREATE TABLE media.album_artists (
+	CREATE TABLE IF NOT EXISTS media.album_artists (
     album uuid NOT NULL,
     person_artist int4,
     group_artist int4,

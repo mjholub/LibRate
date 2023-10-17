@@ -40,7 +40,8 @@ func TestRunMigrations(t *testing.T) {
 					err := DBTearDown(config)
 					require.NoError(t, err)
 				}(&config)
-				err := InitDB(&config, true, false)
+				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
+				err := InitDB(&config, true, false, &log)
 				require.NoError(t, err)
 				err = Migrate(&config, *path)
 				require.NoError(t, err)
@@ -81,8 +82,9 @@ func TestRunMigrations(t *testing.T) {
 					err := DBTearDown(config)
 					require.NoError(t, err)
 				}(&config)
+				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
 				mu.Lock()
-				err := InitDB(&config, true, false)
+				err := InitDB(&config, true, false, &log)
 				require.NoError(t, err)
 				mu.Unlock()
 				err = flag.Set("path", "migrations/000001-fix-missing-timestamps/reviews.sql")
@@ -96,7 +98,6 @@ func TestRunMigrations(t *testing.T) {
 				conn, err := Connect(&config, true)
 				require.NoErrorf(t, err, "Error connecting to database: %v", err)
 				defer conn.Close()
-				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 				// create a test member so that fkey constraints are satisfied
 				ms := member.NewSQLStorage(conn, &log, &config)

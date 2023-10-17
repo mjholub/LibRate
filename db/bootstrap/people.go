@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 func People(ctx context.Context, db *sqlx.DB) error {
@@ -138,7 +139,15 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 	CACHE 1
 	NO CYCLE;`)
 		if err != nil {
-			return fmt.Errorf("failed to create media creators sequence: %w", err)
+			pqErr, ok := err.(*pq.Error)
+			if !ok {
+				return fmt.Errorf("error occurred while creating media creators sequence: %w", err)
+			}
+
+			// Check if the error code indicates a duplicate constraint
+			if pqErr.Code.Name() != "duplicate_table" {
+				return fmt.Errorf("failed to create media creators sequence: %w", err)
+			}
 		}
 
 		if err = tx.Commit(); err != nil {
@@ -166,7 +175,15 @@ func mediaFkey(ctx context.Context, db *sqlx.DB) error {
 			ADD CONSTRAINT media_creator_fkey FOREIGN KEY (creator) REFERENCES people.person(id);
 		`)
 		if err != nil {
-			return fmt.Errorf("failed to add foreign key constraints to media table: %w", err)
+			pqErr, ok := err.(*pq.Error)
+			if !ok {
+				return fmt.Errorf("error occurred while adding foreign key constraints to media creators table: %w", err)
+			}
+
+			// Check if the error code indicates a duplicate constraint
+			if pqErr.Code.Name() != "duplicate_object" {
+				return fmt.Errorf("failed to add foreign key constraints to media creators table: %w", err)
+			}
 		}
 		return nil
 	}
@@ -384,21 +401,37 @@ CREATE TABLE IF NOT EXISTS people.cast (
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 
-		errChan := make(chan error)
-		// don't defer closing the channel, let the GC handle it
-		defer func() {
-			err := createCastTrigger(db)
-			if err != nil {
-				errChan <- err
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			if err := createCastTrigger(db); err != nil {
+				fmt.Printf("Error creating cast trigger: %v", err)
 			}
 		}()
+
+		wg.Wait() // Wait for all goroutines to finish
 
 		return nil
 	}
 }
 
 func createCastTrigger(db *sqlx.DB) error {
-	_, err := db.Exec(`
+	var exists bool
+
+	err := db.Get(&exists, `SELECT EXISTS (
+		SELECT 1
+		FROM pg_trigger
+		WHERE tgname = 'check_roles_before_insert_or_update'
+		AND tgrelid = 'people.cast'::regclass
+	);`)
+	if err != nil {
+		return fmt.Errorf("failed to check trigger existence: %w", err)
+	}
+
+	if !exists {
+		_, err := db.Exec(`
 CREATE OR REPLACE FUNCTION check_actor_director_roles()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -418,8 +451,9 @@ CREATE TRIGGER check_roles_before_insert_or_update
 BEFORE INSERT OR UPDATE ON people.cast
 FOR EACH ROW EXECUTE FUNCTION check_actor_director_roles();
 `)
-	if err != nil {
-		return fmt.Errorf("failed to create cast trigger: %w", err)
+		if err != nil {
+			return fmt.Errorf("failed to create cast trigger: %w", err)
+		}
 	}
 
 	return nil

@@ -11,6 +11,7 @@ import (
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/config"
+	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
 	"github.com/avast/retry-go/v4"
@@ -172,7 +173,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool) error {
+func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool, log *zerolog.Logger) error {
 	if exitAfter {
 		// nolint:revive
 		defer func() {
@@ -196,11 +197,14 @@ func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool) error {
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created schemas")
+
 	// set up the extensions
 	var mu sync.Mutex
 	errChan := make(chan error)
 	mu.Lock()
 	extNames := []string{"pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"}
+	log.Info().Msg("Creating extensions...")
 	for i := range extNames {
 		go func(i int) {
 			errChan <- createExtension(db, extNames[i])
@@ -214,70 +218,87 @@ func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool) error {
 	}
 	close(errChan)
 	mu.Unlock()
+	log.Info().Msg("Created extensions")
 	err = bootstrap.CDN(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create cdn tables: %w", err)
 	}
+	log.Info().Msg("Created cdn tables")
 	err = bootstrap.Places(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created places tables")
 	err = bootstrap.MediaCore(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Creating media tables: 1/2...")
 	err = bootstrap.People(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created people tables")
 	err = bootstrap.Roles(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created roles tables")
 	err = bootstrap.MediaCreators(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created media_creators tables")
 	err = bootstrap.PeopleMeta(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created people_meta tables")
 	err = bootstrap.Media(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Creating media tables complete")
 	err = bootstrap.CreatorGroups(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created creator_groups tables")
 	err = bootstrap.AlbumArtists(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created album_artists tables")
 	err = bootstrap.Studio(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created studio tables")
 	err = bootstrap.Books(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created books tables")
 	err = bootstrap.Cast(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created cast tables")
 	err = bootstrap.Members(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created members tables")
 	err = bootstrap.MembersProfilePic(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created members profilepic tables")
 	err = bootstrap.Review(ctx, db)
 	if err != nil {
 		return err
 	}
+	log.Info().Msg("Created review tables")
 
 	return nil
 }

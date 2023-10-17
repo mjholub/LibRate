@@ -51,3 +51,32 @@ func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
 
 	return h.ResData(c, fiber.StatusOK, "success", member)
 }
+
+// TODO: add webfinger to database
+func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
+	mc.log.Info().Msg("GetMemberByWebfinger called")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mc.log.Debug().Msgf("Webfinger: %s", c.Params("webfinger"))
+	member, err := mc.storage.Read(ctx, "webfinger", c.Params("webfinger"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
+	}
+	mc.log.Info().Msgf("Member: %+v", member)
+
+	return h.ResData(c, fiber.StatusOK, "success", member)
+}
+
+func (mc *MemberController) GetID(c *fiber.Ctx) error {
+	mc.log.Info().Msg("GetID called")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mc.log.Debug().Msgf("ID: %s", c.Params("id"))
+	member, err := mc.storage.Read(ctx, "id", c.Params("id"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Member not found")
+	}
+	mc.log.Info().Msgf("Member: %+v", member)
+
+	return h.ResData(c, fiber.StatusOK, "success", member)
+}

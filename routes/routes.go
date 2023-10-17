@@ -84,14 +84,14 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
 	members.Post("/register", authSvc.Register)
-	members.Get("/:id", memberSvc.GetMember)
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
+	members.Get("/id/:nickname", memberSvc.GetID)
 
 	app.Post("/api/password-entropy", auth.ValidatePassword())
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
-	media.Get("/:id/images", mediaCon.GetImagePaths)
+	media.Get("/:media_id/images", mediaCon.GetImagePaths)
 	media.Get("/:id", mediaCon.GetMedia)
 	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
 	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))

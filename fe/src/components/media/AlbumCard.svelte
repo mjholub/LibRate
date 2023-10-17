@@ -67,18 +67,20 @@
 	<div class="keywords-container">
 		<div class="keywords"><b>Keywords:</b></div>
 		<button class="toggle-button" on:click={toggleKeywords}>
-			{#if album.keywords !== undefined}
-				{#if showKeywords}
-					Show
-				{:else}
-					Hide
-					{#each album.keywords as keyword}
-						{keyword}
-					{/each}
-				{/if}
+			{#if showKeywords}
+				Hide
+			{:else}
+				Show
 			{/if}
 		</button>
 	</div>
+	{#if showKeywords}
+		{#if album.keywords !== undefined}
+			{#each album.keywords as keyword}
+				<span>{keyword.keyword}</span>
+			{/each}
+		{/if}
+	{/if}
 </div>
 
 <style>

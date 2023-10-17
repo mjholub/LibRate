@@ -12,18 +12,13 @@ func Members(ctx context.Context, db *sqlx.DB) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`
-		create type public."role" as enum (
-'admin',
-'mod',
-'regular',
-'creator'
-		);`)
+		err := createEnumType(ctx, db, "role", "public", "admin", "mod", "regular", "creator")
 		if err != nil {
 			return fmt.Errorf("failed to create role enum: %w", err)
 		}
+		// FIXME: this should check whether the table exists and then instead of skipping, attempt an update
 		_, err = db.Exec(`
-	CREATE TABLE public.members (
+	CREATE TABLE IF NOT EXISTS public.members (
 	id serial4 NOT NULL,
 	uuid uuid NOT NULL,
 	nick varchar(255) NOT NULL,
