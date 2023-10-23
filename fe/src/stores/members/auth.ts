@@ -12,6 +12,7 @@ export interface AuthStoreState extends Member {
 
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: () => Promise<void>;
+  logout: () => void;
   getMember: (memberID: number) => Promise<Member>;
 }
 
@@ -28,7 +29,8 @@ const initialAuthState: AuthStoreState = {
   homepage: null,
   regdate: new Date(),
   roles: ['member'],
-  isAuthenticated: false
+  isAuthenticated: false,
+  visibility: 'public'
 };
 
 
@@ -40,29 +42,23 @@ function createAuthStore(): AuthStore {
     set,
     update,
     authenticate: async () => {
-      if (typeof localStorage !== 'undefined') {
-        const token = localStorage.getItem('token');
-        const sessionCookie = document.cookie.includes('session=');
-        if (token || sessionCookie) {
-          // using try-cacth to avoid unhandled promise rejection
-          try {
-            const res = await fetch(`/api/authenticate`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            })
-            console.debug('response from /api/authenticate: ', res);
-            res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
-          } catch (err) {
-            isAuthenticated.set(false);
-            if (import.meta.env.DEV) {
-              console.error('Error while authenticating', err);
-            }
-          }
-        }
-        else {
+      const sessionCookie = document.cookie.includes('session=');
+      if (sessionCookie) {
+        // using try-cacth to avoid unhandled promise rejection
+        try {
+          const res = await fetch(`/api/authenticate`);
+          res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
+        } catch (err) {
           isAuthenticated.set(false);
           if (import.meta.env.DEV) {
-            console.error('No token found');
+            console.error('Error while authenticating', err);
           }
+        }
+      }
+      else {
+        isAuthenticated.set(false);
+        if (import.meta.env.DEV) {
+          console.error('Authentication cookie not found');
         }
       }
     },
@@ -70,6 +66,10 @@ function createAuthStore(): AuthStore {
       const res = await fetch(`/api/members/${memberID}`);
       const member = await res.json();
       return member;
+    },
+    logout: () => {
+      document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      isAuthenticated.set(false);
     }
   };
 }
