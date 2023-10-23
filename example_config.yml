@@ -29,5 +29,9 @@ logging:
   level: "info"
   output: "stdout"
   format: "json"
+  caller: true
+  timestamp:
+    enabled: true
+    format: "2006-01-0215:04:05.000Z07:00" 
 # dev or production
 librateEnv: "production"
