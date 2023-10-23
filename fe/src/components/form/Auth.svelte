@@ -3,7 +3,6 @@
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
-	import type { Member } from '$lib/types/member.ts';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 
 	let isRegistration = false;
@@ -25,29 +24,32 @@
 	};
 
 	// helper function to check password strength
-	let timeoutId: any;
+	let timeoutId: number | undefined;
 	const checkEntropy = async (password: string) => {
 		// if just logging in, don't check the entropy
 		if (!isRegistration) return;
 
-		clearTimeout(timeoutId);
-		timeoutId = setTimeout(async () => {
-			const response = await fetch(`/api/password-entropy`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ password })
-			});
-			const data = await response.json();
-			passwordStrength = data.message;
+		if (timeoutId) {
+			window.clearTimeout(timeoutId);
+		}
+
+		timeoutId = window.setTimeout(async () => {
+			try {
+				const response = await fetch(`/api/password-entropy`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ password })
+				});
+
+				const data = await response.json();
+				passwordStrength = data.message;
+			} catch (error) {
+				console.error(error);
+			}
 		}, 300);
 	};
-
-	const entropyDummy = async (password: string) => {
-		Promise.resolve(password);
-	};
-
 	$: isRegistration && password && checkEntropy(password);
 
 	// helper function to trigger moving either email or nickname to a dedicated field
@@ -63,6 +65,7 @@
 	const register = async (event: Event) => {
 		event.preventDefault();
 
+		// check if passwords match when the registration flow has been triggered
 		isRegistration && password !== passwordConfirm
 			? ((errorMessage = 'Passwords do not match'), false)
 			: passwordStrength !== 'Password is strong enough'
@@ -88,6 +91,7 @@
 		const member = await authStore.getMember(data.member_id);
 
 		if (browser) {
+			// FIXME: since we are already creating a cookie in the backend, ensure that localStorage is not used
 			response.ok
 				? (localStorage.setItem('token', data.token),
 				  await authStore.authenticate(),
@@ -132,8 +136,7 @@
 				  localStorage.setItem('email_or_username', ''),
 				  (authState.id = member.id),
 				  (window.location.href = '/'),
-				  console.info('Login successful'),
-				  alert('Login successful'))
+				  console.info('Login successful'))
 				: (errorMessage = data.message);
 			console.error(data.message);
 		}
@@ -155,7 +158,7 @@
 		<PasswordInput
 			bind:value={password}
 			id="password"
-			onInput={entropyDummy}
+			onInput={() => checkEntropy(password)}
 			{showPassword}
 			{toggleObfuscation}
 		/>
