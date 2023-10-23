@@ -67,22 +67,6 @@ func main() {
 		}
 	}()
 
-	dbConn, neo4jConn, err := connectDB(conf, *NoDBSubprocess)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
-	}
-	log.Info().Msg("Connected to database")
-	defer func() {
-		if dbConn != nil {
-			dbConn.Close()
-		}
-		if neo4jConn != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			neo4jConn.Close(ctx)
-		}
-	}()
-
 	if *init {
 		if !dbRunning {
 			log.Warn().
