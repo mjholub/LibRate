@@ -1,14 +1,17 @@
 package cfg
 
-// unfortunately, camel case must be used, instead the yaml parser will not work
+import "codeberg.org/mjh/LibRate/internal/logging"
 
+// Config is the struct that holds all the configuration for the application
+// unfortunately, camel case must be used, instead the yaml parser will not work
 type Config struct {
 	DBConfig `json:"database,omitempty" yaml:"database" mapstructure:"database"`
 	Fiber    FiberConfig `json:"fiber,omitempty" yaml:"fiber" mapstructure:"fiber"`
 	Secret   string      `json:"secret,omitempty" yaml:"secret" mapstructure:"secret"`
 	// default to production for security reasons
-	LibrateEnv string      `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv"`
-	Redis      RedisConfig `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
+	LibrateEnv string         `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv"`
+	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
+	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
 }
 
 type DBConfig struct {

@@ -31,9 +31,10 @@ import (
 
 func main() {
 	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit := parseFlags()
-	// TODO: get logging config from config file
-	log := initLogging()
+	// first, start logging with some opinionated defaults, just for the config loading phase
+	log := initLogging(nil)
 
+	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
 		err  error
@@ -47,26 +48,12 @@ func main() {
 			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", *configFile, err)
 		}
 	}
+	log = initLogging(&conf.Logging)
+	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
 
 	// database first-run initialization
 	// If the healtheck is to be handled externally, skip it
 	dbRunning := DBRunning(*ExternalDBHealthCheck, conf.Port)
-	dbConn, neo4jConn, err := connectDB(conf, *NoDBSubprocess)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
-	}
-	log.Info().Msg("Connected to database")
-	defer func() {
-		if dbConn != nil {
-			dbConn.Close()
-		}
-		if neo4jConn != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			neo4jConn.Close(ctx)
-		}
-	}()
-
 	dbConn, neo4jConn, err := connectDB(conf, *NoDBSubprocess)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
@@ -249,19 +236,22 @@ func parseFlags() (*bool, *bool, *bool, *string, *string, *bool) {
 	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit
 }
 
-func initLogging() zerolog.Logger {
-	logConf := logging.Config{
-		Level:  "debug",
-		Target: "stdout",
-		Format: "json",
-		Caller: true,
-		Timestamp: logging.TimestampConfig{
-			Enabled: true,
-			Format:  "2006-01-02T15:04:05.000Z07:00",
-		},
-	}
+func initLogging(logConf *logging.Config) zerolog.Logger {
+	if logConf == nil {
+		logConf = &logging.Config{
+			Level:  "trace",
+			Target: "stdout",
+			Format: "json",
+			Caller: true,
+			Timestamp: logging.TimestampConfig{
+				Enabled: true,
+				Format:  "2006-01-02T15:04:05.000Z07:00",
+			},
+		}
 
-	return logging.Init(&logConf)
+		return logging.Init(logConf)
+	}
+	return logging.Init(logConf)
 }
 
 func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithContext, error) {
