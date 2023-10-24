@@ -12,7 +12,6 @@
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
-	import AlbumCard from '$components/media/AlbumCard.svelte';
 
 	let windowWidth: number;
 	$: authState = $authStore;
