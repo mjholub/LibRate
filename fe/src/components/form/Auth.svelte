@@ -81,13 +81,13 @@
 
 		const response = await axios.post('/api/members/register', {
 			membername: nickname,
-			email: email,
-			password: password,
-			passwordConfirm: passwordConfirm,
+			email,
+			password,
+			passwordConfirm,
 			roles: ['regular']
 		});
 
-		const data = response.data;
+		const { data } = response;
 
 		const member = await authStore.getMember(data.member_id);
 
@@ -116,7 +116,7 @@
 			body: JSON.stringify({
 				membername: email_or_username.includes('@') ? '' : email_or_username,
 				email: email_or_username.includes('@') ? email_or_username : '',
-				password: password
+				password
 			})
 		});
 
