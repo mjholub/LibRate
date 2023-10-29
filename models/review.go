@@ -36,6 +36,22 @@ type (
 		CastRating   *CastRating  `json:"castRating,omitempty" db:"cast_rating"`
 	}
 
+	// rating average is a helper, "meta"-type so that the averages retrieved are more concise
+	RatingAverage[T MaybeStrSlice, U MaybeNullF64Slice] struct {
+		BaseRatingID         int64           `json:"base_rating_id" db:"base_rating_id"`
+		BaseRatingScore      sql.NullFloat64 `json:"base_rating_score" db:"base_rating_score"`
+		SecondaryRating      T               `json:"secondary_rating_name" db:"secondary_rating_name"` // track, theme, cast etc.
+		SecondaryRatingScore U               `json:"secondary_rating_score" db:"secondary_rating_score"`
+	}
+
+	MaybeStrSlice interface {
+		~[]string | ~[]sql.NullString | sql.NullString | string
+	}
+
+	MaybeNullF64Slice interface {
+		~[]float64 | ~[]sql.NullFloat64 | sql.NullFloat64 | float64
+	}
+
 	UpdateableKeyTypes interface {
 		~int | ~uint | string
 	}
@@ -181,7 +197,8 @@ func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (r
 	return ratings, nil
 }
 
-func (rs *RatingStorage) GetAverageStars(ctx context.Context, rating interface{},
+func (rs *RatingStorage) GetAverageStars(ctx context.Context,
+	mediaKind string,
 	mediaID uuid.UUID,
 ) (avgStars float64, err error) {
 	select {
@@ -190,16 +207,16 @@ func (rs *RatingStorage) GetAverageStars(ctx context.Context, rating interface{}
 	default:
 		var avgStarsFloat sql.NullFloat64
 
-		switch rating.(type) {
-		case *Track:
+		switch mediaKind {
+		case "track":
 			err = rs.db.GetContext(ctx, &avgStarsFloat,
 				`SELECT AVG(stars) FROM reviews.track_ratings WHERE track_id = $1`, mediaID)
 			if err != nil {
 				return 0, fmt.Errorf("error getting average stars: %w", err)
 			}
-		case *CastRating:
-			err = rs.db.GetContext(ctx, &avgStarsFloat,
-				`SELECT AVG(stars) FROM reviews.cast_ratings WHERE cast_id = $1`, mediaID)
+		case "film", "tv_show", "anime":
+			// get the cast ID for the given media ID and then return the number of average stars for that cast ID
+			// then also the avarage rating for the media itself
 			if err != nil {
 				return 0, fmt.Errorf("error getting average stars: %w", err)
 			}

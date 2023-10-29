@@ -69,12 +69,12 @@ func Setup(
 
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatestRatings)
-	// TODO: handler for single review based on id
 	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
 	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
 	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
-	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
-	reviews.Get("/:id", reviewSvc.GetRatings)
+	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
+	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
+	reviews.Get("/:id", reviewSvc.GetRatingByID)
 
 	authAPI := api.Group("/authenticate")
 	authAPI.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {

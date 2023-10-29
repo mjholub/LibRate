@@ -20,13 +20,14 @@ type (
 	IReviewController interface {
 		GetRatings(c *fiber.Ctx) error
 		GetLatestRatings(c *fiber.Ctx) error
-		GetAverageRatings(c *fiber.Ctx) error
+		GetAverageRating(c *fiber.Ctx) error
 		PostRating(c *fiber.Ctx) error
 	}
 
 	// ReviewController is the controller for review endpoints
 	ReviewController struct {
 		rs *models.RatingStorage
+		ms *models.MediaStorage
 	}
 )
 
@@ -34,16 +35,16 @@ func NewReviewController(rs models.RatingStorage) *ReviewController {
 	return &ReviewController{rs: &rs}
 }
 
-// GetRatings retrieves reviews for a specific media item based on the media ID
-func (rc *ReviewController) GetRatings(c *fiber.Ctx) error {
-	ratingID, err := uuid.FromString(c.Params("id"))
+// GetMediaRatings retrieves reviews for a specific media item based on the media ID
+func (rc *ReviewController) GetMediaRatings(c *fiber.Ctx) error {
+	mediaID, err := uuid.FromString(c.Params("media_id"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	reviews, err := rc.rs.GetByMediaID(ctx, ratingID)
+	reviews, err := rc.rs.GetByMediaID(ctx, mediaID)
 	if err != nil {
 		return h.Res(c, fiber.StatusNotFound, "Ratings not found")
 	}
@@ -158,4 +159,25 @@ func (rc *ReviewController) DeleteRating(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "Rating deleted successfully",
 	})
+}
+
+// GetAverageRating fetches the average (float64) rating ("stars") score based on a given media UUID, kind
+// and rating type
+func (rc *ReviewController) GetAverageRating(c *fiber.Ctx) error {
+	mediaID, err := uuid.FromString(c.Params("media_id"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
+	}
+
+	mediaKind, err := rc.ms.GetKind(c.UserContext(), mediaID) 
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to fetch media kind")
+	}
+	
+	switch mediaKind {
+	case "track":
+	average, err := rc.rs.GetAverageStars(c.UserContext(), mediaID)
+	if err != nil {
+		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
+	}
 }
