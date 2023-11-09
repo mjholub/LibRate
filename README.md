@@ -2,7 +2,7 @@
 
 This project aims to bring a website combining the functionality of such projects as Bookwyrm, RateYourMusic/Sonemic, IMDB and similar to the #fediverse. 
 
-This project is currently in early alpha stage, bugs are expected and PRs are very welcome.
+This project is currently in early beta stage, bugs are expected and PRs are very welcome.
 
 **The first public beta instance is expected to launch by the end of December 2023.**
 
