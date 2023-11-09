@@ -28,7 +28,7 @@ redis:
 logging:
   level: "info"
   output: "stdout"
-  format: "json"
+  format: "console"
   caller: true
   timestamp:
     enabled: true
