@@ -35,3 +35,7 @@ logging:
     format: "2006-01-0215:04:05.000Z07:00" 
 # dev or production
 librateEnv: "production"
+# relative paths supported
+keys:
+  public: "~/.ssh/id_rsa.pub"
+  private: "~/.ssh/private_key"

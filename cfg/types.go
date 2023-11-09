@@ -12,6 +12,7 @@ type Config struct {
 	LibrateEnv string         `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv"`
 	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
+	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
 }
 
 type DBConfig struct {
@@ -45,4 +46,9 @@ type FiberConfig struct {
 	StaticDir      string `yaml:"staticDir" default:"./static"`
 	PowInterval    int    `yaml:"powInterval" default:"300"`
 	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
+}
+
+type KeysConfig struct {
+	Private string `yaml:"private"`
+	Public  string `yaml:"public"`
 }

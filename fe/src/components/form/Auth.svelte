@@ -1,6 +1,8 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { onMount } from 'svelte';
+	import fs from 'fs';
+	import * as crypto from 'crypto';
+	import path from 'path';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
@@ -28,6 +30,16 @@
 
 	// helper function to check password strength
 	let timeoutId: number | undefined;
+	const getPublicKey = async () => {
+		// this API endpoint just returns a plain string with the public key path
+		// the backend should take care of converting that into an absolute path if needed
+		// TODO: implement API endpoint
+		const res = await fetch('/api/config/publicKey');
+		const data = await res.text();
+		const publicKeyPath = path.resolve(data);
+		const publicKey = fs.readFileSync(publicKeyPath, 'utf-8');
+		return publicKey;
+	};
 	const checkEntropy = async (password: string) => {
 		// if just logging in, don't check the entropy
 		if (!isRegistration) return;
@@ -36,14 +48,18 @@
 			window.clearTimeout(timeoutId);
 		}
 
+		const buffer = Buffer.from(password, 'utf-8');
+		const publicKey = await getPublicKey();
+		const encrypted = crypto.publicEncrypt(publicKey, buffer);
+
 		timeoutId = window.setTimeout(async () => {
 			try {
 				const response = await fetch(`/api/password-entropy`, {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json'
+						'Content-Type': 'application/octet-stream'
 					},
-					body: JSON.stringify({ password })
+					body: encrypted
 				});
 
 				const data = await response.json();
