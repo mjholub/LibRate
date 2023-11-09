@@ -4,7 +4,7 @@ This project aims to bring a website combining the functionality of such project
 
 This project is currently in early alpha stage, bugs are expected and PRs are very welcome.
 
-**The first public beta instance is expected to launch by the end of September 2023.**
+**The first public beta instance is expected to launch by the end of December 2023.**
 
 **NOTE**: we're using the term *member* to stress inclusivity and openness, as opposed to the term *user* which is controversial, because it was borrowed from the term drug dealers use to refer to their customers.
 
@@ -15,7 +15,7 @@ This project is currently in early alpha stage, bugs are expected and PRs are ve
   - [x] Member cards with profile info
   - [x] (**WIP**)Full member profile pages
   - [ ] Tagging and mentions
-  - [ ] Advanced profile and UI customization
+  - [x] (WIP) Advanced profile and UI customization
   - [ ] Groups
   - [ ] Direct messages (E2EE)
   - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
