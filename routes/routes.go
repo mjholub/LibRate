@@ -68,13 +68,13 @@ func Setup(
 	app.Get("/api/version", version.Get)
 
 	reviews := api.Group("/reviews")
-	reviews.Get("/latest", reviewSvc.GetLatestRatings)
+	reviews.Get("/latest", reviewSvc.GetLatest)
 	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
 	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
 	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
 	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
 	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
-	reviews.Get("/:id", reviewSvc.GetRatingByID)
+	reviews.Get("/:id", reviewSvc.GetByID)
 
 	authAPI := api.Group("/authenticate")
 	authAPI.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {

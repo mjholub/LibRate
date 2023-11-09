@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -18,6 +19,7 @@ type (
 	// It defines the methods that the review controller must implement
 	// This is useful for mocking the review controller in unit tests
 	IReviewController interface {
+		GetMediaReviews(c *fiber.Ctx) error
 		GetRatings(c *fiber.Ctx) error
 		GetLatestRatings(c *fiber.Ctx) error
 		GetAverageRating(c *fiber.Ctx) error
@@ -36,7 +38,7 @@ func NewReviewController(rs models.RatingStorage) *ReviewController {
 }
 
 // GetMediaRatings retrieves reviews for a specific media item based on the media ID
-func (rc *ReviewController) GetMediaRatings(c *fiber.Ctx) error {
+func (rc *ReviewController) GetMediaReviews(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("media_id"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
@@ -52,44 +54,41 @@ func (rc *ReviewController) GetMediaRatings(c *fiber.Ctx) error {
 	return c.JSON(reviews)
 }
 
-// GetLatestRatings retrieves the latest reviews for a specific media item based on the media ID
-func (rc *ReviewController) GetLatestRatings(ctx *fiber.Ctx) error {
-	// Extract limit and offset parameters from the query string.
-	limit, err := strconv.Atoi(ctx.Query("limit", "5"))
+// GetByID retrieves a single review by its ID
+func (rc *ReviewController) GetByID(c *fiber.Ctx) error {
+	reviewID := c.Params("id")
+	id, err := strconv.ParseInt(reviewID, 10, 64)
 	if err != nil {
-		return h.Res(ctx, fiber.StatusBadRequest, "Invalid limit")
+		return h.Res(c, fiber.StatusBadRequest, "Invalid review ID \""+reviewID+"\"")
 	}
-	offset, err := strconv.Atoi(ctx.Query("offset", "0"))
+	review, err := rc.rs.Get(c.UserContext(), id)
 	if err != nil {
-		return h.Res(ctx, fiber.StatusBadRequest, "Invalid offset")
+		rc.ms.Log.Error().Err(err).Msgf(err.Error())
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to fetch review")
+	}
+	return c.JSON(review)
+}
+
+// GetLatestRatings retrieves the latest reviews for a specific media item based on the media ID
+func (rc *ReviewController) GetLatest(c *fiber.Ctx) error {
+	// Extract limit and offset parameters from the query string.
+	limit, err := strconv.Atoi(c.Query("limit", "5"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid limit")
+	}
+	offset, err := strconv.Atoi(c.Query("offset", "0"))
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Invalid offset")
 	}
 
 	// Call the GetLatest function with the provided limit and offset.
-	ratings, err := rc.rs.GetLatest(ctx.Context(), limit, offset)
+	ratings, err := rc.rs.GetLatest(c.Context(), limit, offset)
 	if err != nil {
-		return h.Res(ctx, fiber.StatusNotFound, err.Error())
+		return h.Res(c, fiber.StatusNotFound, err.Error())
 	}
 
 	// Return the ratings as a JSON response.
-	return ctx.JSON(ratings)
-}
-
-// GetAverageRatings retrieves the average number of stars for the general models.Rating type
-// (i.e. not track or cast ratings)
-func (rc *ReviewController) GetAverageRatings(c *fiber.Ctx) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	mediaID, err := uuid.FromString(c.Params("id"))
-	if err != nil {
-		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
-	}
-	avgStars, err := rc.rs.GetAverageStars(ctx, &models.Rating{}, mediaID)
-	if err != nil {
-		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
-	}
-
-	return c.JSON(avgStars)
+	return c.JSON(ratings)
 }
 
 // PostRating handles the submission of a user's review for a specific media item
@@ -169,15 +168,75 @@ func (rc *ReviewController) GetAverageRating(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
-	mediaKind, err := rc.ms.GetKind(c.UserContext(), mediaID) 
+	mediaKind, err := rc.ms.GetKind(c.UserContext(), mediaID)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to fetch media kind")
 	}
-	
+
 	switch mediaKind {
 	case "track":
-	average, err := rc.rs.GetAverageStars(c.UserContext(), mediaID)
-	if err != nil {
-		return h.Res(c, fiber.StatusNotFound, "Failed to fetch average stars")
+		average, err := rc.getTrackAverageScore(c.UserContext(), mediaID)
+		if err != nil {
+			return h.Res(c, fiber.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(average)
+	case "album":
+		average, err := rc.getAlbumAverageScore(c.UserContext(), mediaID)
+		if err != nil {
+			return h.Res(c, fiber.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(average)
+	default:
+		return h.Res(c, fiber.StatusNotImplemented,
+			fmt.Sprintf(`Fetching average score for this media type (%s) is not implemented yet.
+			Feel free to open an issue on codeberg or github`, mediaKind))
 	}
+}
+
+func (rc *ReviewController) getTrackAverageScore(
+	ctx context.Context, id uuid.UUID,
+) (*models.RatingAverage, error) {
+	average, err := rc.rs.GetAverageStars(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get average score for track with ID %s: %v", id.String(), err.Error())
+	}
+	return &models.RatingAverage{
+		BaseRatingScore:         average,
+		SecondaryRatingTypes:    nil,
+		SecondaryRatingAverages: nil,
+	}, nil
+}
+
+func (rc *ReviewController) getAlbumAverageScore(
+	ctx context.Context, id uuid.UUID,
+) (*models.RatingAverage, error) {
+	// get track IDs for the given album
+	trackIDs, err := rc.ms.GetAlbumTrackIDs(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch track IDs for album %s: %w", id.String(), err)
+	}
+	var trackAverages []models.SecondaryRatingAverage
+	for i := range trackIDs {
+		// fetch the average rating for a single track
+		trackScore, err := rc.rs.GetAverageStars(ctx, trackIDs[i])
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to fetch average track rating when trying to retrieve track ratings for album with ID %s: %w",
+				id.String(), err)
+		}
+		trackAverages = append(trackAverages, models.SecondaryRatingAverage{
+			MediaID:   trackIDs[i],
+			MediaKind: "track",
+			Score:     trackScore,
+		})
+	}
+	albumAverage, err := rc.rs.GetAverageStars(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting average score for album with ID %s: %w", id.String(), err)
+	}
+	return &models.RatingAverage{
+		BaseRatingScore:         albumAverage,
+		SecondaryRatingTypes:    &[]string{"track"},
+		SecondaryRatingAverages: trackAverages,
+	}, nil
 }
