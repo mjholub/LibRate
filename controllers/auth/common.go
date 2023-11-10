@@ -18,8 +18,10 @@ import (
 type (
 	// RegisterInput is the input for the registration request
 	RegisterInput struct {
-		Email           string   `json:"email"`
-		MemberName      string   `json:"membername"`
+		Email      string `json:"email"`
+		MemberName string `json:"membername"`
+		// Password is first temporarily encrypted using RSA and then hashed using argon2id
+		// For more details see the internal/crypt package
 		Password        string   `json:"password"`
 		PasswordConfirm string   `json:"passwordConfirm"`
 		Roles           []string `json:"roles"`

@@ -21,7 +21,6 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/controllers/version"
-	"codeberg.org/mjh/LibRate/internal/crypt"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
 	"codeberg.org/mjh/LibRate/models/member"
@@ -67,13 +66,6 @@ func Setup(
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
-	app.Get("/api/config/publicKey", func(c *fiber.Ctx) error {
-		publicKey, err := crypt.GetPublicKeyPath(conf)
-		if err != nil {
-			return err
-		}
-		return c.SendString(publicKey)
-	})
 
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatest)
@@ -95,7 +87,7 @@ func Setup(
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
 	members.Get("/id/:nickname", memberSvc.GetID)
 
-	app.Post("/api/password-entropy", auth.ValidatePassword())
+	app.Post("/api/password-entropy", auth.ValidatePassword(logger))
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)

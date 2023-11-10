@@ -1,8 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
-	import fs from 'fs';
 	import * as crypto from 'crypto';
-	import path from 'path';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
@@ -14,7 +12,6 @@
 	if (browser) {
 		email_or_username = localStorage.getItem('email_or_username') || '';
 	}
-	let authToken = null;
 	let email = '';
 	let nickname = '';
 	let password = '';
@@ -30,16 +27,7 @@
 
 	// helper function to check password strength
 	let timeoutId: number | undefined;
-	const getPublicKey = async () => {
-		// this API endpoint just returns a plain string with the public key path
-		// the backend should take care of converting that into an absolute path if needed
-		// TODO: implement API endpoint
-		const res = await fetch('/api/config/publicKey');
-		const data = await res.text();
-		const publicKeyPath = path.resolve(data);
-		const publicKey = fs.readFileSync(publicKeyPath, 'utf-8');
-		return publicKey;
-	};
+
 	const checkEntropy = async (password: string) => {
 		// if just logging in, don't check the entropy
 		if (!isRegistration) return;
@@ -48,24 +36,28 @@
 			window.clearTimeout(timeoutId);
 		}
 
-		const buffer = Buffer.from(password, 'utf-8');
-		const publicKey = await getPublicKey();
-		const encrypted = crypto.publicEncrypt(publicKey, buffer);
-
 		timeoutId = window.setTimeout(async () => {
 			try {
+				const payload = {
+					partialPassword,
+					authTag: authTag.toString('hex'),
+					iv: iv.toString('hex')
+				};
+
 				const response = await fetch(`/api/password-entropy`, {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/octet-stream'
+						'Content-Type': 'application/json'
 					},
-					body: encrypted
+					body: JSON.stringify(payload)
 				});
 
 				const data = await response.json();
 				passwordStrength = data.message;
 			} catch (error) {
-				console.error(error);
+				process.env.NODE_ENV === 'development'
+					? console.error(error)
+					: console.error('Error checking password entropy');
 			}
 		}, 300);
 	};
@@ -176,7 +168,7 @@
 			<PasswordInput
 				bind:value={password}
 				id="password"
-				onInput={() => checkEntropy(password)}
+				onInput={async () => void 0}
 				{showPassword}
 				{toggleObfuscation}
 			/>

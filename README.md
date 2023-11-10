@@ -76,7 +76,7 @@ The git tag part is needed only for displaying the version in the footer
 ## Prerequisites for running natively:
 
 - `pnpm`, `yarn` or `npm`, for building the frontend
-- Python 3 for setting up the uint Postgres extension
+- ~~Python 3 for setting up the uint Postgres extension~~
 - working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 ## Development prerequisites
