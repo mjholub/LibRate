@@ -86,8 +86,9 @@ func Setup(
 	members.Post("/register", authSvc.Register)
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
 	members.Get("/id/:nickname", memberSvc.GetID)
-
-	app.Post("/api/password-entropy", auth.ValidatePassword(logger))
+	// pubkey returns a single use public key for the client to encrypt their password with
+	// this is to prevent the server from ever knowing the user's password
+	members.Get("pubkey", authSvc.GetPubKey)
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)

@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -8,9 +8,9 @@ dependencies:
   axios:
     specifier: ^1.5.0
     version: 1.5.0
-  fast-password-entropy:
-    specifier: ^1.1.1
-    version: 1.1.1
+  password-meter:
+    specifier: ^3.10.2
+    version: 3.10.2
 
 devDependencies:
   '@babel/core':
@@ -3300,10 +3300,6 @@ packages:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
     dev: true
 
-  /fast-password-entropy@1.1.1:
-    resolution: {integrity: sha512-dxm29/BPFrNgyEDygg/lf9c2xQR0vnQhG7+hZjAI39M/3um9fD4xiqG6F0ZjW6bya5m9CI0u6YryHGRtxCGCiw==}
-    dev: false
-
   /fastq@1.15.0:
     resolution: {integrity: sha512-wBrocU2LCXXa+lWBt8RoIRD89Fi8OdABODa/kEnyeyjS5aZO5/GNvI5sEINADqP/h8M29UHTHUb53sUu5Ihqdw==}
     dependencies:
@@ -4500,6 +4496,11 @@ packages:
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
     dev: true
+
+  /password-meter@3.10.2:
+    resolution: {integrity: sha512-DgqFkm3sC7LMMJpjdSwZiSB/84uNObBl2z7zDqK1hQoi1RP+FS5eQIXNFa9qnp8WfAzw8CzYvTOqpt+20DLtbw==}
+    engines: {node: '>=12', npm: '>=6'}
+    dev: false
 
   /path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}

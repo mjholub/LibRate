@@ -5,6 +5,7 @@
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
+	import { PasswordMeter } from 'password-meter';
 
 	let tooltipMessage = 'This feature is not implemented yet';
 	let isRegistration = false;
@@ -20,6 +21,7 @@
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
 	let authState: AuthStoreState = $authStore;
+	let strength: number;
 
 	const toggleObfuscation = () => {
 		showPassword = !showPassword;
@@ -38,22 +40,8 @@
 
 		timeoutId = window.setTimeout(async () => {
 			try {
-				const payload = {
-					partialPassword,
-					authTag: authTag.toString('hex'),
-					iv: iv.toString('hex')
-				};
-
-				const response = await fetch(`/api/password-entropy`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(payload)
-				});
-
-				const data = await response.json();
-				passwordStrength = data.message;
+				strength = new PasswordMeter().getResult(password).score;
+				passwordStrength = strength > 135 ? 'Password is strong enough' : `${strength / 2.9} bits`;
 			} catch (error) {
 				process.env.NODE_ENV === 'development'
 					? console.error(error)
@@ -77,6 +65,24 @@
 		}
 	};
 
+	// getPubKey retrieves the public key from the backend to be used to encrypt the password
+	const getPubKey = async () => {
+		const response = await axios.get('/api/members/pubkey');
+		const { data } = response;
+		return data.pub_key;
+	};
+
+	// hashPassword hashes the password (in the frontend) before it gets sent to the backend,
+	// using a temporary private key, so that it's not sent in plain text
+	// but since we use **encryption**, not hashing, the password string can
+	// be decrypted by the backend in order to do a final strength check and hash
+	// it using a stronger algorithm (argon2id)
+	const hashPassword = async (password: string) => {
+		const publicKey = await getPubKey();
+		const hash = crypto.publicEncrypt(publicKey, Buffer.from(password));
+		return hash.toString('base64');
+	};
+
 	const register = async (event: Event) => {
 		event.preventDefault();
 
@@ -86,6 +92,9 @@
 			: passwordStrength !== 'Password is strong enough'
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
+
+		password = await hashPassword(password);
+		passwordConfirm = await hashPassword(passwordConfirm);
 
 		const response = await axios.post('/api/members/register', {
 			membername: nickname,
@@ -102,8 +111,7 @@
 		if (browser) {
 			const registrationSuccessful = response.status == 200 && data.member_id !== 0;
 			registrationSuccessful
-				? ((authToken = data.token),
-				  await authStore.authenticate(),
+				? (await authStore.authenticate(),
 				  localStorage.setItem('email_or_username', ''),
 				  authStore.set(data.member),
 				  (authState.id = member.id),
@@ -133,8 +141,7 @@
 
 		if (browser) {
 			response.ok
-				? (localStorage.setItem('token', data.token),
-				  await authStore.authenticate(),
+				? (await authStore.authenticate(),
 				  authStore.set({
 						...member, // Include existing member properties
 						id: data.member_id,
@@ -207,7 +214,7 @@
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
 				<p>
-					Password strength: {passwordStrength} bits of (<a
+					Password strength: {passwordStrength} of (<a
 						href="https://www.omnicalculator.com/other/password-entropy">entropy</a
 					>), required: 50
 				</p>
