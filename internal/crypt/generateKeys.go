@@ -1,41 +1,40 @@
 package crypt
 
 import (
-	"crypto/md5"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+	"filippo.io/age"
+	"github.com/gofrs/uuid/v5"
 )
 
+// Keys holds the information used for volatile identification of a particular user
 type Keys struct {
-	PubKeyBlock  *pem.Block
-	PrivKeyBlock *pem.Block
-	// Identifier is used to facilitate key retrieval from redis
-	Identifier string
+	Identifier uuid.UUID
+	Private    *age.X25519Identity
+	Public     *age.X25519Recipient
 }
 
+// @function GenerateKeys
+// @description Generates a (volatile) public and private key pair to be used for intermediary encryption in the frontend
+// @returns Keys, error
+// NOTE: should probably also expect some persistent key based identification
+// to be passed as a parameter to make impersonation harder
 func GenerateKeys() (k Keys, e error) {
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	identity, err := age.GenerateX25519Identity()
 	if err != nil {
-		return k, err
+		return Keys{}, err
 	}
 
-	privKeyBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privKey),
-	}
+	recipient := identity.Recipient()
 
-	pubKeyBlock := &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&privKey.PublicKey),
+	// generate a highly randomized identifier, so that we can later look up, if a given private key
+	// matches it's public key. Without a named identifier, such check would be overly complex/impossible
+	id, err := uuid.NewV7()
+	if err != nil {
+		return Keys{}, err
 	}
-	// nolint: gosec
-	identifier := md5.Sum(pubKeyBlock.Bytes)
 
 	return Keys{
-		PubKeyBlock:  pubKeyBlock,
-		PrivKeyBlock: privKeyBlock,
-		Identifier:   string(identifier[:]),
+		Identifier: id,
+		Private:    identity,
+		Public:     recipient,
 	}, nil
 }

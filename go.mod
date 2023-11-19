@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230819112213-15f155339829
+	filippo.io/age v1.1.1
 	github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/avast/retry-go/v4 v4.5.0

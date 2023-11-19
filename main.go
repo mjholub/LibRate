@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
+
+	"filippo.io/age"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/routes"
@@ -110,6 +113,24 @@ func main() {
 	// hardening
 	app.Use(helmet.New())
 
+	// generate x25519 identity
+	identity, err := age.GenerateX25519Identity()
+	if err != nil {
+		log.Panic().Err(err).Msgf("Failed to generate x25519 identity: %v", err)
+	}
+	// create a temporary file to store x25519 encrypted data
+	f, err := os.Create(filepath.Join("tmp", "sec.json"))
+	if err != nil {
+		log.Panic().Err(err).Msgf("Failed to create temporary file: %v", err)
+	}
+	defer func(l *zerolog.Logger) {
+		f.Close()
+		err = os.Remove(filepath.Join("tmp", "sec.json"))
+		if err != nil {
+			l.Panic().Err(err).Msgf("Failed to remove temporary file: %v", err)
+		}
+	}(&log)
+
 	// setup secondary apps
 	profilesApp, noscript, err := setupSecondaryApps(app, conf, fiberlog,
 		recover.New(), idempotency.New(), helmet.New())
@@ -122,7 +143,8 @@ func main() {
 	setupCors(apps)
 	setupPOW(conf, apps)
 
-	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app, profilesApp, noscript, fiberlog)
+	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
+		profilesApp, noscript, fiberlog, identity)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -318,6 +340,7 @@ func setupRoutes(
 	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp, noscript *fiber.App,
 	fiberlog fiber.Handler,
+	identity *age.X25519Identity,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp, &fiberlog)
 	if err != nil {
@@ -336,7 +359,7 @@ func setupRoutes(
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog)
+	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog, identity)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}

@@ -16,6 +16,7 @@ func chunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
 	return append(chunks, items)
 }
 
+// DEPRECATED: use age instead
 // Decrypt decrypts the given data using the given private key
 func Decrypt(data []byte, priv *rsa.PrivateKey) ([]byte, error) {
 	hash := sha512.New()

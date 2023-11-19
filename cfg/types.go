@@ -1,6 +1,8 @@
 package cfg
 
-import "codeberg.org/mjh/LibRate/internal/logging"
+import (
+	"codeberg.org/mjh/LibRate/internal/logging"
+)
 
 // Config is the struct that holds all the configuration for the application
 // unfortunately, camel case must be used, instead the yaml parser will not work

@@ -1,5 +1,7 @@
 codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230819112213-15f155339829 h1:R5RrkNg8zQ4doyZnN9ZiK9YbEo75zGY8+Fbg7riqBEE=
 codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230819112213-15f155339829/go.mod h1:Dl+SpPnw4GJh35UAumdcxXRpsZ3KIG6bAuWBp6Z47nk=
+filippo.io/age v1.1.1 h1:pIpO7l151hCnQ4BdyBujnGP2YlUo0uj6sAVNHGBvXHg=
+filippo.io/age v1.1.1/go.mod h1:l03SrzDUrBkdBx8+IILdnn2KZysqQdbEBUQ4p3sqEQE=
 git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 h1:cliQ4HHsCo6xi2oWZYKWW4bly/Ory9FuTpFPRxj/mAg=
 git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078/go.mod h1:g/V2Hjas6Z1UHUp4yIx6bATpNzJ7DYtD0FG3+xARWxs=
 github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a h1:EsWeQ0ck7JO3Mro4vSb3mKvO4Ho4pQjWdwknurncIxY=
