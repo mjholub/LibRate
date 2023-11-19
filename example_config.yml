@@ -36,6 +36,5 @@ logging:
 # dev or production
 librateEnv: "production"
 # relative paths supported
-keys:
-  public: "~/.ssh/id_rsa.pub"
-  private: "~/.ssh/private_key"
+# currently not used for anything
+#secretsPath: "secrets.enc.yaml" 

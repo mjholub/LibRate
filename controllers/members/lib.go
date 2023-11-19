@@ -1,6 +1,7 @@
 package members
 
 import (
+	"github.com/go-ap/activitypub"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 
@@ -33,4 +34,29 @@ func NewController(
 	conf *cfg.Config,
 ) *MemberController {
 	return &MemberController{storage: storage, log: logger, conf: conf}
+}
+
+// MemberToActor converts a member to an ActivityPub actor
+func MemberToActor(c *fiber.Ctx, member *member.Member) ([]byte, error) {
+	base := c.BaseURL() + "/api/members/" + member.MemberName
+	return activitypub.Actor{
+		ID:        activitypub.IRI(c.BaseURL() + "/api/members/" + member.MemberName),
+		Type:      activitypub.PersonType,
+		Inbox:     activitypub.IRI(base + "/inbox"),
+		Outbox:    activitypub.IRI(base + "/outbox"),
+		Following: activitypub.IRI(base + "/following"),
+		Followers: activitypub.IRI(base + "/followers"),
+		Liked:     activitypub.IRI(base + "/liked"),
+		PreferredUsername: activitypub.NaturalLanguageValues{
+			activitypub.DefaultLangRef(member.DisplayName.String),
+		},
+		Endpoints: &activitypub.Endpoints{
+			SharedInbox: activitypub.IRI(c.BaseURL() + "/api/inbox"),
+		},
+		PublicKey: activitypub.PublicKey{
+			ID:           activitypub.IRI(base + "#main-key"),
+			Owner:        activitypub.IRI(base),
+			PublicKeyPem: member.PublicKeyPem,
+		},
+	}.GobEncode()
 }

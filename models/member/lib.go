@@ -30,6 +30,7 @@ const (
 // Member holds the core information about a member
 type (
 	Member struct {
+		// TODO: convert to int64, postgres doesn't support unsigned by default anyway
 		ID             uint32                 `json:"id" db:"id"`
 		UUID           string                 `json:"_key,omitempty" db:"uuid"`
 		PassHash       string                 `json:"passhash" db:"passhash"`
@@ -48,6 +49,8 @@ type (
 		Visibility     string                 `json:"visibility" db:"visibility"`
 		Followers      activitypub.Collection `json:"followers,omitempty" db:"followers"`
 		SessionTimeout sql.NullInt64          `json:"sessionTimeout,omitempty" db:"sessionTimeout"`
+		// TODO: add database migration
+		PublicKeyPem string `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem,omitempty" db:"public_key_pem"`
 	}
 
 	Device struct {
