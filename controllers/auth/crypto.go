@@ -48,9 +48,14 @@ func (a *Service) GetPubKey(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
 
+	const (
+		private = "private"
+		public  = "public"
+	)
+
 	keysMap := map[string]string{
-		"private": keys.Private.String(),
-		"public":  keys.Public.String(),
+		private: keys.Private.String(),
+		public:  keys.Public.String(),
 	}
 
 	unwrapped := keyData{
@@ -60,7 +65,7 @@ func (a *Service) GetPubKey(c *fiber.Ctx) error {
 
 	keyData, err := json.MarshalIndent(unwrapped, "", "  ")
 	if err != nil {
-		a.log.Error().Msgf("error marshalling X25519 key data: %w", err)
+		a.log.Error().Msgf("error marshalling X25519 key data: %v", err)
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
 
@@ -73,28 +78,28 @@ func (a *Service) GetPubKey(c *fiber.Ctx) error {
 
 	secFile, err := os.Open(path.Join("tmp", "sec.json"))
 	if err != nil {
-		a.log.Error().Msgf("error opening secrets storage: %w", err)
+		a.log.Error().Msgf("error opening secrets storage: %v", err)
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
-	defer func(f *os.File) {
-		err := secFile.Close()
+	defer func() {
+		err = secFile.Close()
 		if err != nil {
-			a.log.Warn().Msgf("file not closed: tmp/sec.json: %w", err)
+			a.log.Warn().Msgf("file not closed: tmp/sec.json: %v", err)
 		}
-	}(secFile)
+	}()
 
 	w, err := age.Encrypt(secFile, pubKey)
 	if err != nil {
-		a.log.Error().Msgf("error creating encrypted buffer: %w", err)
+		a.log.Error().Msgf("error creating encrypted buffer: %v", err)
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
 
 	if _, err := io.WriteString(w, string(keyData)); err != nil {
-		a.log.Error().Msgf("error writing X25519 key details: %w", err)
+		a.log.Error().Msgf("error writing X25519 key details: %v", err)
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
 	if err := w.Close(); err != nil {
-		a.log.Error().Msgf("failed to close encrypted buffer: %w", err)
+		a.log.Error().Msgf("failed to close encrypted buffer: %v", err)
 		return h.Res(c, fiber.StatusInternalServerError, "Internal server error")
 	}
 
@@ -132,13 +137,15 @@ func (a *Service) GetPrivateKey(identifier uuid.UUID) (key *age.X25519Identity, 
 	}
 	for i := range keyDataAll {
 		if keyDataAll[i].identifier == identifierStr {
-			privKey, err := age.ParseX25519Identity(keyDataAll[i].privateStr)
+			privKey, err := age.ParseX25519Identity(keyDataAll[i].privPubNestedMap["private"])
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse private key: %w", err)
 			}
 			return privKey, nil
 		}
-		return nil, fmt.Errorf("failed to find private key for identifier %s", identifierStr)
+		if i == len(keyDataAll)-1 {
+			return nil, fmt.Errorf("failed to find private key for identifier %s", identifierStr)
+		}
 	}
 
 	return nil, errors.New("unknown error")
