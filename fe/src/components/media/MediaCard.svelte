@@ -1,3 +1,5 @@
+<!-- NOTE: as is often the case with such generalised components,
+this one might be completely scrapped in near future. -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import axios from 'axios';

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { authStore } from '$stores/members/auth.ts';
+	import { onMount, onDestroy } from 'svelte';
+	import { authStore, initialAuthState } from '$stores/members/auth.ts';
 	import type { Member } from '$lib/types/member.ts';
 
 	function splitNullable(input: string | null, separator: string): string[] {
@@ -39,8 +39,13 @@
 		}
 		console.debug('member (called outside conditional): ', member);
 	});
+
+	onDestroy(() => {
+		authStore.set(initialAuthState);
+	});
 </script>
 
+<!-- TODO: see if this looks better as a description list -->
 <div class="member-card">
 	<img class="member-image" src={member.profilePic} alt="{member.memberName}'s profile picture" />
 	<div class="member-name">({member.memberName})</div>
@@ -74,6 +79,7 @@
   -->
 </div>
 
+<!-- TODO: use CSS variables -->
 <style>
 	.member-card {
 		border: 1px solid #ccc;

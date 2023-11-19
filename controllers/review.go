@@ -73,11 +73,12 @@ func (rc *ReviewController) GetByID(c *fiber.Ctx) error {
 func (rc *ReviewController) GetLatest(c *fiber.Ctx) error {
 	// Extract limit and offset parameters from the query string.
 	limit, err := strconv.Atoi(c.Query("limit", "5"))
-	if err != nil {
+	if err != nil || limit < 1 || limit > 100 {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid limit")
 	}
+	// offset is the number of ratings to skip
 	offset, err := strconv.Atoi(c.Query("offset", "0"))
-	if err != nil {
+	if err != nil || offset < 0 || offset > 50 {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid offset")
 	}
 

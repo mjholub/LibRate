@@ -21,11 +21,7 @@
 	});
 
 	trackStore.subscribe((value) => {
-		tracks.forEach((track) => {
-			if (track.media_id === value?.track?.media_id) {
-				favoriteTrack = track;
-			}
-		});
+		favoriteTrack = tracks.find((track) => track.media_id === value?.track?.media_id) || null;
 	});
 
 	const submitReview = async (mediaID: UUID) => {
@@ -90,7 +86,7 @@
 	{/if}
 
 	<label>
-		Track ratings
+		{'Track ratings'}
 		{#if $reviewStore.trackRatings}
 			{#each $reviewStore.trackRatings as trackRating, i (i)}
 				<input
@@ -108,6 +104,7 @@
 
 	{#if isMediaVideo}
 		<label>
+			<!-- TODO: refactor to accomodate new rating system -->
 			Cast ratings
 			{#if $reviewStore.castRatings}
 				{#each $reviewStore.castRatings as castRating, i (i)}
@@ -116,7 +113,6 @@
 						bind:value={castRating}
 						min="1"
 						max={$reviewStore.ratingScale}
-						placeholder="Cast ratings"
 						required
 					/>
 				{/each}
@@ -126,14 +122,22 @@
 		</label>
 	{/if}
 
-	<div class="expandable-box">
+	<section class="expandable-box" role="region" aria-labelledby="keywords-heading">
 		<h3>Keywords</h3>
 		<ul>
 			{#each $keywordStore.selectedKeywords as keyword (keyword.keyword)}
 				<li>
 					<span>{keyword.keyword} ({keyword.stars}/{$reviewStore.ratingScale})</span>
-					<button on:click={() => incrementVote(keyword)}>+</button>
-					<button on:click={() => decrementVote(keyword)}>-</button>
+					<button
+						type="button"
+						on:click={() => incrementVote(keyword)}
+						aria-label={`Increment vote for ${keyword.keyword}`}>+</button
+					>
+					<button
+						type="button"
+						on:click={() => decrementVote(keyword)}
+						aria-label={`Decrement vote for ${keyword.keyword}`}>-</button
+					>
 				</li>
 			{/each}
 		</ul>
@@ -150,24 +154,41 @@
 					<option value={keyword} />
 				{/each}
 			</datalist>
-			<button on:click={() => suggestKeywords(mediaID)}>&gt;&gt;</button>
+			<button type="button" on:click={() => suggestKeywords(mediaID)} aria-label="Suggest keywords"
+				>&gt;&gt;</button
+			>
 		</div>
-	</div>
+	</section>
 	<label>
+		<!-- TODO: allow setting custom values for min and max -->
 		<textarea
+			aria-label="Review text"
 			bind:value={$reviewStore.reviewText}
 			on:input={reviewStore.handleReviewChange}
-			placeholder="Review (min 20 words)"
 			required
 		/>
 	</label>
 
-	<div>Word count: {$reviewStore.wordCount}</div>
+	<div aria-live="polite">Word count: {$reviewStore.wordCount}</div>
 
 	<button type="submit">Submit Review</button>
 </form>
 
+<!-- TODO: add CSS variables to ease theming -->
 <style>
+	:root {
+		--input-border-color: #ccc;
+		--input-border-color-focus: #aaa;
+		--input-border-color-error: #f00;
+		--input-background-color: #fff;
+		--input-background-color-focus: #fff;
+		--input-text: #000;
+		--border-radius: 2px;
+		--pwd-container-display: inline flow-root list-item;
+		--box-padding: 0.5em;
+		--box-marigin-btm: 0.5em;
+	}
+
 	input,
 	select,
 	textarea,
@@ -184,8 +205,8 @@
 
 	.expandable-box {
 		border: 1px solid #ccc;
-		padding: 10px;
-		margin-bottom: 10px;
+		padding: var(--box-padding);
+		margin-bottom: var(--box-margin-btm);
 	}
 
 	.expandable-box h3 {

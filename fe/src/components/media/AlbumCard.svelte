@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Album } from '$lib/types/music.ts';
-	//import { mediaImageStore } from '../../stores/media/image.ts';
 	let showArtists = false;
 	let showKeywords = false;
 	let durationStr = '';
@@ -12,7 +11,16 @@
 	}
 	export let album: Album;
 	if (album.duration && album.duration.Valid) {
-		durationStr = album.duration.Time.split('T')[1].split('.')[0];
+		const durationDate = new Date(album.duration.Time);
+		// FIXME: ditch static adapter, because without
+		// the ability to use dynamic rendering, this will always
+		// be the host machine's locale, while we want it to be the user's
+		// browser locale
+		durationStr = durationDate.toLocaleTimeString(undefined, {
+			hour: 'numeric',
+			minute: 'numeric',
+			second: 'numeric'
+		});
 	}
 	export let imgPath: string;
 	console.info('mounting AlbumCard initialized');
@@ -20,70 +28,93 @@
 
 <!-- WARN: optimistically assuming the first image is the album cover -->
 {#if imgPath}
-	<img class="media-image" src={imgPath} alt={album.name} />
+	<img class="media-image" src={imgPath} alt={album.name} loading="lazy" />
 {/if}
 <div class="album-details">
-	<div><b>Title:</b> {album.title}</div>
-	<!-- merge the artists into one array -->
-	<div>
-		<b>Artists:</b>
-		{#if album.album_artists.group_artist !== undefined}
-			{#each album.album_artists.group_artist as artist}
-				{artist.name}
-			{/each}
-		{/if}
-		<!-- expandable list of artists from the person_artist -->
-		<button class="toggle-button" on:click={toggleArtists}>
-			{#if showArtists}
-				Show less
-			{:else}
-				Show more
-			{/if}
-		</button>
-
-		{#if showArtists}
-			<div>
-				{#each album.album_artists.person_artist as artist}
-					{artist.first_name}
-					{#if artist.nick_names}"{artist.nick_names}"{/if}
-					{artist.last_name}
+	<dl>
+		<dt>Title:</dt>
+		<dd>{album.title}</dd>
+		<!-- merge the artists into one array -->
+		<dt>Artists:</dt>
+		<dd>
+			{#if album.album_artists.group_artist !== undefined}
+				{#each album.album_artists.group_artist as artist}
+					{artist.name}
 				{/each}
-			</div>
-		{/if}
-	</div>
-	<div><b>Release Date</b>: {album.release_date}</div>
-	<div class="album-tracklist">
-		{#each album.tracks as track (track.media_id)}
-			<p><b>Tracklist:</b></p>
-			<div class="album-track">
-				<span>{track.track_number++}</span>
-				<span>{track.name}</span>
-				<span>{track.duration}</span>
-			</div>
-		{/each}
-	</div>
-	<div>Duration: {durationStr}</div>
-	<!-- TODO: ability to add keywords from this component-->
-	<div class="keywords-container">
-		<div class="keywords"><b>Keywords:</b></div>
-		<button class="toggle-button" on:click={toggleKeywords}>
-			{#if showKeywords}
-				Hide
-			{:else}
-				Show
 			{/if}
-		</button>
-	</div>
-	{#if showKeywords}
-		{#if album.keywords !== undefined}
-			{#each album.keywords as keyword}
-				<span>{keyword.keyword}</span>
+			<button class="toggle-button" on:click={toggleArtists}>
+				{#if showArtists}
+					Show less
+				{:else}
+					Show more
+				{/if}
+			</button>
+			{#if showArtists}
+				<div>
+					{#each album.album_artists.person_artist as artist}
+						{artist.first_name}
+						{#if artist.nick_names}"{artist.nick_names}"{/if}
+						{artist.last_name}
+					{/each}
+				</div>
+			{/if}
+		</dd>
+
+		<dt>Release Date:</dt>
+		<dd>{album.release_date}</dd>
+
+		<dt>Tracklist:</dt>
+		<dd class="album-tracklist">
+			{#each album.tracks as track (track.media_id)}
+				<div class="album-track">
+					<span>{track.track_number++}</span>
+					<span>{track.name}</span>
+					<span>{track.duration}</span>
+				</div>
 			{/each}
-		{/if}
-	{/if}
+		</dd>
+
+		<dt>Duration:</dt>
+		<dd>{durationStr}</dd>
+		<!-- TODO: ability to add keywords from this component-->
+
+		<dt>Keywords:</dt>
+		<dd class="keywords-container">
+			<div class="keywords">
+				<button class="toggle-button" on:click={toggleKeywords}>
+					{#if showKeywords}
+						Hide
+					{:else}
+						Show
+					{/if}
+				</button>
+			</div>
+			{#if showKeywords}
+				{#if album.keywords !== undefined}
+					{#each album.keywords as keyword}
+						<span>{keyword.keyword}</span>
+					{/each}
+				{/if}
+			{/if}
+		</dd>
+	</dl>
 </div>
 
 <style>
+	/* TODO: use more CSS variables */
+	:root {
+		--input-border-color: #ccc;
+		--input-border-color-focus: #aaa;
+		--input-border-color-error: #f00;
+		--input-background-color: #fff;
+		--input-background-color-focus: #fff;
+		--input-text: #000;
+		--border-radius: 2px;
+		--pwd-container-display: inline flow-root list-item;
+		--toggle-btn-bgcolor: #4caf50;
+		--toggle-btn-hover-bgcolor: #45a049;
+	}
+
 	.album-details {
 		display: flex;
 		width: 100%;
@@ -101,22 +132,22 @@
 		justify-content: space-between;
 	}
 	.toggle-button {
-		background-color: #4caf50; /* Green */
+		background-color: var(--toggle-btn-bgcolor); /* Green */
 		border: none;
 		color: white;
 		padding: 0.2em 0.3em;
 		text-align: center;
 		text-decoration: none;
 		display: inline-block;
-		font-size: 15px;
-		margin: 4px 2px;
+		font-size: 0.8em;
+		margin: 0.2em 0.1em;
 		cursor: pointer;
 		border-radius: 4px;
 		transition-duration: 0.4s;
 	}
 
 	.toggle-button:hover {
-		background-color: #45a049;
+		background-color: var(--toggle-btn-hover-bgcolor);
 	}
 	.keywords-container {
 		display: flex;

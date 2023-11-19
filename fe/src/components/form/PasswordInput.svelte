@@ -15,7 +15,6 @@
 		type="password"
 		autocomplete="new-password"
 		required
-		aria-label="Password"
 		on:input={() => {
 			onInput(value);
 		}}

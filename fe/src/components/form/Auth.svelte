@@ -169,7 +169,6 @@
 				bind:value={email_or_username}
 				required
 				class="input"
-				aria-label="Email or Username"
 			/>
 
 			<PasswordInput
@@ -189,7 +188,7 @@
 			<input id="email" bind:value={email} type="email" class="input" required aria-label="Email" />
 
 			<label for="nickname">Nickname:</label>
-			<input id="nickname" bind:value={nickname} required aria-label="Nickname" class="input" />
+			<input id="nickname" bind:value={nickname} required class="input" />
 
 			<PasswordInput
 				bind:value={password}
@@ -208,7 +207,6 @@
 				bind:value={passwordConfirm}
 				type="password"
 				required
-				aria-label="Confirm Password"
 				on:input={() => checkEntropy(passwordConfirm)}
 			/>
 			<!-- Password strength indicator -->
@@ -224,7 +222,7 @@
 		{/if}
 
 		{#if errorMessage}
-			<p class="error-message">{errorMessage}</p>
+			<p><span class="error-icon" /><span class="error-message">{errorMessage}</span></p>
 		{/if}
 	</div>
 	<!-- End of input container -->
@@ -240,6 +238,12 @@
 </form>
 
 <style>
+	/* very important for the colorblind for example */
+	:root {
+		--error-color: red;
+		--error-background: #ffe6e6;
+	}
+
 	.input {
 		font-family: inherit;
 		font-size: inherit;
@@ -252,8 +256,18 @@
 	}
 
 	.error-message {
-		color: red;
+		color: var(--error-color);
+		background-color: var(--error-background);
+		padding: 0.5rem;
+		border: 1px solid var(--error-color);
 		font-weight: bold;
+	}
+
+	.error-icon::before {
+		content: '⚠️';
+		color: var(--error-color);
+		font-size: 1.5em;
+		margin-right: 0.5em;
 	}
 
 	.button-container {

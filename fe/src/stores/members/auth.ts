@@ -16,7 +16,7 @@ interface AuthStore extends Writable<AuthStoreState> {
   getMember: (memberID: number) => Promise<Member>;
 }
 
-const initialAuthState: AuthStoreState = {
+export const initialAuthState: AuthStoreState = {
   id: 0,
   memberName: '',
   displayName: null,

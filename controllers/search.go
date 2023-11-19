@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type (
@@ -39,12 +40,13 @@ func NewSearchController(dbConn *sqlx.DB) *SearchController {
 
 // Search calls the private function performSearch to perform a full text search
 func (sc *SearchController) Search(c *fiber.Ctx) error {
+	policy := bluemonday.StrictPolicy()
 	// Parse the search term from the request body
 	var body map[string]string
 	if err := c.BodyParser(&body); err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Invalid request body")
 	}
-	searchTerm := body["search"]
+	searchTerm := policy.Sanitize(body["search"])
 	// Perform the search and handle any errors
 	// The context is acquired from the request
 	results, err := performSearch(c.Context(), sc.dbConn, searchTerm)

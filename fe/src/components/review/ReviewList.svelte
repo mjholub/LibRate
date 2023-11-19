@@ -7,6 +7,7 @@
 	export let reviews: Review[];
 	const limit = 5;
 	let offset = 0;
+	const nick = 'anonymous'; // FIXME: add nick fetching logic here
 
 	// TODO: move to store
 	const getReviews = async (limit: number, offset: number) => {
@@ -51,7 +52,7 @@
 	{#if reviews.length > 0}
 		<div>
 			{#each reviews as review (review.id)}
-				<ReviewCard {review} userid={review.userid} media={review.media} />
+				<ReviewCard {review} userid={review.userid} {nick} media={review.media} />
 			{/each}
 			<button on:click={loadMore}>Load More Reviews</button>
 		</div>
@@ -61,12 +62,16 @@
 </div>
 
 <style>
+	:root {
+		--no-reviews-color: #666;
+	}
+
 	.review-list {
 		margin-top: 2em;
 	}
 
 	.no-reviews {
 		text-align: center;
-		color: #666;
+		color: var(--no-reviews-color);
 	}
 </style>
