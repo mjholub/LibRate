@@ -109,8 +109,7 @@ func (ms *MediaStorage) GetImagePath(ctx context.Context, id uuid.UUID) (path st
 			LIMIT 1
 			`, id)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error getting image paths")
-			return "", fmt.Errorf("error getting image paths: %w", err)
+			return "", err
 		}
 
 		return path, nil
