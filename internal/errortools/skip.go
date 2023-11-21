@@ -30,7 +30,9 @@ func ParseIgnorableErrors(fromFlag *string) (errors []string, err error) {
 		wrogCodes := lo.Reject(errorsList, func(code string, _ int) bool {
 			return lo.Contains(Codes, code)
 		})
-		return nil, fmt.Errorf("invalid ignorable error code %s specified", wrogCodes)
+		return nil, fmt.Errorf(
+			"invalid ignorable error code %s specified. Acceptable error codes: %v",
+			wrogCodes, Codes)
 	}
 
 	return errorsList, nil

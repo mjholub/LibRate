@@ -1,7 +1,9 @@
 package errortools
 
 const (
-	ERR_SQLCIPHER_PARSE = "Error establishing encrypted database connection"
+	// ErrSQLCipherParse is the error code for SQLCipher parse errors.
+	ErrSQLCipherParse = "ERR_SQLCIPHER_PARSE"
 )
 
-var Codes = []string{ERR_SQLCIPHER_PARSE}
+// nolint:gochecknoglobals
+var Codes = []string{ErrSQLCipherParse}

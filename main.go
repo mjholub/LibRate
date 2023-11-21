@@ -115,8 +115,8 @@ func main() {
 	// also, this can probably be simplified to use sqlx.DB
 	cryptoConn, err := crypt.CreateCryptoStorage()
 	if err != nil {
-		if lo.Contains(ignorableErrors, errortools.ERR_SQLCIPHER_PARSE) {
-			log.Warn().Msgf("Skipping error %s. Password security checking will not work!", errortools.ERR_SQLCIPHER_PARSE)
+		if lo.Contains(ignorableErrors, errortools.ErrSQLCipherParse) {
+			log.Warn().Msgf("Skipping error %s. Password security checking will not work!", errortools.ErrSQLCipherParse)
 		} else {
 			log.Panic().Msgf("error establishing encrypted secrets storage: %v", err)
 		}
