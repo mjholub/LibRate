@@ -1,9 +1,11 @@
 package crypt
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateStorageKey(t *testing.T) {
@@ -13,7 +15,16 @@ func TestGenerateStorageKey(t *testing.T) {
 }
 
 func TestCreateCryptoStorage(t *testing.T) {
-	conn, err := CreateCryptoStorage()
+	testDir, err := os.MkdirTemp("", "test")
+	require.NoError(t, err)
+	testFile, err := os.CreateTemp(testDir, "test.db")
+	require.NoError(t, err)
+	defer func() {
+		testFile.Close()
+		os.RemoveAll(testDir)
+	}()
+
+	conn, err := CreateCryptoStorage(testFile.Name())
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 }
