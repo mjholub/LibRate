@@ -7,3 +7,6 @@ LibRate
 node_modules
 fe/_app
 *.pem
+*.tar
+todo.md
+.env
