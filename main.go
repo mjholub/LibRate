@@ -113,7 +113,25 @@ func main() {
 
 	// TODO: add a goroutine to automatically rotate the generated key
 	// also, this can probably be simplified to use sqlx.DB
-	cryptoConn, err := crypt.CreateCryptoStorage()
+	cryptDir, err := os.MkdirTemp("", "librate-secrets")
+	if err != nil && !lo.Contains(ignorableErrors, errortools.IOError) {
+		log.Panic().Err(err).Msgf("failed to create temporary directory for secrets: %v", err)
+	}
+
+	dbFile, err := os.CreateTemp(cryptDir, "secrets.db")
+	if err != nil && !lo.Contains(ignorableErrors, errortools.IOError) {
+		log.Panic().Err(err).Msgf("failed to create temporary file for secrets: %v", err)
+	}
+	defer func() {
+		if dbFile != nil {
+			dbFile.Close()
+		}
+		if cryptDir != "" {
+			os.RemoveAll(cryptDir)
+		}
+	}()
+
+	cryptoConn, err := crypt.CreateCryptoStorage(dbFile.Name())
 	if err != nil {
 		if lo.Contains(ignorableErrors, errortools.ErrSQLCipherParse) {
 			log.Warn().Msgf("Skipping error %s. Password security checking will not work!", errortools.ErrSQLCipherParse)

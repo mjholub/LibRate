@@ -11,14 +11,16 @@ import (
 )
 
 // CreateCryptoStorage creates a SQLite-cypher encrypted storage for X25519 keys
-func CreateCryptoStorage() (conn *sql.DB, err error) {
+// It needs to be called inside main function so that the temporary directory it uses
+// is not discarded upon return.
+func CreateCryptoStorage(dbFile string) (conn *sql.DB, err error) {
 	key, err := generateStorageKey()
 	if err != nil {
 		return nil, err
 	}
 
-	dsn := fmt.Sprintf(
-		":memory:?_pragma_key=%s&_pragma_cipher_page_size=4096", key)
+	dsn := dbFile + fmt.Sprintf(
+		"?_pragma_key=%s&_pragma_cipher_page_size=4096", key)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		db.Close()
@@ -31,14 +33,6 @@ func CreateCryptoStorage() (conn *sql.DB, err error) {
 		}
 	}()
 
-	encrypted, err := sqlite3.IsEncrypted(":memory:")
-	if err != nil {
-		return nil, fmt.Errorf("error checking encryption status")
-	}
-	if !encrypted {
-		return nil, fmt.Errorf("go-sqlcipher: error checking encryption status")
-	}
-
 	_, err = db.Exec(`CREATE TABLE keys(
 		id CHARACTER(36) PRIMARY KEY,
 		private TEXT NOT NULL,
@@ -46,6 +40,14 @@ func CreateCryptoStorage() (conn *sql.DB, err error) {
 		)`)
 	if err != nil {
 		return nil, fmt.Errorf("error creating keys table: %v", err)
+	}
+
+	encrypted, err := sqlite3.IsEncrypted(dbFile)
+	if err != nil {
+		return nil, fmt.Errorf("error checking encryption status: %v", err)
+	}
+	if !encrypted {
+		return nil, fmt.Errorf("go-sqlcipher: secrets database not encrypted")
 	}
 
 	return db, nil
