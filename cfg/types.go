@@ -48,6 +48,7 @@ type FiberConfig struct {
 	StaticDir      string `yaml:"staticDir" default:"./static"`
 	PowInterval    int    `yaml:"powInterval" default:"300"`
 	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
+	RequestTimeout int    `yaml:"requestTimeout" default:"10"`
 }
 
 type KeysConfig struct {

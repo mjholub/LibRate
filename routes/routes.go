@@ -1,13 +1,13 @@
 package routes
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"filippo.io/age"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
@@ -37,7 +37,7 @@ func Setup(
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
 	fzlog *fiber.Handler,
-	identity *age.X25519Identity,
+	sqlcipher *sql.DB,
 ) error {
 	// setup the middleware
 	// NOTE: unsure if this handler is correct
@@ -60,7 +60,7 @@ func Setup(
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
-	authSvc := auth.NewService(conf, mStor, logger, identity)
+	authSvc := auth.NewService(conf, mStor, logger, sqlcipher)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := memberCtrl.NewController(mStor, logger, conf)
 	mediaCon := media.NewController(*mediaStor)

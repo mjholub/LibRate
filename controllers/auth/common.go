@@ -1,12 +1,12 @@
 package auth
 
 import (
+	"database/sql"
 	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
 
-	"filippo.io/age"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 
@@ -37,10 +37,10 @@ type (
 	// Service allows dependency injection for the controller methods,
 	// so that the db connection needn't be created in the controller methods
 	Service struct {
-		conf     *cfg.Config
-		log      *zerolog.Logger
-		ms       member.MemberStorer
-		identity *age.X25519Identity
+		conf       *cfg.Config
+		log        *zerolog.Logger
+		ms         member.MemberStorer
+		secStorage *sql.DB
 	}
 
 	// RegLoginInput is an union (feature introduced in Go 1.18) of RegisterInput and LoginInput
@@ -61,9 +61,9 @@ func NewService(
 	conf *cfg.Config,
 	ms member.MemberStorer,
 	log *zerolog.Logger,
-	identity *age.X25519Identity,
+	secStorage *sql.DB,
 ) *Service {
-	return &Service{conf, log, ms, identity}
+	return &Service{conf, log, ms, secStorage}
 }
 
 func isEmail(email string) bool {

@@ -8,6 +8,7 @@ require (
 	github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/avast/retry-go/v4 v4.5.0
+	github.com/dm764/go-sqlcipher/v4 v4.5.4
 	github.com/go-ap/activitypub v0.0.0-20230807182453-602f717f6ca3
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/contrib/fiberzerolog v0.2.0
@@ -69,6 +70,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.1.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/sqlcipher/sqlcipher v4.5.5+incompatible // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
