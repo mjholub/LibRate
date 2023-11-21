@@ -17,7 +17,7 @@
 		}
 		try {
 			const response = await axios.post(
-				'http://127.0.0.1:3000/api/search/',
+				'/api/search/',
 				{ search },
 				{
 					headers: {
@@ -82,12 +82,12 @@
 	.search-result-container {
 		display: flex;
 		flex-direction: column;
-		align-items: left;
+		align-items: start;
 		padding-bottom: 0.5em;
 	}
 
 	.search-bar {
-		margin-bottom: 0.8em;
+		margin-block-end: 0.8em;
 		width: 50%; /* initial width */
 		transition: width 0.4s ease-in-out;
 	}

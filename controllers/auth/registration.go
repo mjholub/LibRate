@@ -50,15 +50,17 @@ func (r RegisterInput) Validate() (*member.Input, error) {
 		return nil, fmt.Errorf("email or nickname required")
 	}
 
-	if r.Password == "" {
+	password := string(r.Password)
+
+	if password == "" {
 		return nil, fmt.Errorf("password required")
 	}
 
-	if r.Password != r.PasswordConfirm {
+	if password != string(r.PasswordConfirm) {
 		return nil, fmt.Errorf("passwords do not match")
 	}
 
-	_, err := redist.CheckPasswordEntropy(r.Password)
+	_, err := redist.CheckPasswordEntropy(password)
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +75,14 @@ func (r RegisterInput) Validate() (*member.Input, error) {
 func ValidatePassword() fiber.Handler {
 	const minEntropy = 50.0
 	return func(c *fiber.Ctx) error {
-		// Parse the JSON body
+		// Parse the JSON body, which includes an encrypted partial password in the
+		// application/octet-stream MIME type
 		var input struct {
-			Password string `json:"password"`
+			Password string `json:"partialPassword"`
+			AuthTag  string `json:"authTag"`
+			Iv       string `json:"iv"`
 		}
+
 		if err := c.BodyParser(&input); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": "Invalid JSON",
@@ -101,7 +107,7 @@ func ValidatePassword() fiber.Handler {
 func createMember(input *member.Input) (*member.Member, error) {
 	in := cleanInput(input)
 
-	passhash, err := hashWithArgon(input.Password)
+	passhash, err := hashWithArgon([]byte(input.Password))
 	if err != nil {
 		return nil, err
 	}

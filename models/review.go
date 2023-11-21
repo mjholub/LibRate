@@ -14,7 +14,7 @@ import (
 type (
 	RatingInput struct {
 		// TODO: allow for setting dynamic rating scales
-		NumStars    uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars"`
+		NumStars    int8      `json:"numstars" binding:"required" validate:"min=0,max=10" error:"numstars must be between 1 and 15" db:"stars"`
 		Comment     string    `json:"comment,omitempty" db:"comment"`
 		Topic       string    `json:"topic,omitempty" db:"topic"`
 		Attribution string    `json:"attribution,omitempty" db:"attribution"`
@@ -22,50 +22,53 @@ type (
 		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
 	}
 
-	Rating struct {
-		ID          int64     `json:"_key" db:"id,pk"`
-		CreatedAt   time.Time `json:"created_at" db:"created_at"`
-		NumStars    uint8     `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		Comment     string    `json:"comment,omitempty" db:"comment"`
-		Topic       string    `json:"topic,omitempty" db:"topic"`
-		Attribution string    `json:"attribution,omitempty" db:"attribution"`
-		UserID      uint32    `json:"userid" db:"user_id"`
-		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
-		// track/cast/theme
-		TrackRatings *TrackRating `json:"trackRatings,omitempty" db:"track_rating"`
-		CastRating   *CastRating  `json:"castRating,omitempty" db:"cast_rating"`
+	Review struct {
+		ID               int64              `json:"_key" db:"id,pk"`
+		CreatedAt        time.Time          `json:"created_at" db:"created_at"`
+		NumStars         int8               `json:"numstars" binding:"required" validate:"min=0,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		Comment          string             `json:"comment,omitempty" db:"comment"`
+		Topic            string             `json:"topic,omitempty" db:"topic"`
+		Attribution      string             `json:"attribution,omitempty" db:"attribution"`
+		UserID           uint32             `json:"userid" db:"user_id"`
+		MediaID          uuid.UUID          `json:"mediaid" db:"media_id"`
+		SecondaryRatings []*SecondaryRating `json:"secondary_ratings,omitempty" db:"secondary_ratings"`
+	}
+
+	// rating average is a helper, "meta"-type so that the averages retrieved are more concise
+	RatingAverage struct {
+		BaseRatingScore float64 `json:"base_rating_score" db:"base_rating_score"`
+		//nolint: revive
+		SecondaryRatingTypes    *[]string                `json:"secondary_rating_types,omitempty" validate:"required,oneof=track plotline soundtrack acting scenography scenario theme" db:"secondary_rating_types"`
+		SecondaryRatingAverages []SecondaryRatingAverage `json:"secondary_rating_score" db:"secondary_rating_score"`
+	}
+
+	// TODO: add migration (if needed)
+	// SecondaryRatingAverages is a map of (secondary rating's) kind to it's value
+	SecondaryRatingAverage struct {
+		MediaID   uuid.UUID `json:"_key" db:"media_id,pk"`
+		MediaKind string    `json:"media_kind" db:"media_kind"`
+		Score     float64   `json:"score,omitempty" db:"score"`
 	}
 
 	UpdateableKeyTypes interface {
 		~int | ~uint | string
 	}
 
-	/*
-	* It should probably be better from the perspective of the UX
-	* as well as the performance, normalization, modularity and reusability
-	* to have a separate table for each kind of rating
-	 */
-
-	TrackRating struct {
-		ID       int64  `json:"_key" db:"id,pk"`
-		Track    *Track `json:"track" db:"track"`
-		NumStars uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		UserID   uint32 `json:"userid" db:"user_id"`
-	}
-
-	CastRating struct {
-		ID       int64  `json:"_key" db:"id,pk"`
-		Cast     *Cast  `json:"cast" db:"cast_id"`
-		NumStars uint8  `json:"numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		UserID   uint32 `json:"userid" db:"user_id"`
+	// TODO: add migration
+	SecondaryRating struct {
+		ID       int64      `json:"_key" db:"id,pk"`
+		MediaID  *uuid.UUID `json:"media_id" db:"media_id"`
+		Kind     string     `json:"kind" validate:"required,oneof=track plotline soundtrack acting scenography scenario theme" db:"kind"`
+		NumStars int8       `json: "numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		UserID   uint32     `json:"userid" db:"user_id"`
 	}
 
 	// Update is not present, because methods cannot have type parameters
 	RatingStorer interface {
 		New(ri *RatingInput) error
-		Get(ctx context.Context, ID int64) (*Rating, error)
-		GetAll() ([]*Rating, error)
-		GetByMediaID(ctx context.Context, mediaID uuid.UUID) ([]*Rating, error)
+		Get(ctx context.Context, ID int64) (*Review, error)
+		GetAll() ([]*Review, error)
+		GetByMediaID(ctx context.Context, mediaID uuid.UUID) ([]*Review, error)
 	}
 
 	RatingStorage struct {
@@ -128,10 +131,10 @@ func UpdateRating[U UpdateableKeyTypes](ctx context.Context, rs *RatingStorage, 
 }
 
 // Get retrieves a rating by its id.
-func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Rating, err error) {
+func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Review, err error) {
 	err = rs.db.GetContext(ctx, &r, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
 	if err != nil {
-		return Rating{}, fmt.Errorf("error getting rating: %w", err)
+		return Review{}, fmt.Errorf("error getting review: %w", err)
 	}
 	return r, nil
 }
@@ -151,7 +154,7 @@ func (rs *RatingStorage) Delete(ctx context.Context, id int64) (err error) {
 
 // GetLatestRatings retrieves the latest reviews for all media items. The limit and offset
 // parameters are used for pagination.
-func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Rating, err error) {
+func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Review, err error) {
 	err = rs.db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings 
 		ORDER BY created_at
 		DESC LIMIT $1 OFFSET $2`, limit, offset)
@@ -161,7 +164,7 @@ func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (
 	return ratings, nil
 }
 
-func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
+func (rs *RatingStorage) GetAll() (ratings []*Review, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -172,7 +175,7 @@ func (rs *RatingStorage) GetAll() (ratings []*Rating, err error) {
 	return ratings, nil
 }
 
-func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Rating, err error) {
+func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Review, err error) {
 	err = rs.db.SelectContext(
 		ctx, &ratings, `SELECT * FROM reviews.ratings WHERE media_id = $1`, mediaID)
 	if err != nil {
@@ -181,7 +184,7 @@ func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (r
 	return ratings, nil
 }
 
-func (rs *RatingStorage) GetAverageStars(ctx context.Context, rating interface{},
+func (rs *RatingStorage) GetAverageStars(ctx context.Context,
 	mediaID uuid.UUID,
 ) (avgStars float64, err error) {
 	select {
@@ -189,28 +192,10 @@ func (rs *RatingStorage) GetAverageStars(ctx context.Context, rating interface{}
 		return 0, ctx.Err()
 	default:
 		var avgStarsFloat sql.NullFloat64
-
-		switch rating.(type) {
-		case *Track:
-			err = rs.db.GetContext(ctx, &avgStarsFloat,
-				`SELECT AVG(stars) FROM reviews.track_ratings WHERE track_id = $1`, mediaID)
-			if err != nil {
-				return 0, fmt.Errorf("error getting average stars: %w", err)
-			}
-		case *CastRating:
-			err = rs.db.GetContext(ctx, &avgStarsFloat,
-				`SELECT AVG(stars) FROM reviews.cast_ratings WHERE cast_id = $1`, mediaID)
-			if err != nil {
-				return 0, fmt.Errorf("error getting average stars: %w", err)
-			}
-		case *Rating:
-			err = rs.db.GetContext(ctx, &avgStarsFloat,
-				`SELECT AVG(stars) FROM reviews.ratings WHERE media_id = $1`, mediaID)
-			if err != nil {
-				return 0, fmt.Errorf("error getting average stars: %w", err)
-			}
-		default:
-			return 0, fmt.Errorf("invalid type")
+		err = rs.db.GetContext(ctx, &avgStarsFloat,
+			`SELECT AVG(stars) FROM reviews.ratings WHERE media_id = $1`, mediaID)
+		if err != nil {
+			return 0, fmt.Errorf("error getting average stars: %w", err)
 		}
 
 		return avgStarsFloat.Float64, nil

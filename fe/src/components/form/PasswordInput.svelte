@@ -15,7 +15,6 @@
 		type="password"
 		autocomplete="new-password"
 		required
-		aria-label="Password"
 		on:input={() => {
 			onInput(value);
 		}}
@@ -35,17 +34,36 @@
 		on:click|preventDefault={toggleObfuscation}
 		aria-label="Toggle password visibility"
 	>
-		<span class="material-icons">
-			{showPassword ? 'visibility_off' : 'visibility'}
+		<span class="icon">
+			{#if showPassword}
+				👁️
+			{:else}
+				<span class="crossed-out-eye">👁️⃠</span>
+			{/if}
 		</span>
 	</button>
 </div>
 
 <style>
+	:root {
+		--input-border-color: #ccc;
+		--input-border-color-focus: #aaa;
+		--input-border-color-error: #f00;
+		--input-background-color: #fff;
+		--input-background-color-focus: #fff;
+		--input-text: #000;
+		--border-radius: 2px;
+		--pwd-container-display: inline flow-root list-item;
+	}
+
 	.password-container {
 		position: relative;
 		overflow: hidden;
-		display: flex;
+		display: var(--pwd-container-display);
+		border: 1px solid var(--input-border-color);
+		border-radius: var(--border-radius);
+		color: var(--input-text);
+		background-color: var(--input-background-color);
 	}
 
 	.hidden {
@@ -54,7 +72,7 @@
 
 	.toggle-btn {
 		position: absolute;
-		right: 10px;
+		right: 0.6rem;
 		top: 50%;
 		transform: translateY(-50%);
 		background: transparent;
@@ -62,13 +80,17 @@
 		cursor: pointer;
 	}
 
-	.material-icons {
-		font-family: 'Material Icons';
+	.icon {
+		/* any emoji or icon font */
+		font-family: 'Noto Color Emoji', 'Material Icons', sans-serif;
 		font-weight: normal;
 		font-style: normal;
-		font-size: 20px; /* Preferred icon size */
+		font-size: 1.2rem; /* Preferred icon size */
+		position: absolute;
 		display: inline-block;
 		line-height: 1;
+		right: -0.4rem;
+		bottom: -50%;
 		text-transform: none;
 		letter-spacing: normal;
 		word-wrap: normal;
@@ -78,5 +100,15 @@
 		text-rendering: optimizeLegibility;
 		-moz-osx-font-smoothing: grayscale;
 		font-feature-settings: 'liga';
+	}
+
+	.crossed-out-eye {
+		position: absolute;
+		display: inline-block;
+		font-family: sans-serif; /* decoration won't look properly on monospace */
+		font-size: 1.2rem;
+		right: -0.4rem;
+		bottom: -50%;
+		text-decoration: line-through;
 	}
 </style>

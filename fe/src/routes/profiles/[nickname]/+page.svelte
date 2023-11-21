@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Search from '$components/utility/Search.svelte';
 	import MemberPage from '$components/member/MemberPage.svelte';
-	import type { Member } from '$lib/types/member.ts';
+	import { filterXSS } from 'xss';
 
 	// we get the nickname from the last part of the URL
 	export let data: { props: { nickname: string } };
@@ -15,7 +15,7 @@
 
 		// Extract the nickname from the URL
 		const urlParts = window.location.pathname.split('/');
-		nickname = urlParts[urlParts.length - 1];
+		nickname = filterXSS(urlParts[urlParts.length - 1]);
 
 		// Fetch user profile data when the component mounts
 		onMount(() => {

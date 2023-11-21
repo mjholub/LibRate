@@ -15,9 +15,13 @@
 	<img class="media-image" src={posterPath} alt={film.title} />
 {/if}
 
-<div class="film-details">
-	<div><b>Title:</b> {film.title}</div>
-	<div><b>Release Date</b>: {film.releaseDate}</div>
-	<div><b>Duration</b>: {durationStr}</div>
-	<div><b>Rating</b>: {film.rating}</div>
-</div>
+<dl class="film-details">
+	<dt>Title:</dt>
+	<dd>{film.title}</dd>
+	<dt>Release date</dt>
+	<dd>{film.releaseDate}</dd>
+	<dt>Duration:</dt>
+	<dd>{durationStr}</dd>
+	<dt class="synopsis">Synopsis</dt>
+	<dd>{film.synopsis}</dd>
+</dl>

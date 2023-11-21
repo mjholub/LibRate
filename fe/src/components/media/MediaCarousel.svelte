@@ -322,6 +322,7 @@
 		font-size: 1.5em;
 		font-weight: bold;
 		margin-bottom: 1em;
+		margin-block-end: 1em;
 		overflow: hidden;
 	}
 	.carousel {

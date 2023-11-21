@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import axios from 'axios';
+	import * as crypto from 'crypto';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
-	import type { Member } from '$lib/types/member.ts';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
+	import { PasswordMeter } from 'password-meter';
 
+	let tooltipMessage = 'This feature is not implemented yet';
 	let isRegistration = false;
 	let email_or_username = '';
 	if (browser) {
@@ -19,36 +21,39 @@
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
 	let authState: AuthStoreState = $authStore;
+	let strength: number;
 
 	const toggleObfuscation = () => {
 		showPassword = !showPassword;
 	};
 
 	// helper function to check password strength
-	let timeoutId: any;
+	let timeoutId: number | undefined;
+
 	const checkEntropy = async (password: string) => {
 		// if just logging in, don't check the entropy
 		if (!isRegistration) return;
 
-		clearTimeout(timeoutId);
-		timeoutId = setTimeout(async () => {
-			const response = await fetch(`/api/password-entropy`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ password })
-			});
-			const data = await response.json();
-			passwordStrength = data.message;
+		if (timeoutId) {
+			window.clearTimeout(timeoutId);
+		}
+
+		timeoutId = window.setTimeout(async () => {
+			try {
+				strength = new PasswordMeter().getResult(password).score;
+				passwordStrength = strength > 135 ? 'Password is strong enough' : `${strength / 2.9} bits`;
+			} catch (error) {
+				process.env.NODE_ENV === 'development'
+					? console.error(error)
+					: console.error('Error checking password entropy');
+			}
 		}, 300);
 	};
-
-	const entropyDummy = async (password: string) => {
-		Promise.resolve(password);
-	};
-
-	$: isRegistration && password && checkEntropy(password);
+	$: {
+		if (isRegistration && password) {
+			checkEntropy(password);
+		}
+	}
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -60,42 +65,58 @@
 		}
 	};
 
+	// getPubKey retrieves the public key from the backend to be used to encrypt the password
+	const getPubKey = async () => {
+		const response = await axios.get('/api/members/pubkey');
+		const { data } = response;
+		return data.pub_key;
+	};
+
+	// hashPassword hashes the password (in the frontend) before it gets sent to the backend,
+	// using a temporary private key, so that it's not sent in plain text
+	// but since we use **encryption**, not hashing, the password string can
+	// be decrypted by the backend in order to do a final strength check and hash
+	// it using a stronger algorithm (argon2id)
+	const hashPassword = async (password: string) => {
+		const publicKey = await getPubKey();
+		const hash = crypto.publicEncrypt(publicKey, Buffer.from(password));
+		return hash.toString('base64');
+	};
+
 	const register = async (event: Event) => {
 		event.preventDefault();
 
+		// check if passwords match when the registration flow has been triggered
 		isRegistration && password !== passwordConfirm
 			? ((errorMessage = 'Passwords do not match'), false)
 			: passwordStrength !== 'Password is strong enough'
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
 
-		const response = await fetch('/api/members/register', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				membername: nickname,
-				email: email,
-				password: password,
-				passwordConfirm: passwordConfirm,
-				roles: ['regular']
-			})
+		password = await hashPassword(password);
+		passwordConfirm = await hashPassword(passwordConfirm);
+
+		const response = await axios.post('/api/members/register', {
+			membername: nickname,
+			email,
+			password,
+			passwordConfirm,
+			roles: ['regular']
 		});
 
-		const data = await response.json();
+		const { data } = response;
 
 		const member = await authStore.getMember(data.member_id);
 
 		if (browser) {
-			response.ok
-				? (localStorage.setItem('token', data.token),
-				  await authStore.authenticate(),
+			const registrationSuccessful = response.status == 200 && data.member_id !== 0;
+			registrationSuccessful
+				? (await authStore.authenticate(),
 				  localStorage.setItem('email_or_username', ''),
 				  authStore.set(data.member),
 				  (authState.id = member.id),
 				  (window.location.href = '/'),
-				  alert('Registration successful'))
+				  console.debug('Registration successful'))
 				: (errorMessage = data.message);
 		}
 	};
@@ -111,18 +132,16 @@
 			body: JSON.stringify({
 				membername: email_or_username.includes('@') ? '' : email_or_username,
 				email: email_or_username.includes('@') ? email_or_username : '',
-				password: password
+				password
 			})
 		});
 
 		const data = await response.json();
 		const member = await authStore.getMember(data.member_id);
-		console.debug('member ID: ', data.member_id);
 
 		if (browser) {
 			response.ok
-				? (localStorage.setItem('token', data.token),
-				  await authStore.authenticate(),
+				? (await authStore.authenticate(),
 				  authStore.set({
 						...member, // Include existing member properties
 						id: data.member_id,
@@ -132,8 +151,7 @@
 				  localStorage.setItem('email_or_username', ''),
 				  (authState.id = member.id),
 				  (window.location.href = '/'),
-				  console.info('Login successful'),
-				  alert('Login successful'))
+				  console.info('Login successful'))
 				: (errorMessage = data.message);
 			console.error(data.message);
 		}
@@ -142,78 +160,91 @@
 
 <!-- Form submission handler -->
 <form on:submit|preventDefault={isRegistration ? register : login}>
-	{#if !isRegistration}
-		<label for="email_or_username">Email or Username:</label>
-		<input
-			type="text"
-			id="email_or_username"
-			bind:value={email_or_username}
-			required
-			aria-label="Email or Username"
-		/>
+	<div class="input">
+		{#if !isRegistration}
+			<label for="email_or_username">Email or Username:</label>
+			<input
+				type="text"
+				id="email_or_username"
+				bind:value={email_or_username}
+				required
+				class="input"
+			/>
 
-		<PasswordInput
-			bind:value={password}
-			id="password"
-			onInput={entropyDummy}
-			{showPassword}
-			{toggleObfuscation}
-		/>
-	{:else}
-		<!-- Registration form -->
-		<label for="email">Email:</label>
-		<input id="email" bind:value={email} type="email" required aria-label="Email" />
-
-		<label for="nickname">Nickname:</label>
-		<input id="nickname" bind:value={nickname} required aria-label="Nickname" />
-
-		<PasswordInput
-			bind:value={password}
-			id="password"
-			onInput={() => checkEntropy(password)}
-			{showPassword}
-			{toggleObfuscation}
-		/>
-	{/if}
-
-	{#if isRegistration}
-		<label for="passwordConfirm">Confirm Password:</label>
-		<input
-			id="passwordConfirm"
-			bind:value={passwordConfirm}
-			type="password"
-			required
-			aria-label="Confirm Password"
-			on:input={() => checkEntropy(passwordConfirm)}
-		/>
-		<!-- Password strength indicator -->
-		{#if passwordStrength !== 'Password is strong enough'}
-			<p>
-				Password strength: {passwordStrength} bits of (<a
-					href="https://www.omnicalculator.com/other/password-entropy">entropy</a
-				>), required: 50
-			</p>
+			<PasswordInput
+				bind:value={password}
+				id="password"
+				onInput={async () => void 0}
+				{showPassword}
+				{toggleObfuscation}
+			/>
+			<label for="rememberMe"
+				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
+			>
+			<input type="checkbox" id="rememberMe" name="rememberMe" value="rememberMe" />
 		{:else}
-			<p>Password strength: {passwordStrength}</p>
+			<!-- Registration form -->
+			<label for="email">Email:</label>
+			<input id="email" bind:value={email} type="email" class="input" required aria-label="Email" />
+
+			<label for="nickname">Nickname:</label>
+			<input id="nickname" bind:value={nickname} required class="input" />
+
+			<PasswordInput
+				bind:value={password}
+				id="password"
+				onInput={() => checkEntropy(password)}
+				{showPassword}
+				{toggleObfuscation}
+			/>
 		{/if}
-	{/if}
 
-	{#if errorMessage}
-		<p class="error-message">{errorMessage}</p>
-	{/if}
+		{#if isRegistration}
+			<label for="passwordConfirm">Confirm Password:</label>
+			<input
+				id="passwordConfirm"
+				class="input"
+				bind:value={passwordConfirm}
+				type="password"
+				required
+				on:input={() => checkEntropy(passwordConfirm)}
+			/>
+			<!-- Password strength indicator -->
+			{#if passwordStrength !== 'Password is strong enough'}
+				<p>
+					Password strength: {passwordStrength} of (<a
+						href="https://www.omnicalculator.com/other/password-entropy">entropy</a
+					>), required: 50
+				</p>
+			{:else}
+				<p>Password strength: {passwordStrength}</p>
+			{/if}
+		{/if}
 
-	{#if !isRegistration}
-		<button type="submit" on:click={login}>Sign In</button>
-		<button type="button" on:click={startRegistration}>Sign Up</button>
-	{:else}
-		<button type="submit">Sign Up</button>
-		<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
-	{/if}
+		{#if errorMessage}
+			<p><span class="error-icon" /><span class="error-message">{errorMessage}</span></p>
+		{/if}
+	</div>
+	<!-- End of input container -->
+	<div class="button-container">
+		{#if !isRegistration}
+			<button type="submit" on:click={login}>Sign In</button>
+			<button type="button" on:click={startRegistration}>Sign Up</button>
+		{:else}
+			<button type="submit">Sign Up</button>
+			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
+		{/if}
+	</div>
 </form>
 
 <style>
-	input,
-	button {
+	/* very important for the colorblind for example */
+	:root {
+		--error-color: red;
+		--error-background: #ffe6e6;
+	}
+
+	.input {
 		font-family: inherit;
 		font-size: inherit;
 		padding: 0.4em;
@@ -221,10 +252,64 @@
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 4px;
+		width: 100%; /* Ensuring inputs take full width */
 	}
 
 	.error-message {
-		color: red;
+		color: var(--error-color);
+		background-color: var(--error-background);
+		padding: 0.5rem;
+		border: 1px solid var(--error-color);
 		font-weight: bold;
+	}
+
+	.error-icon::before {
+		content: '⚠️';
+		color: var(--error-color);
+		font-size: 1.5em;
+		margin-right: 0.5em;
+	}
+
+	.button-container {
+		display: flex;
+		justify-content: space-around;
+		width: 100%; /* Ensuring buttons take full width */
+	}
+
+	.button-container button {
+		margin: 0.2em;
+		flex: 1; /* Making buttons equally share the space */
+	}
+
+	@media (max-width: 600px) {
+		.button-container button {
+			flex: none;
+			width: 100%;
+		}
+	}
+
+	.tooltip {
+		position: relative;
+		font-size: 0.9em;
+		cursor: help;
+	}
+
+	.tooltip::before {
+		content: '⚠️ This feature is not implemented yet';
+		position: absolute;
+		top: 110%;
+		left: 50%;
+		transform: translateX(-50%);
+		display: none;
+		background-color: #aaa;
+		color: #000;
+		padding: 0.3em 0.6em;
+		border-radius: 4px;
+		font-size: 1em;
+		white-space: nowrap;
+	}
+
+	.tooltip:hover::before {
+		display: block;
 	}
 </style>

@@ -1,12 +1,12 @@
 package auth
 
 import (
+	"database/sql"
 	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
 
-	// json "github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 
@@ -18,8 +18,10 @@ import (
 type (
 	// RegisterInput is the input for the registration request
 	RegisterInput struct {
-		Email           string   `json:"email"`
-		MemberName      string   `json:"membername"`
+		Email      string `json:"email"`
+		MemberName string `json:"membername"`
+		// Password is first temporarily encrypted using RSA and then hashed using argon2id
+		// For more details see the internal/crypt package
 		Password        string   `json:"password"`
 		PasswordConfirm string   `json:"passwordConfirm"`
 		Roles           []string `json:"roles"`
@@ -35,9 +37,10 @@ type (
 	// Service allows dependency injection for the controller methods,
 	// so that the db connection needn't be created in the controller methods
 	Service struct {
-		conf *cfg.Config
-		log  *zerolog.Logger
-		ms   member.MemberStorer
+		conf       *cfg.Config
+		log        *zerolog.Logger
+		ms         member.MemberStorer
+		secStorage *sql.DB
 	}
 
 	// RegLoginInput is an union (feature introduced in Go 1.18) of RegisterInput and LoginInput
@@ -54,8 +57,13 @@ type (
 // and returns a pointer to it
 // It should be used within the routes package
 // where the db connection and config are passed from the main package
-func NewService(conf *cfg.Config, ms member.MemberStorer, log *zerolog.Logger) *Service {
-	return &Service{conf, log, ms}
+func NewService(
+	conf *cfg.Config,
+	ms member.MemberStorer,
+	log *zerolog.Logger,
+	secStorage *sql.DB,
+) *Service {
+	return &Service{conf, log, ms, secStorage}
 }
 
 func isEmail(email string) bool {

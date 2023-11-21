@@ -23,12 +23,12 @@ const (
 
 var threads = uint8(runtime.NumCPU() - 1)
 
-func hashWithArgon(password string) (fmtedHash string, err error) {
+func hashWithArgon(password []byte) (fmtedHash string, err error) {
 	salt, err := byteGen(saltLen)
 	if err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey([]byte(password), salt, timeComplexity, mem, threads, keyLen)
+	hash := argon2.IDKey(password, salt, timeComplexity, mem, threads, keyLen)
 
 	encSalt := base64.RawStdEncoding.EncodeToString(salt)
 	encHash := base64.RawStdEncoding.EncodeToString(hash)

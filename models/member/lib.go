@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
 	"github.com/go-ap/activitypub"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
@@ -28,23 +30,38 @@ const (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID           uint32                 `json:"id" db:"id"`
-		UUID         string                 `json:"_key,omitempty" db:"uuid"`
-		PassHash     string                 `json:"passhash" db:"passhash"`
-		MemberName   string                 `json:"memberName" db:"nick"` // i.e. @nick@instance
-		DisplayName  sql.NullString         `json:"displayName,omitempty" db:"display_name"`
-		Email        string                 `json:"email" db:"email" validate:"required,email"`
-		Bio          sql.NullString         `json:"bio,omitempty" db:"bio"`
-		Active       bool                   `json:"active" db:"active"`
-		Roles        []uint8                `json:"roles,omitempty" db:"roles"`
-		RegTimestamp time.Time              `json:"regdate" db:"reg_timestamp"`
-		ProfilePic   *static.Image          `json:"profilepic,omitempty" db:"profilepic_id"`
-		Homepage     sql.NullString         `json:"homepage,omitempty" db:"homepage"`
-		IRC          sql.NullString         `json:"irc,omitempty" db:"irc"`
-		XMPP         sql.NullString         `json:"xmpp,omitempty" db:"xmpp"`
-		Matrix       sql.NullString         `json:"matrix,omitempty" db:"matrix"`
-		Visibility   string                 `json:"visibility" db:"visibility"`
-		Followers    activitypub.Collection `json:"followers,omitempty" db:"followers"`
+		// TODO: convert to int64, postgres doesn't support unsigned by default anyway
+		ID             uint32                 `json:"id" db:"id"`
+		UUID           string                 `json:"_key,omitempty" db:"uuid"`
+		PassHash       string                 `json:"passhash" db:"passhash"`
+		MemberName     string                 `json:"memberName" db:"nick"` // i.e. @nick@instance
+		DisplayName    sql.NullString         `json:"displayName,omitempty" db:"display_name"`
+		Email          string                 `json:"email" db:"email" validate:"required,email"`
+		Bio            sql.NullString         `json:"bio,omitempty" db:"bio"`
+		Active         bool                   `json:"active" db:"active"`
+		Roles          []uint8                `json:"roles,omitempty" db:"roles"`
+		RegTimestamp   time.Time              `json:"regdate" db:"reg_timestamp"`
+		ProfilePic     *static.Image          `json:"profilepic,omitempty" db:"profilepic_id"`
+		Homepage       sql.NullString         `json:"homepage,omitempty" db:"homepage"`
+		IRC            sql.NullString         `json:"irc,omitempty" db:"irc"`
+		XMPP           sql.NullString         `json:"xmpp,omitempty" db:"xmpp"`
+		Matrix         sql.NullString         `json:"matrix,omitempty" db:"matrix"`
+		Visibility     string                 `json:"visibility" db:"visibility"`
+		Followers      activitypub.Collection `json:"followers,omitempty" db:"followers"`
+		SessionTimeout sql.NullInt64          `json:"sessionTimeout,omitempty" db:"sessionTimeout"`
+		// TODO: add database migration
+		PublicKeyPem string `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem,omitempty" db:"public_key_pem"`
+	}
+
+	Device struct {
+		// FIXME: setting this to nullish, but for aesthetic reasons we should probably
+		// generate a hyphenated pseudonym
+		FriendlyName sql.NullString `json:"friendlyName,omitempty" db:"friendly_name"`
+		// KnownIPs is used to improve the security in case of logging in from unknown locations
+		KnownIPs  []net.IP  `json:"knownIPs,omitempty" db:"known_ips"`
+		LastLogin time.Time `json:"lastLogin,omitempty" db:"last_login"`
+		BanStatus BanStatus `json:"banStatus,omitempty" db:"ban_status"`
+		ID        uuid.UUID `json:"id" db:"id,unique,notnull"`
 	}
 
 	FollowRequest struct {
@@ -74,6 +91,10 @@ type (
 		Delete(ctx context.Context, member *Member) error
 		GetID(ctx context.Context, key string) (uint32, error)
 		GetPassHash(email, login string) (string, error)
+		// GetSessionTimeout retrieves the preferred timeout until the session expires,
+		// represented as number of seconds
+		GetSessionTimeout(ctx context.Context, memberID int, deviceID uuid.UUID) (timeout int, err error)
+		LookupDevice(ctx context.Context, deviceID uuid.UUID) error
 		CreateSession(ctx context.Context, member *Member) (string, error)
 		RequestFollow(ctx context.Context, fr *FollowRequest) error
 	}

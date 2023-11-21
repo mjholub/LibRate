@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"net"
@@ -26,20 +27,29 @@ import (
 	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
+	"codeberg.org/mjh/LibRate/internal/crypt"
+	"codeberg.org/mjh/LibRate/internal/errortools"
 	"codeberg.org/mjh/LibRate/internal/logging"
 )
 
 func main() {
-	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit := parseFlags()
+	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, skipErrors := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		err  error
-		conf *cfg.Config
+		ignorableErrors []string
+		err             error
+		conf            *cfg.Config
 	)
+
+	ignorableErrors, err = errortools.ParseIgnorableErrors(skipErrors)
+	if err != nil {
+		log.Warn().Msgf("undefined ignorable error %v provided, skipping", err)
+	}
+
 	if *configFile == "" {
 		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
 	} else {
@@ -101,6 +111,18 @@ func main() {
 	},
 	)
 
+	// TODO: add a goroutine to automatically rotate the generated key
+	// also, this can probably be simplified to use sqlx.DB
+	cryptoConn, err := crypt.CreateCryptoStorage()
+	if err != nil {
+		if lo.Contains(ignorableErrors, errortools.ErrSQLCipherParse) {
+			log.Warn().Msgf("Skipping error %s. Password security checking will not work!", errortools.ErrSQLCipherParse)
+		} else {
+			log.Panic().Msgf("error establishing encrypted secrets storage: %v", err)
+		}
+	}
+	defer cryptoConn.Close()
+
 	// proof of work based anti-spam/anti-ddos
 	app.Use(recover.New())
 
@@ -122,7 +144,8 @@ func main() {
 	setupCors(apps)
 	setupPOW(conf, apps)
 
-	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app, profilesApp, noscript, fiberlog)
+	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
+		profilesApp, noscript, fiberlog, cryptoConn)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -221,7 +244,7 @@ func DBRunning(skipCheck bool, port uint16) bool {
 	return false
 }
 
-func parseFlags() (*bool, *bool, *bool, *string, *string, *bool) {
+func parseFlags() (*bool, *bool, *bool, *string, *string, *bool, *string) {
 	init := flag.Bool("init", false, "Initialize database")
 	NoDBSubprocess := flag.Bool("no-db-subprocess", false,
 		"Do not launching database as subprocess if not running. Not recommended in containers.")
@@ -229,11 +252,14 @@ func parseFlags() (*bool, *bool, *bool, *string, *string, *bool) {
 		`Skips calling the built-in database health check. 
 		Useful for containers with external databases, where pg_isready is used instead.`)
 	configFile := flag.String("config", "config.yml", "Path to config file")
+	// list of pre-defined error codes to skip and not panic on.
+	// Particularly useful in development to bypass certain less important blockers
+	skipErrors := flag.String("skip-errors", "", "Comma-separated list of error codes to skip and not panic on")
 	path := flag.String("path", "db/migrations", "Path to migrations")
 	exit := flag.Bool("exit", false, "Exit after running migrations")
 	flag.Parse()
 
-	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit
+	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, skipErrors
 }
 
 func initLogging(logConf *logging.Config) zerolog.Logger {
@@ -318,6 +344,7 @@ func setupRoutes(
 	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp, noscript *fiber.App,
 	fiberlog fiber.Handler,
+	cryptoConn *sql.DB,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp, &fiberlog)
 	if err != nil {
@@ -336,7 +363,7 @@ func setupRoutes(
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog)
+	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog, cryptoConn)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}

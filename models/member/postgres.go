@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
 )
@@ -134,4 +135,15 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowRequest) 
 		}
 		return nil
 	}
+}
+
+// TODO: implement
+func (s *PgMemberStorage) GetSessionTimeout(
+	ctx context.Context, memberID int, deviceID uuid.UUID,
+) (timeout int, err error) {
+	return 0, fmt.Errorf("GetSessionTimeout not implemented yet")
+}
+
+func (s *PgMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) error {
+	return fmt.Errorf("LookupDevice not implemented yet")
 }
