@@ -12,6 +12,7 @@ const initialRandomState: MediaStoreState = {
   media_id: null,
   mediaType: null,
   isLoading: true,
+  media: null,
 };
 
 function createRandomStore(): RandomStore {
@@ -33,7 +34,7 @@ function createRandomStore(): RandomStore {
           throw new Error('No data returned from the server');
         }
 
-        console.debug('mediaData:', response.data);
+        console.debug('mediaData:', responseData.data);
 
         const mediaData = responseData.data;
         const mediaTypes = determineMediaTypes(mediaData);
@@ -41,18 +42,24 @@ function createRandomStore(): RandomStore {
         const processedMediaData = mediaData.map((media: any) => {
           const kind = media.kind;
           const details = media.details;
+          const media_id = details.media_id;
 
-          return { kind, ...details };
+          return { kind, media_id, ...details };
         });
 
-        mediaTypes.forEach((mediaType) => {
+        for (let i = 0; i < mediaTypes.length; i++) {
+          const mediaType = mediaTypes[i];
+
           set({
             ...initialRandomState,
-            mediaType,
-            [mediaType.toLowerCase()]: processedMediaData,
+            media_id: processedMediaData.map((media: AnyMedia) => media.media_id),
+            mediaType: mediaType,
+            media: processedMediaData[i],
             isLoading: false,
           });
-        });
+          console.debug('mediaType:', mediaType);
+          console.debug('media:', processedMediaData);
+        };
       } catch (error) {
         console.error('Error in getRandom:', error);
       }
