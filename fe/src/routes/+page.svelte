@@ -50,14 +50,11 @@
 
 			authStore.subscribe(async (newAuthState) => {
 				authState = newAuthState;
-				const token = localStorage.getItem('token');
 				const sessionCookie = document.cookie.includes('session=');
-				if (token || sessionCookie) {
+				if (sessionCookie) {
 					// using try-cacth to avoid unhandled promise rejection
 					try {
-						const res = await fetch(`/api/authenticate`, {
-							headers: { Authorization: `Bearer ${token}` }
-						});
+						const res = await fetch(`/api/authenticate`);
 						res.ok ? (authState.isAuthenticated = true) : (authState.isAuthenticated = false);
 					} catch (err) {
 						console.error(err);
