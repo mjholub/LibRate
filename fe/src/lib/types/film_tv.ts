@@ -1,5 +1,5 @@
 import type { Person } from './people';
-import type { UUID, NullableDuration } from './utils';
+import type { UUID, NullableDuration, NullableString, NullableDate } from './utils';
 import type { Media } from './media';
 
 // TODO: add genre, keywords, etc.
@@ -10,8 +10,8 @@ export interface Film extends Media {
   kind: 'film';
   title: string;
   castID: number;
-  synopsis?: string;
-  releaseDate?: Date;
+  synopsis?: NullableString;
+  releaseDate?: NullableDate;
   duration?: NullableDuration | null;
   rating?: number;
   created: Date;

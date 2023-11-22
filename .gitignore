@@ -11,3 +11,4 @@ fe/_app
 *.pub
 todo.md
 .env
+tmp
