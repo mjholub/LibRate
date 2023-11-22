@@ -141,14 +141,18 @@ func setupStatic(app *fiber.App) error {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 
-		app.Use("/", filesystem.New(filesystem.Config{
-			Root:         http.Dir(staticPath),
-			Browse:       true,
-			NotFoundFile: "404.html",
-		}))
+		var mu sync.Mutex
+
+		mu.Lock()
 		app.Use("/static", filesystem.New(filesystem.Config{
 			Root:   http.Dir(assetPath),
 			Browse: true,
+		}))
+		mu.Unlock()
+		app.Use("/", filesystem.New(filesystem.Config{
+			Root:         http.Dir(staticPath),
+			Browse:       false,
+			NotFoundFile: "404.html",
 		}))
 	}()
 

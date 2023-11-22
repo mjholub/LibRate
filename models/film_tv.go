@@ -78,6 +78,10 @@ func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error)
 		return Film{}, err
 	}
 
+	if !film.Synopsis.Valid {
+		film.Synopsis.String = "No synopsis available"
+	}
+
 	return film, nil
 }
 

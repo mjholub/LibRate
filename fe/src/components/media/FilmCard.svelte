@@ -6,8 +6,13 @@
 	export let film: Film;
 
 	let durationStr = '';
+	let releaseDate = 'unknown';
 	if (film.duration && film.duration.Valid) {
 		durationStr = film.duration.Time.split('T')[1].split('.')[0];
+	}
+	if (film.releaseDate && film.releaseDate.Valid) {
+		// cut to just the date
+		releaseDate = film.releaseDate.Time.toDateString();
 	}
 </script>
 
@@ -19,9 +24,32 @@
 	<dt>Title:</dt>
 	<dd>{film.title}</dd>
 	<dt>Release date</dt>
-	<dd>{film.releaseDate}</dd>
+	<dd>{releaseDate}</dd>
 	<dt>Duration:</dt>
 	<dd>{durationStr}</dd>
-	<dt class="synopsis">Synopsis</dt>
-	<dd>{film.synopsis}</dd>
+	<dt class="synopsis">Synopsis:</dt>
+	<dd>{film.synopsis?.String}</dd>
 </dl>
+
+<style>
+	:root {
+		--film-card-width: 30vw;
+		--film-card-height: 50vh;
+	}
+	.media-image {
+		width: var(--film-card-width);
+		height: var(--film-card-height);
+	}
+	.film-details {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: 1fr 1fr;
+		width: var(--film-card-width);
+		height: var(--film-card-height);
+		margin: 0;
+		padding: 0;
+	}
+	dt {
+		font-weight: bold;
+	}
+</style>
