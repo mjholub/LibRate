@@ -3,9 +3,7 @@ import { initialPerson } from './people.ts';
 import type { Writable } from 'svelte/store';
 import type { UUID } from '$lib/types/utils.ts';
 import type { Person } from '$lib/types/people.ts';
-import type { Book } from '$lib/types/books.ts';
-import type { Album, Track } from '$lib/types/music.ts';
-import type { Film, TVShow } from '$lib/types/film_tv.ts';
+import type { AnyMedia } from '$lib/types/media.ts';
 
 
 export interface MediaStoreState {
@@ -13,14 +11,9 @@ export interface MediaStoreState {
   mediaType: 'Album' | 'Film' | 'TVShow' | 'Book' | 'Track' | 'Unknown' | null;
   isLoading: boolean;
   mediaTitle?: string;
-  mediaKind?: string;
   created?: Date;
   mediaCreator?: Person;
-  album?: Album | Album[] | null;
-  book?: Book | Book[] | null;
-  track?: Track | Track[] | null;
-  film?: Film | Film[] | null;
-  tvShow?: TVShow | TVShow[] | null;
+  media: AnyMedia | null | AnyMedia[];
 };
 
 interface MediaStore extends Writable<MediaStoreState> {
@@ -32,9 +25,9 @@ const initialState: MediaStoreState = {
   mediaType: null,
   isLoading: true,
   mediaTitle: '',
-  mediaKind: '',
   created: new Date(),
   mediaCreator: { ...initialPerson },
+  media: null,
 };
 
 function createMediaStore(): MediaStore {
