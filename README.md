@@ -54,8 +54,8 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 
 ### **Other**
-  - [ ] Extended configurability
-  - [ ] Signed builds and security mechanisms preventing federation with modified versions of LibRate
+  - [x] Extended configurability
+  - [ ] Internationalization
   - [ ] Admin panel
   - [ ] Events, federating with Mobilizon
   - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
