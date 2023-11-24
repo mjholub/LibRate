@@ -32,7 +32,7 @@ function createMemberStore(): MemberStore {
     set,
     update,
     getMemberByNick: async (nick: string) => {
-      const res = await fetch(`/api/members/info/${nick}`);
+      const res = await fetch(`/api/members/${nick}/info`);
       res.ok || console.error(res.statusText);
       const member = await res.json();
       console.debug('memberStore.getMemberByNick', member);

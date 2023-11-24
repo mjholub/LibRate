@@ -54,8 +54,6 @@ type (
 	}
 
 	Device struct {
-		// FIXME: setting this to nullish, but for aesthetic reasons we should probably
-		// generate a hyphenated pseudonym
 		FriendlyName sql.NullString `json:"friendlyName,omitempty" db:"friendly_name"`
 		// KnownIPs is used to improve the security in case of logging in from unknown locations
 		KnownIPs  []net.IP  `json:"knownIPs,omitempty" db:"known_ips"`
@@ -87,6 +85,8 @@ type (
 	MemberStorer interface {
 		Save(ctx context.Context, member *Member) error
 		Read(ctx context.Context, keyName, key string) (*Member, error)
+		// Check checks if a member with the given email or nickname already exists
+		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error
 		Delete(ctx context.Context, member *Member) error
 		GetID(ctx context.Context, key string) (uint32, error)

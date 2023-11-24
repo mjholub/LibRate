@@ -2,10 +2,11 @@ import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
 import type { Member } from '$lib/types/member.ts';
 
-export const memberID = writable<number>(0);
+export const nickName = writable<string>('');
 export const isAuthenticated = writable(false);
 export interface AuthStoreState extends Member {
   id: number;
+  memberName: string;
   roles: string[];
   isAuthenticated: boolean;
 };
@@ -13,7 +14,7 @@ export interface AuthStoreState extends Member {
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: () => Promise<void>;
   logout: () => void;
-  getMember: (memberID: number) => Promise<Member>;
+  getMember: (nickname: string) => Promise<Member>;
 }
 
 export const initialAuthState: AuthStoreState = {
@@ -62,9 +63,11 @@ function createAuthStore(): AuthStore {
         }
       }
     },
-    getMember: async (memberID: number) => {
-      const res = await fetch(`/api/members/${memberID}`);
+    getMember: async (nickname: string) => {
+      const res = await fetch(`/api/members/${nickname}/info`);
       const member = await res.json();
+      member.passhash = '';
+      member.id = 0;
       return member;
     },
     logout: () => {

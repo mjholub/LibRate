@@ -6,13 +6,11 @@
 
 	export let media: Media;
 	export let review: Review;
-	export let userid: number;
 	let userImage = '';
 	export let nick: string;
 
 	$: (async () => {
-		if (userid) {
-			userid = await memberStore.getMemberIDByNick(nick);
+		if (nick) {
 			userImage = await fetch('/static/images/' + nick + '.png').then((r) => r.text());
 		}
 	})();

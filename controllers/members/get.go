@@ -2,6 +2,7 @@ package members
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
 
@@ -72,11 +73,42 @@ func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
 	return nil
 }
 
-func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
-	mc.log.Info().Msg("GetMemberByNick called")
+// check checks for the existence of a member
+// it requires both nickname and email to be provided
+func (mc *MemberController) Check(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mc.log.Debug().Msgf("Nick: %s", c.Params("nickname"))
+	mc.log.Trace().Msgf("Check called with payload: %s", string(c.Request().Body()))
+	member := member.Member{}
+	err := c.BodyParser(&member)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Error parsing request body")
+	}
+	mc.log.Debug().Msgf("Member: %+v", member)
+
+	if member.MemberName == "" || member.Email == "" {
+		return h.Res(c, fiber.StatusBadRequest, "No nickname or email provided")
+	}
+
+	exists, err := mc.storage.Check(ctx, member.Email, member.MemberName)
+	if err != nil && err != sql.ErrNoRows {
+		mc.log.Error().Msgf("Error checking if member \"%s\" exists: %v", member.MemberName, err)
+		return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+	}
+	if exists {
+		return h.Res(c, fiber.StatusConflict, "not available")
+	}
+	return h.Res(c, fiber.StatusOK, "available")
+}
+
+func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
+	if c.Params("nickname") == "" {
+		return h.Res(c, fiber.StatusNotFound, "No nickname provided")
+	}
+	mc.log.Trace().Msgf("GetMemberByNick called with payload: %s", string(c.Request().Body()))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	mc.log.Trace().Msgf("Nick: %s", c.Params("nickname"))
 	member, err := mc.storage.Read(ctx, "nick", c.Params("nickname"))
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
