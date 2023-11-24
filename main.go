@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -151,7 +152,7 @@ func main() {
 	app.Use(helmet.New())
 
 	// setup secondary apps
-	profilesApp, noscript, err := setupSecondaryApps(app, conf, fiberlog,
+	profilesApp, noscript, err := setupSecondaryApps(app, fiberlog,
 		recover.New(), idempotency.New(), helmet.New())
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup secondary apps")
@@ -202,12 +203,8 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
 		// skip logging for static files, there's too many of them
-		SkipURIs: []string{
-			"/_app/immutable",
-			"/_app/chunks",
-			"/_app/*",
-			"/profiles/_app",
-			"/_app/immutable/chunks/",
+		Next: func(c *fiber.Ctx) bool {
+			return strings.Contains(c.Path(), "/_app/")
 		},
 	})
 	return fiberlog
@@ -324,7 +321,7 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 }
 
 // unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App, conf *cfg.Config, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
+func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
 	profilesApp.Use(middlewares...)
