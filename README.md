@@ -6,6 +6,25 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 **The first public beta instance is expected to launch by the end of December 2023.**
 
+# Table of contents
+<!-- toc -->
+
+  * [Roadmap:](#roadmap)
+    + [**Social features**:](#social-features)
+    + [**Media features**](#media-features)
+    + [**Reviews**](#reviews)
+    + [**Recommendations**](#recommendations)
+    + [**Other**](#other)
+  * [Deploying](#deploying)
+  * [Prerequisites for running natively:](#prerequisites-for-running-natively)
+    + [Get the Dependencies](#get-the-dependencies)
+    + [Setup secrets](#setup-secrets)
+  * [Development prerequisites](#development-prerequisites)
+  * [Building and installing](#building-and-installing)
+- [Testing](#testing)
+
+<!-- tocstop -->
+
 ## Roadmap:
 
 ### **Social features**:
