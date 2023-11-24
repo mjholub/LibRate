@@ -10,14 +10,14 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 ### **Social features**:
   - [x] Basic registration support
-  - [x] Member cards with profile info
-  - [x] (**WIP**)Full member profile pages
+  - [x] User profile cards
+  - [x] (**WIP**)Full profile pages
   - [ ] Tagging and mentions
   - [x] (WIP) Advanced profile and UI customization
   - [ ] Groups
   - [ ] Direct messages (E2EE)
   - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
-  - [x] (**WIP**) Member-generated content tagging and categorization
+  - [x] (**WIP**) User-generated content tagging and categorization
   - [x] (**WIP**) Following
   - [ ] Sharing
   - [x] (**WIP**) **ActivityPub support**, with selective federation
@@ -41,7 +41,7 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
   - [ ] Artwork galleries for visual artists(?)
   ### **Reviews**
   - [x] Basic review form
-  - [?] Backend logic for submission and fetching of reviews
+  - [x] Backend logic for submission and fetching of reviews
   - [x] (**WIP**) Review feed
   - [ ] Commenting and voting on reviews and media items
   - [ ] Importing from 3rd party sources

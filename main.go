@@ -179,11 +179,13 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
+
 	// Listen on port 3000
 	err = modularListen(conf, app)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen")
 	}
+
 	// Graceful shutdown
 	err = app.ShutdownWithTimeout(time.Second * 10)
 	if err != nil {
