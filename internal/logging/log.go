@@ -7,7 +7,6 @@ import (
 	"github.com/samber/lo"
 )
 
-// FIXME: add function to load logger config in the config package
 func Init(c *Config) zerolog.Logger {
 	zerolog.TimeFieldFormat = lo.Ternary(c.Timestamp.Enabled, c.Timestamp.Format, "")
 
@@ -22,29 +21,34 @@ func Init(c *Config) zerolog.Logger {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
-	logger := lo.TernaryF(c.Target == "stdout",
-		func() interface{} {
-			return lo.TernaryF(c.Format == "json",
-				func() interface{} {
-					return zerolog.New(os.Stdout).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
-				},
-				func() interface{} {
-					return zerolog.New(os.Stdout).With().Timestamp().Logger()
-				}).(zerolog.Logger)
-		},
-		func() interface{} {
-			return lo.TernaryF(c.Format == "json",
-				func() interface{} {
-					return zerolog.New(os.Stderr).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
-				},
-				func() interface{} {
-					return zerolog.New(os.Stderr).With().Timestamp().Logger()
-				}).(zerolog.Logger)
-		}).(zerolog.Logger)
-
-	if c.Caller {
-		logger = logger.With().Caller().Logger()
+	var logger zerolog.Logger
+	switch c.Target {
+	case "stdout":
+		switch c.Format {
+		case "json":
+			if c.Caller {
+				return zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
+			}
+			return zerolog.New(os.Stdout).With().Timestamp().Logger()
+		case "console":
+			if c.Caller {
+				return zerolog.New(os.Stdout).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
+			}
+			return zerolog.New(os.Stdout).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		}
+	default:
+		switch c.Format {
+		case "json":
+			if c.Caller {
+				return zerolog.New(os.Stderr).With().Timestamp().Caller().Logger()
+			}
+			return zerolog.New(os.Stderr).With().Timestamp().Logger()
+		case "console":
+			if c.Caller {
+				return zerolog.New(os.Stderr).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+			}
+			return zerolog.New(os.Stderr).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		}
 	}
-
 	return logger
 }

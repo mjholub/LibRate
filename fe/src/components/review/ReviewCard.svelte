@@ -6,13 +6,11 @@
 
 	export let media: Media;
 	export let review: Review;
-	let userid: number;
 	let userImage = '';
 	export let nick: string;
 
 	$: (async () => {
-		if (userid) {
-			userid = await memberStore.getMemberIDByNick(nick);
+		if (nick) {
 			userImage = await fetch('/static/images/' + nick + '.png').then((r) => r.text());
 		}
 	})();
@@ -40,7 +38,7 @@
 		</div>
 	{/if}
 
-	{#if media.kind === 'film' || media.kind === 'tv_show' || media.kind === 'anime'}
+	{#if ['film', 'tv_show', 'anime'].includes(media.kind)}
 		<div>
 			<strong>Cast rating:</strong>
 			<ul>
@@ -65,10 +63,22 @@
 </div>
 
 <style>
+	:root {
+		--primary-color: #1a1a1a;
+		--secondary-color: #e6e6e6;
+		--tertiary-color: #ccc;
+		--review-card-background-color: #fff;
+		--review-card-border-style: solid;
+		--review-card-border-color: #ccc;
+		--review-card-padding: 0.15em;
+		--review-card-margin: 0.4em 0;
+	}
+
 	.review-card {
-		border: 1px solid #ccc;
-		padding: 1em;
-		margin: 1em 0;
+		border: var(--review-card-border-style) var(--review-card-border-color);
+		background-color: var(--review-card-background-color);
+		padding: var(--review-card-padding);
+		margin: var(--review-card-margin);
 	}
 
 	.review-user {
@@ -77,6 +87,7 @@
 		margin-bottom: 1em;
 	}
 
+	/* TODO: review if it handles different image sizes well when this becomes functional */
 	.review-user-image {
 		width: 50px;
 		height: 50px;

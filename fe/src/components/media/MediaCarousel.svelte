@@ -38,6 +38,7 @@
 
 	async function initialFetch() {
 		try {
+			// first call to /api/media/random
 			await randomStore.getRandom();
 		} catch (error) {
 			console.error('Error during initial fetch: ', error);
@@ -45,157 +46,151 @@
 	}
 
 	function subscribeToRandomStore() {
+		let isFirstUpdate = true;
+
 		const unsubscribe = randomStore.subscribe((data: MediaStoreState) => {
-			if (data.isLoading) {
+			if (data.isLoading || !isFirstUpdate) {
 				return;
 			}
-			if (!data.mediaType) {
+			if (!data.mediaType || data.media_id === null) {
 				console.warn('data is not valid: ', data);
 				return;
 			}
 			handleNewData(data);
+			isFirstUpdate = false;
 		});
 
 		subscriptions.push(unsubscribe);
 	}
 
 	function handleNewData(data: MediaStoreState) {
+		console.debug('handling new data: ', data);
 		switch (data.mediaType) {
 			case 'Album':
-				if (data.album) {
-					const albums = Array.isArray(data.album) ? data.album : [data.album];
-					albums.forEach((albumData) => {
-						let creator = null;
-						if (albumData.album_artists && albumData.album_artists.person_artist.length > 0) {
-							creator = albumData.album_artists.person_artist[0];
-						} else if (albumData.album_artists && albumData.album_artists.group_artist.length > 0) {
-							creator = albumData.album_artists.group_artist[0];
-						}
-						const albumCreators = albumData.creators ? albumData.creators : [];
-						const addedDate = albumData.added ? albumData.added : new Date();
-						const releaseDate = albumData.release_date
-							? albumData.release_date.toString().split('T')[0]
-							: null;
-						const newAlbum: Album = {
-							UUID: albumData.media_id,
-							kind: 'album',
-							title: albumData.name,
-							created: new Date(),
-							creator: creator,
-							creators: albumCreators,
-							added: addedDate,
-							media_id: albumData.media_id,
-							name: albumData.name,
-							album_artists: albumData.album_artists || [],
-							image_paths: albumData.image_paths,
-							release_date: releaseDate,
-							genres: albumData.genres,
-							keywords: albumData.keywords,
-							duration: albumData.duration,
-							tracks: albumData.tracks || []
-						};
-
-						newAlbum.tracks = (albumData.tracks || []).map((track) => {
-							return {
-								UUID: track.media_id,
-								kind: 'track',
-								title: track.name,
-								created: new Date(),
-								creator: null,
-								creators: [],
-								album_artists: creators || [],
-								added: new Date(),
-								media_id: track.media_id,
-								name: track.name,
-								album_id: track.album_id,
-								duration: formatDuration(track.duration as string),
-								lyrics: track.lyrics,
-								track_number: track.track_number
-							};
-						});
-						media.push(newAlbum);
-						al.push(newAlbum);
-					});
+				const albumData = data.media as Album;
+				let creator = null;
+				if (albumData.album_artists && albumData.album_artists.person_artist.length > 0) {
+					creator = albumData.album_artists.person_artist[0];
+				} else if (albumData.album_artists && albumData.album_artists.group_artist.length > 0) {
+					creator = albumData.album_artists.group_artist[0];
 				}
+				const albumCreators = albumData.creators ? albumData.creators : [];
+				const addedDate = albumData.added ? albumData.added : new Date();
+				const releaseDate = albumData.release_date
+					? albumData.release_date.toString().split('T')[0]
+					: null;
+				const newAlbum: Album = {
+					UUID: albumData.media_id,
+					kind: 'album',
+					title: albumData.name,
+					created: new Date(),
+					creator: creator,
+					creators: albumCreators,
+					added: addedDate,
+					media_id: albumData.media_id,
+					name: albumData.name,
+					album_artists: albumData.album_artists || [],
+					image_paths: albumData.image_paths,
+					release_date: releaseDate,
+					genres: albumData.genres,
+					keywords: albumData.keywords,
+					duration: albumData.duration,
+					tracks: albumData.tracks || []
+				};
+
+				newAlbum.tracks = (albumData.tracks || []).map((track: Track) => {
+					return {
+						UUID: track.media_id,
+						kind: 'track',
+						title: track.name,
+						created: new Date(),
+						creator: null,
+						creators: [],
+						album_artists: creators || [],
+						added: new Date(),
+						media_id: track.media_id,
+						name: track.name,
+						album_id: track.album_id,
+						duration: formatDuration(track.duration as string),
+						lyrics: track.lyrics,
+						track_number: track.track_number
+					};
+				});
+				media.push(newAlbum);
+				al.push(newAlbum);
 				break;
 			case 'Track':
-				if (data.track) {
-					const tracks = Array.isArray(data.track) ? data.track : [data.track];
-					tracks.forEach((trackData) => {
-						let newTrack: Track = {
-							UUID: trackData.media_id,
-							kind: 'track',
-							title: trackData.name,
-							created: new Date(),
-							creator: null,
-							creators: [],
-							added: new Date(),
-							media_id: trackData.media_id,
-							name: trackData.name,
-							album_id: trackData.album_id,
-							duration: trackData.duration,
-							lyrics: trackData.lyrics,
-							track_number: trackData.track_number
-						};
+				data.media = data.media as Track;
+				const tracks = Array.isArray(data.media) ? data.media : [data.media];
+				tracks.forEach((trackData) => {
+					let newTrack: Track = {
+						UUID: trackData.media_id,
+						kind: 'track',
+						title: trackData.name,
+						created: new Date(),
+						creator: null,
+						creators: [],
+						added: new Date(),
+						media_id: trackData.media_id,
+						name: trackData.name,
+						album_id: trackData.album_id,
+						duration: trackData.duration,
+						lyrics: trackData.lyrics,
+						track_number: trackData.track_number
+					};
 
-						media.push(newTrack);
-					});
-				}
+					media.push(newTrack);
+				});
 				break;
 			case 'Book':
-				if (data.book) {
-					const books = Array.isArray(data.book) ? data.book : [data.book];
-					const bookAddedDate = books[0].added ? books[0].added : new Date();
-					books.forEach((bookData) => {
-						let newBook: Book = {
-							UUID: bookData.media_id,
-							kind: 'book',
-							title: bookData.title,
-							created: bookData.publication_date,
-							creator: bookData.authors[0],
-							creators: bookData.authors,
-							added: bookAddedDate,
-							authors: bookData.authors,
-							media_id: bookData.media_id,
-							publisher: bookData.publisher,
-							publication_date: bookData.publication_date,
-							genres: bookData.genres,
-							keywords: bookData.keywords,
-							isbn: bookData.isbn,
-							asin: bookData.asin,
-							pages: bookData.pages,
-							cover: bookData.cover,
-							summary: bookData.summary,
-							languages: bookData.languages
-						};
+				data.media = data.media as Book;
+				const books = Array.isArray(data.media) ? data.media : [data.media];
+				const bookAddedDate = books[0].added ? books[0].added : new Date();
+				books.forEach((bookData) => {
+					let newBook: Book = {
+						UUID: bookData.media_id,
+						kind: 'book',
+						title: bookData.title,
+						created: bookData.publication_date,
+						creator: bookData.authors[0],
+						creators: bookData.authors,
+						added: bookAddedDate,
+						authors: bookData.authors,
+						media_id: bookData.media_id,
+						publisher: bookData.publisher,
+						publication_date: bookData.publication_date,
+						genres: bookData.genres,
+						keywords: bookData.keywords,
+						isbn: bookData.isbn,
+						asin: bookData.asin,
+						pages: bookData.pages,
+						cover: bookData.cover,
+						summary: bookData.summary,
+						languages: bookData.languages
+					};
 
-						media.push(newBook);
-					});
-				}
+					media.push(newBook);
+				});
 				break;
 			case 'Film':
-				if (data.film) {
-					const films = Array.isArray(data.film) ? data.film : [data.film];
-					films.forEach((filmData) => {
-						let newFilm: Film = {
-							UUID: filmData.media_id,
-							media_id: filmData.media_id,
-							kind: 'film',
-							title: filmData.title,
-							created: new Date(),
-							creator: null,
-							creators: [],
-							added: new Date(),
-							castID: filmData.castID,
-							synopsis: filmData.synopsis ? filmData.synopsis : 'No synopsis available.',
-							releaseDate: filmData.releaseDate ? filmData.releaseDate : new Date(),
-							duration: filmData.duration ? filmData.duration : 0,
-							rating: filmData.rating ? filmData.rating : 0
-						};
+				const filmData = data.media as Film;
+				let newFilm: Film = {
+					UUID: filmData.media_id,
+					media_id: filmData.media_id,
+					kind: 'film',
+					title: filmData.title,
+					created: new Date(),
+					creator: null,
+					creators: [],
+					added: new Date(),
+					castID: filmData.castID,
+					synopsis: filmData.synopsis ? filmData.synopsis : 'No synopsis available.',
+					releaseDate: filmData.releaseDate ? filmData.releaseDate : new Date(),
+					duration: filmData.duration ? filmData.duration : null,
+					rating: filmData.rating ? filmData.rating : 0
+				};
 
-						media.push(newFilm);
-					});
-				}
+				media.push(newFilm);
 				break;
 			case 'Unknown':
 				console.warn('unknown media type: ', data.mediaType);
@@ -322,6 +317,7 @@
 		font-size: 1.5em;
 		font-weight: bold;
 		margin-bottom: 1em;
+		margin-block-end: 1em;
 		overflow: hidden;
 	}
 	.carousel {

@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -15,10 +17,12 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
@@ -26,20 +30,29 @@ import (
 	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
+	"codeberg.org/mjh/LibRate/internal/crypt"
+	"codeberg.org/mjh/LibRate/internal/errortools"
 	"codeberg.org/mjh/LibRate/internal/logging"
 )
 
 func main() {
-	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit := parseFlags()
+	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, skipErrors := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		err  error
-		conf *cfg.Config
+		ignorableErrors []string
+		err             error
+		conf            *cfg.Config
 	)
+
+	ignorableErrors, err = errortools.ParseIgnorableErrors(skipErrors)
+	if err != nil {
+		log.Warn().Msgf("undefined ignorable error %v provided, skipping", err)
+	}
+
 	if *configFile == "" {
 		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
 	} else {
@@ -101,6 +114,36 @@ func main() {
 	},
 	)
 
+	// TODO: add a goroutine to automatically rotate the generated key
+	// also, this can probably be simplified to use sqlx.DB
+	cryptDir, err := os.MkdirTemp("", "librate-secrets")
+	if err != nil && !lo.Contains(ignorableErrors, errortools.IOError) {
+		log.Panic().Err(err).Msgf("failed to create temporary directory for secrets: %v", err)
+	}
+
+	dbFile, err := os.CreateTemp(cryptDir, "secrets.db")
+	if err != nil && !lo.Contains(ignorableErrors, errortools.IOError) {
+		log.Panic().Err(err).Msgf("failed to create temporary file for secrets: %v", err)
+	}
+	defer func() {
+		if dbFile != nil {
+			dbFile.Close()
+		}
+		if cryptDir != "" {
+			os.RemoveAll(cryptDir)
+		}
+	}()
+
+	cryptoConn, err := crypt.CreateCryptoStorage(dbFile.Name())
+	if err != nil {
+		if lo.Contains(ignorableErrors, errortools.ErrSQLCipherParse) {
+			log.Warn().Msgf("Skipping error %s. Password security checking will not work!", errortools.ErrSQLCipherParse)
+		} else {
+			log.Panic().Msgf("error establishing encrypted secrets storage: %v", err)
+		}
+	}
+	defer cryptoConn.Close()
+
 	// proof of work based anti-spam/anti-ddos
 	app.Use(recover.New())
 
@@ -110,8 +153,17 @@ func main() {
 	// hardening
 	app.Use(helmet.New())
 
+	app.Use(csrf.New(csrf.Config{
+		KeyLookup:         "header:X-CSRF-Token",
+		CookieName:        "csrf_",
+		CookieSessionOnly: true,
+		CookieSameSite:    "Lax",
+		Expiration:        2 * time.Hour,
+		KeyGenerator:      uuid.Must(uuid.NewV4()).String,
+	}))
+
 	// setup secondary apps
-	profilesApp, noscript, err := setupSecondaryApps(app, conf, fiberlog,
+	profilesApp, noscript, err := setupSecondaryApps(app, fiberlog,
 		recover.New(), idempotency.New(), helmet.New())
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup secondary apps")
@@ -122,7 +174,8 @@ func main() {
 	setupCors(apps)
 	setupPOW(conf, apps)
 
-	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app, profilesApp, noscript, fiberlog)
+	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
+		profilesApp, noscript, fiberlog, cryptoConn)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -141,6 +194,9 @@ func main() {
 }
 
 func setupPOW(conf *cfg.Config, app []*fiber.App) {
+	if conf.Fiber.PowDifficulty == 0 {
+		conf.Fiber.PowDifficulty = 60000
+	}
 	for i := range app {
 		app[i].Use(fiberpow.New(fiberpow.Config{
 			PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
@@ -163,12 +219,8 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
 		// skip logging for static files, there's too many of them
-		SkipURIs: []string{
-			"/_app/immutable",
-			"/_app/chunks",
-			"/_app/*",
-			"/profiles/_app",
-			"/_app/immutable/chunks/",
+		Next: func(c *fiber.Ctx) bool {
+			return strings.Contains(c.Path(), "/_app/")
 		},
 	})
 	return fiberlog
@@ -223,7 +275,7 @@ func DBRunning(skipCheck bool, port uint16) bool {
 	return false
 }
 
-func parseFlags() (*bool, *bool, *bool, *string, *string, *bool) {
+func parseFlags() (*bool, *bool, *bool, *string, *string, *bool, *string) {
 	init := flag.Bool("init", false, "Initialize database")
 	NoDBSubprocess := flag.Bool("no-db-subprocess", false,
 		"Do not launching database as subprocess if not running. Not recommended in containers.")
@@ -231,11 +283,14 @@ func parseFlags() (*bool, *bool, *bool, *string, *string, *bool) {
 		`Skips calling the built-in database health check. 
 		Useful for containers with external databases, where pg_isready is used instead.`)
 	configFile := flag.String("config", "config.yml", "Path to config file")
+	// list of pre-defined error codes to skip and not panic on.
+	// Particularly useful in development to bypass certain less important blockers
+	skipErrors := flag.String("skip-errors", "", "Comma-separated list of error codes to skip and not panic on")
 	path := flag.String("path", "db/migrations", "Path to migrations")
 	exit := flag.Bool("exit", false, "Exit after running migrations")
 	flag.Parse()
 
-	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit
+	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, skipErrors
 }
 
 func initLogging(logConf *logging.Config) zerolog.Logger {
@@ -282,7 +337,7 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 }
 
 // unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App, conf *cfg.Config, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
+func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
 	profilesApp.Use(middlewares...)
@@ -320,6 +375,7 @@ func setupRoutes(
 	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp, noscript *fiber.App,
 	fiberlog fiber.Handler,
+	cryptoConn *sql.DB,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp, &fiberlog)
 	if err != nil {
@@ -338,7 +394,7 @@ func setupRoutes(
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog)
+	err = routes.Setup(log, conf, dbConn, neo4jConn, app, &fiberlog, cryptoConn)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}

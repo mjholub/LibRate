@@ -2,20 +2,22 @@ import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
 import type { Member } from '$lib/types/member.ts';
 
-export const memberID = writable<number>(0);
+export const nickName = writable<string>('');
 export const isAuthenticated = writable(false);
 export interface AuthStoreState extends Member {
   id: number;
+  memberName: string;
   roles: string[];
   isAuthenticated: boolean;
 };
 
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: () => Promise<void>;
-  getMember: (memberID: number) => Promise<Member>;
+  logout: () => void;
+  getMember: (nickname: string) => Promise<Member>;
 }
 
-const initialAuthState: AuthStoreState = {
+export const initialAuthState: AuthStoreState = {
   id: 0,
   memberName: '',
   displayName: null,
@@ -28,7 +30,8 @@ const initialAuthState: AuthStoreState = {
   homepage: null,
   regdate: new Date(),
   roles: ['member'],
-  isAuthenticated: false
+  isAuthenticated: false,
+  visibility: 'public'
 };
 
 
@@ -40,36 +43,36 @@ function createAuthStore(): AuthStore {
     set,
     update,
     authenticate: async () => {
-      if (typeof localStorage !== 'undefined') {
-        const token = localStorage.getItem('token');
-        const sessionCookie = document.cookie.includes('session=');
-        if (token || sessionCookie) {
-          // using try-cacth to avoid unhandled promise rejection
-          try {
-            const res = await fetch(`/api/authenticate`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            })
-            console.debug('response from /api/authenticate: ', res);
-            res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
-          } catch (err) {
-            isAuthenticated.set(false);
-            if (import.meta.env.DEV) {
-              console.error('Error while authenticating', err);
-            }
-          }
-        }
-        else {
+      const sessionCookie = document.cookie.includes('session=');
+      if (sessionCookie) {
+        // using try-cacth to avoid unhandled promise rejection
+        try {
+          const res = await fetch(`/api/authenticate`);
+          res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
+        } catch (err) {
           isAuthenticated.set(false);
           if (import.meta.env.DEV) {
-            console.error('No token found');
+            console.error('Error while authenticating', err);
           }
         }
       }
+      else {
+        isAuthenticated.set(false);
+        if (import.meta.env.DEV) {
+          console.error('Authentication cookie not found');
+        }
+      }
     },
-    getMember: async (memberID: number) => {
-      const res = await fetch(`/api/members/${memberID}`);
+    getMember: async (nickname: string) => {
+      const res = await fetch(`/api/members/${nickname}/info`);
       const member = await res.json();
+      member.passhash = '';
+      member.id = 0;
       return member;
+    },
+    logout: () => {
+      document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      isAuthenticated.set(false);
     }
   };
 }

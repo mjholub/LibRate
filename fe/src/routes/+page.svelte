@@ -12,7 +12,6 @@
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
-	import AlbumCard from '$components/media/AlbumCard.svelte';
 
 	let windowWidth: number;
 	$: authState = $authStore;
@@ -51,14 +50,11 @@
 
 			authStore.subscribe(async (newAuthState) => {
 				authState = newAuthState;
-				const token = localStorage.getItem('token');
 				const sessionCookie = document.cookie.includes('session=');
-				if (token || sessionCookie) {
+				if (sessionCookie) {
 					// using try-cacth to avoid unhandled promise rejection
 					try {
-						const res = await fetch(`/api/authenticate`, {
-							headers: { Authorization: `Bearer ${token}` }
-						});
+						const res = await fetch(`/api/authenticate`);
 						res.ok ? (authState.isAuthenticated = true) : (authState.isAuthenticated = false);
 					} catch (err) {
 						console.error(err);
@@ -84,7 +80,8 @@
 						irc: data.irc?.String || null,
 						homepage: data.homepage?.String || null,
 						regdate: new Date(data.regdate) || null,
-						roles: data.roles || []
+						roles: data.roles || [],
+						visibility: data.visibility || 'private'
 					};
 				} else {
 					member = {
@@ -99,7 +96,8 @@
 						irc: null,
 						homepage: null,
 						regdate: new Date(),
-						roles: []
+						roles: [],
+						visibility: 'private'
 					};
 					console.warn('No member data found in local storage');
 				}
@@ -148,29 +146,41 @@
 </div>
 
 <style>
+	:root {
+		--main-bg-color: #333;
+		--text-color: #fff;
+		--padding-base: 20px;
+	}
+
 	.app {
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
-		background-color: #333;
-		color: #fff;
+		background-color: var(--main-bg-color);
+		color: var(--text-color);
 	}
 
 	.navbar {
-		background-color: #333;
-		color: #fff;
-		padding: 10px 0;
-		text-align: center; /* Center the search box */
-		/* don't allow other items in line with search box */
+		background-color: var(--main-bg-color);
+		color: var(--text-color);
+		padding: 1rem 0;
+		text-align: center;
 		display: block;
 	}
 
 	.content {
 		display: flex;
 		justify-content: space-between;
-		align-items: flex-start; /* Align items to the top */
-		padding: 40px 20px;
-		flex: 1; /* Take up available space */
+		align-items: flex-start;
+		padding: var(--padding-base) calc(var(--padding-base) / 2);
+		flex: 1;
+	}
+
+	.left,
+	.center,
+	.right {
+		display: flex;
+		flex-direction: column;
 	}
 
 	.left {
@@ -179,12 +189,11 @@
 
 	.center {
 		width: 30%;
-		display: flex;
-		justify-content: center; /* Center the content inside */
+		justify-content: center;
 	}
 
 	.feed {
-		text-align: center; /* Center text inside the feed */
+		text-align: center;
 	}
 
 	.right {
@@ -192,9 +201,9 @@
 	}
 
 	.footer {
-		padding: 20px;
-		background-color: #333;
-		color: #fff;
+		padding: var(--padding-base);
+		background-color: var(--main-bg-color);
+		color: var(--text-color);
 		text-align: center;
 	}
 </style>

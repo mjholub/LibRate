@@ -227,7 +227,6 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	}
 
 	album.Tracks = tracks
-	ms.Log.Trace().Msgf("album: %v", album)
 
 	return album, nil
 }
@@ -248,4 +247,56 @@ func (ms *MediaStorage) getTrack(ctx context.Context, id uuid.UUID) (Track, erro
 	}
 
 	return track, nil
+}
+
+// GetAlbumTracks retrieves the full metadata of given album's tracks based on the album ID
+func (ms *MediaStorage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Track, error) {
+	// Query to fetch tracks and their metadata using a JOIN operation
+	query := `
+		SELECT t.* FROM media.tracks AS t
+		INNER JOIN media.album_tracks AS at ON t.id = at.track_id
+		WHERE at.album_id = $1
+		ORDER BY at.track_number
+	`
+
+	rows, err := ms.db.QueryxContext(ctx, query, albumID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying album tracks: %w", err)
+	}
+	defer rows.Close()
+
+	var tracks []Track
+	for rows.Next() {
+		var track Track
+		if err := rows.StructScan(&track); err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		tracks = append(tracks, track)
+	}
+
+	return tracks, nil
+}
+
+func (ms *MediaStorage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) ([]uuid.UUID, error) {
+	query := `
+		SELECT track FROM media.album_tracks
+		WHERE album = $1
+		ORDER BY track_number
+	`
+
+	rows, err := ms.db.QueryContext(ctx, query, albumID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying album tracks: %w", err)
+	}
+	defer rows.Close()
+
+	var trackIDs []uuid.UUID
+	for rows.Next() {
+		var trackID uuid.UUID
+		if err := rows.Scan(&trackID); err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		trackIDs = append(trackIDs, trackID)
+	}
+	return trackIDs, nil
 }

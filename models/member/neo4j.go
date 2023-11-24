@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/mitchellh/mapstructure"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
@@ -167,4 +168,18 @@ func (s Neo4jMemberStorage) RequestFollow(ctx context.Context, fr *FollowRequest
 
 func (s Neo4jMemberStorage) Close() error {
 	return s.client.Close(context.Background())
+}
+
+func (s Neo4jMemberStorage) GetSessionTimeout(
+	ctx context.Context, memberID int, deviceID uuid.UUID,
+) (timeout int, err error) {
+	return 0, fmt.Errorf("GetSessionTimeout not implemented yet")
+}
+
+func (s Neo4jMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) error {
+	return fmt.Errorf("LookupDevice not implemented yet")
+}
+
+func (s Neo4jMemberStorage) Check(ctx context.Context, email, nick string) (bool, error) {
+	return false, fmt.Errorf("Check not implemented yet for neo4j")
 }

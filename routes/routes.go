@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -36,6 +37,7 @@ func Setup(
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
 	fzlog *fiber.Handler,
+	sqlcipher *sql.DB,
 ) error {
 	// setup the middleware
 	// NOTE: unsure if this handler is correct
@@ -58,7 +60,7 @@ func Setup(
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
-	authSvc := auth.NewService(conf, mStor, logger)
+	authSvc := auth.NewService(conf, mStor, logger, sqlcipher)
 	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := memberCtrl.NewController(mStor, logger, conf)
 	mediaCon := media.NewController(*mediaStor)
@@ -68,13 +70,13 @@ func Setup(
 	app.Get("/api/version", version.Get)
 
 	reviews := api.Group("/reviews")
-	reviews.Get("/latest", reviewSvc.GetLatestRatings)
-	// TODO: handler for single review based on id
+	reviews.Get("/latest", reviewSvc.GetLatest)
 	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
 	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
 	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
-	// ...or define the GetRatings handler in a way where it returns all ratings if no id is given
-	reviews.Get("/:id", reviewSvc.GetRatings)
+	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
+	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
+	reviews.Get("/:id", reviewSvc.GetByID)
 
 	authAPI := api.Group("/authenticate")
 	authAPI.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {
@@ -84,10 +86,12 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
 	members.Post("/register", authSvc.Register)
+	members.Post("/check", memberSvc.Check)
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
 	members.Get("/id/:nickname", memberSvc.GetID)
-
-	app.Post("/api/password-entropy", auth.ValidatePassword())
+	// pubkey returns a single use public key for the client to encrypt their password with
+	// this is to prevent the server from ever knowing the user's password
+	members.Get("pubkey", authSvc.GetPubKey)
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
@@ -138,14 +142,18 @@ func setupStatic(app *fiber.App) error {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
 
-		app.Use("/", filesystem.New(filesystem.Config{
-			Root:         http.Dir(staticPath),
-			Browse:       true,
-			NotFoundFile: "404.html",
-		}))
+		var mu sync.Mutex
+
+		mu.Lock()
 		app.Use("/static", filesystem.New(filesystem.Config{
 			Root:   http.Dir(assetPath),
 			Browse: true,
+		}))
+		mu.Unlock()
+		app.Use("/", filesystem.New(filesystem.Config{
+			Root:         http.Dir(staticPath),
+			Browse:       false,
+			NotFoundFile: "404.html",
 		}))
 	}()
 

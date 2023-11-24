@@ -6,8 +6,13 @@
 	export let film: Film;
 
 	let durationStr = '';
+	let releaseDate = 'unknown';
 	if (film.duration && film.duration.Valid) {
 		durationStr = film.duration.Time.split('T')[1].split('.')[0];
+	}
+	if (film.releaseDate && film.releaseDate.Valid) {
+		// cut to just the date
+		releaseDate = film.releaseDate.Time.toDateString();
 	}
 </script>
 
@@ -15,9 +20,36 @@
 	<img class="media-image" src={posterPath} alt={film.title} />
 {/if}
 
-<div class="film-details">
-	<div><b>Title:</b> {film.title}</div>
-	<div><b>Release Date</b>: {film.releaseDate}</div>
-	<div><b>Duration</b>: {durationStr}</div>
-	<div><b>Rating</b>: {film.rating}</div>
-</div>
+<dl class="film-details">
+	<dt>Title:</dt>
+	<dd>{film.title}</dd>
+	<dt>Release date</dt>
+	<dd>{releaseDate}</dd>
+	<dt>Duration:</dt>
+	<dd>{durationStr}</dd>
+	<dt class="synopsis">Synopsis:</dt>
+	<dd>{film.synopsis?.String}</dd>
+</dl>
+
+<style>
+	:root {
+		--film-card-width: 30vw;
+		--film-card-height: 50vh;
+	}
+	.media-image {
+		width: var(--film-card-width);
+		height: var(--film-card-height);
+	}
+	.film-details {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: 1fr 1fr;
+		width: var(--film-card-width);
+		height: var(--film-card-height);
+		margin: 0;
+		padding: 0;
+	}
+	dt {
+		font-weight: bold;
+	}
+</style>

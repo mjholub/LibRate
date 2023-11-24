@@ -5,11 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
 )
 
 func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
+	// first, check if nick or email is already taken
+	findEmailOrNickQuery := `SELECT id FROM members WHERE nick = $1 OR email = $2`
+	var id uint32
+	err := s.client.Get(&id, findEmailOrNickQuery, member.MemberName, member.Email)
+	if err == nil {
+		return fmt.Errorf("email %s or nick %s is already taken", member.Email, member.MemberName)
+	}
+
 	query := `INSERT INTO members (uuid, passhash, nick, email, reg_timestamp, active, roles) 
 	VALUES (:uuid, :passhash, :nick, :email, to_timestamp(:reg_timestamp), :active, :roles)`
 	stmt, err := s.client.PrepareNamedContext(ctx, query)
@@ -133,5 +142,33 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowRequest) 
 			return fmt.Errorf("failed to save follow request: %v", err)
 		}
 		return nil
+	}
+}
+
+// TODO: implement
+func (s *PgMemberStorage) GetSessionTimeout(
+	ctx context.Context, memberID int, deviceID uuid.UUID,
+) (timeout int, err error) {
+	return 0, fmt.Errorf("GetSessionTimeout not implemented yet")
+}
+
+func (s *PgMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) error {
+	return fmt.Errorf("LookupDevice not implemented yet")
+}
+
+// Check checks if a member with the given email or nickname already exists
+func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool, error) {
+	select {
+	case <-c.Done():
+		return false, c.Err()
+	default:
+		query := `SELECT id FROM members WHERE email = $1 OR nick = $2`
+		var id uint32
+		err := s.client.Get(&id, query, email, nickname)
+		// for example if sql.ErrNoRows is returned, it means that the member does not exist
+		if err != nil {
+			return false, err
+		}
+		return true, nil
 	}
 }

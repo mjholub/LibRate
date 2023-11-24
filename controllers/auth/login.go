@@ -1,13 +1,17 @@
 package auth
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"codeberg.org/mjh/LibRate/models/member"
 
-	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofrs/uuid/v5"
+
+	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
 // 1. Parse the input
@@ -96,11 +100,10 @@ func (a *Service) validatePassword(email, login, password string) error {
 	return nil
 }
 
-// TODO: move to a dedicated file?
 func (a *Service) createSession(c *fiber.Ctx, member *member.Member) error {
-	token, err := a.ms.CreateSession(c.Context(), member)
+	token, err := a.createToken()
 	if err != nil {
-		return h.Res(c, http.StatusInternalServerError, "Internal server error")
+		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
 	}
 
 	c.Cookie(&fiber.Cookie{
@@ -118,8 +121,74 @@ func (a *Service) createSession(c *fiber.Ctx, member *member.Member) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"message":   "Logged in successfully",
-		"token":     token,
-		"member_id": member.ID,
+		"message":  "Logged in successfully",
+		"token":    token,
+		"nickname": member.MemberName,
 	})
+}
+
+func (a *Service) createToken() (string, error) {
+	token, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	return token.String(), nil
+}
+
+// GetSessionTimeoutPrefs returns the session timeout preferences
+// This setting is not synced across devices.
+// The way it works is:
+// 1. Send a request to the database, where a JOIN is performed on the current device's identifier and the member's ID
+// 2. If the device is found, return the timeout preference
+func (a *Service) GetSessionTimeoutPrefs(c *fiber.Ctx) error {
+	memberStr := c.Params("member_id")
+	if memberStr == "" {
+		return h.Res(c, http.StatusBadRequest, "Member ID missing or member not found")
+	}
+
+	deviceStr := c.Cookies("device_id")
+	if deviceStr == "" {
+		return h.Res(c, http.StatusBadRequest, "Device ID not found")
+	}
+
+	// sanitize the received parameters, don't trust random strings
+	memberID, err := strconv.Atoi(memberStr)
+	if err != nil {
+		return h.Res(c, http.StatusBadRequest, "Invalid member ID")
+	}
+
+	deviceID, err := uuid.FromString(deviceStr)
+	if err != nil {
+		return h.Res(c, http.StatusBadRequest, "Invalid device ID")
+	}
+
+	timeout, err := a.ms.GetSessionTimeout(c.Context(), memberID, deviceID)
+	if err != nil {
+		return h.Res(c, http.StatusInternalServerError, "Failed to get session timeout preferences")
+	}
+
+	return c.Status(http.StatusOK).SendString(strconv.Itoa(timeout))
+}
+
+// isKnownDevice queries the database to check if the device has been saved.
+// Since we use uuids to assign device IDs, the member ID is redundant
+func (a *Service) isKnownDevice(c *fiber.Ctx) (bool, error) {
+	deviceStr := c.Cookies("device_id")
+	if deviceStr == "" {
+		return false, nil
+	}
+
+	deviceID, err := uuid.FromString(deviceStr)
+	if err != nil {
+		return false, h.Res(c, http.StatusBadRequest, "Invalid device ID")
+	}
+
+	// query the db
+	err = a.ms.LookupDevice(c.Context(), deviceID)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
 }

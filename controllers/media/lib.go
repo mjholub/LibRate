@@ -84,6 +84,7 @@ func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get kind")
 	}
+	mc.storage.Log.Debug().Msgf("Got kind %s for media with ID %s", kind, c.Params("media_id"))
 
 	path, err := mc.storage.GetImagePath(ctx, mediaID)
 	if err == sql.ErrNoRows {
@@ -101,7 +102,7 @@ func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
 }
 
 func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msgf("Failed to %s", message)
+	log.Error().Msg(message)
 	return h.Res(c, fiber.StatusInternalServerError, message)
 }
 
@@ -110,7 +111,7 @@ func handlePlaceholderImage(log *zerolog.Logger, c *fiber.Ctx, kind string) erro
 	var placeholderPath string
 	switch kind {
 	case "film", "tv_show":
-		placeholderPath = "./static/film/placeholder.png"
+		placeholderPath = "./static/video/placeholder.svg"
 	case "album", "track":
 		placeholderPath = "./static/music/placeholder.webp"
 	default:
@@ -133,9 +134,4 @@ func handleImageResponse(log *zerolog.Logger, c *fiber.Ctx, path string) error {
 		return h.Res(c, fiber.StatusNotFound, "Failed to send image")
 	}
 	return c.SendStatus(fiber.StatusOK)
-}
-
-// WARN: this is probably wrong
-func AddGenre() {
-	// TODO: implement
 }

@@ -6,3 +6,9 @@ config.yml
 LibRate
 node_modules
 fe/_app
+*.pem
+*.tar
+*.pub
+todo.md
+.env
+tmp
