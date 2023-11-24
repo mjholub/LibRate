@@ -86,6 +86,7 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
 	members.Post("/register", authSvc.Register)
+	members.Post("/check", memberSvc.Check)
 	members.Get("/:nickname/info", memberSvc.GetMemberByNick)
 	members.Get("/id/:nickname", memberSvc.GetID)
 	// pubkey returns a single use public key for the client to encrypt their password with

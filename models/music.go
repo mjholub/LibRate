@@ -227,7 +227,6 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	}
 
 	album.Tracks = tracks
-	ms.Log.Trace().Msgf("album: %v", album)
 
 	return album, nil
 }

@@ -179,3 +179,7 @@ func (s Neo4jMemberStorage) GetSessionTimeout(
 func (s Neo4jMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) error {
 	return fmt.Errorf("LookupDevice not implemented yet")
 }
+
+func (s Neo4jMemberStorage) Check(ctx context.Context, email, nick string) (bool, error) {
+	return false, fmt.Errorf("Check not implemented yet for neo4j")
+}

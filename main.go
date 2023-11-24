@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -16,10 +17,12 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
@@ -150,8 +153,17 @@ func main() {
 	// hardening
 	app.Use(helmet.New())
 
+	app.Use(csrf.New(csrf.Config{
+		KeyLookup:         "header:X-CSRF-Token",
+		CookieName:        "csrf_",
+		CookieSessionOnly: true,
+		CookieSameSite:    "Lax",
+		Expiration:        2 * time.Hour,
+		KeyGenerator:      uuid.Must(uuid.NewV4()).String,
+	}))
+
 	// setup secondary apps
-	profilesApp, noscript, err := setupSecondaryApps(app, conf, fiberlog,
+	profilesApp, noscript, err := setupSecondaryApps(app, fiberlog,
 		recover.New(), idempotency.New(), helmet.New())
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup secondary apps")
@@ -180,6 +192,9 @@ func main() {
 }
 
 func setupPOW(conf *cfg.Config, app []*fiber.App) {
+	if conf.Fiber.PowDifficulty == 0 {
+		conf.Fiber.PowDifficulty = 60000
+	}
 	for i := range app {
 		app[i].Use(fiberpow.New(fiberpow.Config{
 			PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
@@ -202,12 +217,8 @@ func setupLogger(logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
 		// skip logging for static files, there's too many of them
-		SkipURIs: []string{
-			"/_app/immutable",
-			"/_app/chunks",
-			"/_app/*",
-			"/profiles/_app",
-			"/_app/immutable/chunks/",
+		Next: func(c *fiber.Ctx) bool {
+			return strings.Contains(c.Path(), "/_app/")
 		},
 	})
 	return fiberlog
@@ -324,7 +335,7 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 }
 
 // unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App, conf *cfg.Config, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
+func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
 	profilesApp := fiber.New()
 	profilesApp.Static("/", "./fe/build/")
 	profilesApp.Use(middlewares...)

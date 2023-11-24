@@ -1,6 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
-	import * as crypto from 'crypto';
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
@@ -14,8 +14,42 @@
 		email_or_username = localStorage.getItem('email_or_username') || '';
 	}
 	let email = '';
+	let email_input: HTMLInputElement;
 	let nickname = '';
+	let nickname_input: HTMLInputElement;
+
+	let isAvailable: boolean;
+	onMount(async () => {
+		email_input.value = email;
+		nickname_input.value = nickname;
+
+		if (email_input) {
+			email_input.addEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					email = email_input.value;
+					await checkExists();
+				}, 1000);
+			});
+		} else {
+			console.error('email input element not present');
+		}
+
+		if (nickname_input) {
+			nickname_input.addEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					nickname = nickname_input.value;
+					await checkExists();
+				}, 1000);
+			});
+		} else {
+			console.error('nickname input element not present');
+		}
+	});
+
 	let password = '';
+	let checkTimeout: any;
 	let showPassword = false;
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
@@ -29,6 +63,24 @@
 
 	// helper function to check password strength
 	let timeoutId: number | undefined;
+
+	// in password input for registration this function will be called until an available nickname is found
+	const checkExists = async () => {
+		try {
+			const res = await axios.post('/api/members/check', {
+				membername: nickname,
+				email
+			});
+			isAvailable = res.data.message === 'available';
+			if (!isAvailable) {
+				errorMessage = 'Nickname or email already taken';
+			}
+		} catch (error) {
+			process.env.NODE_ENV === 'development'
+				? console.error(error)
+				: console.error('Error checking nickname availability');
+		}
+	};
 
 	const checkEntropy = async (password: string) => {
 		// if just logging in, don't check the entropy
@@ -65,26 +117,10 @@
 		}
 	};
 
-	// getPubKey retrieves the public key from the backend to be used to encrypt the password
-	const getPubKey = async () => {
-		const response = await axios.get('/api/members/pubkey');
-		const { data } = response;
-		return data.pub_key;
-	};
-
-	// hashPassword hashes the password (in the frontend) before it gets sent to the backend,
-	// using a temporary private key, so that it's not sent in plain text
-	// but since we use **encryption**, not hashing, the password string can
-	// be decrypted by the backend in order to do a final strength check and hash
-	// it using a stronger algorithm (argon2id)
-	const hashPassword = async (password: string) => {
-		const publicKey = await getPubKey();
-		const hash = crypto.publicEncrypt(publicKey, Buffer.from(password));
-		return hash.toString('base64');
-	};
-
 	const register = async (event: Event) => {
 		event.preventDefault();
+		localStorage.removeItem('email_or_username');
+		localStorage.removeItem('member');
 
 		// check if passwords match when the registration flow has been triggered
 		isRegistration && password !== passwordConfirm
@@ -92,9 +128,6 @@
 			: passwordStrength !== 'Password is strong enough'
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
-
-		password = await hashPassword(password);
-		passwordConfirm = await hashPassword(passwordConfirm);
 
 		const response = await axios.post('/api/members/register', {
 			membername: nickname,
@@ -106,23 +139,40 @@
 
 		const { data } = response;
 
-		const member = await authStore.getMember(data.member_id);
+		const nickName = email_or_username.includes('@') ? '' : email_or_username;
 
 		if (browser) {
-			const registrationSuccessful = response.status == 200 && data.member_id !== 0;
-			registrationSuccessful
-				? (await authStore.authenticate(),
-				  localStorage.setItem('email_or_username', ''),
-				  authStore.set(data.member),
-				  (authState.id = member.id),
-				  (window.location.href = '/'),
-				  console.debug('Registration successful'))
-				: (errorMessage = data.message);
+			if (response.data.message.includes('already taken')) {
+				errorMessage = response.data.message;
+				return;
+			}
+
+			if (response.status == 200) {
+				const member = await authStore.getMember(nickName);
+				authStore.set({
+					...member, // Include existing member properties
+					memberName: data.memberName,
+					isAuthenticated: true
+				});
+				localStorage.setItem('member', JSON.stringify(member));
+				localStorage.setItem('email_or_username', '');
+				authState.memberName = member.memberName;
+				window.location.href = '/';
+				console.info('Registration successful');
+			} else {
+				console.error(data.message);
+			}
 		}
 	};
-
+	//
+	// END OF REGISTRATION
+	// START OF LOGIN
+	//
 	const login = async (event: Event) => {
 		event.preventDefault();
+
+		const nickName = email_or_username.includes('@') ? '' : email_or_username;
+		const emailValue = email_or_username.includes('@') ? email_or_username : '';
 
 		const response = await fetch('/api/members/login', {
 			method: 'POST',
@@ -130,26 +180,27 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				membername: email_or_username.includes('@') ? '' : email_or_username,
-				email: email_or_username.includes('@') ? email_or_username : '',
+				membername: nickName,
+				email: emailValue,
 				password
 			})
 		});
 
 		const data = await response.json();
-		const member = await authStore.getMember(data.member_id);
+		const member = await authStore.getMember(nickName);
+		console.debug('authStore.getMember called for ', nickName, ' and returned ', member);
 
 		if (browser) {
 			response.ok
 				? (await authStore.authenticate(),
 				  authStore.set({
 						...member, // Include existing member properties
-						id: data.member_id,
+						memberName: data.memberName,
 						isAuthenticated: true
 				  }),
 				  localStorage.setItem('member', JSON.stringify(member)),
 				  localStorage.setItem('email_or_username', ''),
-				  (authState.id = member.id),
+				  (authState.memberName = member.memberName),
 				  (window.location.href = '/'),
 				  console.info('Login successful'))
 				: (errorMessage = data.message);
@@ -185,29 +236,54 @@
 		{:else}
 			<!-- Registration form -->
 			<label for="email">Email:</label>
-			<input id="email" bind:value={email} type="email" class="input" required aria-label="Email" />
+			<input
+				bind:this={email_input}
+				bind:value={email}
+				type="email"
+				class="input"
+				id="email_input"
+				required
+				aria-label="Email"
+			/>
 
 			<label for="nickname">Nickname:</label>
-			<input id="nickname" bind:value={nickname} required class="input" />
+			<input
+				type="text"
+				bind:this={nickname_input}
+				bind:value={nickname}
+				required
+				class="input"
+				id="nickname_input"
+			/>
 
 			<PasswordInput
 				bind:value={password}
 				id="password"
-				onInput={() => checkEntropy(password)}
+				onInput={async () => {
+					checkEntropy(password);
+				}}
 				{showPassword}
 				{toggleObfuscation}
 			/>
+
+			<!-- FIXME: this is not getting updated properly -->
+			<!--
+			{#if isAvailable}
+				<p>Nickname is available</p>
+			{:else}
+				<p>Nickname is not available</p>
+			{/if}
+      -->
 		{/if}
 
 		{#if isRegistration}
 			<label for="passwordConfirm">Confirm Password:</label>
-			<input
+			<PasswordInput
 				id="passwordConfirm"
-				class="input"
 				bind:value={passwordConfirm}
-				type="password"
-				required
-				on:input={() => checkEntropy(passwordConfirm)}
+				onInput={() => Promise.resolve(void 0)}
+				{showPassword}
+				{toggleObfuscation}
 			/>
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
@@ -218,6 +294,9 @@
 				</p>
 			{:else}
 				<p>Password strength: {passwordStrength}</p>
+			{/if}
+			{#if errorMessage}
+				<p><span class="error-icon" /><span class="error-message">{errorMessage}</span></p>
 			{/if}
 		{/if}
 
@@ -261,6 +340,7 @@
 		padding: 0.5rem;
 		border: 1px solid var(--error-color);
 		font-weight: bold;
+		font-size: 1.2em;
 	}
 
 	.error-icon::before {
