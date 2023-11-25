@@ -85,7 +85,7 @@ type (
 
 	MemberStorer interface {
 		Save(ctx context.Context, member *Member) error
-		Read(ctx context.Context, keyName, key string) (*Member, error)
+		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
 		// Check checks if a member with the given email or nickname already exists
 		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error

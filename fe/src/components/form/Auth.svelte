@@ -201,7 +201,6 @@
 			'CSRF-Token': csrfToken
 		};
 
-		localStorage.removeItem('email_or_username');
 		localStorage.removeItem('member');
 
 		const nickName = email_or_username.includes('@') ? '' : email_or_username;
@@ -218,8 +217,8 @@
 		});
 
 		const data = await response.json();
-		const member = await authStore.getMember(nickName);
-		console.debug('authStore.getMember called for ', nickName, ' and returned ', member);
+		const member = await authStore.getMember(email_or_username);
+		console.debug('authStore.getMember called for ', email_or_username, ' and returned ', member);
 
 		if (browser) {
 			response.ok
