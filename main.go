@@ -163,7 +163,7 @@ func main() {
 	}
 
 	// setup secondary apps
-	profilesApp, err := setupSecondaryApps(app, fiberlog,
+	profilesApp, err := setupSecondaryApps(app,
 		middlewares)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup secondary apps")
@@ -351,7 +351,7 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 }
 
 // unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, error) {
+func setupSecondaryApps(mainApp *fiber.App, middlewares []fiber.Handler) (*fiber.App, error) {
 	profilesApp := fiber.New(fiber.Config{
 		EnableTrustedProxyCheck: true,
 	})
