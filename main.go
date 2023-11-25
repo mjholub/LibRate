@@ -118,6 +118,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName:                 fmt.Sprintf("LibRate %s", tag),
 		EnableTrustedProxyCheck: true,
+		TrustedProxies:          []string{"127.0.0.1", "::1", "localhost", conf.Fiber.Host},
 		Prefork:                 conf.Fiber.Prefork,
 		ReduceMemoryUsage:       conf.Fiber.ReduceMemUsage,
 		Views:                   engine,
@@ -157,10 +158,11 @@ func main() {
 	defer cryptoConn.Close()
 
 	middlewares := setupMiddlewares(conf)
-	for i := range middlewares {
-		log.Debug().Msgf("Setting up middleware %s", middlewares[i])
-		app.Use(middlewares[i])
-	}
+	go func() {
+		for i := range middlewares {
+			app.Use(middlewares[i])
+		}
+	}()
 
 	// setup secondary apps
 	profilesApp, err := setupSecondaryApps(app,
@@ -173,7 +175,7 @@ func main() {
 	// CORS
 	setupCors(apps)
 	setupPOW(conf, apps)
-	setupGlobalHeaders(apps)
+	setupGlobalHeaders(conf, apps)
 
 	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
 		profilesApp, fiberlog, cryptoConn)
@@ -264,14 +266,19 @@ func setupCors(apps []*fiber.App) {
 	}
 }
 
-func setupGlobalHeaders(apps []*fiber.App) {
+func setupGlobalHeaders(conf *cfg.Config, apps []*fiber.App) {
+	localAliases := strings.ReplaceAll(fmt.Sprintf(`%s:%d https://%s:%d http://%s:%d https://lr.localhost`,
+		"localhost", 3000, conf.Fiber.Host, conf.Fiber.Port, conf.Fiber.Host, conf.Fiber.Port), "'", "")
 	for i := range apps {
 		apps[i].Use(func(c *fiber.Ctx) error {
 			c.Set("X-Frame-Options", "SAMEORIGIN")
 			c.Set("X-XSS-Protection", "1; mode=block")
 			c.Set("X-Content-Type-Options", "nosniff")
 			c.Set("Referrer-Policy", "no-referrer")
-			c.Set("Content-Security-Policy", "default-src 'self'")
+			c.Set("Content-Security-Policy", fmt.Sprintf(`default-src 'self' https://gnu.org %s;
+				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
+				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';`,
+				localAliases, localAliases))
 			return c.Next()
 		})
 	}
