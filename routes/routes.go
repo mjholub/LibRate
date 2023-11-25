@@ -68,6 +68,8 @@ func Setup(
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
+	// TODO: add template rendering
+	// app.Get("/noscript",
 
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatest)

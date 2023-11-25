@@ -15,9 +15,13 @@ import (
 	"codeberg.org/mjh/LibRate/routes"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
+	"github.com/gofiber/fiber/v2/middleware/earlydata"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -33,6 +37,7 @@ import (
 	"codeberg.org/mjh/LibRate/internal/crypt"
 	"codeberg.org/mjh/LibRate/internal/errortools"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/render"
 )
 
 func main() {
@@ -107,10 +112,17 @@ func main() {
 	if err != nil {
 		tag = "unknown"
 	}
+
+	engine := render.Setup(conf)
+
 	app := fiber.New(fiber.Config{
-		AppName:           fmt.Sprintf("LibRate %s", tag),
-		Prefork:           conf.Fiber.Prefork,
-		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
+		AppName:                 fmt.Sprintf("LibRate %s", tag),
+		EnableTrustedProxyCheck: true,
+		Prefork:                 conf.Fiber.Prefork,
+		ReduceMemoryUsage:       conf.Fiber.ReduceMemUsage,
+		Views:                   engine,
+		JSONEncoder:             json.Marshal,
+		JSONDecoder:             json.Unmarshal,
 	},
 	)
 
@@ -144,38 +156,27 @@ func main() {
 	}
 	defer cryptoConn.Close()
 
-	// proof of work based anti-spam/anti-ddos
-	app.Use(recover.New())
-
-	app.Use(fiberlog)
-
-	app.Use(idempotency.New())
-	// hardening
-	app.Use(helmet.New())
-
-	app.Use(csrf.New(csrf.Config{
-		KeyLookup:         "header:X-CSRF-Token",
-		CookieName:        "csrf_",
-		CookieSessionOnly: true,
-		CookieSameSite:    "Lax",
-		Expiration:        2 * time.Hour,
-		KeyGenerator:      uuid.Must(uuid.NewV4()).String,
-	}))
+	middlewares := setupMiddlewares(conf)
+	for i := range middlewares {
+		log.Debug().Msgf("Setting up middleware %s", middlewares[i])
+		app.Use(middlewares[i])
+	}
 
 	// setup secondary apps
-	profilesApp, noscript, err := setupSecondaryApps(app, fiberlog,
-		recover.New(), idempotency.New(), helmet.New())
+	profilesApp, err := setupSecondaryApps(app, fiberlog,
+		middlewares)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup secondary apps")
 	}
-	apps := []*fiber.App{app, profilesApp, noscript}
+	apps := []*fiber.App{app, profilesApp}
 
 	// CORS
 	setupCors(apps)
 	setupPOW(conf, apps)
+	setupGlobalHeaders(apps)
 
 	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
-		profilesApp, noscript, fiberlog, cryptoConn)
+		profilesApp, fiberlog, cryptoConn)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -263,6 +264,19 @@ func setupCors(apps []*fiber.App) {
 	}
 }
 
+func setupGlobalHeaders(apps []*fiber.App) {
+	for i := range apps {
+		apps[i].Use(func(c *fiber.Ctx) error {
+			c.Set("X-Frame-Options", "SAMEORIGIN")
+			c.Set("X-XSS-Protection", "1; mode=block")
+			c.Set("X-Content-Type-Options", "nosniff")
+			c.Set("Referrer-Policy", "no-referrer")
+			c.Set("Content-Security-Policy", "default-src 'self'")
+			return c.Next()
+		})
+	}
+}
+
 func DBRunning(skipCheck bool, port uint16) bool {
 	if skipCheck {
 		return true
@@ -337,18 +351,16 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 }
 
 // unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, *fiber.App, error) {
-	profilesApp := fiber.New()
+func setupSecondaryApps(mainApp *fiber.App, middlewares ...interface{}) (*fiber.App, error) {
+	profilesApp := fiber.New(fiber.Config{
+		EnableTrustedProxyCheck: true,
+	})
 	profilesApp.Static("/", "./fe/build/")
-	profilesApp.Use(middlewares...)
-	mainApp.Mount("/profiles", profilesApp)
-	noscript, err := setupNoscript()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup noscript app: %w", err)
+	for i := range middlewares {
+		profilesApp.Use(middlewares[i])
 	}
-	noscript.Use(middlewares...)
-	mainApp.Mount("/noscript", noscript)
-	return profilesApp, noscript, nil
+	mainApp.Mount("/profiles", profilesApp)
+	return profilesApp, nil
 }
 
 func modularListen(conf *cfg.Config, app *fiber.App) error {
@@ -373,24 +385,13 @@ func setupRoutes(
 	log *zerolog.Logger,
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
-	app, profilesApp, noscript *fiber.App,
+	app, profilesApp *fiber.App,
 	fiberlog fiber.Handler,
 	cryptoConn *sql.DB,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp, &fiberlog)
 	if err != nil {
 		return fmt.Errorf("failed to setup profiles routes: %w", err)
-	}
-	switch conf.Engine {
-	case "postgres", "sqlite", "mariadb":
-		err = routeNoScript(noscript, dbConn, log, conf, nil)
-	case "neo4j":
-		err = routeNoScript(noscript, nil, log, conf, *neo4jConn)
-	default:
-		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to setup noscript routes: %w", err)
 	}
 
 	// Setup routes
@@ -399,4 +400,45 @@ func setupRoutes(
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}
 	return nil
+}
+
+func setupMiddlewares(conf *cfg.Config) []fiber.Handler {
+	return []fiber.Handler{
+		idempotency.New(),
+		helmet.New(),
+		csrf.New(csrf.Config{
+			// FIXME: stupid svelte won't load X-CSRF-Token from cookies
+			KeyLookup:         "cookie:csrf_",
+			CookieName:        "csrf_",
+			CookieSessionOnly: true,
+			CookieSameSite:    "Lax",
+			Expiration:        2 * time.Hour,
+			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
+			Storage: redis.New(redis.Config{
+				Host:     conf.Redis.Host,
+				Port:     conf.Redis.Port,
+				Username: conf.Redis.Username,
+				Password: conf.Redis.Password,
+				Database: conf.Redis.Database + 1,
+			}),
+		}),
+		recover.New(),
+		earlydata.New(),
+		cache.New(cache.Config{
+			Expiration: 15 * time.Minute,
+			Storage: redis.New(redis.Config{
+				Host:     conf.Redis.Host,
+				Port:     conf.Redis.Port,
+				Username: conf.Redis.Username,
+				Password: conf.Redis.Password,
+				Database: conf.Redis.Database + 2,
+			}),
+			Next: func(c *fiber.Ctx) bool {
+				return c.Query("cache") == "false"
+			},
+		}),
+		compress.New(compress.Config{
+			Level: compress.LevelBestSpeed,
+		}),
+	}
 }

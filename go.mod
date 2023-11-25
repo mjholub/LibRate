@@ -1,6 +1,6 @@
 module codeberg.org/mjh/LibRate
 
-go 1.21
+go 1.20
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20230819112213-15f155339829
@@ -16,6 +16,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/gofiber/storage/redis/v3 v3.0.0
 	github.com/gofiber/template/django/v3 v3.1.6
+	github.com/gofiber/template/html/v2 v2.0.5
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/mock v1.6.0
