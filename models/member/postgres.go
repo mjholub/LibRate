@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
+	"github.com/samber/lo"
 )
 
 func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
@@ -35,7 +36,7 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 		"email":         member.Email,
 		"reg_timestamp": member.RegTimestamp.Unix(),
 		"active":        true,
-		"roles":         pq.Array(mapRoleCodesToStrings(member.Roles)),
+		"roles":         pq.StringArray(member.Roles),
 	}
 
 	s.log.Debug().Msgf("params: %v", params)

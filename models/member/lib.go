@@ -11,6 +11,7 @@ import (
 	"github.com/go-ap/activitypub"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
@@ -32,14 +33,14 @@ type (
 	Member struct {
 		// TODO: convert to int64, postgres doesn't support unsigned by default anyway
 		ID             uint32                 `json:"id" db:"id"`
-		UUID           string                 `json:"_key,omitempty" db:"uuid"`
+		UUID           uuid.UUID              `json:"uuid,omitempty" db:"uuid"`
 		PassHash       string                 `json:"passhash" db:"passhash"`
 		MemberName     string                 `json:"memberName" db:"nick"` // i.e. @nick@instance
 		DisplayName    sql.NullString         `json:"displayName,omitempty" db:"display_name"`
 		Email          string                 `json:"email" db:"email" validate:"required,email"`
 		Bio            sql.NullString         `json:"bio,omitempty" db:"bio"`
 		Active         bool                   `json:"active" db:"active"`
-		Roles          []uint8                `json:"roles,omitempty" db:"roles"`
+		Roles          pq.StringArray         `json:"roles,omitempty" db:"roles"`
 		RegTimestamp   time.Time              `json:"regdate" db:"reg_timestamp"`
 		ProfilePic     *static.Image          `json:"profilepic,omitempty" db:"profilepic_id"`
 		Homepage       sql.NullString         `json:"homepage,omitempty" db:"homepage"`

@@ -20,7 +20,8 @@ func (s Neo4jMemberStorage) Save(ctx context.Context, member *Member) error {
 		"email":         member.Email,
 		"reg_timestamp": member.RegTimestamp.Unix(),
 		"active":        true,
-		"roles":         mapRoleCodesToStrings(member.Roles),
+		// TODO: convert pq.StringArray to neo4j compatible type
+		"roles": nil,
 	}
 
 	s.log.Debug().Msgf("params: %v", params)

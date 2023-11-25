@@ -63,8 +63,9 @@ func (a *Service) Login(c *fiber.Ctx) error {
 		}
 		member.ID = memberID
 		return a.createSession(c, &member)
-	case err != nil && a.conf.LibrateEnv == "dev":
-		return h.Res(c, http.StatusUnauthorized, "Invalid credentials: "+err.Error())
+	case err != nil && a.conf.LibrateEnv == "development":
+		a.log.Error().Err(err).Msgf("Failed to validate credentials: %s", err.Error())
+		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	case err != nil:
 		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	default:
