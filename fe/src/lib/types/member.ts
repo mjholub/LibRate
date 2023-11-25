@@ -1,5 +1,7 @@
 export type Member = {
   id: number,
+  active: boolean,
+  uuid: string,
   memberName: string,
   displayName: string | null,
   email: string,
@@ -11,7 +13,9 @@ export type Member = {
   homepage: string | null,
   //bookwyrm: "",
   regdate: number | Date,
-  roles: string[],
+  roles: MemberRole[],
   // private means federated, but visible only if authenticated
   visibility: 'public' | 'followers_only' | 'local' | 'private',
 };
+
+export type MemberRole = 'regular' | 'admin' | 'creator' | 'mod';

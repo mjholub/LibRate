@@ -101,16 +101,16 @@ func (mc *MemberController) Check(c *fiber.Ctx) error {
 	return h.Res(c, fiber.StatusOK, "available")
 }
 
-func (mc *MemberController) GetMemberByNick(c *fiber.Ctx) error {
-	if c.Params("nickname") == "" {
-		return h.Res(c, fiber.StatusNotFound, "No nickname provided")
+func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
+	if c.Params("email_or_username") == "" {
+		return h.Res(c, fiber.StatusNotFound, "No email or nickname provided")
 	}
-	mc.log.Trace().Msgf("GetMemberByNick called with payload: %s", string(c.Request().Body()))
+	mc.log.Debug().Msgf("GetMemberByNickOrEmail called with payload: %s", string(c.Request().Body()))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mc.log.Trace().Msgf("Nick: %s", c.Params("nickname"))
-	member, err := mc.storage.Read(ctx, "nick", c.Params("nickname"))
+	member, err := mc.storage.Read(ctx, c.Params("email_or_username"), "nick", "email")
 	if err != nil {
+		mc.log.Error().Msgf("Error getting member \"%s\": %v", c.Params("email_or_username"), err)
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
 	mc.log.Info().Msgf("Member: %+v", member)

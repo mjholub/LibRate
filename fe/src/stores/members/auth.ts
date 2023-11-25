@@ -14,7 +14,7 @@ export interface AuthStoreState extends Member {
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: () => Promise<void>;
   logout: () => void;
-  getMember: (nickname: string) => Promise<Member>;
+  getMember: (email_or_username: string) => Promise<Member>;
 }
 
 export const initialAuthState: AuthStoreState = {
@@ -63,8 +63,8 @@ function createAuthStore(): AuthStore {
         }
       }
     },
-    getMember: async (nickname: string) => {
-      const res = await fetch(`/api/members/${nickname}/info`);
+    getMember: async (email_or_username: string) => {
+      const res = await fetch(`/api/members/${email_or_username}/info`);
       const member = await res.json();
       member.passhash = '';
       member.id = 0;

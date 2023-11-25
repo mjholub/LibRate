@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
+	"github.com/samber/lo"
 )
 
 func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
@@ -35,7 +36,7 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 		"email":         member.Email,
 		"reg_timestamp": member.RegTimestamp.Unix(),
 		"active":        true,
-		"roles":         pq.Array(mapRoleCodesToStrings(member.Roles)),
+		"roles":         pq.StringArray(member.Roles),
 	}
 
 	s.log.Debug().Msgf("params: %v", params)
@@ -67,10 +68,13 @@ func (s *PgMemberStorage) Delete(ctx context.Context, member *Member) error {
 	return nil
 }
 
-func (s *PgMemberStorage) Read(ctx context.Context, keyName, key string) (*Member, error) {
-	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1 LIMIT 1", keyName)
+func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...string) (*Member, error) {
+	if lo.Contains(keyNames, "email_or_username") {
+		keyNames = []string{"email", "nick"}
+	}
+	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
 	member := &Member{}
-	err := s.client.GetContext(ctx, member, query, key)
+	err := s.client.GetContext(ctx, member, query, value)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read member: %v", err)
 	}

@@ -20,7 +20,8 @@ func (s Neo4jMemberStorage) Save(ctx context.Context, member *Member) error {
 		"email":         member.Email,
 		"reg_timestamp": member.RegTimestamp.Unix(),
 		"active":        true,
-		"roles":         mapRoleCodesToStrings(member.Roles),
+		// TODO: convert pq.StringArray to neo4j compatible type
+		"roles": nil,
 	}
 
 	s.log.Debug().Msgf("params: %v", params)
@@ -116,13 +117,13 @@ func (s Neo4jMemberStorage) Delete(ctx context.Context, member *Member) error {
 	return nil
 }
 
-func (s Neo4jMemberStorage) Read(ctx context.Context, keyName, key string) (*Member, error) {
+func (s Neo4jMemberStorage) Read(ctx context.Context, value string, keyNames ...string) (*Member, error) {
 	session := s.client.NewSession(ctx, neo4j.SessionConfig{})
 	defer session.Close(ctx)
 
 	result, err := neo4j.ExecuteRead[*Member](ctx, session, func(tx neo4j.ManagedTransaction) (*Member, error) {
 		result, err := tx.Run(ctx,
-			"MATCH (m:Member) WHERE m."+keyName+" = $key RETURN m", map[string]interface{}{"key": key})
+			"MATCH (m:Member) WHERE m."+keyNames[0]+" = $key RETURN m", map[string]interface{}{"key": value})
 		if err != nil {
 			return nil, fmt.Errorf("failed to read member: %v", err)
 		}

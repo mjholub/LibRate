@@ -19,6 +19,8 @@
 	let nickname_input: HTMLInputElement;
 
 	let isAvailable: boolean;
+
+	let csrfToken: string;
 	onMount(async () => {
 		email_input.value = email;
 		nickname_input.value = nickname;
@@ -46,6 +48,16 @@
 		} else {
 			console.error('nickname input element not present');
 		}
+
+		if (browser) {
+			// @ts-ignore
+			csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+			if (csrfToken) {
+				console.debug('csrfToken found: ', csrfToken);
+			} else {
+				console.error('csrfToken not found');
+			}
+		}
 	});
 
 	let password = '';
@@ -66,11 +78,18 @@
 
 	// in password input for registration this function will be called until an available nickname is found
 	const checkExists = async () => {
+		const headers = {
+			'Content-Type': 'application/json',
+			'CSRF-Token': csrfToken
+		};
+
 		try {
-			const res = await axios.post('/api/members/check', {
+			let requestPayload = {
 				membername: nickname,
 				email
-			});
+			};
+
+			const res = await axios.post('/api/members/check', requestPayload, { headers });
 			isAvailable = res.data.message === 'available';
 			if (!isAvailable) {
 				errorMessage = 'Nickname or email already taken';
@@ -119,6 +138,11 @@
 
 	const register = async (event: Event) => {
 		event.preventDefault();
+		const headers = {
+			'Content-Type': 'application/json',
+			'CSRF-Token': csrfToken
+		};
+
 		localStorage.removeItem('email_or_username');
 		localStorage.removeItem('member');
 
@@ -129,13 +153,15 @@
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
 
-		const response = await axios.post('/api/members/register', {
+		let requestPayload = {
 			membername: nickname,
 			email,
 			password,
 			passwordConfirm,
 			roles: ['regular']
-		});
+		};
+
+		const response = await axios.post('/api/members/register', requestPayload, { headers });
 
 		const { data } = response;
 
@@ -170,15 +196,19 @@
 	//
 	const login = async (event: Event) => {
 		event.preventDefault();
+		const headers = {
+			'Content-Type': 'application/json',
+			'CSRF-Token': csrfToken
+		};
+
+		localStorage.removeItem('member');
 
 		const nickName = email_or_username.includes('@') ? '' : email_or_username;
 		const emailValue = email_or_username.includes('@') ? email_or_username : '';
 
 		const response = await fetch('/api/members/login', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
+			headers: headers,
 			body: JSON.stringify({
 				membername: nickName,
 				email: emailValue,
@@ -187,8 +217,8 @@
 		});
 
 		const data = await response.json();
-		const member = await authStore.getMember(nickName);
-		console.debug('authStore.getMember called for ', nickName, ' and returned ', member);
+		const member = await authStore.getMember(email_or_username);
+		console.debug('authStore.getMember called for ', email_or_username, ' and returned ', member);
 
 		if (browser) {
 			response.ok
