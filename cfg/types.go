@@ -42,6 +42,7 @@ type RedisConfig struct {
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
 	Host           string `yaml:"host" default:"localhost"`
+	Domain         string `yaml:"domain" default:"lr.localhost"`
 	Port           int    `yaml:"port" default:"3000"`
 	Prefork        bool   `yaml:"prefork" default:"false"`
 	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false"`

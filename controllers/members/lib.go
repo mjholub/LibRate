@@ -3,10 +3,12 @@ package members
 import (
 	"github.com/go-ap/activitypub"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models/member"
+	"codeberg.org/mjh/LibRate/models/static"
 )
 
 // MemberController allows for the retrieval of user information
@@ -25,15 +27,18 @@ type (
 		storage member.MemberStorer
 		log     *zerolog.Logger
 		conf    *cfg.Config
+		images  *static.Storage
 	}
 )
 
 func NewController(
 	storage member.MemberStorer,
+	db *sqlx.DB,
 	logger *zerolog.Logger,
 	conf *cfg.Config,
 ) *MemberController {
-	return &MemberController{storage: storage, log: logger, conf: conf}
+	imagesStorage := static.NewStorage(db, logger)
+	return &MemberController{storage: storage, log: logger, conf: conf, images: imagesStorage}
 }
 
 // MemberToActor converts a member to an ActivityPub actor

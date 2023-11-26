@@ -7,7 +7,7 @@ const memberInfo: Member = {
   memberName: '',
   displayName: null,
   email: '',
-  profilePic: null,
+  profilePic: '',
   bio: null,
   matrix: null,
   xmpp: null,
@@ -20,7 +20,6 @@ const memberInfo: Member = {
 
 interface MemberStore extends Writable<Member> {
   getMemberByNick: (nick: string) => Promise<Member>;
-  getMemberIDByNick: (nick: string) => Promise<number>;
   //getMemberByID: (id: number) => Promise<Member>;
 }
 
@@ -38,19 +37,6 @@ function createMemberStore(): MemberStore {
       console.debug('memberStore.getMemberByNick', member);
       return member;
     },
-    getMemberIDByNick: async (nick: string) => {
-      const res = await fetch(`/api/members/id/${nick}`);
-      res.ok || console.error(res.statusText);
-      const member = await res.json();
-      console.debug('memberStore.getMemberIDByNick', member);
-      return member;
-    },
-    /* getMemberByID: async (id: number) => {
-       const res = await fetch(`/api/members/${id}`);
-       const member = await res.json();
-       return member;
-     }
-     */
   };
 }
 

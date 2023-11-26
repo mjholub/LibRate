@@ -113,12 +113,12 @@ func createMember(input *member.Input) (*member.Member, error) {
 	}
 
 	member := &member.Member{
-		UUID:         uuid.Must(uuid.NewV4()).String(),
+		UUID:         uuid.Must(uuid.NewV4()),
 		PassHash:     passhash,
 		MemberName:   in.MemberName,
 		Email:        in.Email,
 		RegTimestamp: time.Now(),
-		Roles:        []uint8{3},
+		Roles:        []string{"member"},
 	}
 
 	return member, nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"codeberg.org/mjh/LibRate/models/member"
 
@@ -107,10 +108,32 @@ func (a *Service) createSession(c *fiber.Ctx, member *member.Member) error {
 		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
 	}
 
+	if c.Cookies("device_id") == "" {
+		deviceUUID, err := a.identifyDevice()
+		if err != nil {
+			a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
+			return h.Res(c, http.StatusInternalServerError, "Failed to create session")
+		}
+		c.Cookie(&fiber.Cookie{
+			Domain:      a.conf.Fiber.Domain,
+			SessionOnly: true,
+			Expires:     time.Now().Add(time.Hour * 24 * 90),
+			SameSite:    "Lax",
+			Name:        "device_id",
+			Value:       deviceUUID.String(),
+			HTTPOnly:    false,
+		})
+
+	}
+
 	c.Cookie(&fiber.Cookie{
-		Name:     "session",
-		Value:    token,
-		HTTPOnly: true,
+		Domain:      a.conf.Fiber.Domain,
+		SessionOnly: true,
+		Expires:     time.Now().Add(time.Hour * 24 * 7),
+		SameSite:    "Strict",
+		Name:        "session",
+		Value:       token,
+		HTTPOnly:    true,
 	})
 
 	if member.ID == 0 {
@@ -120,12 +143,54 @@ func (a *Service) createSession(c *fiber.Ctx, member *member.Member) error {
 		}
 		member.ID = memberID
 	}
+	sess, err := a.sess.Get(c)
+	if err != nil {
+		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
+		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
+	}
+	sess.Set("member_uuid", member.UUID.String())
+	sess.Set("memberName", member.MemberName)
+	sess.Set("device_id", c.Cookies("device_id"))
+	if err := sess.Save(); err != nil {
+		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
+		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
+	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"message":  "Logged in successfully",
-		"token":    token,
-		"nickname": member.MemberName,
+		"message":    "Logged in successfully",
+		"token":      token,
+		"memberName": member.MemberName,
 	})
+}
+
+func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
+	sess, err := a.sess.Get(c)
+	if err != nil {
+		return h.Res(c, http.StatusInternalServerError, "Failed to get session")
+	}
+	if c.Cookies("session") == "" {
+		return h.Res(c, http.StatusUnauthorized, "Not logged in")
+	}
+
+	memberUUID := sess.Get("member_uuid")
+	if memberUUID == nil {
+		return h.Res(c, http.StatusUnauthorized, "Not logged in")
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message":         "Logged in",
+		"isAuthenticated": true,
+		"memberName":      sess.Get("memberName"),
+	})
+}
+
+// TODO: create corresponding database modifications so that we can tie a device to a member
+func (a *Service) identifyDevice() (uuid.UUID, error) {
+	deviceID, err := uuid.NewV7()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return deviceID, nil
 }
 
 func (a *Service) createToken() (string, error) {

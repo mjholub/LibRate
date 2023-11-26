@@ -102,7 +102,7 @@ func TestRunMigrations(t *testing.T) {
 				// create a test member so that fkey constraints are satisfied
 				ms := member.NewSQLStorage(conn, &log, &config)
 				member := member.Member{
-					UUID:         uuid.Must(uuid.NewV4()).String(),
+					UUID:         uuid.Must(uuid.NewV4()),
 					MemberName:   "test",
 					Email:        "test@test.com",
 					PassHash:     "test",
