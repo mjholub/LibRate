@@ -1,37 +1,45 @@
+import axios from 'axios';
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
 import type { Member } from '$lib/types/member.ts';
 
-export const nickName = writable<string>('');
 export const isAuthenticated = writable(false);
 export interface AuthStoreState extends Member {
-  id: number;
-  memberName: string;
-  roles: string[];
   isAuthenticated: boolean;
 };
 
+export type authData = {
+  isAuthenticated: boolean;
+  memberName: string;
+};
+
 interface AuthStore extends Writable<AuthStoreState> {
-  authenticate: () => Promise<void>;
+  authenticate: () => Promise<authData>;
   logout: () => void;
-  getMember: (nickname: string) => Promise<Member>;
+  getMember: (email_or_username: string) => Promise<Member>;
 }
 
 export const initialAuthState: AuthStoreState = {
   id: 0,
   memberName: '',
-  displayName: null,
+  displayName: { String: '', Valid: false },
   email: '',
-  profilePic: null,
-  bio: null,
-  matrix: null,
-  xmpp: null,
-  irc: null,
-  homepage: null,
+  profilePic: '',
+  bio: { String: '', Valid: false },
+  matrix: { String: '', Valid: false },
+  xmpp: { String: '', Valid: false },
+  irc: { String: '', Valid: false },
+  homepage: { String: '', Valid: false },
   regdate: new Date(),
   roles: ['member'],
   isAuthenticated: false,
-  visibility: 'public'
+  visibility: 'public',
+  followers_uri: '',
+  following_uri: '',
+  sessionTimeout: { Int64: 0, Valid: false },
+  active: false,
+  uuid: '',
+  publicKeyPem: ''
 };
 
 
@@ -43,30 +51,38 @@ function createAuthStore(): AuthStore {
     set,
     update,
     authenticate: async () => {
-      const sessionCookie = document.cookie.includes('session=');
-      if (sessionCookie) {
-        // using try-cacth to avoid unhandled promise rejection
+      return new Promise<authData>(async (resolve, reject) => {
         try {
-          const res = await fetch(`/api/authenticate`);
-          res.ok ? isAuthenticated.set(true) : isAuthenticated.set(false);
-        } catch (err) {
-          isAuthenticated.set(false);
-          if (import.meta.env.DEV) {
-            console.error('Error while authenticating', err);
+          const authStatus = await axios.get(`/api/authenticate/status`);
+
+          if (authStatus.status === 200) {
+            isAuthenticated.set(authStatus.data.isAuthenticated);
+            resolve({ isAuthenticated: authStatus.data.isAuthenticated, memberName: authStatus.data.memberName });
+          } else {
+            // Handle other non-200 status codes here
+            isAuthenticated.set(false);
+            reject(Error(`Unexpected status code: ${authStatus.status}`));
+          }
+        } catch (error) {
+          // Handle errors from the axios request, including 401 status code
+          if (axios.isAxiosError(error) && error.response?.status === 401) {
+            isAuthenticated.set(false);
+            reject(Error('Unauthorized'));
+          } else {
+            isAuthenticated.set(false);
+            reject(error);
           }
         }
-      }
-      else {
-        isAuthenticated.set(false);
-        if (import.meta.env.DEV) {
-          console.error('Authentication cookie not found');
-        }
-      }
+      });
     },
-    getMember: async (nickname: string) => {
-      const res = await fetch(`/api/members/${nickname}/info`);
-      const member = await res.json();
-      member.passhash = '';
+    getMember: async (email_or_username: string) => {
+      const res = await fetch(`/api/members/${email_or_username}/info`);
+      const resData = await res.json();
+      if (resData.message !== "success") {
+        throw new Error('Error while retrieving member data');
+      }
+      const member: Member = resData.data;
+      console.debug('member data retrieved from API: ', member);
       member.id = 0;
       return member;
     },

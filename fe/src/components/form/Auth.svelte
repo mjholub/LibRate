@@ -1,6 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
@@ -19,11 +19,10 @@
 	let nickname_input: HTMLInputElement;
 
 	let isAvailable: boolean;
-	onMount(async () => {
-		email_input.value = email;
-		nickname_input.value = nickname;
 
+	onMount(async () => {
 		if (email_input) {
+			email_input.value = email;
 			email_input.addEventListener('keyup', () => {
 				clearTimeout(checkTimeout);
 				checkTimeout = setTimeout(async () => {
@@ -36,6 +35,7 @@
 		}
 
 		if (nickname_input) {
+			nickname_input.value = nickname;
 			nickname_input.addEventListener('keyup', () => {
 				clearTimeout(checkTimeout);
 				checkTimeout = setTimeout(async () => {
@@ -66,11 +66,17 @@
 
 	// in password input for registration this function will be called until an available nickname is found
 	const checkExists = async () => {
+		const headers = {
+			'Content-Type': 'application/json'
+		};
+
 		try {
-			const res = await axios.post('/api/members/check', {
+			let requestPayload = {
 				membername: nickname,
 				email
-			});
+			};
+
+			const res = await axios.post('/api/members/check', requestPayload, { headers });
 			isAvailable = res.data.message === 'available';
 			if (!isAvailable) {
 				errorMessage = 'Nickname or email already taken';
@@ -119,6 +125,10 @@
 
 	const register = async (event: Event) => {
 		event.preventDefault();
+		const headers = {
+			'Content-Type': 'application/json'
+		};
+
 		localStorage.removeItem('email_or_username');
 		localStorage.removeItem('member');
 
@@ -129,13 +139,15 @@
 			? ((errorMessage = 'Password is not strong enough'), false)
 			: true;
 
-		const response = await axios.post('/api/members/register', {
+		let requestPayload = {
 			membername: nickname,
 			email,
 			password,
 			passwordConfirm,
 			roles: ['regular']
-		});
+		};
+
+		const response = await axios.post('/api/authenticate/register', requestPayload, { headers });
 
 		const { data } = response;
 
@@ -151,7 +163,6 @@
 				const member = await authStore.getMember(nickName);
 				authStore.set({
 					...member, // Include existing member properties
-					memberName: data.memberName,
 					isAuthenticated: true
 				});
 				localStorage.setItem('member', JSON.stringify(member));
@@ -170,15 +181,18 @@
 	//
 	const login = async (event: Event) => {
 		event.preventDefault();
+		const headers = {
+			'Content-Type': 'application/json'
+		};
+
+		localStorage.removeItem('member');
 
 		const nickName = email_or_username.includes('@') ? '' : email_or_username;
 		const emailValue = email_or_username.includes('@') ? email_or_username : '';
 
-		const response = await fetch('/api/members/login', {
+		const response = await fetch('/api/authenticate/login', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
+			headers: headers,
 			body: JSON.stringify({
 				membername: nickName,
 				email: emailValue,
@@ -187,26 +201,44 @@
 		});
 
 		const data = await response.json();
-		const member = await authStore.getMember(nickName);
-		console.debug('authStore.getMember called for ', nickName, ' and returned ', member);
+		const member = await authStore.getMember(email_or_username);
+		console.debug('authStore.getMember called for ', email_or_username, ' and returned ', member);
 
 		if (browser) {
 			response.ok
 				? (await authStore.authenticate(),
 				  authStore.set({
 						...member, // Include existing member properties
-						memberName: data.memberName,
 						isAuthenticated: true
 				  }),
 				  localStorage.setItem('member', JSON.stringify(member)),
 				  localStorage.setItem('email_or_username', ''),
-				  (authState.memberName = member.memberName),
 				  (window.location.href = '/'),
 				  console.info('Login successful'))
 				: (errorMessage = data.message);
 			console.error(data.message);
 		}
 	};
+
+	onDestroy(() => {
+		if (browser) {
+			localStorage.removeItem('email_or_username');
+			email_input.removeEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					email = email_input.value;
+					await checkExists();
+				}, 1000);
+			});
+			nickname_input.removeEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					nickname = nickname_input.value;
+					await checkExists();
+				}, 1000);
+			});
+		}
+	});
 </script>
 
 <!-- Form submission handler -->

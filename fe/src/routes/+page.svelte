@@ -1,6 +1,7 @@
 <script lang="ts">
+	import axios from 'axios';
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
 	//import ReviewList from '../components/review/ReviewList.svelte';
 	import Auth from '$components/form/Auth.svelte';
@@ -11,106 +12,41 @@
 	import MemberCard from '$components/member/MemberCard.svelte';
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
-	import type { AuthStoreState } from '$stores/members/auth.ts';
+	import type { authData } from '$stores/members/auth.ts';
 
 	let windowWidth: number;
 	$: authState = $authStore;
-	let authenticating = true;
+	let isAuthenticated: boolean;
 	let member: Member;
+	let authstatus: authData;
 	async function handleAuthentication() {
-		let unsubscribe: () => void;
-
-		function updateAuthState(newAuthState: AuthStoreState) {
-			if (newAuthState.isAuthenticated) {
-				console.debug('User is authenticated', newAuthState);
-				unsubscribe(); // Unsubscribe to avoid further updates
-			}
+		try {
+			authstatus = await authStore.authenticate();
+			isAuthenticated = authstatus.isAuthenticated;
+			console.debug('authstatus', authstatus);
+		} catch (error) {
+			console.error('error', error);
 		}
-
-		unsubscribe = authStore.subscribe(updateAuthState);
-		await authStore.authenticate();
+	}
+	async function getMember(memberName: string) {
+		member = await authStore.getMember(memberName);
 	}
 	if (browser) {
-		onMount(() => {
+		onMount(async () => {
 			windowWidth = window.innerWidth;
 			const handleResize = () => {
 				windowWidth = window.innerWidth;
 			};
 			window.addEventListener('resize', handleResize);
 
-			const wasAuthConfirmationDisplayed = JSON.parse(
-				localStorage.getItem('wasAuthConfirmationDisplayed') || 'false'
-			);
-			if ($authStore.isAuthenticated && !wasAuthConfirmationDisplayed) {
-				alert('Logged in');
-				localStorage.setItem('wasAuthConfirmationDisplayed', JSON.stringify(true));
-			}
-
-			handleAuthentication();
-
-			authStore.subscribe(async (newAuthState) => {
-				authState = newAuthState;
-				const sessionCookie = document.cookie.includes('session=');
-				if (sessionCookie) {
-					// using try-cacth to avoid unhandled promise rejection
-					try {
-						const res = await fetch(`/api/authenticate`);
-						res.ok ? (authState.isAuthenticated = true) : (authState.isAuthenticated = false);
-					} catch (err) {
-						console.error(err);
-					}
-				}
-				const localStorageData = localStorage.getItem('member');
-				if (localStorageData) {
-					const parsedData = JSON.parse(localStorageData);
-
-					// Extract the relevant properties from the "data" object
-					const data = parsedData?.data || {}; // Ensure "data" exists
-
-					// Create a new Member object with the correct types
-					member = {
-						id: data.id || 0, // Provide a default value if id is missing
-						memberName: data.memberName || '',
-						displayName: data.displayname?.String || null,
-						email: data.email || '',
-						profilePic: data.profilePic || null,
-						bio: data.bio?.String || null,
-						matrix: data.matrix?.String || null,
-						xmpp: data.xmpp?.String || null,
-						irc: data.irc?.String || null,
-						homepage: data.homepage?.String || null,
-						regdate: new Date(data.regdate) || null,
-						roles: data.roles || [],
-						visibility: data.visibility || 'private'
-					};
-				} else {
-					member = {
-						id: 0,
-						memberName: '',
-						displayName: null,
-						email: '',
-						profilePic: null,
-						bio: null,
-						matrix: null,
-						xmpp: null,
-						irc: null,
-						homepage: null,
-						regdate: new Date(),
-						roles: [],
-						visibility: 'private'
-					};
-					console.warn('No member data found in local storage');
-				}
-				authenticating = false;
-			});
-
-			return () => {
-				window.removeEventListener('resize', handleResize);
-			};
+			await handleAuthentication();
 		});
 	}
-
-	//let reviews: Review[] = [];
+	onDestroy(() => {
+		if (browser) {
+			window.removeEventListener('resize', () => {});
+		}
+	});
 </script>
 
 <div class="app">
@@ -128,16 +64,25 @@
 			</div>
 		</div>
 		<div class="right">
-			{#if authenticating || !authState.isAuthenticated}
-				<Auth />
-			{:else if authState.isAuthenticated}
-				{#if member}
-					<p>Logged in as <a href="/profiles/{member.memberName}">{member.memberName}</a></p>
-					<MemberCard {member} />
+			{#await handleAuthentication()}
+				<p>loading...</p>
+			{:then}
+				{#if !isAuthenticated}
+					<Auth />
+				{:else if isAuthenticated}
+					{#await getMember(authstatus.memberName)}
+						<p>loading member card...</p>
+					{:then}
+						<MemberCard {member} />
+					{:catch}
+						<p>error loading member card</p>
+					{/await}
+				{:else}
+					<p>Client error while rendering the auth component.</p>
 				{/if}
-			{:else}
-				<p>Client error while rendering the auth component.</p>
-			{/if}
+			{:catch}
+				<p>error loading auth component</p>
+			{/await}
 		</div>
 	</div>
 	<div class="footer">

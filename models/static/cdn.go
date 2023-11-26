@@ -35,6 +35,13 @@ type (
 	}
 )
 
+func NewStorage(db *sqlx.DB, log *zerolog.Logger) *Storage {
+	return &Storage{
+		db:  db,
+		Log: log,
+	}
+}
+
 func generateThumbnail(source string) (string, error) {
 	file, err := os.Open(source)
 	if err != nil {
@@ -89,4 +96,23 @@ func (s *Storage) AddVideo(v *Video) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) GetImageSource(ctx context.Context, id int64) (source string, err error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		stmt, err := s.db.PreparexContext(ctx, `SELECT source FROM cdn.images WHERE id = $1`)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving image source: %w", err)
+		}
+		defer stmt.Close()
+
+		err = stmt.GetContext(ctx, &source, id)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving image source: %w", err)
+		}
+		return source, nil
+	}
 }

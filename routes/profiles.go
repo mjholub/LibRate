@@ -19,13 +19,12 @@ func SetupProfiles(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
-	fzlog *fiber.Handler,
 ) error {
 	if err := setupStatic(app); err != nil {
 		return err
 	}
 
-	api := app.Group("/api", *fzlog)
+	api := app.Group("/api")
 
 	var mStor member.MemberStorer
 
@@ -37,7 +36,7 @@ func SetupProfiles(
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	memberSvc := members.NewController(mStor, logger, conf)
+	memberSvc := members.NewController(mStor, dbConn, logger, conf)
 	/*nicknames := mStor.GetNicknames()
 	for i := range nicknames {
 		app.Get("/"+nicknames[i], func(c *fiber.Ctx) error {
@@ -66,7 +65,7 @@ func SetupProfiles(
 
 	member := api.Group("/members")
 	member.Get("/:id", memberSvc.GetMember)
-	member.Get("/:nickname/info", memberSvc.GetMemberByNick)
+	member.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	return nil
 }

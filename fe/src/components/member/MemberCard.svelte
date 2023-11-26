@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import { authStore, initialAuthState } from '$stores/members/auth.ts';
+	import axios from 'axios';
+	import { browser } from '$app/environment';
 	import type { Member } from '$lib/types/member.ts';
+	import type { NullableString } from '$lib/types/utils';
 
-	function splitNullable(input: string | null, separator: string): string[] {
-		return input ? input.split(separator) : [];
+	function splitNullable(input: NullableString, separator: string): string[] {
+		if (input.Valid) {
+			return input.String.split(separator);
+		}
+		return [];
 	}
 
 	let matrixInstance: string,
@@ -29,47 +33,56 @@
 		regDate = new Date(member.regdate).toLocaleDateString();
 	}
 
-	onMount(async () => {
-		if (member && member.id) {
-			authStore.subscribe((auth) => {
-				if (auth && auth.id === member.id) {
-					console.debug('member', member);
-				}
-			});
+	const logout = async () => {
+		try {
+			await axios.post('/api/authenticate/logout');
+			if (browser) {
+				window.location.reload();
+			}
+		} catch (error) {
+			alert(error);
 		}
-		console.debug('member (called outside conditional): ', member);
-	});
-
-	onDestroy(() => {
-		authStore.set(initialAuthState);
-	});
+	};
 </script>
 
 <!-- TODO: see if this looks better as a description list -->
 <div class="member-card">
-	<img class="member-image" src={member.profilePic} alt="{member.memberName}'s profile picture" />
+	<!--  <p>Logged in as <a href="/profiles/{member.memberName}">{member.memberName}</a></p> -->
+	{#if member.profilePic}
+		<img class="member-image" src={member.profilePic} alt="{member.memberName}'s profile picture" />
+	{:else}
+		<img
+			class="member-image"
+			src="https://www.gravatar.com/avatar/000
+    ?d=mp"
+			alt="{member.memberName}'s profile picture"
+		/>
+	{/if}
 	<div class="member-name">({member.memberName})</div>
-	<div class="member-bio">{member.bio}</div>
+	{#if member.bio.Valid}
+		<div class="member-bio">{member.bio.String}</div>
+	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
 	<div class="member-links">
 		Other links and contact info @{member.memberName} has provided:
-		{#if member.matrix}
+		{#if member.matrix.Valid}
 			<p>
 				<b>Matrix:</b>
 				<a href="https://matrix.to/#/{matrixUser}:{matrixInstance}">{matrixUser}:{matrixInstance}</a
 				>
 			</p>
 		{/if}
-		{#if member.xmpp}
+		{#if member.xmpp.Valid}
 			<p><b>XMPP:</b> <a href="xmpp:{xmppUser}@{xmppInstance}">{xmppUser}@{xmppInstance}</a></p>
 		{/if}
-		{#if member.irc}
+		{#if member.irc.Valid}
 			<p><b>IRC:</b> <a href="irc://{ircUser}@{ircInstance}">{ircUser}@{ircInstance}</a></p>
 		{/if}
-		{#if member.homepage}
-			<p><b>Homepage:</b> <a href={member.homepage}>{member.homepage}</a></p>
+		{#if member.homepage.Valid}
+			<p><b>Homepage:</b> <a href={member.homepage.String}>{member.homepage}</a></p>
 		{/if}
 	</div>
+	<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
 	<!-- TODO: uncomment when groups are implemented
 	<div class="member-groups">
 		{#each member.groups as group}
