@@ -34,6 +34,7 @@ require (
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.8
+	go.uber.org/mock v0.3.0
 	golang.org/x/crypto v0.15.0
 	google.golang.org/grpc v1.59.0
 )
