@@ -3,12 +3,10 @@ package member
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/go-ap/activitypub"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -16,42 +14,32 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/models/static"
-)
-
-// TODO: convert to enum if this becomes possible in Go
-// nolint:gochecknoglobals // roles
-const (
-	admin uint8 = iota
-	mod
-	regular
-	creator
 )
 
 // Member holds the core information about a member
 type (
 	Member struct {
-		// TODO: convert to int64, postgres doesn't support unsigned by default anyway
-		ID             uint32                 `json:"id" db:"id"`
-		UUID           uuid.UUID              `json:"uuid,omitempty" db:"uuid"`
-		PassHash       string                 `json:"passhash" db:"passhash"`
-		MemberName     string                 `json:"memberName" db:"nick"` // i.e. @nick@instance
-		DisplayName    sql.NullString         `json:"displayName,omitempty" db:"display_name"`
-		Email          string                 `json:"email" db:"email" validate:"required,email"`
-		Bio            sql.NullString         `json:"bio,omitempty" db:"bio"`
-		Active         bool                   `json:"active" db:"active"`
-		Roles          pq.StringArray         `json:"roles,omitempty" db:"roles"`
-		RegTimestamp   time.Time              `json:"regdate" db:"reg_timestamp"`
-		ProfilePic     *static.Image          `json:"profilepic,omitempty" db:"profilepic_id"`
-		Homepage       sql.NullString         `json:"homepage,omitempty" db:"homepage"`
-		IRC            sql.NullString         `json:"irc,omitempty" db:"irc"`
-		XMPP           sql.NullString         `json:"xmpp,omitempty" db:"xmpp"`
-		Matrix         sql.NullString         `json:"matrix,omitempty" db:"matrix"`
-		Visibility     string                 `json:"visibility" db:"visibility"`
-		Followers      activitypub.Collection `json:"followers,omitempty" db:"followers"`
-		SessionTimeout sql.NullInt64          `json:"sessionTimeout,omitempty" db:"sessionTimeout"`
-		// TODO: add database migration
-		PublicKeyPem string `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem,omitempty" db:"public_key_pem"`
+		ID               int            `json:"id" db:"id"`
+		UUID             uuid.UUID      `json:"uuid,omitempty" db:"uuid"`
+		PassHash         string         `json:"-" db:"passhash"`
+		MemberName       string         `json:"memberName" db:"nick"` // i.e. @nick@instance
+		DisplayName      sql.NullString `json:"displayName,omitempty" db:"display_name"`
+		Email            string         `json:"email" db:"email" validate:"required,email"`
+		Bio              sql.NullString `json:"bio,omitempty" db:"bio"`
+		Active           bool           `json:"active" db:"active"`
+		Roles            pq.StringArray `json:"roles,omitempty" db:"roles"`
+		RegTimestamp     time.Time      `json:"regdate" db:"reg_timestamp"`
+		ProfilePicID     sql.NullInt64  `json:"-" db:"profilepic_id"`
+		ProfilePicSource string         `json:"profilePic,omitempty" db:"-"`
+		Homepage         sql.NullString `json:"homepage,omitempty" db:"homepage"`
+		IRC              sql.NullString `json:"irc,omitempty" db:"irc"`
+		XMPP             sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
+		Matrix           sql.NullString `json:"matrix,omitempty" db:"matrix"`
+		Visibility       string         `json:"visibility" db:"visibility"`
+		FollowingURI     string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
+		FollowersURI     string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
+		SessionTimeout   sql.NullInt64  `json:"sessionTimeout,omitempty" db:"session_timeout"`
+		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem,omitempty" db:"public_key_pem"`
 	}
 
 	Device struct {
@@ -90,7 +78,7 @@ type (
 		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error
 		Delete(ctx context.Context, member *Member) error
-		GetID(ctx context.Context, key string) (uint32, error)
+		GetID(ctx context.Context, key string) (int, error)
 		GetPassHash(email, login string) (string, error)
 		// GetSessionTimeout retrieves the preferred timeout until the session expires,
 		// represented as number of seconds
@@ -121,23 +109,4 @@ func NewSQLStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *PgMe
 
 func NewNeo4jStorage(client neo4j.DriverWithContext, log *zerolog.Logger, conf *cfg.Config) Neo4jMemberStorage {
 	return Neo4jMemberStorage{client: client, log: log, config: conf}
-}
-
-func mapRoleCodesToStrings(roles []uint8) []string {
-	roleStrings := make([]string, len(roles))
-	for i, role := range roles {
-		switch role {
-		case admin:
-			roleStrings[i] = "admin"
-		case mod:
-			roleStrings[i] = "mod"
-		case regular:
-			roleStrings[i] = "regular"
-		case creator:
-			roleStrings[i] = "creator"
-		default:
-			panic(fmt.Sprintf("invalid role: %d", role))
-		}
-	}
-	return roleStrings
 }

@@ -1,21 +1,27 @@
+import type { NullableInt64, NullableString } from './utils';
+
 export type Member = {
   id: number,
   active: boolean,
   uuid: string,
   memberName: string,
-  displayName: string | null,
+  displayName: NullableString,
   email: string,
   profilePic: string | null,
-  bio: string | null,
-  matrix: string | null,
-  xmpp: string | null,
-  irc: string | null,
-  homepage: string | null,
+  bio: NullableString,
+  matrix: NullableString,
+  xmpp: NullableString,
+  irc: NullableString,
+  homepage: NullableString,
   //bookwyrm: "",
   regdate: number | Date,
   roles: MemberRole[],
   // private means federated, but visible only if authenticated
   visibility: 'public' | 'followers_only' | 'local' | 'private',
+  followers_uri: string,
+  following_uri: string,
+  sessionTimeout: NullableInt64,
+  publicKeyPem: string
 };
 
-export type MemberRole = 'regular' | 'admin' | 'creator' | 'mod';
+export type MemberRole = 'regular' | 'admin' | 'creator' | 'mod' | 'member' | 'banned';

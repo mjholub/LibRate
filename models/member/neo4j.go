@@ -155,7 +155,7 @@ func (s Neo4jMemberStorage) CreateSession(ctx context.Context, m *Member) (t str
 	return "", errors.New("not implemented")
 }
 
-func (s Neo4jMemberStorage) GetID(ctx context.Context, key string) (uint32, error) {
+func (s Neo4jMemberStorage) GetID(ctx context.Context, key string) (int, error) {
 	return 0, errors.New("not implemented")
 }
 

@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -10,12 +9,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/cmd"
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/controllers/form"
@@ -36,11 +37,10 @@ func Setup(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
-	sqlcipher *sql.DB,
+	sess *session.Store,
 ) error {
-	// setup the middleware
-	// NOTE: unsure if this handler is correct
-	api := app.Group("/api")
+	fzlog := cmd.SetupLogger(logger)
+	api := app.Group("/api", fzlog)
 
 	var (
 		mStor     member.MemberStorer
@@ -59,9 +59,9 @@ func Setup(
 	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
-	authSvc := auth.NewService(conf, mStor, logger, sqlcipher)
+	authSvc := auth.NewService(conf, mStor, logger, sess)
 	reviewSvc := controllers.NewReviewController(*rStor)
-	memberSvc := memberCtrl.NewController(mStor, logger, conf)
+	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
 	mediaCon := media.NewController(*mediaStor)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	sc := controllers.NewSearchController(dbConn)
@@ -80,19 +80,17 @@ func Setup(
 	reviews.Get("/:id", reviewSvc.GetByID)
 
 	authAPI := api.Group("/authenticate")
-	authAPI.Get("/", middleware.Protected(nil, conf), func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	authAPI.Get("/status", authSvc.GetAuthStatus)
+	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Post("/logout", authSvc.Logout)
+	authAPI.Post("/register", authSvc.Register)
 
 	members := api.Group("/members")
-	members.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
-	members.Post("/register", authSvc.Register)
 	members.Post("/check", memberSvc.Check)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 	members.Get("/id/:nickname", memberSvc.GetID)
 	// pubkey returns a single use public key for the client to encrypt their password with
 	// this is to prevent the server from ever knowing the user's password
-	members.Get("pubkey", authSvc.GetPubKey)
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
@@ -111,11 +109,6 @@ func Setup(
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
-	err := setupStatic(app)
-	if err != nil {
-		return fmt.Errorf("failed to setup static files: %w", err)
-	}
-	logger.Debug().Msg("static files initialized")
 
 	app.Get("/api/health", func(c *fiber.Ctx) error {
 		if dbConn.Ping() == nil {
@@ -123,6 +116,11 @@ func Setup(
 		}
 		return c.SendStatus(fiber.StatusServiceUnavailable)
 	})
+	err := setupStatic(app)
+	if err != nil {
+		return fmt.Errorf("failed to setup static files: %w", err)
+	}
+	logger.Debug().Msg("static files initialized")
 
 	return nil
 }

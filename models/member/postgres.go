@@ -28,7 +28,6 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 	}
 	defer stmt.Close()
 
-	// TODO: verify if there is no unnecessary copying here
 	params := map[string]interface{}{
 		"uuid":          member.UUID,
 		"passhash":      member.PassHash,
@@ -60,12 +59,21 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 }
 
 func (s *PgMemberStorage) Delete(ctx context.Context, member *Member) error {
-	query := `DELETE FROM members WHERE id = :id`
-	_, err := s.client.NamedExecContext(ctx, query, member)
-	if err != nil {
-		return fmt.Errorf("failed to delete member: %v", err)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := s.client.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %v", err)
+		}
+		defer tx.Rollback()
+		_, err = s.client.ExecContext(ctx, `DELETE FROM members WHERE id = $1`, member.ID)
+		if err != nil {
+			return fmt.Errorf("failed to delete member: %v", err)
+		}
+		return tx.Commit()
 	}
-	return nil
 }
 
 func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...string) (*Member, error) {
@@ -83,14 +91,13 @@ func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...st
 
 // GetID retrieves the ID required for JWT on the basis of one of the credentials,
 // i.e. email or login
-func (s *PgMemberStorage) GetID(ctx context.Context, credential string) (uint32, error) {
+func (s *PgMemberStorage) GetID(ctx context.Context, credential string) (id int, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
 		query := `SELECT id FROM members WHERE email = $1 OR nick = $2`
-		var id uint32
-		err := s.client.Get(&id, query, credential, credential)
+		err = s.client.Get(&id, query, credential, credential)
 		if err != nil {
 			return 0, fmt.Errorf("failed to get member id: %v", err)
 		}

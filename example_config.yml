@@ -1,5 +1,6 @@
 fiber:
   host: "localhost"
+  domain: "lr.localhost"
   port: 3000
   prefork: true
   reduceMemUsage: false

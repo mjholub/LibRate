@@ -12,21 +12,25 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/internal/crypt"
+	"codeberg.org/mjh/LibRate/middleware/render"
 
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
+	// "github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/earlydata"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
-	"github.com/gofiber/template/html/v2"
 )
 
-func CreateApp(renderEngine *html.Engine, conf *cfg.Config) *fiber.App {
+func CreateApp(conf *cfg.Config) *fiber.App {
+	renderEngine := render.Setup(conf)
+
 	tag, err := getLatestTag()
 	if err != nil {
 		tag = "unknown"
@@ -47,26 +51,31 @@ func CreateApp(renderEngine *html.Engine, conf *cfg.Config) *fiber.App {
 	return app
 }
 
-func SetupMiddlewares(conf *cfg.Config, logger *zerolog.Logger) []fiber.Handler {
+func SetupMiddlewares(conf *cfg.Config,
+	logger *zerolog.Logger, session *session.Store,
+) []fiber.Handler {
 	return []fiber.Handler{
 		idempotency.New(),
 		helmet.New(),
-		csrf.New(csrf.Config{
-			// FIXME: stupid svelte won't load X-CSRF-Token from cookies
-			KeyLookup:         "cookie:csrf_",
-			CookieName:        "csrf_",
-			CookieSessionOnly: true,
-			CookieSameSite:    "Lax",
-			Expiration:        2 * time.Hour,
-			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
-			Storage: redis.New(redis.Config{
-				Host:     conf.Redis.Host,
-				Port:     conf.Redis.Port,
-				Username: conf.Redis.Username,
-				Password: conf.Redis.Password,
-				Database: conf.Redis.Database + 1,
+		/*
+			csrf.New(csrf.Config{
+				// FIXME: stupid svelte won't load X-CSRF-Token from cookies
+				KeyLookup:         "cookie:csrf_",
+				CookieName:        "csrf_",
+				CookieSessionOnly: true,
+				CookieSameSite:    "Lax",
+				Expiration:        2 * time.Hour,
+				Session:           session,
+				KeyGenerator:      uuid.Must(uuid.NewV4()).String,
+				Storage: redis.New(redis.Config{
+					Host:     conf.Redis.Host,
+					Port:     conf.Redis.Port,
+					Username: conf.Redis.Username,
+					Password: conf.Redis.Password,
+					Database: conf.Redis.Database + 1,
+				}),
 			}),
-		}),
+		*/
 		recover.New(),
 		earlydata.New(),
 		cache.New(cache.Config{
@@ -85,11 +94,11 @@ func SetupMiddlewares(conf *cfg.Config, logger *zerolog.Logger) []fiber.Handler 
 		compress.New(compress.Config{
 			Level: compress.LevelBestSpeed,
 		}),
-		setupLogger(logger),
+		SetupLogger(logger),
 	}
 }
 
-func setupLogger(logger *zerolog.Logger) fiber.Handler {
+func SetupLogger(logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
 		// skip logging for static files, there's too many of them
@@ -116,4 +125,24 @@ func getLatestTag() (string, error) {
 
 	latestTag := strings.TrimSpace(string(out))
 	return latestTag, nil
+}
+
+func SetupSession(conf *cfg.Config, dbFile *os.File) (*session.Store, error) {
+	storage, err := crypt.CreateCryptoStorage(dbFile.Name())
+	if err != nil {
+		return nil, err
+	}
+	return session.New(
+		session.Config{
+			Storage:           storage,
+			Expiration:        7 * 24 * time.Hour,
+			KeyLookup:         "cookie:session_",
+			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
+			CookieDomain:      conf.Fiber.Domain,
+			CookieHTTPOnly:    true,
+			CookieSessionOnly: true,
+			CookieSameSite:    "Lax",
+			CookieSecure:      true,
+		},
+	), nil
 }

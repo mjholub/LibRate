@@ -1,6 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
@@ -20,12 +20,9 @@
 
 	let isAvailable: boolean;
 
-	let csrfToken: string;
 	onMount(async () => {
-		email_input.value = email;
-		nickname_input.value = nickname;
-
 		if (email_input) {
+			email_input.value = email;
 			email_input.addEventListener('keyup', () => {
 				clearTimeout(checkTimeout);
 				checkTimeout = setTimeout(async () => {
@@ -38,6 +35,7 @@
 		}
 
 		if (nickname_input) {
+			nickname_input.value = nickname;
 			nickname_input.addEventListener('keyup', () => {
 				clearTimeout(checkTimeout);
 				checkTimeout = setTimeout(async () => {
@@ -47,16 +45,6 @@
 			});
 		} else {
 			console.error('nickname input element not present');
-		}
-
-		if (browser) {
-			// @ts-ignore
-			csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-			if (csrfToken) {
-				console.debug('csrfToken found: ', csrfToken);
-			} else {
-				console.error('csrfToken not found');
-			}
 		}
 	});
 
@@ -79,8 +67,7 @@
 	// in password input for registration this function will be called until an available nickname is found
 	const checkExists = async () => {
 		const headers = {
-			'Content-Type': 'application/json',
-			'CSRF-Token': csrfToken
+			'Content-Type': 'application/json'
 		};
 
 		try {
@@ -139,8 +126,7 @@
 	const register = async (event: Event) => {
 		event.preventDefault();
 		const headers = {
-			'Content-Type': 'application/json',
-			'CSRF-Token': csrfToken
+			'Content-Type': 'application/json'
 		};
 
 		localStorage.removeItem('email_or_username');
@@ -161,7 +147,7 @@
 			roles: ['regular']
 		};
 
-		const response = await axios.post('/api/members/register', requestPayload, { headers });
+		const response = await axios.post('/api/authenticate/register', requestPayload, { headers });
 
 		const { data } = response;
 
@@ -177,7 +163,6 @@
 				const member = await authStore.getMember(nickName);
 				authStore.set({
 					...member, // Include existing member properties
-					memberName: data.memberName,
 					isAuthenticated: true
 				});
 				localStorage.setItem('member', JSON.stringify(member));
@@ -197,8 +182,7 @@
 	const login = async (event: Event) => {
 		event.preventDefault();
 		const headers = {
-			'Content-Type': 'application/json',
-			'CSRF-Token': csrfToken
+			'Content-Type': 'application/json'
 		};
 
 		localStorage.removeItem('member');
@@ -206,7 +190,7 @@
 		const nickName = email_or_username.includes('@') ? '' : email_or_username;
 		const emailValue = email_or_username.includes('@') ? email_or_username : '';
 
-		const response = await fetch('/api/members/login', {
+		const response = await fetch('/api/authenticate/login', {
 			method: 'POST',
 			headers: headers,
 			body: JSON.stringify({
@@ -225,18 +209,36 @@
 				? (await authStore.authenticate(),
 				  authStore.set({
 						...member, // Include existing member properties
-						memberName: data.memberName,
 						isAuthenticated: true
 				  }),
 				  localStorage.setItem('member', JSON.stringify(member)),
 				  localStorage.setItem('email_or_username', ''),
-				  (authState.memberName = member.memberName),
 				  (window.location.href = '/'),
 				  console.info('Login successful'))
 				: (errorMessage = data.message);
 			console.error(data.message);
 		}
 	};
+
+	onDestroy(() => {
+		if (browser) {
+			localStorage.removeItem('email_or_username');
+			email_input.removeEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					email = email_input.value;
+					await checkExists();
+				}, 1000);
+			});
+			nickname_input.removeEventListener('keyup', () => {
+				clearTimeout(checkTimeout);
+				checkTimeout = setTimeout(async () => {
+					nickname = nickname_input.value;
+					await checkExists();
+				}, 1000);
+			});
+		}
+	});
 </script>
 
 <!-- Form submission handler -->

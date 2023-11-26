@@ -36,7 +36,7 @@ func SetupProfiles(
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	memberSvc := members.NewController(mStor, logger, conf)
+	memberSvc := members.NewController(mStor, dbConn, logger, conf)
 	/*nicknames := mStor.GetNicknames()
 	for i := range nicknames {
 		app.Get("/"+nicknames[i], func(c *fiber.Ctx) error {

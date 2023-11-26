@@ -13,14 +13,12 @@ import (
 )
 
 func Migrate(conf *cfg.Config, path string) error {
-	if conf.AutoMigrate || !conf.AutoMigrate {
-		if err := runMigrations(conf, path); err != nil {
-			return fmt.Errorf("failed to run migrations: %w", err)
-		}
-		if conf.ExitAfterMigration {
-			// nolint:revive
-			os.Exit(0)
-		}
+	if err := runMigrations(conf, path); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	if conf.ExitAfterMigration {
+		// nolint:revive
+		os.Exit(0)
 	}
 	return nil
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"net"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -26,9 +26,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/crypt"
-	"codeberg.org/mjh/LibRate/internal/errortools"
 	"codeberg.org/mjh/LibRate/internal/logging"
-	"codeberg.org/mjh/LibRate/middleware/render"
 )
 
 func main() {
@@ -81,10 +79,31 @@ func main() {
 		log.Panic().Err(err).Msg(err.Error())
 	}
 
+	cryptFile, cryptDir, err := crypt.CreateFiles()
+	if err != nil {
+		log.Panic().Err(err).Msgf("Failed to create files for encrypted storage: %v", err)
+	}
+	defer func() {
+		if conf.LibrateEnv == "development" {
+			return
+		}
+		if cryptDir != "" {
+			os.RemoveAll(cryptDir)
+		}
+		if cryptFile != nil {
+			cryptFile.Close()
+		}
+	}()
+
+	// Setup session
+	sess, err := cmd.SetupSession(conf, cryptFile)
+	if err != nil {
+		log.Panic().Err(err).Msg("Failed to setup session")
+	}
+
 	// Create a new Fiber instance
-	engine := render.Setup(conf)
-	app := cmd.CreateApp(engine, conf)
-	middlewares := cmd.SetupMiddlewares(conf, &log)
+	app := cmd.CreateApp(conf)
+	middlewares := cmd.SetupMiddlewares(conf, &log, sess)
 	go func() {
 		for i := range middlewares {
 			app.Use(middlewares[i])
@@ -104,7 +123,7 @@ func main() {
 	setupGlobalHeaders(conf, apps)
 
 	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
-		profilesApp, cryptoConn)
+		profilesApp, sess)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -198,10 +217,19 @@ func setupGlobalHeaders(conf *cfg.Config, apps []*fiber.App) {
 			c.Set("X-XSS-Protection", "1; mode=block")
 			c.Set("X-Content-Type-Options", "nosniff")
 			c.Set("Referrer-Policy", "no-referrer")
-			c.Set("Content-Security-Policy", fmt.Sprintf(`default-src 'self' https://gnu.org %s;
+			c.Set("Content-Security-Policy", fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
 				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
-				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';`,
+				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
+				img-src 'self' https://www.gravatar.com data:;`,
 				localAliases, localAliases))
+			c.Set("Access-Control-Allow-Origin", "https://www.gravatar.com")
+			c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
+
+			if c.Method() == "OPTIONS" {
+				c.SendStatus(fiber.StatusNoContent)
+				return nil
+			}
 			return c.Next()
 		})
 	}
@@ -318,7 +346,7 @@ func setupRoutes(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp *fiber.App,
-	cryptoConn *sql.DB,
+	sess *session.Store,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp)
 	if err != nil {
@@ -326,7 +354,7 @@ func setupRoutes(
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, neo4jConn, app, cryptoConn)
+	err = routes.Setup(log, conf, dbConn, neo4jConn, app, sess)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}

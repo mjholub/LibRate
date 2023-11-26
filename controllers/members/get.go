@@ -113,6 +113,16 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		mc.log.Error().Msgf("Error getting member \"%s\": %v", c.Params("email_or_username"), err)
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
+	if member.ProfilePicID.Valid {
+		member.ProfilePicSource, err = mc.images.GetImageSource(c.UserContext(), member.ProfilePicID.Int64)
+		if err != nil {
+			mc.log.Warn().Msgf(
+				"Error getting profile picture for member \"%s\" despite valid picture ID: %v", c.Params("email_or_username"), err)
+			// send a warning in headers
+			c.Set("X-Warning", "Error getting profile picture for member")
+			return c.SendStatus(fiber.StatusOK)
+		}
+	}
 	mc.log.Info().Msgf("Member: %+v", member)
 
 	return h.ResData(c, fiber.StatusOK, "success", member)
