@@ -19,13 +19,12 @@ func SetupProfiles(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
-	fzlog *fiber.Handler,
 ) error {
 	if err := setupStatic(app); err != nil {
 		return err
 	}
 
-	api := app.Group("/api", *fzlog)
+	api := app.Group("/api")
 
 	var mStor member.MemberStorer
 

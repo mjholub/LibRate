@@ -36,12 +36,11 @@ func Setup(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
-	fzlog *fiber.Handler,
 	sqlcipher *sql.DB,
 ) error {
 	// setup the middleware
 	// NOTE: unsure if this handler is correct
-	api := app.Group("/api", *fzlog)
+	api := app.Group("/api")
 
 	var (
 		mStor     member.MemberStorer
