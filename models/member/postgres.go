@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/mjh/LibRate/db"
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
@@ -80,12 +81,22 @@ func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...st
 	if lo.Contains(keyNames, "email_or_username") {
 		keyNames = []string{"email", "nick"}
 	}
-	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
+	keyNames = db.Sanitize(keyNames)
+
+	query := fmt.Sprintf(
+		"SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
 	member := &Member{}
-	err := s.client.GetContext(ctx, member, query, value)
+	st, err := s.client.PreparexContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read member: %v", err)
 	}
+	defer st.Close()
+
+	err = st.GetContext(ctx, member, value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read member: %v", err)
+	}
+
 	return member, nil
 }
 
