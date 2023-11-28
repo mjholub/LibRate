@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"runtime"
+	"runtime/pprof"
 	"strconv"
 	"time"
 
@@ -26,19 +28,33 @@ import (
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/crypt"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	fiberpprof "github.com/gofiber/fiber/v2/middleware/pprof"
 )
 
 func main() {
+	var (
+		cpu, mem *os.File
+		err      error
+		conf     *cfg.Config
+	)
+
+	cpu, err = os.Create("cpu.prof")
+	if err != nil {
+		panic(err)
+	}
+	if err = pprof.StartCPUProfile(cpu); err != nil {
+		panic(err)
+	}
+	mem, err = os.Create("mem.prof")
+	if err != nil {
+		panic(err)
+	}
 	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, _ := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
 	log.Info().Msg("Starting LibRate")
 	// Load config
-	var (
-		err  error
-		conf *cfg.Config
-	)
 
 	if *configFile == "" {
 		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
@@ -113,6 +129,19 @@ func main() {
 			app.Use(middlewares[i])
 		}
 	}()
+	app.Use(fiberpprof.New())
+	app.Hooks().OnShutdown(func() error {
+		log.Info().Msg("Shutting down")
+		runtime.GC()
+		if err = pprof.WriteHeapProfile(mem); err != nil {
+			log.Error().Err(err).Msgf("Failed to write heap profile: %v", err)
+			return err
+		}
+		defer mem.Close()
+		defer cpu.Close()
+		defer pprof.StopCPUProfile()
+		return nil
+	})
 
 	// setup secondary apps
 	profilesApp, err := setupSecondaryApps(app, middlewares)
