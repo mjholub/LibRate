@@ -41,16 +41,17 @@ type RedisConfig struct {
 
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
-	Host           string `yaml:"host" default:"localhost"`
-	Domain         string `yaml:"domain" default:"lr.localhost"`
-	Port           int    `yaml:"port" default:"3000"`
-	Prefork        bool   `yaml:"prefork" default:"false"`
-	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false"`
-	StaticDir      string `yaml:"staticDir" default:"./static"`
-	PowInterval    int    `yaml:"powInterval" default:"300"`
-	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
-	RequestTimeout int    `yaml:"requestTimeout" default:"10"`
-	TLS            bool   `yaml:"tls" default:"false"`
+	Host            string `yaml:"host" default:"localhost"`
+	Domain          string `yaml:"domain" default:"lr.localhost"`
+	Port            int    `yaml:"port" default:"3000"`
+	Prefork         bool   `yaml:"prefork" default:"false"`
+	ReduceMemUsage  bool   `yaml:"reduceMemUsage" default:"false"`
+	StaticDir       string `yaml:"staticDir" default:"./static"`
+	PowInterval     int    `yaml:"powInterval" default:"300"`
+	PowDifficulty   int    `yaml:"powDifficulty" default:"30000"`
+	RequestTimeout  int    `yaml:"requestTimeout" default:"10"`
+	TLS             bool   `yaml:"tls" default:"false"`
+	ShutdownTimeout int    `yaml:"shutdownTimeout" default:"10"`
 }
 
 // KeysConfig defines the location of keys used for TLS

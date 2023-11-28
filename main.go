@@ -78,6 +78,11 @@ func main() {
 		log.Panic().Err(err).Msg(err.Error())
 	}
 
+	// TODO: consider moving to redis and reading the secrets from
+	// an age-encrypted file using SOPS. This would be more reliable
+	// as the file is deleted after the process exits.
+	// Additionally, there is no way to look up the database, since
+	// the password is generated programatically
 	cryptFile, cryptDir, err := crypt.CreateFiles()
 	if err != nil {
 		log.Panic().Err(err).Msgf("Failed to create files for encrypted storage: %v", err)
@@ -124,16 +129,24 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
 
-	// Listen on port 3000
+	// Listen on chosen port, host and protocol
+	// (disabling HTTPS still works if you use reverse proxy)
 	err = modularListen(conf, app)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen")
 	}
 
-	// Graceful shutdown
-	err = app.ShutdownWithTimeout(time.Second * 10)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to shutdown app gracefully")
+	// Graceful or timed shutdown
+	if conf.Fiber.ShutdownTimeout >= 0 {
+		err = app.ShutdownWithTimeout(time.Second * time.Duration(conf.Fiber.ShutdownTimeout))
+		if err != nil {
+			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
+		}
+	} else {
+		err = app.Shutdown()
+		if err != nil {
+			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
+		}
 	}
 }
 

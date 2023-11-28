@@ -9,6 +9,8 @@ fiber:
   powInterval: 300
   powDifficulty: 30000
   tls: false
+  # -1 for graceful shutdown that will wait indefintely
+  shutdownTimeout: 10
 secret: "librate-secret-key"
 database:
     engine: "postgres"
