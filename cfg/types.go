@@ -50,9 +50,11 @@ type FiberConfig struct {
 	PowInterval    int    `yaml:"powInterval" default:"300"`
 	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
 	RequestTimeout int    `yaml:"requestTimeout" default:"10"`
+	TLS            bool   `yaml:"tls" default:"false"`
 }
 
+// KeysConfig defines the location of keys used for TLS
 type KeysConfig struct {
-	Private string `yaml:"private"`
-	Public  string `yaml:"public"`
+	Private string `yaml:"private" default:"./keys/private.pem"`
+	Public  string `yaml:"public" default:"./keys/public.pem"`
 }

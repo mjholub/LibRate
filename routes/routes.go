@@ -88,7 +88,6 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
-	members.Get("/id/:nickname", memberSvc.GetID)
 	// pubkey returns a single use public key for the client to encrypt their password with
 	// this is to prevent the server from ever knowing the user's password
 

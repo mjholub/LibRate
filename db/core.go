@@ -140,8 +140,7 @@ func launch(conf *cfg.Config) error {
 				Please provide one under a 'start_cmd' key in the database section of the config file.\n
 				Waiting for manual start of database server for 10 seconds.
 				`)
-		fmt.Printf("failed to start postgresql service: %v", err)
-		time.Sleep(10 * time.Second)
+		return fmt.Errorf("failed to start postgresql service: %v", err)
 	}
 
 	if !lo.Contains(allcmds, conf.StartCmd) {
@@ -151,6 +150,9 @@ func launch(conf *cfg.Config) error {
 				`)
 		return fmt.Errorf("failed to start postgresql service: %w", err)
 	} else if conf.StartCmd != "" && lo.Contains(allcmds, conf.StartCmd) {
+		// TODO: add a switch to execute ping or preferably other more harder to spoof commands
+		// so that a malicious alias can't be passed
+		// nolint: gosec
 		cmd := exec.CommandContext(context.Background(), conf.StartCmd+" &")
 		err := cmd.Run()
 		if err != nil {
@@ -165,7 +167,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.ExecContext(ctx,
-		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA public;`, extName))
+		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%q" SCHEMA public;`, extName))
 	if err != nil {
 		return fmt.Errorf("failed to create extension %s: %w", extName, err)
 	}
