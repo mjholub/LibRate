@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -117,10 +116,7 @@ func main() {
 	}
 	apps := []*fiber.App{app, profilesApp}
 
-	// CORS
-	setupCors(apps)
 	setupPOW(conf, apps)
-	setupGlobalHeaders(conf, apps)
 
 	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
 		profilesApp, sess)
@@ -195,44 +191,6 @@ func initDB(conf *cfg.Config, do, externalHC, noSubprocess, exitAfter bool, logg
 			(use -exit to exit after migrations are run)"
 			`)
 	return nil
-}
-
-func setupCors(apps []*fiber.App) {
-	for i := range apps {
-		apps[i].Use("/api", func(c *fiber.Ctx) error {
-			c.Set("Access-Control-Allow-Origin", "*")
-			c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			return c.Next()
-		})
-	}
-}
-
-func setupGlobalHeaders(conf *cfg.Config, apps []*fiber.App) {
-	localAliases := strings.ReplaceAll(fmt.Sprintf(`%s:%d https://%s:%d http://%s:%d https://lr.localhost`,
-		"localhost", 3000, conf.Fiber.Host, conf.Fiber.Port, conf.Fiber.Host, conf.Fiber.Port), "'", "")
-	for i := range apps {
-		apps[i].Use(func(c *fiber.Ctx) error {
-			c.Set("X-Frame-Options", "SAMEORIGIN")
-			c.Set("X-XSS-Protection", "1; mode=block")
-			c.Set("X-Content-Type-Options", "nosniff")
-			c.Set("Referrer-Policy", "no-referrer")
-			c.Set("Content-Security-Policy", fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
-				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
-				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
-				img-src 'self' https://www.gravatar.com data:;`,
-				localAliases, localAliases))
-			c.Set("Access-Control-Allow-Origin", "https://www.gravatar.com")
-			c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
-
-			if c.Method() == "OPTIONS" {
-				c.SendStatus(fiber.StatusNoContent)
-				return nil
-			}
-			return c.Next()
-		})
-	}
 }
 
 func DBRunning(skipCheck bool, port uint16) bool {

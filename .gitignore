@@ -9,6 +9,8 @@ fe/_app
 *.pem
 *.tar
 *.pub
+*.prof
+*.pdf
 todo.md
 .env
 tmp
