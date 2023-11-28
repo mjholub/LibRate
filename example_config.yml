@@ -8,6 +8,7 @@ fiber:
   # in seconds
   powInterval: 300
   powDifficulty: 30000
+  tls: false
 secret: "librate-secret-key"
 database:
     engine: "postgres"

@@ -291,6 +291,12 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 		listenHost = "127.0.0.1"
 	}
 	listenAddr := fmt.Sprintf("%s:%s", listenHost, listenPort)
+	if conf.Fiber.TLS {
+		err := app.ListenTLS(listenAddr, conf.Keys.Public, conf.Keys.Private)
+		if err != nil {
+			return fmt.Errorf("failed to listen on %s: %w", listenAddr, err)
+		}
+	}
 	err := app.Listen(listenAddr)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", listenAddr, err)
