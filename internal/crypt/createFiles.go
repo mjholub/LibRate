@@ -6,18 +6,17 @@ import (
 )
 
 // CreateFiles creates the temporary directory and database file
-func CreateFiles() (dbFile *os.File, dbDir string, err error) {
-	// TODO: add a goroutine to automatically rotate the generated key
-	// also, this can probably be simplified to use sqlx.DB
-	dbDir, err = os.MkdirTemp("", "librate-secrets")
+func CreateFile(path string) (dbFile *os.File, err error) {
+	_, err = os.Stat(path)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to create temporary directory for secrets: %v", err)
+		if os.IsNotExist(err) {
+			dbFile, err = os.Create(path)
+			if err != nil {
+				return nil, fmt.Errorf("could not create database file: %v", err)
+			}
+			return dbFile, nil
+		}
+		return nil, fmt.Errorf("could not stat database file: %v", err)
 	}
-
-	dbFile, err = os.CreateTemp(dbDir, "secrets.db")
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to create temporary file for secrets: %v", err)
-	}
-
-	return dbFile, dbDir, nil
+	return os.OpenFile(path, os.O_RDWR, 0o600)
 }

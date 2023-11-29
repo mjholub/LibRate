@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/internal/crypt"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/middleware/render"
 
@@ -65,7 +64,7 @@ func SetupMiddlewares(conf *cfg.Config,
 		idempotency.New(),
 		helmet.New(helmet.Config{
 			XSSProtection:  "1; mode=block",
-			ReferrerPolicy: "no-referrer",
+			ReferrerPolicy: "no-referrer-when-downgrade",
 			ContentSecurityPolicy: fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
 				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
 				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
@@ -100,19 +99,18 @@ func SetupMiddlewares(conf *cfg.Config,
 				}
 				return c.Next()
 			},
-			KeyLookup:         "header:X-Csrf-Token",
+			KeyLookup:         "header:X-CSRF-Token",
 			CookieName:        "csrf_",
 			CookieSessionOnly: true,
 			CookieSameSite:    "Lax",
 			Expiration:        2 * time.Hour,
-			Session:           session,
 			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
 			Storage: redis.New(redis.Config{
 				Host:     conf.Redis.Host,
 				Port:     conf.Redis.Port,
 				Username: conf.Redis.Username,
 				Password: conf.Redis.Password,
-				Database: conf.Redis.Database + 1,
+				Database: conf.Redis.CsrfDB,
 			}),
 		}),
 		cors.New(cors.Config{
@@ -132,7 +130,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Port:     conf.Redis.Port,
 				Username: conf.Redis.Username,
 				Password: conf.Redis.Password,
-				Database: conf.Redis.Database + 2,
+				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
 				return c.Query("cache") == "false"
@@ -172,24 +170,4 @@ func getLatestTag() (string, error) {
 
 	latestTag := strings.TrimSpace(string(out))
 	return latestTag, nil
-}
-
-func SetupSession(conf *cfg.Config, dbFile *os.File) (*session.Store, error) {
-	storage, err := crypt.CreateCryptoStorage(dbFile.Name())
-	if err != nil {
-		return nil, err
-	}
-	return session.New(
-		session.Config{
-			Storage:           storage,
-			Expiration:        7 * 24 * time.Hour,
-			KeyLookup:         "cookie:session_",
-			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
-			CookieDomain:      conf.Fiber.Domain,
-			CookieHTTPOnly:    true,
-			CookieSessionOnly: true,
-			CookieSameSite:    "Lax",
-			CookieSecure:      true,
-		},
-	), nil
 }

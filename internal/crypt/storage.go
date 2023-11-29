@@ -13,7 +13,7 @@ import (
 
 // cryptoStorage is a helper struct to create an instance of SQLite-cypher
 // that implements fiber.Storage interface.
-type CryptoStorage struct {
+type Storage struct {
 	db         *sql.DB
 	gcInterval time.Duration
 	done       chan struct{}
@@ -25,7 +25,7 @@ type CryptoStorage struct {
 }
 
 // Get returns the value of a key in the storage.
-func (s *CryptoStorage) Get(key string) ([]byte, error) {
+func (s *Storage) Get(key string) ([]byte, error) {
 	if len(key) <= 0 {
 		return nil, nil
 	}
@@ -51,7 +51,7 @@ func (s *CryptoStorage) Get(key string) ([]byte, error) {
 
 // Set sets the value of a key in the storage.
 // If the key does not exist, it will be created.
-func (s *CryptoStorage) Set(key string, val []byte, exp time.Duration) error {
+func (s *Storage) Set(key string, val []byte, exp time.Duration) error {
 	if len(key) <= 0 || len(val) <= 0 {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (s *CryptoStorage) Set(key string, val []byte, exp time.Duration) error {
 }
 
 // Delete deletes a key in the storage.
-func (s *CryptoStorage) Delete(key string) error {
+func (s *Storage) Delete(key string) error {
 	if len(key) <= 0 {
 		return nil
 	}
@@ -73,18 +73,18 @@ func (s *CryptoStorage) Delete(key string) error {
 }
 
 // Reset resets the storage, removing all keys.
-func (s *CryptoStorage) Reset() error {
+func (s *Storage) Reset() error {
 	_, err := s.db.Exec(s.sqlReset)
 	return err
 }
 
 // Close closes the storage.
-func (s *CryptoStorage) Close() error {
+func (s *Storage) Close() error {
 	close(s.done)
 	return s.db.Close()
 }
 
-func (s *CryptoStorage) gcTicker() {
+func (s *Storage) gcTicker() {
 	ticker := time.NewTicker(s.gcInterval)
 	defer ticker.Stop()
 	for {
@@ -98,25 +98,27 @@ func (s *CryptoStorage) gcTicker() {
 }
 
 // gc deletes all expired entries
-func (s *CryptoStorage) gc(t time.Time) {
+func (s *Storage) gc(t time.Time) {
 	_, _ = s.db.Exec(s.sqlGC, t.Unix())
 }
 
-func (s *CryptoStorage) Conn() *sql.DB {
+func (s *Storage) Conn() *sql.DB {
 	return s.db
 }
 
-// CreateCryptoStorage creates a SQLite-cypher encrypted storage for X25519 keys
+// CreateStorage creates a SQLite-cypher encrypted storage for X25519 keys
 // It needs to be called inside main function so that the temporary directory it uses
 // is not discarded upon return.
-func CreateCryptoStorage(dbFile string) (conn *CryptoStorage, err error) {
-	key, err := generateStorageKey()
-	if err != nil {
-		return nil, err
+func CreateStorage(dbFile, secret string) (conn *Storage, err error) {
+	if secret == "" {
+		secret, err = generateStorageKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	dsn := dbFile + fmt.Sprintf(
-		"?_pragma_key=%s&_pragma_cipher_page_size=4096", key)
+		"?_pragma_key=%s&_pragma_cipher_page_size=4096", secret)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		db.Close()
@@ -137,7 +139,7 @@ func CreateCryptoStorage(dbFile string) (conn *CryptoStorage, err error) {
 		}
 	}()
 
-	Table := "secrets"
+	Table := "sessions"
 	_, err = db.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 		k TEXT PRIMARY KEY,
 		v BLOB,
@@ -155,9 +157,9 @@ func CreateCryptoStorage(dbFile string) (conn *CryptoStorage, err error) {
 		return nil, fmt.Errorf("go-sqlcipher: secrets database not encrypted")
 	}
 
-	store := &CryptoStorage{
+	store := &Storage{
 		db:         db,
-		gcInterval: 10 * time.Minute,
+		gcInterval: 30 * time.Minute,
 		done:       make(chan struct{}),
 		sqlSelect:  fmt.Sprintf(`SELECT v, e FROM %s WHERE k=?;`, Table),
 		sqlInsert:  fmt.Sprintf("INSERT OR REPLACE INTO %s (k, v, e) VALUES (?,?,?)", Table),

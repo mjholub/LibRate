@@ -16,7 +16,7 @@ import (
 // Register handles the creation of a new user
 func (a *Service) Register(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Registration request")
-	input, err := parseInput("register", c)
+	input, err := parseRegistrationInput(c)
 	if err != nil {
 		return h.Res(c, fiber.StatusBadRequest, err.Error())
 	}
@@ -70,38 +70,6 @@ func (r RegisterInput) Validate() (*member.Input, error) {
 		MemberName: r.MemberName,
 		Password:   r.Password,
 	}, nil
-}
-
-func ValidatePassword() fiber.Handler {
-	const minEntropy = 50.0
-	return func(c *fiber.Ctx) error {
-		// Parse the JSON body, which includes an encrypted partial password in the
-		// application/octet-stream MIME type
-		var input struct {
-			Password string `json:"partialPassword"`
-			AuthTag  string `json:"authTag"`
-			Iv       string `json:"iv"`
-		}
-
-		if err := c.BodyParser(&input); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Invalid JSON",
-			})
-		}
-
-		// Validate the password
-		entropy, err := redist.CheckPasswordEntropy(input.Password)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": fmt.Sprintf("password too weak: want entropy > %f, got %f", minEntropy, entropy),
-			})
-		}
-
-		// If the password is valid, return a success response
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Password is strong enough",
-		})
-	}
 }
 
 func createMember(input *member.Input) (*member.Member, error) {
