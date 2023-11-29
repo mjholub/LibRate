@@ -10,6 +10,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/gofrs/uuid/v5"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
@@ -61,7 +62,11 @@ func SetupMiddlewares(conf *cfg.Config,
 	localAliases := strings.ReplaceAll(fmt.Sprintf(`%s:%d https://%s:%d http://%s:%d https://lr.localhost`,
 		fh, fp, fh, fp, fh, fp), "'", "")
 	return []fiber.Handler{
-		idempotency.New(),
+		idempotency.New(idempotency.Config{
+			Next: func(c *fiber.Ctx) bool {
+				return lo.Contains([]string{"/api/authenticate", "/api/media/random"}, c.Path())
+			},
+		}),
 		helmet.New(helmet.Config{
 			XSSProtection:  "1; mode=block",
 			ReferrerPolicy: "no-referrer-when-downgrade",
