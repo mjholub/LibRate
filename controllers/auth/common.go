@@ -106,6 +106,37 @@ func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
 	return nil, fmt.Errorf("unknown request type")
 }
 
+func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
+	var input LoginInput
+	if input.Email != "" || input.MemberName != "" {
+		if !isEmail(input.Email) {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		}
+	}
+	err := c.BodyParser(&input)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
+	}
+	return &input, nil
+}
+
+func parseRegistrationInput(c *fiber.Ctx) (input *RegisterInput, err error) {
+	err = c.BodyParser(&input)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
+	}
+	if input.Password != input.PasswordConfirm {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
+	}
+	if input.Email == "" && input.MemberName == "" {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
+	}
+	if !isEmail(input.Email) {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+	}
+	return input, nil
+}
+
 // cleanRegInput cleans the input from non-ASCII and unsafe characters
 func cleanInput(input *member.Input) *member.Input {
 	input.MemberName = strings.TrimSpace(input.MemberName)
