@@ -32,14 +32,13 @@ type DBConfig struct {
 }
 
 type RedisConfig struct {
-	Host      string `yaml:"host,omitempty" default:"localhost"`
-	Port      int    `yaml:"port,omitempty" default:"6379"`
-	Username  string `yaml:"username,omitempty" default:""`
-	Password  string `yaml:"password,omitempty" default:""`
-	CacheDB   int    `yaml:"cacheDb,omitempty" default:"0"`
-	SessionDB int    `yaml:"sessionDb,omitempty" default:"1"`
-	CsrfDB    int    `yaml:"csrfDb,omitempty" default:"2"`
-	PowDB     int    `yaml:"powDb,omitempty" default:"3"`
+	Host     string `yaml:"host,omitempty" default:"localhost"`
+	Port     int    `yaml:"port,omitempty" default:"6379"`
+	Username string `yaml:"username,omitempty" default:""`
+	Password string `yaml:"password,omitempty" default:""`
+	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0"`
+	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2"`
+	PowDB    int    `yaml:"powDb,omitempty" default:"3"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config

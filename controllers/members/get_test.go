@@ -147,7 +147,7 @@ func TestGetMember(t *testing.T) {
 	sess, err := session.Setup(&cfg.TestConfig)
 	require.NoError(t, err)
 	app.Use(sess)
-	middlewares := cmd.SetupMiddlewares(&cfg.TestConfig, &logger, sess)
+	middlewares := cmd.SetupMiddlewares(&cfg.TestConfig, &logger)
 	for i := range middlewares {
 		app.Use(middlewares[i])
 	}

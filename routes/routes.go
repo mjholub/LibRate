@@ -67,8 +67,6 @@ func Setup(
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
-	// TODO: add template rendering
-	// app.Get("/noscript",
 
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatest)
@@ -88,8 +86,6 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
-	// pubkey returns a single use public key for the client to encrypt their password with
-	// this is to prevent the server from ever knowing the user's password
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)

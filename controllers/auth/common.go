@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -69,41 +68,6 @@ func NewService(
 func isEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
-}
-
-// parseInput parses the input from the request body to be used in the controller
-func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
-	switch reqType {
-	case "register":
-		var input RegisterInput
-		err := c.BodyParser(&input)
-		if err != nil {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
-		}
-		if input.Password != input.PasswordConfirm {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
-		}
-		if input.Email == "" && input.MemberName == "" {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
-		}
-		if !isEmail(input.Email) {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
-		}
-		return input, nil
-	case "login":
-		var input LoginInput
-		if input.Email != "" || input.MemberName != "" {
-			if !isEmail(input.Email) {
-				return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
-			}
-		}
-		err := c.BodyParser(&input)
-		if err != nil {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
-		}
-		return input, nil
-	}
-	return nil, fmt.Errorf("unknown request type")
 }
 
 func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {

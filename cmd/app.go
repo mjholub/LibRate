@@ -27,7 +27,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 )
 
@@ -55,7 +54,7 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 }
 
 func SetupMiddlewares(conf *cfg.Config,
-	logger *zerolog.Logger, session *session.Store,
+	logger *zerolog.Logger,
 ) []fiber.Handler {
 	fh := conf.Fiber.Host
 	fp := conf.Fiber.Port

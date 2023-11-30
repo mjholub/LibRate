@@ -22,7 +22,7 @@ type (
 		ID               int            `json:"id" db:"id"`
 		UUID             uuid.UUID      `json:"uuid,omitempty" db:"uuid"`
 		PassHash         string         `json:"-" db:"passhash"`
-		MemberName       string         `json:"memberName" db:"nick"` // i.e. @nick@instance
+		MemberName       string         `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30"`
 		DisplayName      sql.NullString `json:"displayName,omitempty" db:"display_name"`
 		Email            string         `json:"email" db:"email" validate:"required,email"`
 		Bio              sql.NullString `json:"bio,omitempty" db:"bio"`
