@@ -1,13 +1,10 @@
 <script lang="ts">
-	import axios from 'axios';
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
 	//import ReviewList from '../components/review/ReviewList.svelte';
 	import Auth from '$components/form/Auth.svelte';
 	import Search from '$components/utility/Search.svelte';
-	// FIXME: member card not rendering upon login
-	//import MemberCard from '$components/member/MemberCard.svelte';
 	import Footer from '$components/footer/footer.svelte';
 	import MemberCard from '$components/member/MemberCard.svelte';
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
@@ -15,17 +12,19 @@
 	import type { authData } from '$stores/members/auth.ts';
 
 	let windowWidth: number;
-	$: authState = $authStore;
 	let isAuthenticated: boolean;
 	let member: Member;
 	let authstatus: authData;
 	async function handleAuthentication() {
-		try {
-			authstatus = await authStore.authenticate();
-			isAuthenticated = authstatus.isAuthenticated;
-			console.debug('authstatus', authstatus);
-		} catch (error) {
-			console.error('error', error);
+		if (browser) {
+			const jwtToken = localStorage.getItem('jwtToken');
+			try {
+				authstatus = await authStore.authenticate(jwtToken);
+				isAuthenticated = authstatus.isAuthenticated;
+				console.debug('authstatus', authstatus);
+			} catch (error) {
+				console.error('error', error);
+			}
 		}
 	}
 	async function getMember(memberName: string) {
@@ -38,8 +37,6 @@
 				windowWidth = window.innerWidth;
 			};
 			window.addEventListener('resize', handleResize);
-
-			await handleAuthentication();
 		});
 	}
 	onDestroy(() => {

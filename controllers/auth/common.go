@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -32,6 +31,7 @@ type (
 		Email      string `json:"email,omitempty"`
 		MemberName string `json:"membername,omitempty"`
 		Password   string `json:"password"`
+		RememberMe bool   `json:"remember_me"`
 	}
 
 	// Service allows dependency injection for the controller methods,
@@ -71,39 +71,38 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
-// parseInput parses the input from the request body to be used in the controller
-func parseInput(reqType string, c *fiber.Ctx) (Validator, error) {
-	switch reqType {
-	case "register":
-		var input RegisterInput
-		err := c.BodyParser(&input)
-		if err != nil {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
-		}
-		if input.Password != input.PasswordConfirm {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
-		}
-		if input.Email == "" && input.MemberName == "" {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
-		}
+func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
+	var input LoginInput
+	if input.Email != "" || input.MemberName != "" {
 		if !isEmail(input.Email) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
-		return input, nil
-	case "login":
-		var input LoginInput
-		if input.Email != "" || input.MemberName != "" {
-			if !isEmail(input.Email) {
-				return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
-			}
-		}
-		err := c.BodyParser(&input)
-		if err != nil {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
-		}
-		return input, nil
 	}
-	return nil, fmt.Errorf("unknown request type")
+	if c.FormValue("remember_me") != "true" && c.FormValue("remember_me") != "false" {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid remember_me value")
+	}
+	err := c.BodyParser(&input)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
+	}
+	return &input, nil
+}
+
+func parseRegistrationInput(c *fiber.Ctx) (input *RegisterInput, err error) {
+	err = c.BodyParser(&input)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
+	}
+	if input.Password != input.PasswordConfirm {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
+	}
+	if input.Email == "" && input.MemberName == "" {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
+	}
+	if !isEmail(input.Email) {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+	}
+	return input, nil
 }
 
 // cleanRegInput cleans the input from non-ASCII and unsafe characters

@@ -51,7 +51,9 @@ var (
 			Port:     6379,
 			Username: "",
 			Password: "",
-			Database: 5,
+			CacheDB:  8,
+			PowDB:    9,
+			CsrfDB:   11,
 		},
 		Fiber: FiberConfig{
 			Host:           "0.0.0.0",

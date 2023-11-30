@@ -19,6 +19,7 @@ import (
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/cmd"
 	"codeberg.org/mjh/LibRate/db"
+	"codeberg.org/mjh/LibRate/middleware/session"
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
@@ -143,6 +144,9 @@ func TestGetMember(t *testing.T) {
 	app := cmd.CreateApp(&cfg.TestConfig)
 	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).With().Timestamp().Logger()
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	sess, err := session.Setup(&cfg.TestConfig)
+	require.NoError(t, err)
+	app.Use(sess)
 	middlewares := cmd.SetupMiddlewares(&cfg.TestConfig, &logger)
 	for i := range middlewares {
 		app.Use(middlewares[i])

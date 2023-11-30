@@ -1,35 +1,45 @@
 package members
 
 import (
-	"context"
-	"encoding/json"
-	"time"
+	"database/sql"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models/member"
-	"github.com/gofiber/fiber/v2"
 )
 
 // UpdateMember handles the updating of user information
-func (mc *MemberController) UpdateMember(c *fiber.Ctx) error {
-	var input member.Input
-	err := json.Unmarshal(c.Body(), &input)
+func (mc *MemberController) Update(c *fiber.Ctx) error {
+	mc.log.Info().Msg("Update called")
+	var member *member.Member
+	err := c.BodyParser(&member)
 	if err != nil {
-		return h.Res(c, fiber.StatusBadRequest, "Invalid input")
+		mc.log.Error().Err(err).Msgf("Error parsing request body: %v", err)
+		return h.Res(c, fiber.StatusBadRequest, "Error parsing request body")
+	}
+	// NOTE: this is a hack. We're passing the profile pic ID in the
+	// request body, but c.BodyParser() doesn't include it, because we don't
+	// want the ID in the JSON response. So we're setting it here.
+	profilePicID := c.Params("profilePic")
+	if profilePicID != "" {
+		profilePicIDInt, err := strconv.ParseInt(profilePicID, 10, 64)
+		if err != nil {
+			mc.log.Error().Err(err).Msgf("Error parsing profile pic ID: %v", err)
+			return h.Res(c, fiber.StatusBadRequest, "Error parsing profile pic ID")
+		}
+		member.ProfilePicID = sql.NullInt64{
+			Int64: profilePicIDInt,
+			Valid: true,
+		}
+		mc.log.Debug().Msgf("Profile pic ID: %v", member.ProfilePicID)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	member, err := mc.storage.Read(ctx, "email", input.Email)
+	err = mc.storage.Update(c.UserContext(), member)
 	if err != nil {
-		return h.Res(c, fiber.StatusBadRequest, "Member not found")
+		mc.log.Error().Err(err).Msgf("Error updating member: %v", err)
+		return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
 	}
-	err = mc.storage.Update(ctx, member)
-	if err != nil {
-		return h.Res(c, fiber.StatusInternalServerError, "Failed to update member info")
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Member updated successfully",
-	})
+	return h.Res(c, fiber.StatusOK, "success")
 }

@@ -7,6 +7,7 @@ import (
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
+	"github.com/getsops/sops/v3/decrypt"
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
 	"github.com/samber/mo"
@@ -71,8 +72,13 @@ func LoadConfig() mo.Result[*Config] {
 // parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
 	conf = &Config{}
+	// decrypt the config file
+	decrypted, err := decrypt.File(configLocation, "yaml")
+	if err != nil {
+		return nil, err
+	}
 
-	configRaw, err := parser.Parse(configLocation)
+	configRaw, err := parser.Parse(decrypted)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
