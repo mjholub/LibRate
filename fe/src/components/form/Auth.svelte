@@ -7,7 +7,7 @@
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
 
-	let tooltipMessage = 'This feature is not implemented yet';
+	const tooltipMessage = 'Not recommended on shared computers';
 	let isRegistration = false;
 	let email_or_username = '';
 	if (browser) {
@@ -49,6 +49,7 @@
 	});
 
 	let password = '';
+	let rememberMe = false;
 	let checkTimeout: any;
 	let showPassword = false;
 	let passwordConfirm = '';
@@ -112,6 +113,12 @@
 			checkEntropy(password);
 		}
 	}
+
+	const setRememberMe = (event: Event) => {
+		if (browser) {
+			rememberMe = (event.target as HTMLInputElement).checked;
+		}
+	};
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -212,6 +219,7 @@
 			{
 				membername: nickName,
 				email: emailValue,
+				remember_me: rememberMe,
 				password
 			},
 			{
@@ -230,7 +238,7 @@
 				  }),
 				  console.debug('authStore updated to ', authStore),
 				  localStorage.removeItem('email_or_username'),
-				  localStorage.setItem('token', response.data.token),
+				  localStorage.setItem('jwtToken', response.data.token),
 				  (window.location.href = '/'),
 				  console.info('Login successful'))
 				: (errorMessage = response.data.message);
@@ -282,7 +290,13 @@
 			<label for="rememberMe"
 				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
 			>
-			<input type="checkbox" id="rememberMe" name="rememberMe" value="rememberMe" />
+			<input
+				type="checkbox"
+				id="rememberMe"
+				name="rememberMe"
+				value="rememberMe"
+				on:change={setRememberMe}
+			/>
 		{:else}
 			<!-- Registration form -->
 			<label for="email">Email:</label>
@@ -425,7 +439,7 @@
 	}
 
 	.tooltip::before {
-		content: '⚠️ This feature is not implemented yet';
+		content: '⚠️ Not recommended on shared computers';
 		position: absolute;
 		top: 110%;
 		left: 50%;

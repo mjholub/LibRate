@@ -25,7 +25,6 @@ import (
 	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/internal/crypt"
 	"codeberg.org/mjh/LibRate/internal/logging"
 	"codeberg.org/mjh/LibRate/middleware/session"
 )
@@ -105,26 +104,15 @@ func main() {
 		log.Warn().Msgf("Secret is weak: %2f bits of entropy", entropy)
 	}
 
-	sessionsDB, err := crypt.CreateFile("librate_sessions.db")
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to create session files")
-	}
-	defer sessionsDB.Close()
-
-	cryptStore, err := crypt.CreateStorage("librate_sessions.db", conf.Secret)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to create session storage")
-	}
-
 	// Setup session
-	sess, err := session.Setup(conf, cryptStore)
+	sess, err := session.Setup(conf)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)
-	middlewares := cmd.SetupMiddlewares(conf, &log, sess)
+	middlewares := cmd.SetupMiddlewares(conf, &log)
 	go func() {
 		for i := range middlewares {
 			app.Use(middlewares[i])

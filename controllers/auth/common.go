@@ -31,6 +31,7 @@ type (
 		Email      string `json:"email,omitempty"`
 		MemberName string `json:"membername,omitempty"`
 		Password   string `json:"password"`
+		RememberMe bool   `json:"remember_me"`
 	}
 
 	// Service allows dependency injection for the controller methods,
@@ -76,6 +77,9 @@ func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
 		if !isEmail(input.Email) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
+	}
+	if c.FormValue("remember_me") != "true" && c.FormValue("remember_me") != "false" {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid remember_me value")
 	}
 	err := c.BodyParser(&input)
 	if err != nil {

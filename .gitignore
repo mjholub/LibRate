@@ -14,3 +14,4 @@ fe/_app
 todo.md
 .env
 tmp
+fe/public

@@ -12,6 +12,7 @@ fiber:
   tls: false
   # -1 for graceful shutdown that will wait indefintely
   shutdownTimeout: 10
+  maxUploadSize: 4194304
 # used to encrypt sensitive data that is stored in session redis store
 secret: "librate-secret-key"
 database:
@@ -45,6 +46,7 @@ logging:
     format: "2006-01-0215:04:05.000Z07:00" 
 # developmen or production
 librateEnv: "production"
+jwtSecret: "librate-jwt-secret"
 # relative paths supported
 # currently not used for anything
 #secretsPath: "secrets.enc.yaml" 

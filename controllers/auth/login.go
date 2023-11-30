@@ -26,11 +26,14 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	if input == nil {
 		return h.Res(c, http.StatusInternalServerError, "Cannot parse input")
 	}
-	a.log.Debug().Msgf("Parsed input: %+v", input)
+	a.log.Debug().Msgf("Parsed input")
 
 	validatedInput, err := input.Validate()
 	if err != nil {
 		return h.Res(c, http.StatusBadRequest, "Invalid login request")
+	}
+	if validatedInput == nil {
+		return h.Res(c, http.StatusInternalServerError, "Cannot parse input")
 	}
 	a.log.Debug().Msg("Validated input")
 
@@ -53,7 +56,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 		PassHash:   validatedInput.Password,
 	}
 
-	return a.createSession(c, &member)
+	return a.createSession(c, input.RememberMe, &member)
 }
 
 func (l LoginInput) Validate() (*member.Input, error) {

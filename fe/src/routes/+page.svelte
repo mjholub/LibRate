@@ -17,13 +17,9 @@
 	let authstatus: authData;
 	async function handleAuthentication() {
 		if (browser) {
+			const jwtToken = localStorage.getItem('jwtToken');
 			try {
-				const token = localStorage?.getItem('token');
-				if (!token) {
-					console.debug('no token found');
-					return;
-				}
-				authstatus = await authStore.authenticate(token);
+				authstatus = await authStore.authenticate(jwtToken);
 				isAuthenticated = authstatus.isAuthenticated;
 				console.debug('authstatus', authstatus);
 			} catch (error) {

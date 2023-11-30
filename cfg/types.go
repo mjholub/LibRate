@@ -15,6 +15,7 @@ type Config struct {
 	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
 	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
+	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret"`
 }
 
 type DBConfig struct {

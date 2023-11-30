@@ -72,8 +72,8 @@ func SetupMiddlewares(conf *cfg.Config,
 			ContentSecurityPolicy: fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
 				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
 				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
-				img-src 'self' https://www.gravatar.com data:;`,
-				localAliases, localAliases),
+			img-src 'self' https://www.gravatar.com %s data: blob:;`,
+				localAliases, localAliases, localAliases),
 		}),
 		csrf.New(csrf.Config{
 			ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -137,7 +137,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
-				return c.Query("cache") == "false"
+				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status"
 			},
 		}),
 		compress.New(compress.Config{
