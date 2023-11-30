@@ -94,15 +94,13 @@ The git tag part is needed only for displaying the version in the footer
 
 ### Get the Dependencies
 
-- ~~[SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for handling secrets~~ (see next section)
+- [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for handling secrets
 - `pnpm`, `yarn` or `npm`, for building the frontend
 - ~~Python 3 for setting up the uint Postgres extension~~
 - working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 
 ### Setup secrets
-
-**NOTE**: currently you may skip reading this section, leaving it here as it'll be more likely that I'll remember to delete a single line than not let this rot somewhere in a Git stash since I'm too lazy to bother setting up a git hook. X25519 secrets are currently generated with intentional opacity and volatility.
 
 **A foreword**: you may ask about other storage options for secrets. 
 Well, relying on local storage and age is the simplest way for now, but luckily
@@ -115,11 +113,8 @@ and use that to handle the config, run the binary and store the
 [age](https://github.com/FiloSottile/age) keys. 
 
 All you need to do is [generate an age X25519 identity](https://github.com/FiloSottile/age)
-and then [encrypt the secrets file](https://github.com/getsops/sops#22encrypting-using-age)
-(by default, this is _./secrets.enc.yaml_, but you may specify a different path using
-`secretsPath` key in your config file) with SOPS.
-
-Note that **you must** encrypt the secrets file, otherwise it will not work.
+and then [encrypt the config file](https://github.com/getsops/sops#22encrypting-using-age)
+with SOPS. Don't forget to pass the `-c` flag if you decide to save the encrypted file under a new path.
 
 
 ## Development prerequisites
