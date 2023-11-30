@@ -15,3 +15,5 @@ todo.md
 .env
 tmp
 fe/public
+config_enc.yml
+config._enc.yml.old

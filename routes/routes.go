@@ -22,6 +22,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/form"
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
+	"codeberg.org/mjh/LibRate/controllers/static"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
@@ -64,15 +65,16 @@ func Setup(
 	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
 	mediaCon := media.NewController(*mediaStor)
 	formCon := form.NewController(logger, *mediaStor, conf)
+	uploadSvc := static.NewStaticController(conf, dbConn, logger)
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
 
 	reviews := api.Group("/reviews")
 	reviews.Get("/latest", reviewSvc.GetLatest)
-	reviews.Post("/", middleware.Protected(nil, conf), reviewSvc.PostRating)
-	reviews.Patch("/:id", middleware.Protected(nil, conf), reviewSvc.UpdateRating)
-	reviews.Delete("/:id", middleware.Protected(nil, conf), reviewSvc.DeleteRating)
+	reviews.Post("/", middleware.Protected(sess, logger, conf), reviewSvc.PostRating)
+	reviews.Patch("/:id", middleware.Protected(sess, logger, conf), reviewSvc.UpdateRating)
+	reviews.Delete("/:id", middleware.Protected(sess, logger, conf), reviewSvc.DeleteRating)
 	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
 	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
 	reviews.Get("/:id", reviewSvc.GetByID)
@@ -85,6 +87,7 @@ func Setup(
 
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
+	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	media := api.Group("/media")
@@ -96,8 +99,13 @@ func Setup(
 
 	formAPI := api.Group("/form")
 	// TODO: make the timeouts configurable
-	formAPI.Post("/add_media/:type", middleware.Protected(nil, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formAPI.Post("/update_media/:type", middleware.Protected(nil, conf), formCon.UpdateMedia)
+	formAPI.Post("/add_media/:type", middleware.Protected(sess, logger, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formAPI.Post("/update_media/:type", middleware.Protected(sess, logger, conf), formCon.UpdateMedia)
+
+	uploadAPI := api.Group("/upload")
+	uploadAPI.Get("/max-file-size", func(c *fiber.Ctx) error { return c.SendString(fmt.Sprintf("%d", conf.Fiber.MaxUploadSize)) })
+	uploadAPI.Post("/image", middleware.Protected(sess, logger, conf), uploadSvc.UploadImage)
+	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
 
 	search := api.Group("/search")
 	search.Post("/", sc.Search)

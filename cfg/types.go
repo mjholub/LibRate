@@ -55,6 +55,7 @@ type FiberConfig struct {
 	RequestTimeout  int    `yaml:"requestTimeout" default:"10"`
 	TLS             bool   `yaml:"tls" default:"false"`
 	ShutdownTimeout int    `yaml:"shutdownTimeout" default:"10"`
+	MaxUploadSize   int64  `yaml:"maxUploadSize" default:"4194304"`
 }
 
 // KeysConfig defines the location of keys used for TLS
