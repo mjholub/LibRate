@@ -12,7 +12,10 @@ func (a *Service) Logout(c *fiber.Ctx) error {
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
-	a.sess.Delete(session.ID())
+	err = a.sess.Delete(session.ID())
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, err.Error())
+	}
 	c.ClearCookie("session")
 	return c.SendStatus(fiber.StatusOK)
 }

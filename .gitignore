@@ -9,6 +9,11 @@ fe/_app
 *.pem
 *.tar
 *.pub
+*.prof
+*.pdf
 todo.md
 .env
 tmp
+fe/public
+config_enc.yml
+config._enc.yml.old

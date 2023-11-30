@@ -38,7 +38,7 @@ func TestLoadFromFile(t *testing.T) {
 			Port:     6379,
 			Username: "",
 			Password: "",
-			Database: 0,
+			CacheDB:  0,
 		},
 	}
 
@@ -53,4 +53,11 @@ func TestLoadFromFile(t *testing.T) {
 	conf, err = LoadFromFile(*configFile)
 	assert.Equal(t, conf, &ExampleConfig)
 	assert.Nil(t, err)
+}
+
+func TestParseRaw(t *testing.T) {
+	configLocation := filepath.Join("..", "config_enc.yml")
+	conf, err := parseRaw(configLocation)
+	assert.Nil(t, err)
+	assert.Equal(t, conf.DBConfig.Engine, "postgres")
 }

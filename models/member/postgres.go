@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/mjh/LibRate/db"
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
@@ -50,11 +51,42 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 }
 
 func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
-	query := `UPDATE members SET field1 = :field1, field2 = :field2, ... WHERE id = :id`
-	_, err := s.client.NamedExecContext(ctx, query, member)
+	stmt := `
+		UPDATE public.members AS m
+		SET display_name = :display_name, email = :email, bio = :bio, active = :active, 
+		    roles = :roles, homepage = :homepage, irc = :irc, xmpp = :xmpp, matrix = :matrix,
+		    visibility = :visibility, following_uri = :following_uri, followers_uri = :followers_uri,
+		    session_timeout = :session_timeout, public_key_pem = :public_key_pem
+		FROM (SELECT id FROM members WHERE nick = :nick_value) AS subquery
+		WHERE m.id = subquery.id
+	`
+	namedQuery, err := s.client.PrepareNamedContext(ctx, stmt)
 	if err != nil {
 		return fmt.Errorf("failed to update member: %v", err)
 	}
+	defer namedQuery.Close()
+
+	_, err = namedQuery.ExecContext(ctx, map[string]interface{}{
+		"display_name":    member.DisplayName,
+		"email":           member.Email,
+		"bio":             member.Bio,
+		"active":          member.Active,
+		"roles":           member.Roles,
+		"homepage":        member.Homepage,
+		"irc":             member.IRC,
+		"xmpp":            member.XMPP,
+		"matrix":          member.Matrix,
+		"visibility":      member.Visibility,
+		"following_uri":   member.FollowingURI,
+		"followers_uri":   member.FollowersURI,
+		"session_timeout": member.SessionTimeout,
+		"public_key_pem":  member.PublicKeyPem,
+		"nick_value":      member.MemberName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update member: %v", err)
+	}
+
 	return nil
 }
 
@@ -80,12 +112,22 @@ func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...st
 	if lo.Contains(keyNames, "email_or_username") {
 		keyNames = []string{"email", "nick"}
 	}
-	query := fmt.Sprintf("SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
+	keyNames = db.Sanitize(keyNames)
+
+	query := fmt.Sprintf(
+		"SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
 	member := &Member{}
-	err := s.client.GetContext(ctx, member, query, value)
+	st, err := s.client.PreparexContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read member: %v", err)
 	}
+	defer st.Close()
+
+	err = st.GetContext(ctx, member, value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read member: %v", err)
+	}
+
 	return member, nil
 }
 

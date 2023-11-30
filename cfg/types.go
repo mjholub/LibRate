@@ -15,6 +15,7 @@ type Config struct {
 	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
 	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
+	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret"`
 }
 
 type DBConfig struct {
@@ -36,23 +37,29 @@ type RedisConfig struct {
 	Port     int    `yaml:"port,omitempty" default:"6379"`
 	Username string `yaml:"username,omitempty" default:""`
 	Password string `yaml:"password,omitempty" default:""`
-	Database int    `yaml:"database,omitempty" default:"0"`
+	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0"`
+	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2"`
+	PowDB    int    `yaml:"powDb,omitempty" default:"3"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
-	Host           string `yaml:"host" default:"localhost"`
-	Domain         string `yaml:"domain" default:"lr.localhost"`
-	Port           int    `yaml:"port" default:"3000"`
-	Prefork        bool   `yaml:"prefork" default:"false"`
-	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false"`
-	StaticDir      string `yaml:"staticDir" default:"./static"`
-	PowInterval    int    `yaml:"powInterval" default:"300"`
-	PowDifficulty  int    `yaml:"powDifficulty" default:"30000"`
-	RequestTimeout int    `yaml:"requestTimeout" default:"10"`
+	Host            string `yaml:"host" default:"localhost"`
+	Domain          string `yaml:"domain" default:"lr.localhost"`
+	Port            int    `yaml:"port" default:"3000"`
+	Prefork         bool   `yaml:"prefork" default:"false"`
+	ReduceMemUsage  bool   `yaml:"reduceMemUsage" default:"false"`
+	StaticDir       string `yaml:"staticDir" default:"./static"`
+	PowInterval     int    `yaml:"powInterval" default:"300"`
+	PowDifficulty   int    `yaml:"powDifficulty" default:"30000"`
+	RequestTimeout  int    `yaml:"requestTimeout" default:"10"`
+	TLS             bool   `yaml:"tls" default:"false"`
+	ShutdownTimeout int    `yaml:"shutdownTimeout" default:"10"`
+	MaxUploadSize   int64  `yaml:"maxUploadSize" default:"4194304"`
 }
 
+// KeysConfig defines the location of keys used for TLS
 type KeysConfig struct {
-	Private string `yaml:"private"`
-	Public  string `yaml:"public"`
+	Private string `yaml:"private" default:"./keys/private.pem"`
+	Public  string `yaml:"public" default:"./keys/public.pem"`
 }

@@ -7,16 +7,16 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/cmd"
+	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
+	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jmoiron/sqlx"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
@@ -25,12 +25,32 @@ import (
 	"github.com/witer33/fiberpow"
 
 	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/internal/crypt"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/session"
 )
 
+type FlagArgs struct {
+	// init is a flag to initialize the database
+	Init bool
+	// NoDBSubprocess is a flag to not launch the database as a subprocess if it is not running
+	NoDBSubprocess bool
+	// ExternalDBHealthCheck is a flag to skip the built-in healthcheck, especially for database
+	// Should be used in containers with external databases, where pg_isready is used instead
+	ExternalDBHealthCheck bool
+	// configFile is a flag to specify the path to the config file
+	ConfigFile string
+	// path is a flag to specify the path to the migrations that should be applied.
+	// TODO: add this feature (currently only batch application of all migrations is supported)
+	Path string
+	// When exit is true, the program will exit after running migrations
+	Exit bool
+	// SkipErrors is a comma-separated list of error codes to skip and not panic on.
+	// Particularly useful in development to bypass certain less important blockers
+	SkipErrors string
+}
+
 func main() {
-	init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, _ := parseFlags()
+	flags := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
@@ -41,12 +61,12 @@ func main() {
 		conf *cfg.Config
 	)
 
-	if *configFile == "" {
+	if flags.ConfigFile == "" {
 		conf = cfg.LoadConfig().OrElse(&cfg.DefaultConfig)
 	} else {
-		conf, err = cfg.LoadFromFile(*configFile)
+		conf, err = cfg.LoadFromFile(flags.ConfigFile)
 		if err != nil {
-			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", *configFile, err)
+			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", flags.ConfigFile, err)
 		}
 	}
 	log = initLogging(&conf.Logging)
@@ -54,7 +74,7 @@ func main() {
 
 	// database first-run initialization
 	// If the healtheck is to be handled externally, skip it
-	dbConn, neo4jConn, err := connectDB(conf, *NoDBSubprocess)
+	dbConn, neo4jConn, err := connectDB(conf, flags.NoDBSubprocess)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 	}
@@ -70,40 +90,29 @@ func main() {
 		}
 	}()
 
-	if err = initDB(conf, *init, *ExternalDBHealthCheck, *NoDBSubprocess, *exit, &log); err != nil {
+	if err = initDB(conf, flags.Init, flags.ExternalDBHealthCheck, flags.NoDBSubprocess, flags.Exit, &log); err != nil {
 		log.Panic().Err(err).Msg("Failed to initialize database")
 	}
 
-	err = handleMigrations(conf, &log, *path)
+	err = handleMigrations(conf, &log, flags.Path)
 	if err != nil {
 		log.Panic().Err(err).Msg(err.Error())
 	}
 
-	cryptFile, cryptDir, err := crypt.CreateFiles()
-	if err != nil {
-		log.Panic().Err(err).Msgf("Failed to create files for encrypted storage: %v", err)
+	entropy, _ := redist.CheckPasswordEntropy(conf.Secret)
+	if err == nil && entropy < 50 {
+		log.Warn().Msgf("Secret is weak: %2f bits of entropy", entropy)
 	}
-	defer func() {
-		if conf.LibrateEnv == "development" {
-			return
-		}
-		if cryptDir != "" {
-			os.RemoveAll(cryptDir)
-		}
-		if cryptFile != nil {
-			cryptFile.Close()
-		}
-	}()
 
 	// Setup session
-	sess, err := cmd.SetupSession(conf, cryptFile)
+	sess, err := session.Setup(conf)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)
-	middlewares := cmd.SetupMiddlewares(conf, &log, sess)
+	middlewares := cmd.SetupMiddlewares(conf, &log)
 	go func() {
 		for i := range middlewares {
 			app.Use(middlewares[i])
@@ -117,10 +126,7 @@ func main() {
 	}
 	apps := []*fiber.App{app, profilesApp}
 
-	// CORS
-	setupCors(apps)
 	setupPOW(conf, apps)
-	setupGlobalHeaders(conf, apps)
 
 	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
 		profilesApp, sess)
@@ -128,16 +134,24 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
 
-	// Listen on port 3000
+	// Listen on chosen port, host and protocol
+	// (disabling HTTPS still works if you use reverse proxy)
 	err = modularListen(conf, app)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen")
 	}
 
-	// Graceful shutdown
-	err = app.ShutdownWithTimeout(time.Second * 10)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to shutdown app gracefully")
+	// Graceful or timed shutdown
+	if conf.Fiber.ShutdownTimeout >= 0 {
+		err = app.ShutdownWithTimeout(time.Second * time.Duration(conf.Fiber.ShutdownTimeout))
+		if err != nil {
+			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
+		}
+	} else {
+		err = app.Shutdown()
+		if err != nil {
+			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
+		}
 	}
 }
 
@@ -150,14 +164,14 @@ func setupPOW(conf *cfg.Config, app []*fiber.App) {
 			PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
 			Difficulty:  conf.Fiber.PowDifficulty,
 			Filter: func(c *fiber.Ctx) bool {
-				return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "dev"
+				return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "development"
 			},
 			Storage: redis.New(redis.Config{
 				Host:     conf.Redis.Host,
 				Port:     conf.Redis.Port,
 				Username: conf.Redis.Username,
 				Password: conf.Redis.Password,
-				Database: conf.Redis.Database,
+				Database: conf.Redis.PowDB,
 			}),
 		}))
 	}
@@ -197,44 +211,6 @@ func initDB(conf *cfg.Config, do, externalHC, noSubprocess, exitAfter bool, logg
 	return nil
 }
 
-func setupCors(apps []*fiber.App) {
-	for i := range apps {
-		apps[i].Use("/api", func(c *fiber.Ctx) error {
-			c.Set("Access-Control-Allow-Origin", "*")
-			c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			return c.Next()
-		})
-	}
-}
-
-func setupGlobalHeaders(conf *cfg.Config, apps []*fiber.App) {
-	localAliases := strings.ReplaceAll(fmt.Sprintf(`%s:%d https://%s:%d http://%s:%d https://lr.localhost`,
-		"localhost", 3000, conf.Fiber.Host, conf.Fiber.Port, conf.Fiber.Host, conf.Fiber.Port), "'", "")
-	for i := range apps {
-		apps[i].Use(func(c *fiber.Ctx) error {
-			c.Set("X-Frame-Options", "SAMEORIGIN")
-			c.Set("X-XSS-Protection", "1; mode=block")
-			c.Set("X-Content-Type-Options", "nosniff")
-			c.Set("Referrer-Policy", "no-referrer")
-			c.Set("Content-Security-Policy", fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
-				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
-				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
-				img-src 'self' https://www.gravatar.com data:;`,
-				localAliases, localAliases))
-			c.Set("Access-Control-Allow-Origin", "https://www.gravatar.com")
-			c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
-
-			if c.Method() == "OPTIONS" {
-				c.SendStatus(fiber.StatusNoContent)
-				return nil
-			}
-			return c.Next()
-		})
-	}
-}
-
 func DBRunning(skipCheck bool, port uint16) bool {
 	if skipCheck {
 		return true
@@ -247,22 +223,54 @@ func DBRunning(skipCheck bool, port uint16) bool {
 	return false
 }
 
-func parseFlags() (*bool, *bool, *bool, *string, *string, *bool, *string) {
-	init := flag.Bool("init", false, "Initialize database")
-	NoDBSubprocess := flag.Bool("no-db-subprocess", false,
-		"Do not launching database as subprocess if not running. Not recommended in containers.")
-	ExternalDBHealthCheck := flag.Bool("hc-extern", false,
-		`Skips calling the built-in database health check. 
-		Useful for containers with external databases, where pg_isready is used instead.`)
-	configFile := flag.String("config", "config.yml", "Path to config file")
-	// list of pre-defined error codes to skip and not panic on.
-	// Particularly useful in development to bypass certain less important blockers
-	skipErrors := flag.String("skip-errors", "", "Comma-separated list of error codes to skip and not panic on")
-	path := flag.String("path", "db/migrations", "Path to migrations")
-	exit := flag.Bool("exit", false, "Exit after running migrations")
+func parseFlags() FlagArgs {
+	var (
+		init, NoDBSubprocess, ExternalDBHealthCheck, exit bool
+		configFile, path, skipErrors                      string
+	)
+
+	const (
+		initVal         = false
+		initUse         = "Initialize database"
+		noDBSPVal       = false
+		noDBSPUse       = `Skip launching the database as subprocess if not running.`
+		externalDBHCVal = false
+		exDBHCUse       = `Skip calling the built-in database health check.`
+		confVal         = "config.yml"
+		confUse         = "Path to config file"
+		skipErrVal      = ""
+		skipErrUse      = "Comma-separated list of error codes to skip and not panic on"
+		pathVal         = "db/migrations"
+		pathUse         = "Path to migrations to apply"
+		exitVal         = false
+		exitUse         = "Exit after running migrations"
+	)
+	flag.BoolVar(&init, "init", initVal, initUse)
+	flag.BoolVar(&init, "i", initVal, initUse+" (&shorthand)")
+	flag.BoolVar(&NoDBSubprocess, "no-db-subprocess", noDBSPVal, noDBSPUse)
+	flag.BoolVar(&NoDBSubprocess, "n", noDBSPVal, noDBSPUse+" (&shorthand)")
+	flag.BoolVar(&ExternalDBHealthCheck, "external-db-health-check", externalDBHCVal, exDBHCUse)
+	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+" (&shorthand)")
+	flag.StringVar(&configFile, "config", confVal, confUse)
+	flag.StringVar(&configFile, "c", confVal, confUse+" (&shorthand)")
+	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
+	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+" (&shorthand)")
+	flag.StringVar(&path, "path", pathVal, pathUse)
+	flag.StringVar(&path, "p", pathVal, pathUse+" (&shorthand)")
+	flag.BoolVar(&exit, "exit", exitVal, exitUse)
+	flag.BoolVar(&exit, "x", exitVal, exitUse+" (&shorthand)")
+
 	flag.Parse()
 
-	return init, NoDBSubprocess, ExternalDBHealthCheck, configFile, path, exit, skipErrors
+	return FlagArgs{
+		Init:                  init,
+		NoDBSubprocess:        NoDBSubprocess,
+		ExternalDBHealthCheck: ExternalDBHealthCheck,
+		ConfigFile:            configFile,
+		Path:                  path,
+		Exit:                  exit,
+		SkipErrors:            skipErrors,
+	}
 }
 
 func initLogging(logConf *logging.Config) zerolog.Logger {
@@ -333,6 +341,12 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 		listenHost = "127.0.0.1"
 	}
 	listenAddr := fmt.Sprintf("%s:%s", listenHost, listenPort)
+	if conf.Fiber.TLS {
+		err := app.ListenTLS(listenAddr, conf.Keys.Public, conf.Keys.Private)
+		if err != nil {
+			return fmt.Errorf("failed to listen on %s: %w", listenAddr, err)
+		}
+	}
 	err := app.Listen(listenAddr)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", listenAddr, err)
@@ -346,7 +360,7 @@ func setupRoutes(
 	dbConn *sqlx.DB,
 	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp *fiber.App,
-	sess *session.Store,
+	sess *fiberSession.Store,
 ) (err error) {
 	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp)
 	if err != nil {

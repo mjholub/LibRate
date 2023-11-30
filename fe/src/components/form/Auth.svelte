@@ -7,7 +7,7 @@
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
 
-	let tooltipMessage = 'This feature is not implemented yet';
+	const tooltipMessage = 'Not recommended on shared computers';
 	let isRegistration = false;
 	let email_or_username = '';
 	if (browser) {
@@ -49,6 +49,7 @@
 	});
 
 	let password = '';
+	let rememberMe = false;
 	let checkTimeout: any;
 	let showPassword = false;
 	let passwordConfirm = '';
@@ -113,6 +114,12 @@
 		}
 	}
 
+	const setRememberMe = (event: Event) => {
+		if (browser) {
+			rememberMe = (event.target as HTMLInputElement).checked;
+		}
+	};
+
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
 		isRegistration = true;
@@ -124,13 +131,21 @@
 	};
 
 	const register = async (event: Event) => {
+		let csrfToken: string | undefined;
+		if (browser) {
+			csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('csrf_'))
+				?.split('=')[1];
+		}
 		event.preventDefault();
 		const headers = {
-			'Content-Type': 'application/json'
+			'Content-Type': 'multipart/form-data',
+			'Referrer-Policy': 'no-referrer-when-downgrade',
+			'X-CSRF-Token': csrfToken
 		};
 
 		localStorage.removeItem('email_or_username');
-		localStorage.removeItem('member');
 
 		// check if passwords match when the registration flow has been triggered
 		isRegistration && password !== passwordConfirm
@@ -165,8 +180,8 @@
 					...member, // Include existing member properties
 					isAuthenticated: true
 				});
-				localStorage.setItem('member', JSON.stringify(member));
-				localStorage.setItem('email_or_username', '');
+				console.debug('authStore updated to ', authStore);
+				localStorage.removeItem('email_or_username');
 				authState.memberName = member.memberName;
 				window.location.href = '/';
 				console.info('Registration successful');
@@ -180,9 +195,18 @@
 	// START OF LOGIN
 	//
 	const login = async (event: Event) => {
+		let csrfToken: string | undefined;
+		if (browser) {
+			csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('csrf_'))
+				?.split('=')[1];
+		}
 		event.preventDefault();
 		const headers = {
-			'Content-Type': 'application/json'
+			'Content-Type': 'multipart/form-data',
+			'Referrer-Policy': 'no-referrer-when-downgrade',
+			'X-CSRF-Token': csrfToken
 		};
 
 		localStorage.removeItem('member');
@@ -190,33 +214,35 @@
 		const nickName = email_or_username.includes('@') ? '' : email_or_username;
 		const emailValue = email_or_username.includes('@') ? email_or_username : '';
 
-		const response = await fetch('/api/authenticate/login', {
-			method: 'POST',
-			headers: headers,
-			body: JSON.stringify({
+		const response = await axios.postForm(
+			'/api/authenticate/login',
+			{
 				membername: nickName,
 				email: emailValue,
+				remember_me: rememberMe,
 				password
-			})
-		});
+			},
+			{
+				headers: headers
+			}
+		);
 
-		const data = await response.json();
 		const member = await authStore.getMember(email_or_username);
 		console.debug('authStore.getMember called for ', email_or_username, ' and returned ', member);
 
 		if (browser) {
-			response.ok
-				? (await authStore.authenticate(),
-				  authStore.set({
+			response.status == 200
+				? (authStore.set({
 						...member, // Include existing member properties
 						isAuthenticated: true
 				  }),
-				  localStorage.setItem('member', JSON.stringify(member)),
-				  localStorage.setItem('email_or_username', ''),
+				  console.debug('authStore updated to ', authStore),
+				  localStorage.removeItem('email_or_username'),
+				  localStorage.setItem('jwtToken', response.data.token),
 				  (window.location.href = '/'),
 				  console.info('Login successful'))
-				: (errorMessage = data.message);
-			console.error(data.message);
+				: (errorMessage = response.data.message);
+			console.error(response.data.message);
 		}
 	};
 
@@ -264,7 +290,13 @@
 			<label for="rememberMe"
 				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
 			>
-			<input type="checkbox" id="rememberMe" name="rememberMe" value="rememberMe" />
+			<input
+				type="checkbox"
+				id="rememberMe"
+				name="rememberMe"
+				value="rememberMe"
+				on:change={setRememberMe}
+			/>
 		{:else}
 			<!-- Registration form -->
 			<label for="email">Email:</label>
@@ -407,7 +439,7 @@
 	}
 
 	.tooltip::before {
-		content: '⚠️ This feature is not implemented yet';
+		content: '⚠️ Not recommended on shared computers';
 		position: absolute;
 		top: 110%;
 		left: 50%;

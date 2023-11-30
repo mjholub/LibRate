@@ -109,4 +109,28 @@ func TestInitDB(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// not passing *testing.T as parameter to avoid this helper function being treated as a test
+func TestLaunch(t *testing.T) {
+	unsafeConf := &cfg.Config{
+		DBConfig: cfg.DBConfig{
+			StartCmd: "ls ..",
+		},
+	}
+	err := launch(unsafeConf)
+	assert.Containsf(t, err.Error(), "not in whitelist",
+		"unexpected error for unsafe command: %v", err)
+	require.Error(t, err, "wanted error for unsafe command")
+
+	empty := &cfg.Config{
+		DBConfig: cfg.DBConfig{
+			StartCmd: "",
+		},
+	}
+	err = launch(empty)
+	assert.Containsf(t, err.Error(), "no start command",
+		"unexpected error for empty command: %v", err)
+
+	// this test is primarily to check whether arbitrary code execution is possible
+	// for happy path just test manually
+	// also, see notes inside the test target
+	// INFO: https://overflow.smnz.de/questions/71102318/how-to-mock-exec-cmd-exec-command#73875035
+}

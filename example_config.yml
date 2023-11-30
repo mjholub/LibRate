@@ -1,3 +1,4 @@
+# YOU MUST encrypt the config file using AGE/SOPS, see the relevant section in the README
 fiber:
   host: "localhost"
   domain: "lr.localhost"
@@ -8,6 +9,11 @@ fiber:
   # in seconds
   powInterval: 300
   powDifficulty: 30000
+  tls: false
+  # -1 for graceful shutdown that will wait indefintely
+  shutdownTimeout: 10
+  maxUploadSize: 4194304
+# used to encrypt sensitive data that is stored in session redis store
 secret: "librate-secret-key"
 database:
     engine: "postgres"
@@ -25,7 +31,11 @@ redis:
   port: 6379
   username: ""
   password: ""
-  database: 0
+  # database for use by the cache middleware and so on
+  cacheDb: 0 
+  sessionDb: 1
+  csrfDb: 2
+  powDb: 3
 logging:
   level: "info"
   output: "stdout"
@@ -34,8 +44,9 @@ logging:
   timestamp:
     enabled: true
     format: "2006-01-0215:04:05.000Z07:00" 
-# dev or production
+# developmen or production
 librateEnv: "production"
+jwtSecret: "librate-jwt-secret"
 # relative paths supported
 # currently not used for anything
 #secretsPath: "secrets.enc.yaml" 

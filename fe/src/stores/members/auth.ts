@@ -14,7 +14,7 @@ export type authData = {
 };
 
 interface AuthStore extends Writable<AuthStoreState> {
-  authenticate: () => Promise<authData>;
+  authenticate: (jwtToken: string) => Promise<authData>;
   logout: () => void;
   getMember: (email_or_username: string) => Promise<Member>;
 }
@@ -50,10 +50,15 @@ function createAuthStore(): AuthStore {
     subscribe,
     set,
     update,
-    authenticate: async () => {
+    authenticate: async (jwtToken: string) => {
       return new Promise<authData>(async (resolve, reject) => {
         try {
-          const authStatus = await axios.get(`/api/authenticate/status`);
+
+          const authStatus = await axios.get('/api/authenticate/status?cache=false', {
+            headers: {
+              'Authorization': `Bearer ${jwtToken}`
+            }
+          });
 
           if (authStatus.status === 200) {
             isAuthenticated.set(authStatus.data.isAuthenticated);
