@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/jmoiron/sqlx"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -36,7 +35,6 @@ func Setup(
 	logger *zerolog.Logger,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
-	neo4jConn *neo4j.DriverWithContext,
 	app *fiber.App,
 	sess *session.Store,
 ) error {
@@ -52,8 +50,6 @@ func Setup(
 	switch conf.Engine {
 	case "postgres", "sqlite", "mariadb":
 		mStor = member.NewSQLStorage(dbConn, logger, conf)
-	case "neo4j":
-		mStor = member.NewNeo4jStorage(*neo4jConn, logger, conf)
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}

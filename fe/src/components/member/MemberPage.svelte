@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { memberStore } from '$stores/members/getInfo';
+	import { authStore } from '$stores/members/auth';
 	import getMemberProps from './MemberCard.svelte';
 	import MemberCard from './MemberCard.svelte';
 	import ReviewList from '../review/ReviewList.svelte';
@@ -10,9 +10,10 @@
 	export let nickname: string;
 	console.info('fetching member info for', nickname);
 	let member: Member;
+
 	onMount(async () => {
-		member = await memberStore.getMemberByNick(nickname);
-		if (member && member.id) {
+		member = await authStore.getMember(nickname);
+		if (member && member.uuid) {
 			new getMemberProps({ target: document.body, props: { member } });
 		}
 	});

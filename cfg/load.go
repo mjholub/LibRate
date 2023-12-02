@@ -29,7 +29,7 @@ func LoadFromFile(path string) (conf *Config, err error) {
 		if err != nil {
 			return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to load config from environment variables: %w", err)
 		}
-		log.Info().Msgf("loaded config from environment variables: +%v", conf)
+		log.Info().Msgf("loaded config from environment variables: %+v", conf)
 		return conf, nil
 	}
 	if path == "" {
@@ -59,7 +59,7 @@ func LoadConfig() mo.Result[*Config] {
 		if confLoc, err = lookForExisting(tryLocations()); err == nil && confLoc != "" {
 			log.Info().Msgf("found config at %s", confLoc)
 			var loadedConfig *Config
-			loadedConfig, err := parseRaw(confLoc)
+			loadedConfig, err = parseRaw(confLoc)
 			if err != nil {
 				return conf, fmt.Errorf("failed to parse config: %w", err)
 			}
@@ -98,7 +98,7 @@ func parseRaw(configLocation string) (conf *Config, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
-	log.Debug().Msgf("conf: %v", conf)
+	log.Debug().Msgf("conf: %+v", conf)
 
 	return conf, nil
 }
