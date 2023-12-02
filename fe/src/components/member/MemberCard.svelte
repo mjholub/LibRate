@@ -178,15 +178,35 @@
 </script>
 
 <div class="member-card">
-	{#if member.profilePic}
-		<img class="member-image" src={member.profilePic} alt="{member.memberName}'s profile picture" />
+	{#if member.profile_pic}
+		<img
+			class="member-image"
+			src={member.profile_pic}
+			alt="{member.memberName}'s profile picture"
+		/>
+		<button
+			aria-label="View full image"
+			on:click={toggleModal}
+			on:keypress={toggleModal}
+			id="expand-image-button"
+		>
+			<svg class="maximize-button">
+				<use href="static/icons/maximize.svg" />
+			</svg>
+		</button>
 		<button
 			aria-label="Change profile picture (max. {maxFileSizeString})"
 			id="change-profile-pic-button"
 			on:click={openFilePicker}
+			on:keypress={openFilePicker}
 			><span class="tooltip" aria-label={tooltipMessage} />
-			<i class="feather" data-feather="edit-2" />
+			<svg class="edit-button">
+				<use href="static/icons/edit-2.svg" />
+			</svg>
 		</button>
+		{#if isUploading}
+			<div class="spinner" />
+		{/if}
 	{:else}
 		<img
 			class="member-image"
@@ -198,9 +218,15 @@
 			aria-label="Change profile picture (max. {maxFileSizeString})"
 			id="change-profile-pic-button"
 			on:click={openFilePicker}
+			on:keypress={openFilePicker}
 			><span class="tooltip" aria-label={tooltipMessage} />
-			<i class="feather" data-feather="edit-2" />
+			<svg class="edit-button">
+				<use href="static/icons/edit-2.svg" />
+			</svg>
 		</button>
+		{#if isUploading}
+			<div class="spinner" />
+		{/if}
 	{/if}
 	<div class="member-name">@{member.memberName}</div>
 	{#if member.bio.Valid}
@@ -227,10 +253,10 @@
 <button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
 {#if showModal}
 	<div class="modal">
-		<img src={member.profilePic} alt="{member.memberName}'s profile picture" />
-		<button on:click={toggleModal} aria-label="Close modal">
-			<i class="feather" data-feather="x" />
-		</button>
+		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
+		<svg class="close-button">
+			<use href="static/icons/x.svg" />
+		</svg>
 	</div>
 {/if}
 
@@ -239,6 +265,14 @@
 		--member-card-border-radius: 0.25em;
 		--logout-button-align: right;
 		--logout-button-padding-top: 3em;
+		--close-button-align: right;
+		--close-button-width: 1.2em;
+		--close-button-height: 1.2em;
+	}
+
+	svg {
+		position: absolute;
+		z-index: 1000;
 	}
 
 	.member-card {
@@ -248,14 +282,31 @@
 		border-radius: var(--member-card-border-radius);
 	}
 
-	.feather {
-		width: 0.8em;
-		height: 0.8em;
+	.edit-button {
+		width: 0.9em;
+		height: 0.9em;
+		fill: none;
+	}
+
+	.edit-button:hover {
+		fill: #fafafa;
+	}
+
+	.maximize-button {
+		width: 0.9em;
+		height: 0.9em;
+		fill: none;
+	}
+
+	.close-button {
+		width: var(--close-button-width);
+		height: var(--close-button-height);
+		fill: none;
 	}
 
 	.member-image {
-		width: 100px;
-		height: 100px;
+		width: 5em;
+		height: 5em;
 		border-radius: 50%;
 		object-fit: cover;
 		margin-bottom: 1em;
