@@ -21,7 +21,6 @@ type Config struct {
 
 // nolint: musttag // tagged in the struct above
 type DBConfig struct {
-	StartCmd           string `yaml:"startCmd,omitempty" default:"sudo service postgresql start"`
 	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE"`
 	Host               string `yaml:"host" default:"localhost" env:"LIBRATE_DB_HOST"`
 	Port               uint16 `yaml:"port" default:"5432" env:"LIBRATE_DB_PORT"`

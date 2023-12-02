@@ -18,7 +18,6 @@ func TestLoadFromFile(t *testing.T) {
 			User:               "postgres",
 			Password:           "postgres",
 			PGConfig:           "/usr/bin/pg_config",
-			StartCmd:           "sudo systemctl start postgresql",
 			AutoMigrate:        true,
 			ExitAfterMigration: false,
 		},
