@@ -32,8 +32,6 @@ import (
 type FlagArgs struct {
 	// init is a flag to initialize the database
 	Init bool
-	// NoDBSubprocess is a flag to not launch the database as a subprocess if it is not running
-	NoDBSubprocess bool
 	// ExternalDBHealthCheck is a flag to skip the built-in healthcheck, especially for database
 	// Should be used in containers with external databases, where pg_isready is used instead
 	ExternalDBHealthCheck bool
@@ -74,7 +72,7 @@ func main() {
 
 	// database first-run initialization
 	// If the healtheck is to be handled externally, skip it
-	dbConn, neo4jConn, err := connectDB(conf, flags.NoDBSubprocess)
+	dbConn, neo4jConn, err := connectDB(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 	}
@@ -90,7 +88,7 @@ func main() {
 		}
 	}()
 
-	if err = initDB(conf, flags.Init, flags.ExternalDBHealthCheck, flags.NoDBSubprocess, flags.Exit, &log); err != nil {
+	if err = initDB(conf, flags.Init, flags.ExternalDBHealthCheck, flags.Exit, &log); err != nil {
 		log.Panic().Err(err).Msg("Failed to initialize database")
 	}
 
@@ -177,7 +175,7 @@ func setupPOW(conf *cfg.Config, app []*fiber.App) {
 	}
 }
 
-func initDB(conf *cfg.Config, do, externalHC, noSubprocess, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(conf *cfg.Config, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
@@ -189,7 +187,7 @@ func initDB(conf *cfg.Config, do, externalHC, noSubprocess, exitAfter bool, logg
 	// retry connecting to database
 	err := retry.Do(
 		func() error {
-			return db.InitDB(conf, noSubprocess, exitAfter, logger)
+			return db.InitDB(conf, exitAfter, logger)
 		},
 		retry.Attempts(5),
 		retry.Delay(3*time.Second), // Delay between retries
@@ -225,15 +223,13 @@ func DBRunning(skipCheck bool, port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, NoDBSubprocess, ExternalDBHealthCheck, exit bool
-		configFile, path, skipErrors                      string
+		init, ExternalDBHealthCheck, exit bool
+		configFile, path, skipErrors      string
 	)
 
 	const (
 		initVal         = false
 		initUse         = "Initialize database"
-		noDBSPVal       = false
-		noDBSPUse       = `Skip launching the database as subprocess if not running.`
 		externalDBHCVal = false
 		exDBHCUse       = `Skip calling the built-in database health check.`
 		confVal         = "config.yml"
@@ -247,8 +243,6 @@ func parseFlags() FlagArgs {
 	)
 	flag.BoolVar(&init, "init", initVal, initUse)
 	flag.BoolVar(&init, "i", initVal, initUse+" (&shorthand)")
-	flag.BoolVar(&NoDBSubprocess, "no-db-subprocess", noDBSPVal, noDBSPUse)
-	flag.BoolVar(&NoDBSubprocess, "n", noDBSPVal, noDBSPUse+" (&shorthand)")
 	flag.BoolVar(&ExternalDBHealthCheck, "external-db-health-check", externalDBHCVal, exDBHCUse)
 	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+" (&shorthand)")
 	flag.StringVar(&configFile, "config", confVal, confUse)
@@ -264,7 +258,6 @@ func parseFlags() FlagArgs {
 
 	return FlagArgs{
 		Init:                  init,
-		NoDBSubprocess:        NoDBSubprocess,
 		ExternalDBHealthCheck: ExternalDBHealthCheck,
 		ConfigFile:            configFile,
 		Path:                  path,
@@ -291,7 +284,7 @@ func initLogging(logConf *logging.Config) zerolog.Logger {
 	return logging.Init(logConf)
 }
 
-func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithContext, error) {
+func connectDB(conf *cfg.Config) (*sqlx.DB, neo4j.DriverWithContext, error) {
 	// Connect to database
 	var (
 		err       error
@@ -300,7 +293,7 @@ func connectDB(conf *cfg.Config, noSubprocess bool) (*sqlx.DB, neo4j.DriverWithC
 	)
 	switch conf.Engine {
 	case "postgres", "mariadb", "sqlite":
-		dbConn, err = db.Connect(conf, noSubprocess)
+		dbConn, err = db.Connect(conf)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
 		}

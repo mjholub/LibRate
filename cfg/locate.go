@@ -30,12 +30,13 @@ func tryLocations() []string {
 		"/var/lib/librate/config",
 		"/opt/librate/config",
 		"/usr/local/librate/config",
-		home + "/.config/librate/config",
-		cfhome + "/.local/share/librate/config",
+		home + "/.local/share/librate/config",
+		cfhome + "librate/config",
 	}
 	configExtensions := []string{
 		".yml",
 		".yaml",
+		"_enc.yml",
 		"",
 	}
 	// use FlatMap and Map to create a list of all possible config file locations

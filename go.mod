@@ -8,6 +8,7 @@ require (
 	github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/avast/retry-go/v4 v4.5.1
+	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/dm764/go-sqlcipher/v4 v4.5.4
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
