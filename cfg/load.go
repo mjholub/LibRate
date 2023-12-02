@@ -25,7 +25,7 @@ var log = logging.Init(&logging.Config{
 func LoadFromFile(path string) (conf *Config, err error) {
 	conf = &Config{}
 	if path == "env" {
-		err := env.Set(&conf)
+		err = env.Set(&conf)
 		if err != nil {
 			return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to load config from environment variables: %w", err)
 		}
@@ -55,8 +55,10 @@ func LoadConfig() mo.Result[*Config] {
 	return mo.Try(func() (conf *Config, err error) {
 		// first, look for an existing config file
 		conf = &Config{}
-		if confLoc, err := lookForExisting(tryLocations()); err == nil && confLoc != "" {
+		var confLoc string
+		if confLoc, err = lookForExisting(tryLocations()); err == nil && confLoc != "" {
 			log.Info().Msgf("found config at %s", confLoc)
+			var loadedConfig *Config
 			loadedConfig, err := parseRaw(confLoc)
 			if err != nil {
 				return conf, fmt.Errorf("failed to parse config: %w", err)

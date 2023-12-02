@@ -121,6 +121,16 @@ and then [encrypt the secrets file](https://github.com/getsops/sops#22encrypting
 
 Note that **you must** encrypt the secrets file, otherwise it will not work.
 
+The following config paths will be automatically checked and not require passing a `-c` flag. These paths can either contain no or a .yml or .yaml extension.
+
+-   "./config",
+-		"./config/config",
+-		"/etc/librate/config",
+-		"/var/lib/librate/config",
+-		"/opt/librate/config",
+-		"/usr/local/librate/config",
+-		~/.local/share/librate/config",
+-		~/.config/librate/config"
 
 ## Development prerequisites
 
