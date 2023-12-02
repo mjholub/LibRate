@@ -53,7 +53,6 @@ func SetupProfiles(
 	})
 
 	member := api.Group("/members")
-	member.Get("/:id", memberSvc.GetMember)
 	member.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	return nil

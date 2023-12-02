@@ -3,6 +3,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
+	import { memberStore } from '$stores/members/getInfo.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
@@ -131,64 +132,64 @@
 	};
 
 	const register = async (event: Event) => {
-		let csrfToken: string | undefined;
-		if (browser) {
-			csrfToken = document.cookie
-				.split('; ')
-				.find((row) => row.startsWith('csrf_'))
-				?.split('=')[1];
-		}
-		event.preventDefault();
-		const headers = {
-			'Content-Type': 'multipart/form-data',
-			'Referrer-Policy': 'no-referrer-when-downgrade',
-			'X-CSRF-Token': csrfToken
-		};
-
-		localStorage.removeItem('email_or_username');
-
-		// check if passwords match when the registration flow has been triggered
-		isRegistration && password !== passwordConfirm
-			? ((errorMessage = 'Passwords do not match'), false)
-			: passwordStrength !== 'Password is strong enough'
-			? ((errorMessage = 'Password is not strong enough'), false)
-			: true;
-
-		let requestPayload = {
-			membername: nickname,
-			email,
-			password,
-			passwordConfirm,
-			roles: ['regular']
-		};
-
-		const response = await axios.post('/api/authenticate/register', requestPayload, { headers });
-
-		const { data } = response;
-
-		const nickName = email_or_username.includes('@') ? '' : email_or_username;
-
-		if (browser) {
-			if (response.data.message.includes('already taken')) {
-				errorMessage = response.data.message;
-				return;
+		return new Promise(async (resolve, reject) => {
+			let csrfToken: string | undefined;
+			if (browser) {
+				csrfToken = document.cookie
+					.split('; ')
+					.find((row) => row.startsWith('csrf_'))
+					?.split('=')[1];
 			}
+			event.preventDefault();
+			const headers = {
+				'Content-Type': 'multipart/form-data',
+				'Referrer-Policy': 'no-referrer-when-downgrade',
+				'X-CSRF-Token': csrfToken
+			};
 
-			if (response.status == 200) {
-				const member = await authStore.getMember(nickName);
-				authStore.set({
-					...member, // Include existing member properties
-					isAuthenticated: true
-				});
-				console.debug('authStore updated to ', authStore);
-				localStorage.removeItem('email_or_username');
-				authState.memberName = member.memberName;
-				window.location.href = '/';
-				console.info('Registration successful');
-			} else {
-				console.error(data.message);
+			localStorage.removeItem('email_or_username');
+
+			// check if passwords match when the registration flow has been triggered
+			isRegistration && password !== passwordConfirm
+				? ((errorMessage = 'Passwords do not match'), false)
+				: passwordStrength !== 'Password is strong enough'
+				? ((errorMessage = 'Password is not strong enough'), false)
+				: true;
+
+			let requestPayload = {
+				membername: nickname,
+				email,
+				password,
+				passwordConfirm,
+				roles: ['regular']
+			};
+
+			const response = await axios.post('/api/authenticate/register', requestPayload, { headers });
+
+			const { data } = response;
+
+			if (browser) {
+				if (response.data.message.includes('already taken')) {
+					errorMessage = response.data.message;
+					reject(errorMessage);
+				}
+
+				if (response.status == 200) {
+					authStore.set({
+						isAuthenticated: true
+					});
+					console.debug('authState updated to ', authState);
+					localStorage.removeItem('email_or_username');
+					window.location.href = '/';
+					console.info('Registration successful');
+					resolve(data.message);
+				} else {
+					errorMessage = data.message;
+					reject(data.message);
+					console.error(data.message);
+				}
 			}
-		}
+		});
 	};
 	//
 	// END OF REGISTRATION
@@ -227,13 +228,9 @@
 			}
 		);
 
-		const member = await authStore.getMember(email_or_username);
-		console.debug('authStore.getMember called for ', email_or_username, ' and returned ', member);
-
 		if (browser) {
 			response.status == 200
 				? (authStore.set({
-						...member, // Include existing member properties
 						isAuthenticated: true
 				  }),
 				  console.debug('authStore updated to ', authStore),

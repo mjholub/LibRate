@@ -10,6 +10,7 @@
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { authData } from '$stores/members/auth.ts';
+	import { memberStore } from '$stores/members/getInfo';
 
 	let windowWidth: number;
 	let isAuthenticated: boolean;
@@ -19,6 +20,10 @@
 		if (browser) {
 			const jwtToken = localStorage.getItem('jwtToken');
 			try {
+				if (jwtToken === null) {
+					console.error('jwtToken is null');
+					return;
+				}
 				authstatus = await authStore.authenticate(jwtToken);
 				isAuthenticated = authstatus.isAuthenticated;
 				console.debug('authstatus', authstatus);
@@ -28,7 +33,12 @@
 		}
 	}
 	async function getMember(memberName: string) {
-		member = await authStore.getMember(memberName);
+		const jwtToken = localStorage.getItem('jwtToken');
+		if (jwtToken === null) {
+			console.error('jwtToken is null');
+			return;
+		}
+		member = await memberStore.getMember(jwtToken, memberName);
 	}
 	if (browser) {
 		onMount(async () => {

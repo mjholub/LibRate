@@ -1,9 +1,9 @@
 <script lang="ts">
 	import axios from 'axios';
-	import 'feather-icons';
 	import type { Member } from '$lib/types/member.ts';
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
+	import { authStore } from '$stores/members/auth';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	function splitNullable(input: NullableString, separator: string): string[] {
@@ -36,26 +36,21 @@
 	}
 
 	const logout = async () => {
-		const csrfToken = document.cookie
-			.split('; ')
-			.find((row) => row.startsWith('csrf_'))
-			?.split('=')[1];
 		try {
-			await axios.post(
-				'/api/authenticate/logout',
-				{},
-				{
-					headers: {
-						'X-CSRF-Token': csrfToken || ''
-					}
-				}
-			);
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('csrf_'))
+				?.split('=')[1];
+			if (csrfToken) {
+				authStore.logout(csrfToken);
+				authStore.set({ isAuthenticated: false });
+			}
 			if (browser) {
 				window.location.reload();
+				localStorage.removeItem('jwtToken');
 			}
-			localStorage.removeItem('jwtToken');
 		} catch (error) {
-			alert(error);
+			console.error(error);
 		}
 	};
 

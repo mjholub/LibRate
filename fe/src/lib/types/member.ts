@@ -1,13 +1,12 @@
 import type { NullableInt64, NullableString } from './utils';
 
 export type Member = {
-  id: number,
   active: boolean,
   uuid: string,
   memberName: string,
   displayName: NullableString,
   email: string,
-  profilePic: string | null,
+  profile_pic: string | null,
   bio: NullableString,
   matrix: NullableString,
   xmpp: NullableString,
@@ -21,7 +20,6 @@ export type Member = {
   followers_uri: string,
   following_uri: string,
   sessionTimeout: NullableInt64,
-  publicKeyPem: string
 };
 
 export type MemberRole = 'regular' | 'admin' | 'creator' | 'mod' | 'member' | 'banned';
