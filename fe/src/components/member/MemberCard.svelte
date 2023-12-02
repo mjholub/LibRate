@@ -130,14 +130,15 @@
 				}
 				console.log('uploaded');
 				isUploading = false;
-				const pic_id = response.data.pic_id;
+				console.log(response.data);
+				const pic_id = response.data.data.pic_id;
+				console.log(pic_id);
 				const confirmSave = confirm('Save new profile picture?');
 				if (confirmSave) {
 					const res = await axios.patch(
-						`/api/members/update/${member.memberName}`,
+						`/api/members/update/${member.memberName}?profile_pic_id=${pic_id}`,
 						{
-							member_name: member.memberName,
-							profilePic: pic_id
+							memberName: member.memberName
 						},
 						{
 							headers: {
@@ -151,7 +152,6 @@
 						alert('Error saving profile picture');
 						reject();
 					}
-					// TODO: trigger reload of profile picture
 				} else {
 					const res = await axios.delete(`/api/upload/image/${pic_id}`, {
 						headers: {

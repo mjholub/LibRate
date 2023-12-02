@@ -11,6 +11,7 @@ const (
 	Expired   BanStatusType = "expired"
 	Permanent BanStatusType = "permanent"
 	None      BanStatusType = "none"
+	Error     BanStatusType = "error"
 )
 
 type (
@@ -29,11 +30,17 @@ type (
 )
 
 func (b BanStatusType) getStatus(target interface{}, storage *sqlx.DB) BanStatusType {
-	switch target.(type) {
+	switch target := target.(type) {
 	case Member:
-		storage.QueryRowx("SELECT ban_status FROM members WHERE id = $1", target.(Member).ID).Scan(&b)
+		if err := storage.QueryRowx("SELECT ban_status FROM members WHERE id = $1", target.ID).Scan(&b); err != nil {
+			return Error
+		}
+		return b
 	case Device:
-		storage.QueryRowx("SELECT ban_status FROM devices WHERE id = $1", target.(Device).ID).Scan(&b)
+		if err := storage.QueryRowx("SELECT ban_status FROM devices WHERE id = $1", target.ID).Scan(&b); err != nil {
+			return Error
+		}
+		return b
 	case net.IP:
 		// here's where I tnink we'll need a separate table for bans so that querying that data is easier
 		// especially since every ban always needs an offending member's ID/webfinger
@@ -41,5 +48,4 @@ func (b BanStatusType) getStatus(target interface{}, storage *sqlx.DB) BanStatus
 	default:
 		return None
 	}
-	return b
 }

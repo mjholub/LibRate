@@ -2,14 +2,17 @@ package member
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
-	"codeberg.org/mjh/LibRate/db"
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
+
+	"codeberg.org/mjh/LibRate/db"
 )
 
 func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
@@ -51,27 +54,65 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 }
 
 func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
-	stmt := `
+	fieldsToUpdate := make(map[string]interface{})
+
+	setClause := "SET "
+
+	if member.Roles != nil {
+		fieldsToUpdate["roles"] = pq.StringArray(member.Roles)
+		setClause += "roles = :roles, "
+	}
+
+	for _, field := range []struct {
+		name  string
+		value interface{}
+	}{
+		{"display_name", member.DisplayName},
+		{"email", member.Email},
+		{"bio", member.Bio},
+		{"active", member.Active},
+		{"homepage", member.Homepage},
+		{"irc", member.IRC},
+		{"xmpp", member.XMPP},
+		{"matrix", member.Matrix},
+		{"visibility", member.Visibility},
+		{"following_uri", member.FollowingURI},
+		{"followers_uri", member.FollowersURI},
+		{"session_timeout", member.SessionTimeout},
+		{"public_key_pem", member.PublicKeyPem},
+		{"profilepic_id", member.ProfilePicID},
+		{"nick", member.MemberName},
+	} {
+		if db.IsNotNull(field.value) {
+			fieldsToUpdate[field.name] = field.value
+			setClause += field.name + " = :" + field.name + ", "
+		}
+	}
+
+	// remove the trailing comma and space
+	setClause = strings.TrimSuffix(setClause, ", ")
+	s.log.Trace().Msgf("setClause: %s", setClause)
+
+	stmt := fmt.Sprintf(`
 		UPDATE public.members AS m
-		SET display_name = :display_name, email = :email, bio = :bio, active = :active, 
-		    roles = :roles, homepage = :homepage, irc = :irc, xmpp = :xmpp, matrix = :matrix,
-		    visibility = :visibility, following_uri = :following_uri, followers_uri = :followers_uri,
-		    session_timeout = :session_timeout, public_key_pem = :public_key_pem
-		FROM (SELECT id FROM members WHERE nick = :nick_value) AS subquery
+		%s
+		FROM (SELECT id FROM members WHERE nick = :nick) AS subquery
 		WHERE m.id = subquery.id
-	`
+	`, setClause)
 	namedQuery, err := s.client.PrepareNamedContext(ctx, stmt)
 	if err != nil {
 		return fmt.Errorf("failed to update member: %v", err)
 	}
+	s.log.Trace().Msgf("namedQuery: %+v", *namedQuery)
 	defer namedQuery.Close()
 
-	_, err = namedQuery.ExecContext(ctx, map[string]interface{}{
+	var res sql.Result
+	res, err = namedQuery.ExecContext(ctx, map[string]interface{}{
 		"display_name":    member.DisplayName,
 		"email":           member.Email,
 		"bio":             member.Bio,
 		"active":          member.Active,
-		"roles":           member.Roles,
+		"roles":           pq.StringArray(member.Roles),
 		"homepage":        member.Homepage,
 		"irc":             member.IRC,
 		"xmpp":            member.XMPP,
@@ -81,11 +122,13 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		"followers_uri":   member.FollowersURI,
 		"session_timeout": member.SessionTimeout,
 		"public_key_pem":  member.PublicKeyPem,
-		"nick_value":      member.MemberName,
+		"nick":            member.MemberName,
+		"profilepic_id":   member.ProfilePicID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update member: %v", err)
 	}
+	s.log.Trace().Msgf("result of UPDATE query: %v", res)
 
 	return nil
 }

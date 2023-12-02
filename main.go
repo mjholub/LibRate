@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net"
@@ -19,7 +18,6 @@ import (
 	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jmoiron/sqlx"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
@@ -72,7 +70,7 @@ func main() {
 
 	// database first-run initialization
 	// If the healtheck is to be handled externally, skip it
-	dbConn, neo4jConn, err := connectDB(conf)
+	dbConn, err := connectDB(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 	}
@@ -80,11 +78,6 @@ func main() {
 	defer func() {
 		if dbConn != nil {
 			dbConn.Close()
-		}
-		if neo4jConn != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			neo4jConn.Close(ctx)
 		}
 	}()
 
@@ -126,7 +119,7 @@ func main() {
 
 	setupPOW(conf, apps)
 
-	err = setupRoutes(conf, &log, dbConn, &neo4jConn, app,
+	err = setupRoutes(conf, &log, dbConn, app,
 		profilesApp, sess)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
@@ -284,28 +277,22 @@ func initLogging(logConf *logging.Config) zerolog.Logger {
 	return logging.Init(logConf)
 }
 
-func connectDB(conf *cfg.Config) (*sqlx.DB, neo4j.DriverWithContext, error) {
+func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 	// Connect to database
 	var (
-		err       error
-		dbConn    *sqlx.DB
-		neo4jConn neo4j.DriverWithContext
+		err    error
+		dbConn *sqlx.DB
 	)
 	switch conf.Engine {
+	// TODO: add validate... oneof tags to config struct
 	case "postgres", "mariadb", "sqlite":
 		dbConn, err = db.Connect(conf)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
+			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
-		return dbConn, nil, nil
-	case "neo4j":
-		neo4jConn, err = db.ConnectNeo4j(conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to connect to neo4j: %w", err)
-		}
-		return nil, neo4jConn, nil
+		return dbConn, nil
 	default:
-		return nil, nil, fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
+		return nil, fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
 }
 
@@ -351,17 +338,16 @@ func setupRoutes(
 	conf *cfg.Config,
 	log *zerolog.Logger,
 	dbConn *sqlx.DB,
-	neo4jConn *neo4j.DriverWithContext,
 	app, profilesApp *fiber.App,
 	sess *fiberSession.Store,
 ) (err error) {
-	err = routes.SetupProfiles(log, conf, dbConn, neo4jConn, profilesApp)
+	err = routes.SetupProfiles(log, conf, dbConn, profilesApp)
 	if err != nil {
 		return fmt.Errorf("failed to setup profiles routes: %w", err)
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, neo4jConn, app, sess)
+	err = routes.Setup(log, conf, dbConn, app, sess)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}
