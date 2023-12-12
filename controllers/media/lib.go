@@ -70,6 +70,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", detailedMedia)
 }
 
+// TODO: when upload form is implemented, flush the redis cache, since the response might change
 func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
 	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

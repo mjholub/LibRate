@@ -44,8 +44,8 @@ button {
 }
 
 svg {
-  vertical-align: middle;
-  z-index: 1000;
+  vertical-align: baseline;
+  z-index: 100;
 }
 
 input:disabled {

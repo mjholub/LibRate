@@ -1,10 +1,12 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { XIcon, Edit2Icon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
+	import { XIcon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
+	import UpdateBio from '$components/form/UpdateBio.svelte';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	function splitNullable(input: NullableString, separator: string): string[] {
@@ -28,13 +30,19 @@
 		xmppInstance = splitNullable(member.xmpp, '@')[1];
 		ircUser = splitNullable(member.irc, '@')[0];
 		ircInstance = splitNullable(member.irc, '@')[1];
+		regDate = new Date(member.regdate).toLocaleDateString();
 	}
 
 	let regDate: string;
 	export let member: Member;
-	$: {
-		regDate = new Date(member.regdate).toLocaleDateString();
-	}
+
+	onMount(async () => {
+		await getMaxFileSize();
+	});
+
+	onDestroy(() => {
+		maxFileSize = 0;
+	});
 
 	const logout = async () => {
 		try {
@@ -138,6 +146,7 @@
 						},
 						{
 							headers: {
+								'Content-Type': 'multipart/form-data',
 								Expect: '100-continue',
 								Authorization: `Bearer ${jwtToken}`,
 								'X-CSRF-Token': csrfToken || ''
@@ -165,17 +174,6 @@
 			}
 		});
 	};
-
-	const toggleSaveButton = (e: Event) => {
-		const button = e.target as HTMLButtonElement;
-		button.classList.toggle('saved');
-		button.classList.toggle('unsaved');
-		if (button.classList.contains('saved')) {
-			button.innerHTML = '<i class="feather" data-feather="check"></i> Saved';
-		} else {
-			button.innerHTML = '<i class="feather" data-feather="save"></i> Save';
-		}
-	};
 </script>
 
 <div class="member-card">
@@ -192,8 +190,9 @@
 				on:keypress={toggleModal}
 				id="expand-image-button"
 			>
+				<span class="tooltip" aria-label="View full image" />
 				<div class="maximize-button">
-					<MaximizeIcon />
+					<MaximizeIcon class="maximize-icon" />
 				</div>
 			</button>
 			<button
@@ -236,9 +235,17 @@
 	<div class="member-name">@{member.memberName}</div>
 	{#if member.bio.Valid}
 		<div class="member-bio">{member.bio.String}</div>
+		<UpdateBio
+			memberName={member.memberName}
+			isBioPresent={member.bio.Valid}
+			bio={member.bio.String}
+		/>
+	{:else}
+		<UpdateBio memberName={member.memberName} isBioPresent={member.bio.Valid} bio="" />
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
-	Other links and contact info @{member.memberName} has provided:
+	Other links and contact info for @{member.memberName}:
+	<!-- TODO: replace with user-defined custom fields, like on e.g. pleroma -->
 	{#if member.matrix.Valid}
 		<p>
 			<b>Matrix:</b>
@@ -277,6 +284,10 @@
 		--icon-color: #ffcbcc;
 		--button-bg: #60605190;
 		--button-radius: 20%;
+		--change-profile-pic-btn-right: 3.1rem;
+		--change-profile-pic-btn-top: -4rem;
+		--expand-image-btn-right: 1.15rem;
+		--expand-image-btn-bottom: 0.65rem;
 	}
 
 	:xicon {
@@ -286,9 +297,9 @@
 	}
 
 	#change-profile-pic-button {
-		position: absolute !important;
-		top: 0.9rem !important;
-		right: 0.5rem !important;
+		position: relative !important;
+		right: var(--change-profile-pic-btn-right) !important;
+		top: var(--change-profile-pic-btn-top) !important;
 		margin-right: 0.7em !important;
 		width: 1.75em !important;
 		height: 1.75em !important;
@@ -341,16 +352,20 @@
 		width: 1.75em !important;
 		height: 1.75em !important;
 		position: relative;
-		bottom: 0.5em;
-		right: 1.15em;
+		bottom: var(--expand-image-btn-bottom) !important;
+		right: var(--expand-image-btn-right) !important;
+		padding-right: 0.1em;
 	}
 
 	.maximize-button {
-		display: contents !important;
+		display: inherit !important;
 		width: 1em;
 		height: 1em;
 		fill: none;
 		color: var(--icon-color);
+		margin-top: -0.35em !important;
+		padding: 0 35% 20% 0 !important;
+		right: 0.35em;
 		position: relative;
 	}
 
@@ -375,6 +390,11 @@
 		font-size: 0.9em;
 		color: #666;
 		margin-bottom: 1em;
+		width: 85%;
+		position: relative;
+		overflow-wrap: break-word;
+		word-wrap: break-word;
+		display: inline-block;
 	}
 
 	.member-joined-date {
