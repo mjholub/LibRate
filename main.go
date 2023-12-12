@@ -109,6 +109,8 @@ func main() {
 			app.Use(middlewares[i])
 		}
 	}()
+	fzlog := cmd.SetupLogger(conf, &log)
+	app.Use(fzlog)
 
 	// setup secondary apps
 	profilesApp, err := setupSecondaryApps(app, middlewares)
@@ -119,7 +121,7 @@ func main() {
 
 	setupPOW(conf, apps)
 
-	err = setupRoutes(conf, &log, dbConn, app,
+	err = setupRoutes(conf, &log, fzlog, dbConn, app,
 		profilesApp, sess)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
@@ -337,6 +339,7 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 func setupRoutes(
 	conf *cfg.Config,
 	log *zerolog.Logger,
+	fzlog fiber.Handler,
 	dbConn *sqlx.DB,
 	app, profilesApp *fiber.App,
 	sess *fiberSession.Store,
@@ -347,7 +350,7 @@ func setupRoutes(
 	}
 
 	// Setup routes
-	err = routes.Setup(log, conf, dbConn, app, sess)
+	err = routes.Setup(log, fzlog, conf, dbConn, app, sess)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %w", err)
 	}

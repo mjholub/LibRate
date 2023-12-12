@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/cmd"
 	"codeberg.org/mjh/LibRate/controllers"
 	"codeberg.org/mjh/LibRate/controllers/auth"
 	"codeberg.org/mjh/LibRate/controllers/form"
@@ -33,12 +32,12 @@ import (
 // and then passes them to the controllers
 func Setup(
 	logger *zerolog.Logger,
+	fzlog fiber.Handler,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
 	app *fiber.App,
 	sess *session.Store,
 ) error {
-	fzlog := cmd.SetupLogger(logger)
 	api := app.Group("/api", fzlog)
 
 	var (
