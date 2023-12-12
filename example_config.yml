@@ -33,7 +33,6 @@ redis:
   password: ""
   # database for use by the cache middleware and so on
   cacheDb: 0 
-  sessionDb: 1
   csrfDb: 2
   powDb: 3
 logging:

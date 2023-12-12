@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { Member } from '$lib/types/member.ts';
 
 export const isAuthenticated = writable(false);
-// TODO: move to member getInfo.ts
 export interface AuthStoreState {
   isAuthenticated: boolean;
 };

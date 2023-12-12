@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import { string } from 'rollup-plugin-string';
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
@@ -60,6 +61,9 @@ export default {
       browser: true,
       dedupe: ['svelte'],
       exportConditions: ['svelte']
+    }),
+    string({
+      include: '../static/icons/*.svg'
     }),
     commonjs(),
     typescript({

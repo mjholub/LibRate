@@ -1,5 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
+	import { XIcon, Edit2Icon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
 	import type { Member } from '$lib/types/member.ts';
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
@@ -179,54 +180,58 @@
 
 <div class="member-card">
 	{#if member.profile_pic}
-		<img
-			class="member-image"
-			src={member.profile_pic}
-			alt="{member.memberName}'s profile picture"
-		/>
-		<button
-			aria-label="View full image"
-			on:click={toggleModal}
-			on:keypress={toggleModal}
-			id="expand-image-button"
-		>
-			<svg class="maximize-button">
-				<use href="static/icons/maximize.svg" />
-			</svg>
-		</button>
-		<button
-			aria-label="Change profile picture (max. {maxFileSizeString})"
-			id="change-profile-pic-button"
-			on:click={openFilePicker}
-			on:keypress={openFilePicker}
-			><span class="tooltip" aria-label={tooltipMessage} />
-			<svg class="edit-button">
-				<use href="static/icons/edit-2.svg" />
-			</svg>
-		</button>
-		{#if isUploading}
-			<div class="spinner" />
-		{/if}
+		<div class="member-image-container">
+			<img
+				class="member-image"
+				src={member.profile_pic}
+				alt="{member.memberName}'s profile picture"
+			/>
+			<button
+				aria-label="View full image"
+				on:click={toggleModal}
+				on:keypress={toggleModal}
+				id="expand-image-button"
+			>
+				<div class="maximize-button">
+					<MaximizeIcon />
+				</div>
+			</button>
+			<button
+				aria-label="Change profile picture (max. {maxFileSizeString})"
+				id="change-profile-pic-button"
+				on:click={openFilePicker}
+				on:keypress={openFilePicker}
+				><span class="tooltip" aria-label={tooltipMessage} />
+				<div class="edit-button">
+					<EditIcon />
+				</div>
+			</button>
+			{#if isUploading}
+				<div class="spinner" />
+			{/if}
+		</div>
 	{:else}
-		<img
-			class="member-image"
-			src="https://www.gravatar.com/avatar/000
+		<div class="member-image-container">
+			<img
+				class="member-image"
+				src="https://www.gravatar.com/avatar/000
     ?d=mp"
-			alt="{member.memberName}'s profile picture"
-		/>
-		<button
-			aria-label="Change profile picture (max. {maxFileSizeString})"
-			id="change-profile-pic-button"
-			on:click={openFilePicker}
-			on:keypress={openFilePicker}
-			><span class="tooltip" aria-label={tooltipMessage} />
-			<svg class="edit-button">
-				<use href="static/icons/edit-2.svg" />
-			</svg>
-		</button>
-		{#if isUploading}
-			<div class="spinner" />
-		{/if}
+				alt="{member.memberName}'s profile picture"
+			/>
+			<button
+				aria-label="Change profile picture (max. {maxFileSizeString})"
+				id="change-profile-pic-button"
+				on:click={openFilePicker}
+				on:keypress={openFilePicker}
+				><span class="tooltip" aria-label={tooltipMessage} />
+				<div class="edit-button">
+					<EditIcon />
+				</div>
+			</button>
+			{#if isUploading}
+				<div class="spinner" />
+			{/if}
+		</div>
 	{/if}
 	<div class="member-name">@{member.memberName}</div>
 	{#if member.bio.Valid}
@@ -254,54 +259,57 @@
 {#if showModal}
 	<div class="modal">
 		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
-		<svg class="close-button">
-			<use href="static/icons/x.svg" />
-		</svg>
+		<div class="close-button">
+			<XIcon />
+		</div>
 	</div>
 {/if}
 
 <style>
 	:root {
 		--member-card-border-radius: 0.25em;
+		--member-card-background-color: #1f1f1f;
 		--logout-button-align: right;
-		--logout-button-padding-top: 3em;
+		--logout-button-padding-top: 0.25em;
 		--close-button-align: right;
 		--close-button-width: 1.2em;
 		--close-button-height: 1.2em;
+		--icon-color: #ffcbcc;
+		--button-bg: #60605190;
+		--button-radius: 20%;
 	}
 
-	svg {
-		position: absolute;
-		z-index: 1000;
+	:xicon {
+		width: 1.2em;
+		height: 1.2em;
+		fill: none;
 	}
 
-	.member-card {
-		border: 1px solid #ccc;
-		padding: 1em;
-		margin: 1em;
-		border-radius: var(--member-card-border-radius);
+	#change-profile-pic-button {
+		position: absolute !important;
+		top: 0.9rem !important;
+		right: 0.5rem !important;
+		margin-right: 0.7em !important;
+		width: 1.75em !important;
+		height: 1.75em !important;
+		padding: 0 0 0.25em 0;
+		border-radius: var(--button-radius);
+		background: var(--button-bg);
 	}
 
 	.edit-button {
-		width: 0.9em;
-		height: 0.9em;
+		width: 1em;
+		height: 1em;
 		fill: none;
+		display: contents !important;
+		/* calculate contrast between component background and element background */
+		mix-blend-mode: difference;
+		color: var(--icon-color);
+		position: relative;
 	}
 
 	.edit-button:hover {
 		fill: #fafafa;
-	}
-
-	.maximize-button {
-		width: 0.9em;
-		height: 0.9em;
-		fill: none;
-	}
-
-	.close-button {
-		width: var(--close-button-width);
-		height: var(--close-button-height);
-		fill: none;
 	}
 
 	.member-image {
@@ -310,6 +318,52 @@
 		border-radius: 50%;
 		object-fit: cover;
 		margin-bottom: 1em;
+		max-width: 100%;
+		font-size: smaller;
+	}
+
+	.member-image-container {
+		position: relative;
+		display: inline-block;
+	}
+
+	.member-card {
+		border: 1px solid #ccc;
+		padding: 1em;
+		margin: 1em;
+		border-radius: var(--member-card-border-radius);
+		background-color: var(--member-card-background-color);
+	}
+
+	button#expand-image-button {
+		background: var(--button-bg);
+		border-radius: var(--button-radius);
+		width: 1.75em !important;
+		height: 1.75em !important;
+		position: relative;
+		bottom: 0.5em;
+		right: 1.15em;
+	}
+
+	.maximize-button {
+		display: contents !important;
+		width: 1em;
+		height: 1em;
+		fill: none;
+		color: var(--icon-color);
+		position: relative;
+	}
+
+	.close-button {
+		display: inline-block;
+		color: #e1e1e1;
+		width: var(--close-button-width);
+		height: var(--close-button-height);
+		fill: none;
+	}
+
+	.close-button:hover {
+		color: #fafaff;
 	}
 
 	.member-name {
@@ -328,9 +382,12 @@
 		color: #999;
 	}
 
-	.logout-button {
+	button#logout-button {
+		/* 90% of member card width  */
+		width: calc(90% - 2em);
 		float: var(--logout-button-align);
 		padding-top: var(--logout-button-padding-top);
+		margin-left: 10%;
 	}
 
 	.spinner {
