@@ -24,7 +24,7 @@ func TestCreateCryptoStorage(t *testing.T) {
 		os.RemoveAll(testDir)
 	}()
 
-	conn, err := CreateCryptoStorage(testFile.Name())
+	conn, err := CreateStorage(testFile.Name(), "test")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 }

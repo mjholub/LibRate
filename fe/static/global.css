@@ -38,6 +38,14 @@ input, button, select, textarea {
 	box-sizing: border-box;
 	border: 1px solid #ccc;
 	border-radius: 4px;
+button {
+  cursor: pointer;
+  z-index: 1;
+}
+
+svg {
+  vertical-align: baseline;
+  z-index: 100;
 }
 
 input:disabled {

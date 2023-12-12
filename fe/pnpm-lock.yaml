@@ -94,6 +94,9 @@ devDependencies:
   rollup-plugin-css-only:
     specifier: ^4.3.0
     version: 4.3.0(rollup@3.26.2)
+  rollup-plugin-string:
+    specifier: ^3.0.0
+    version: 3.0.0
   rollup-plugin-svelte:
     specifier: ^7.1.6
     version: 7.1.6(rollup@3.26.2)(svelte@4.0.5)
@@ -3261,6 +3264,10 @@ packages:
     engines: {node: '>=4.0'}
     dev: true
 
+  /estree-walker@0.6.1:
+    resolution: {integrity: sha512-SqmZANLWS0mnatqbSfRP5g8OXZC12Fgg1IwNtLsyHDzJizORW4khDfjPqJZsemPWBB2uqykUah5YpQ6epsqC/w==}
+    dev: true
+
   /estree-walker@2.0.2:
     resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
     dev: true
@@ -4844,6 +4851,12 @@ packages:
       rollup: 3.26.2
     dev: true
 
+  /rollup-plugin-string@3.0.0:
+    resolution: {integrity: sha512-vqyzgn9QefAgeKi+Y4A7jETeIAU1zQmS6VotH6bzm/zmUQEnYkpIGRaOBPY41oiWYV4JyBoGAaBjYMYuv+6wVw==}
+    dependencies:
+      rollup-pluginutils: 2.8.2
+    dev: true
+
   /rollup-plugin-svelte@7.1.6(rollup@3.26.2)(svelte@4.0.5):
     resolution: {integrity: sha512-nVFRBpGWI2qUY1OcSiEEA/kjCY2+vAjO9BI8SzA7NRrh2GTunLd6w2EYmnMt/atgdg8GvcNjLsmZmbQs/u4SQA==}
     engines: {node: '>=10'}
@@ -4855,6 +4868,12 @@ packages:
       resolve.exports: 2.0.2
       rollup: 3.26.2
       svelte: 4.0.5
+    dev: true
+
+  /rollup-pluginutils@2.8.2:
+    resolution: {integrity: sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==}
+    dependencies:
+      estree-walker: 0.6.1
     dev: true
 
   /rollup@3.26.2:

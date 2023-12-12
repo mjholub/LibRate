@@ -116,6 +116,16 @@ All you need to do is [generate an age X25519 identity](https://github.com/FiloS
 and then [encrypt the config file](https://github.com/getsops/sops#22encrypting-using-age)
 with SOPS. Don't forget to pass the `-c` flag if you decide to save the encrypted file under a new path.
 
+The following config paths will be automatically checked and not require passing a `-c` flag. These paths can either contain no or a .yml or .yaml extension.
+
+-   "./config",
+-		"./config/config",
+-		"/etc/librate/config",
+-		"/var/lib/librate/config",
+-		"/opt/librate/config",
+-		"/usr/local/librate/config",
+-		~/.local/share/librate/config",
+-		~/.config/librate/config"
 
 ## Development prerequisites
 

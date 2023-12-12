@@ -2,17 +2,14 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"sync"
 	"time"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/config"
 	"github.com/rs/zerolog"
-	"github.com/samber/lo"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/jmoiron/sqlx"
@@ -43,7 +40,7 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
+func Connect(conf *cfg.Config) (*sqlx.DB, error) {
 	// create a whitelist of launch commands to avond arbitrary code execution
 
 	data := CreateDsn(&conf.DBConfig)
@@ -61,13 +58,8 @@ func Connect(conf *cfg.Config, noSubProcess bool) (*sqlx.DB, error) {
 		retry.Delay(1*time.Second), // Delay between retries
 		retry.OnRetry(func(n uint, _ error) {
 			fmt.Printf("Attempt %d failed; retrying...", n)
-			if !noSubProcess {
-				err := launch(conf)
-				if err != nil {
-					return
-				}
-			}
-		}),
+		},
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -87,82 +79,6 @@ func ConnectNeo4j(conf *cfg.Config) (neo4j.DriverWithContext, error) {
 		auth, neo4jConf)
 }
 
-func launch(conf *cfg.Config) error {
-	if conf.StartCmd == "skip" {
-		return nil
-	}
-
-	whitelist := []string{
-		// standalone
-		"pg_ctl start -D /var/lib/postgresql/data",
-		"pg_ctl start -D /var/lib/postgresql/data -l /var/lib/postgresql/data/logfile",
-		// sysvinit
-		"service postgresql start",
-		// systemd
-		"systemctl start postgresql",
-		// openrc
-		"rc-service postgresql start",
-		"/etc/init.d/postgresql start",
-		// s6
-		"s6-svc -u /var/run/s6/services/postgresql",
-		// supervisord
-		"supervisorctl start postgresql",
-		// runit
-		"sv start postgresql",
-		// launchd
-		"launchctl start homebrew.mxcl.postgresql",
-		// containerized
-		"docker run --name postgresql -e POSTGRES_PASSWORD=postgres -d postgres",
-		"podman run --name postgresql -e POSTGRES_PASSWORD=postgres -d postgres",
-		"kubectl run postgresql --image=postgres --env=\"POSTGRES_PASSWORD=postgres\"",
-		"docker-compose up -d postgresql",
-	}
-
-	rootcmds := []string{
-		"sudo",
-		"su -c",
-		"doas",
-		"please",
-	}
-
-	// combine the two lists
-	allcmds := lo.FlatMap(whitelist, func(s string, _ int) []string {
-		return lo.Map(rootcmds, func(s2 string, _ int) string {
-			withRoot := fmt.Sprintf("%s %s", s2, s)
-			// also add the command without root, e.g. for containerized environments
-			withoutRoot := s
-			return withRoot + "\n" + withoutRoot
-		})
-	})
-
-	if conf.StartCmd == "" {
-		err := errors.New(`no start command provided for database server\n
-				Please provide one under a 'start_cmd' key in the database section of the config file.\n
-				Waiting for manual start of database server for 10 seconds.
-				`)
-		return fmt.Errorf("failed to start postgresql service: %v", err)
-	}
-
-	if !lo.Contains(allcmds, conf.StartCmd) {
-		err := errors.New(`start command not in whitelist\n
-				Aborting to prevent arbitrary code execution.\n
-				Please use a command from the whitelist provided in db/core.go
-				`)
-		return fmt.Errorf("failed to start postgresql service: %w", err)
-	} else if conf.StartCmd != "" && lo.Contains(allcmds, conf.StartCmd) {
-		// TODO: add a switch to execute ping or preferably other more harder to spoof commands
-		// so that a malicious alias can't be passed
-		// nolint: gosec
-		cmd := exec.CommandContext(context.Background(), conf.StartCmd+" &")
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to start postgresql service: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func createExtension(db *sqlx.DB, extName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -175,7 +91,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool, log *zerolog.Logger) error {
+func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
 	if exitAfter {
 		// nolint:revive
 		defer func() {
@@ -183,7 +99,7 @@ func InitDB(conf *cfg.Config, noSubProcess, exitAfter bool, log *zerolog.Logger)
 			os.Exit(0)
 		}()
 	}
-	db, err := Connect(conf, noSubProcess)
+	db, err := Connect(conf)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

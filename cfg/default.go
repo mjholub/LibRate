@@ -20,7 +20,6 @@ var (
 			Password: "postgres",
 			SSL:      "unknown",
 			PGConfig: "/usr/bin/pg_config",
-			StartCmd: "sudo service postgresql start",
 		},
 		Fiber: FiberConfig{
 			Host:    "localhost",
@@ -42,7 +41,6 @@ var (
 			Password:           "postgres",
 			SSL:                "disable",
 			PGConfig:           "/usr/bin/pg_config",
-			StartCmd:           "skip",
 			AutoMigrate:        true,
 			ExitAfterMigration: false,
 		},

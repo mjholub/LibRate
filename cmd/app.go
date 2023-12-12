@@ -143,16 +143,18 @@ func SetupMiddlewares(conf *cfg.Config,
 		compress.New(compress.Config{
 			Level: compress.LevelBestSpeed,
 		}),
-		SetupLogger(logger),
 	}
 }
 
-func SetupLogger(logger *zerolog.Logger) fiber.Handler {
+func SetupLogger(conf *cfg.Config, logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
 		// skip logging for static files, there's too many of them
 		Next: func(c *fiber.Ctx) bool {
-			return strings.Contains(c.Path(), "/_app/")
+			if conf.Logging.Level != "trace" {
+				return strings.Contains(c.Path(), "/_app/")
+			}
+			return false
 		},
 	})
 	return fiberlog

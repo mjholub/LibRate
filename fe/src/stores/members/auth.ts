@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
-import type { Member } from '$lib/types/member.ts';
 
 export const isAuthenticated = writable(false);
-export interface AuthStoreState extends Member {
+export interface AuthStoreState {
   isAuthenticated: boolean;
 };
 
@@ -15,32 +14,12 @@ export type authData = {
 
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: (jwtToken: string) => Promise<authData>;
-  logout: () => void;
-  getMember: (email_or_username: string) => Promise<Member>;
+  logout: (csrfToken: string) => void;
 }
 
 export const initialAuthState: AuthStoreState = {
-  id: 0,
-  memberName: '',
-  displayName: { String: '', Valid: false },
-  email: '',
-  profilePic: '',
-  bio: { String: '', Valid: false },
-  matrix: { String: '', Valid: false },
-  xmpp: { String: '', Valid: false },
-  irc: { String: '', Valid: false },
-  homepage: { String: '', Valid: false },
-  regdate: new Date(),
-  roles: ['member'],
   isAuthenticated: false,
-  visibility: 'public',
-  followers_uri: '',
-  following_uri: '',
-  sessionTimeout: { Int64: 0, Valid: false },
-  active: false,
-  uuid: '',
-  publicKeyPem: ''
-};
+}
 
 
 function createAuthStore(): AuthStore {
@@ -80,22 +59,21 @@ function createAuthStore(): AuthStore {
         }
       });
     },
-    getMember: async (email_or_username: string) => {
-      const res = await fetch(`/api/members/${email_or_username}/info`);
-      const resData = await res.json();
-      if (resData.message !== "success") {
-        throw new Error('Error while retrieving member data');
-      }
-      const member: Member = resData.data;
-      console.debug('member data retrieved from API: ', member);
-      member.id = 0;
-      return member;
+    logout: (csrfToken: string) => {
+      return new Promise<void>(async (resolve, reject) => {
+        const res = await axios.post(
+          '/api/authenticate/logout',
+          {},
+          {
+            headers: {
+              'X-CSRF-Token': csrfToken || ''
+            }
+          }
+        );
+        res.status === 200 ? resolve() : reject(Error);
+      });
     },
-    logout: () => {
-      document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      isAuthenticated.set(false);
-    }
-  };
+  }
 }
 
 export const authStore: AuthStore = createAuthStore();

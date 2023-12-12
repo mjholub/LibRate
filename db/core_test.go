@@ -83,7 +83,7 @@ func TestConnect(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			got, err := Connect(tc.Inputs, true)
+			got, err := Connect(tc.Inputs)
 			if tc.WantErr {
 				assert.Error(t, err)
 				return
@@ -105,32 +105,6 @@ func TestInitDB(t *testing.T) {
 		require.NoError(t, err)
 	}(&config)
 	log := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	err := InitDB(&config, true, false, &log)
+	err := InitDB(&config, true, &log)
 	require.NoError(t, err)
-}
-
-func TestLaunch(t *testing.T) {
-	unsafeConf := &cfg.Config{
-		DBConfig: cfg.DBConfig{
-			StartCmd: "ls ..",
-		},
-	}
-	err := launch(unsafeConf)
-	assert.Containsf(t, err.Error(), "not in whitelist",
-		"unexpected error for unsafe command: %v", err)
-	require.Error(t, err, "wanted error for unsafe command")
-
-	empty := &cfg.Config{
-		DBConfig: cfg.DBConfig{
-			StartCmd: "",
-		},
-	}
-	err = launch(empty)
-	assert.Containsf(t, err.Error(), "no start command",
-		"unexpected error for empty command: %v", err)
-
-	// this test is primarily to check whether arbitrary code execution is possible
-	// for happy path just test manually
-	// also, see notes inside the test target
-	// INFO: https://overflow.smnz.de/questions/71102318/how-to-mock-exec-cmd-exec-command#73875035
 }

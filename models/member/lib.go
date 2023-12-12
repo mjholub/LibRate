@@ -10,7 +10,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -19,7 +18,7 @@ import (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID               int            `json:"id" db:"id"`
+		ID               int            `json:"-" db:"id"`
 		UUID             uuid.UUID      `json:"uuid,omitempty" db:"uuid"`
 		PassHash         string         `json:"-" db:"passhash"`
 		MemberName       string         `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30"`
@@ -30,7 +29,7 @@ type (
 		Roles            pq.StringArray `json:"roles,omitempty" db:"roles"`
 		RegTimestamp     time.Time      `json:"regdate" db:"reg_timestamp"`
 		ProfilePicID     sql.NullInt64  `json:"-" db:"profilepic_id"`
-		ProfilePicSource string         `json:"profilePic,omitempty" db:"-"`
+		ProfilePicSource string         `json:"profile_pic,omitempty" db:"-"`
 		Homepage         sql.NullString `json:"homepage,omitempty" db:"homepage"`
 		IRC              sql.NullString `json:"irc,omitempty" db:"irc"`
 		XMPP             sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
@@ -38,8 +37,8 @@ type (
 		Visibility       string         `json:"visibility" db:"visibility"`
 		FollowingURI     string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
 		FollowersURI     string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
-		SessionTimeout   sql.NullInt64  `json:"sessionTimeout,omitempty" db:"session_timeout"`
-		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem,omitempty" db:"public_key_pem"`
+		SessionTimeout   sql.NullInt64  `json:"-" db:"session_timeout"`
+		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"-" db:"public_key_pem"`
 	}
 
 	Device struct {
@@ -95,18 +94,8 @@ type (
 		nicknameCache []string
 		cacheMutex    sync.RWMutex
 	}
-
-	Neo4jMemberStorage struct {
-		client neo4j.DriverWithContext
-		log    *zerolog.Logger
-		config *cfg.Config
-	}
 )
 
 func NewSQLStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
 	return &PgMemberStorage{client: client, log: log, config: conf}
-}
-
-func NewNeo4jStorage(client neo4j.DriverWithContext, log *zerolog.Logger, conf *cfg.Config) Neo4jMemberStorage {
-	return Neo4jMemberStorage{client: client, log: log, config: conf}
 }

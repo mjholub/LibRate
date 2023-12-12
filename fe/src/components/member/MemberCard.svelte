@@ -1,9 +1,12 @@
 <script lang="ts">
 	import axios from 'axios';
-	import 'feather-icons';
+	import { XIcon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
+	import { authStore } from '$stores/members/auth';
+	import UpdateBio from '$components/form/UpdateBio.svelte';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	function splitNullable(input: NullableString, separator: string): string[] {
@@ -27,35 +30,36 @@
 		xmppInstance = splitNullable(member.xmpp, '@')[1];
 		ircUser = splitNullable(member.irc, '@')[0];
 		ircInstance = splitNullable(member.irc, '@')[1];
+		regDate = new Date(member.regdate).toLocaleDateString();
 	}
 
 	let regDate: string;
 	export let member: Member;
-	$: {
-		regDate = new Date(member.regdate).toLocaleDateString();
-	}
+
+	onMount(async () => {
+		await getMaxFileSize();
+	});
+
+	onDestroy(() => {
+		maxFileSize = 0;
+	});
 
 	const logout = async () => {
-		const csrfToken = document.cookie
-			.split('; ')
-			.find((row) => row.startsWith('csrf_'))
-			?.split('=')[1];
 		try {
-			await axios.post(
-				'/api/authenticate/logout',
-				{},
-				{
-					headers: {
-						'X-CSRF-Token': csrfToken || ''
-					}
-				}
-			);
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('csrf_'))
+				?.split('=')[1];
+			if (csrfToken) {
+				authStore.logout(csrfToken);
+				authStore.set({ isAuthenticated: false });
+			}
 			if (browser) {
 				window.location.reload();
+				localStorage.removeItem('jwtToken');
 			}
-			localStorage.removeItem('jwtToken');
 		} catch (error) {
-			alert(error);
+			console.error(error);
 		}
 	};
 
@@ -130,17 +134,19 @@
 				}
 				console.log('uploaded');
 				isUploading = false;
-				const pic_id = response.data.pic_id;
+				console.log(response.data);
+				const pic_id = response.data.data.pic_id;
+				console.log(pic_id);
 				const confirmSave = confirm('Save new profile picture?');
 				if (confirmSave) {
 					const res = await axios.patch(
-						`/api/members/update/${member.memberName}`,
+						`/api/members/update/${member.memberName}?profile_pic_id=${pic_id}`,
 						{
-							member_name: member.memberName,
-							profilePic: pic_id
+							memberName: member.memberName
 						},
 						{
 							headers: {
+								'Content-Type': 'multipart/form-data',
 								Expect: '100-continue',
 								Authorization: `Bearer ${jwtToken}`,
 								'X-CSRF-Token': csrfToken || ''
@@ -151,7 +157,6 @@
 						alert('Error saving profile picture');
 						reject();
 					}
-					// TODO: trigger reload of profile picture
 				} else {
 					const res = await axios.delete(`/api/upload/image/${pic_id}`, {
 						headers: {
@@ -169,50 +174,78 @@
 			}
 		});
 	};
-
-	const toggleSaveButton = (e: Event) => {
-		const button = e.target as HTMLButtonElement;
-		button.classList.toggle('saved');
-		button.classList.toggle('unsaved');
-		if (button.classList.contains('saved')) {
-			button.innerHTML = '<i class="feather" data-feather="check"></i> Saved';
-		} else {
-			button.innerHTML = '<i class="feather" data-feather="save"></i> Save';
-		}
-	};
 </script>
 
 <div class="member-card">
-	{#if member.profilePic}
-		<img class="member-image" src={member.profilePic} alt="{member.memberName}'s profile picture" />
-		<button
-			aria-label="Change profile picture (max. {maxFileSizeString})"
-			id="change-profile-pic-button"
-			on:click={openFilePicker}
-			><span class="tooltip" aria-label={tooltipMessage} />
-			<i class="feather" data-feather="edit-2" />
-		</button>
+	{#if member.profile_pic}
+		<div class="member-image-container">
+			<img
+				class="member-image"
+				src={member.profile_pic}
+				alt="{member.memberName}'s profile picture"
+			/>
+			<button
+				aria-label="View full image"
+				on:click={toggleModal}
+				on:keypress={toggleModal}
+				id="expand-image-button"
+			>
+				<span class="tooltip" aria-label="View full image" />
+				<div class="maximize-button">
+					<MaximizeIcon class="maximize-icon" />
+				</div>
+			</button>
+			<button
+				aria-label="Change profile picture (max. {maxFileSizeString})"
+				id="change-profile-pic-button"
+				on:click={openFilePicker}
+				on:keypress={openFilePicker}
+				><span class="tooltip" aria-label={tooltipMessage} />
+				<div class="edit-button">
+					<EditIcon />
+				</div>
+			</button>
+			{#if isUploading}
+				<div class="spinner" />
+			{/if}
+		</div>
 	{:else}
-		<img
-			class="member-image"
-			src="https://www.gravatar.com/avatar/000
+		<div class="member-image-container">
+			<img
+				class="member-image"
+				src="https://www.gravatar.com/avatar/000
     ?d=mp"
-			alt="{member.memberName}'s profile picture"
-		/>
-		<button
-			aria-label="Change profile picture (max. {maxFileSizeString})"
-			id="change-profile-pic-button"
-			on:click={openFilePicker}
-			><span class="tooltip" aria-label={tooltipMessage} />
-			<i class="feather" data-feather="edit-2" />
-		</button>
+				alt="{member.memberName}'s profile picture"
+			/>
+			<button
+				aria-label="Change profile picture (max. {maxFileSizeString})"
+				id="change-profile-pic-button"
+				on:click={openFilePicker}
+				on:keypress={openFilePicker}
+				><span class="tooltip" aria-label={tooltipMessage} />
+				<div class="edit-button">
+					<EditIcon />
+				</div>
+			</button>
+			{#if isUploading}
+				<div class="spinner" />
+			{/if}
+		</div>
 	{/if}
 	<div class="member-name">@{member.memberName}</div>
 	{#if member.bio.Valid}
 		<div class="member-bio">{member.bio.String}</div>
+		<UpdateBio
+			memberName={member.memberName}
+			isBioPresent={member.bio.Valid}
+			bio={member.bio.String}
+		/>
+	{:else}
+		<UpdateBio memberName={member.memberName} isBioPresent={member.bio.Valid} bio="" />
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
-	Other links and contact info @{member.memberName} has provided:
+	Other links and contact info for @{member.memberName}:
+	<!-- TODO: replace with user-defined custom fields, like on e.g. pleroma -->
 	{#if member.matrix.Valid}
 		<p>
 			<b>Matrix:</b>
@@ -232,18 +265,77 @@
 <button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
 {#if showModal}
 	<div class="modal">
-		<img src={member.profilePic} alt="{member.memberName}'s profile picture" />
-		<button on:click={toggleModal} aria-label="Close modal">
-			<i class="feather" data-feather="x" />
-		</button>
+		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
+		<div class="close-button">
+			<XIcon />
+		</div>
 	</div>
 {/if}
 
 <style>
 	:root {
 		--member-card-border-radius: 0.25em;
+		--member-card-background-color: #1f1f1f;
 		--logout-button-align: right;
-		--logout-button-padding-top: 3em;
+		--logout-button-padding-top: 0.25em;
+		--close-button-align: right;
+		--close-button-width: 1.2em;
+		--close-button-height: 1.2em;
+		--icon-color: #ffcbcc;
+		--button-bg: #60605190;
+		--button-radius: 20%;
+		--change-profile-pic-btn-right: 3.1rem;
+		--change-profile-pic-btn-top: -4rem;
+		--expand-image-btn-right: 1.15rem;
+		--expand-image-btn-bottom: 0.65rem;
+	}
+
+	:xicon {
+		width: 1.2em;
+		height: 1.2em;
+		fill: none;
+	}
+
+	#change-profile-pic-button {
+		position: relative !important;
+		right: var(--change-profile-pic-btn-right) !important;
+		top: var(--change-profile-pic-btn-top) !important;
+		margin-right: 0.7em !important;
+		width: 1.75em !important;
+		height: 1.75em !important;
+		padding: 0 0 0.25em 0;
+		border-radius: var(--button-radius);
+		background: var(--button-bg);
+	}
+
+	.edit-button {
+		width: 1em;
+		height: 1em;
+		fill: none;
+		display: contents !important;
+		/* calculate contrast between component background and element background */
+		mix-blend-mode: difference;
+		color: var(--icon-color);
+		position: relative;
+	}
+
+	.edit-button:hover {
+		fill: #fafafa;
+	}
+
+	.member-image {
+		width: 5em;
+		height: 5em;
+		border-radius: 50%;
+		object-fit: cover;
+		margin-bottom: 1em;
+		max-width: 100%;
+		font-size: smaller;
+	}
+
+	.member-image-container {
+		position: relative;
+		display: inline-block;
 	}
 
 	.member-card {
@@ -251,19 +343,42 @@
 		padding: 1em;
 		margin: 1em;
 		border-radius: var(--member-card-border-radius);
+		background-color: var(--member-card-background-color);
 	}
 
-	.feather {
-		width: 0.8em;
-		height: 0.8em;
+	button#expand-image-button {
+		background: var(--button-bg);
+		border-radius: var(--button-radius);
+		width: 1.75em !important;
+		height: 1.75em !important;
+		position: relative;
+		bottom: var(--expand-image-btn-bottom) !important;
+		right: var(--expand-image-btn-right) !important;
+		padding-right: 0.1em;
 	}
 
-	.member-image {
-		width: 100px;
-		height: 100px;
-		border-radius: 50%;
-		object-fit: cover;
-		margin-bottom: 1em;
+	.maximize-button {
+		display: inherit !important;
+		width: 1em;
+		height: 1em;
+		fill: none;
+		color: var(--icon-color);
+		margin-top: -0.35em !important;
+		padding: 0 35% 20% 0 !important;
+		right: 0.35em;
+		position: relative;
+	}
+
+	.close-button {
+		display: inline-block;
+		color: #e1e1e1;
+		width: var(--close-button-width);
+		height: var(--close-button-height);
+		fill: none;
+	}
+
+	.close-button:hover {
+		color: #fafaff;
 	}
 
 	.member-name {
@@ -275,6 +390,11 @@
 		font-size: 0.9em;
 		color: #666;
 		margin-bottom: 1em;
+		width: 85%;
+		position: relative;
+		overflow-wrap: break-word;
+		word-wrap: break-word;
+		display: inline-block;
 	}
 
 	.member-joined-date {
@@ -282,9 +402,12 @@
 		color: #999;
 	}
 
-	.logout-button {
+	button#logout-button {
+		/* 90% of member card width  */
+		width: calc(90% - 2em);
 		float: var(--logout-button-align);
 		padding-top: var(--logout-button-padding-top);
+		margin-left: 10%;
 	}
 
 	.spinner {
