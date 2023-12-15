@@ -412,8 +412,19 @@
 
 	.button-container {
 		display: flex;
+		width: 95% !important;
 		justify-content: space-around;
 		width: 100%; /* Ensuring buttons take full width */
+	}
+
+	form {
+		display: block;
+	}
+
+	@media (max-width: 600px) {
+		.button-container {
+			flex-direction: column;
+		}
 	}
 
 	.button-container button {
