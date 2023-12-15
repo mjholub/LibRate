@@ -26,7 +26,6 @@
 	}
 </script>
 
-<p>test</p>
 <div class="navbar">
 	<Search />
 </div>

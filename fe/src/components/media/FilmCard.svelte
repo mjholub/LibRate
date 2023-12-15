@@ -37,6 +37,7 @@
 		--film-card-height: 50vh;
 	}
 	.media-image {
+		display: block;
 		width: var(--film-card-width);
 		height: var(--film-card-height);
 	}
