@@ -9,29 +9,30 @@
 </script>
 
 <div class="password-container">
-	<input
-		{id}
-		class={!showPassword ? '' : 'hidden'}
-		bind:value
-		type="password"
-		autocomplete="new-password"
-		aria-label="Password"
-		aria-live="polite"
-		required
-		on:input={() => {
-			onInput(value);
-		}}
-	/>
-	<input
-		id="{id}Text"
-		class={showPassword ? '' : 'hidden'}
-		bind:value
-		type="text"
-		aria-live="polite"
-		autocomplete="new-password"
-		required
-		aria-label="Password confirmation"
-	/>
+	{#if !showPassword}
+		<input
+			{id}
+			bind:value
+			type="password"
+			autocomplete="new-password"
+			aria-label="Password"
+			aria-live="polite"
+			required
+			on:input={() => {
+				onInput(value);
+			}}
+		/>
+	{:else}
+		<input
+			id="{id}Text"
+			bind:value
+			type="text"
+			aria-live="polite"
+			autocomplete="new-password"
+			required
+			aria-label="Password confirmation"
+		/>
+	{/if}
 	<button
 		class="toggle-btn"
 		type="button"
@@ -72,7 +73,8 @@
 		height: 2rem;
 	}
 
-	input#password {
+	input#password,
+	input#passwordText {
 		font-family: inherit;
 		font-size: inherit;
 		-webkit-padding: 0.4em 0;
