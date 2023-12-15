@@ -45,6 +45,15 @@
 			windowWidth = window.innerWidth;
 			const handleResize = () => {
 				windowWidth = window.innerWidth;
+				const left = document.getElementById('left');
+				if (left) {
+					// if the window size is less than 768px, hide the left column
+					if (windowWidth < 768) {
+						left.style.display = 'none';
+					} else {
+						left.style.display = 'block';
+					}
+				}
 			};
 			window.addEventListener('resize', handleResize);
 		});
@@ -61,7 +70,7 @@
 		<Search />
 	</div>
 	<div class="content">
-		<div class="left">
+		<div id="left">
 			<MediaCarousel />
 		</div>
 		<div class="center">
