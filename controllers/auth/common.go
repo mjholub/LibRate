@@ -89,20 +89,27 @@ func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
 }
 
 func parseRegistrationInput(c *fiber.Ctx) (input *RegisterInput, err error) {
-	err = c.BodyParser(&input)
-	if err != nil {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
+	if form, err := c.MultipartForm(); err == nil {
+		if form.Value["password"][0] != form.Value["passwordConfirm"][0] {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
+		}
+		if form.Value["email"] == nil || form.Value["membername"] == nil {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
+		}
+		if !isEmail(form.Value["email"][0]) {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		}
+		input = &RegisterInput{
+			Email:           form.Value["email"][0],
+			MemberName:      form.Value["membername"][0],
+			Password:        form.Value["password"][0],
+			PasswordConfirm: form.Value["passwordConfirm"][0],
+			Roles:           []string{"member"},
+		}
+		return input, nil
 	}
-	if input.Password != input.PasswordConfirm {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Passwords do not match")
-	}
-	if input.Email == "" && input.MemberName == "" {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Email and nickname required")
-	}
-	if !isEmail(input.Email) {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
-	}
-	return input, nil
+
+	return nil, h.Res(c, fiber.StatusBadRequest, "Invalid registration request")
 }
 
 // cleanRegInput cleans the input from non-ASCII and unsafe characters
