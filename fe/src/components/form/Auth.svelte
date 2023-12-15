@@ -1,10 +1,9 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
-	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
 
 	const tooltipMessage = 'Not recommended on shared computers';
@@ -14,48 +13,20 @@
 		email_or_username = localStorage.getItem('email_or_username') || '';
 	}
 	let email = '';
-	let email_input: HTMLInputElement;
 	let nickname = '';
-	let nickname_input: HTMLInputElement;
 
-	let isAvailable: boolean;
-
-	onMount(async () => {
-		if (email_input) {
-			email_input.value = email;
-			email_input.addEventListener('keyup', () => {
-				clearTimeout(checkTimeout);
-				checkTimeout = setTimeout(async () => {
-					email = email_input.value;
-					await checkExists();
-				}, 1000);
-			});
-		} else {
-			console.error('email input element not present');
-		}
-
-		if (nickname_input) {
-			nickname_input.value = nickname;
-			nickname_input.addEventListener('keyup', () => {
-				clearTimeout(checkTimeout);
-				checkTimeout = setTimeout(async () => {
-					nickname = nickname_input.value;
-					await checkExists();
-				}, 1000);
-			});
-		} else {
-			console.error('nickname input element not present');
-		}
-	});
+	let isEmailAvailable = true;
+	let isNickAvailable = true;
 
 	let password = '';
 	let rememberMe = false;
-	let checkTimeout: any;
 	let showPassword = false;
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
 	let strength: number;
+	let email_input: HTMLInputElement;
+	let nickname_input: HTMLInputElement;
 
 	const toggleObfuscation = () => {
 		showPassword = !showPassword;
@@ -64,28 +35,71 @@
 	// helper function to check password strength
 	let timeoutId: number | undefined;
 
-	// in password input for registration this function will be called until an available nickname is found
-	const checkExists = async () => {
+	const prepareCSRF = async () => {
+		const csrfToken = document.cookie
+			.split('; ')
+			.find((row) => row.startsWith('csrf_'))
+			?.split('=')[1];
 		const headers = {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': csrfToken
 		};
+		return headers;
+	};
 
-		try {
-			let requestPayload = {
-				membername: nickname,
-				email
-			};
+	const checkEmailExistApi = async (email: string) => {
+		let available = false;
+		const headers = await prepareCSRF();
+		const requestPayload = {
+			email
+		};
+		const res = await axios.post('/api/members/check', requestPayload, { headers });
+		res.data.message === 'available' ? (available = true) : (available = false);
+		return available;
+	};
 
-			const res = await axios.post('/api/members/check', requestPayload, { headers });
-			isAvailable = res.data.message === 'available';
-			if (!isAvailable) {
-				errorMessage = 'Nickname or email already taken';
-			}
-		} catch (error) {
-			process.env.NODE_ENV === 'development'
-				? console.error(error)
-				: console.error('Error checking nickname availability');
+	const checkNicknameExistApi = async (nickname: string) => {
+		let available = false;
+		const headers = await prepareCSRF();
+		const requestPayload = {
+			memberName: nickname
+		};
+		const res = await axios.post('/api/members/check', requestPayload, { headers });
+		res.data.message === 'available' ? (available = true) : (available = false);
+		return available;
+	};
+
+	const checkEmailExists = async (email: string, debounceTime: number) => {
+		if (timeoutId) {
+			window.clearTimeout(timeoutId);
 		}
+		// wait until there is a value in the input field
+		if (email.length < 1) return;
+
+		timeoutId = window.setTimeout(async () => {
+			try {
+				isEmailAvailable = await checkEmailExistApi(email);
+			} catch (error) {
+				isEmailAvailable = false;
+			}
+		}, debounceTime);
+	};
+
+	const checkNicknameExists = async (nickname: string, debounceTime: number) => {
+		if (timeoutId) {
+			window.clearTimeout(timeoutId);
+		}
+
+		// wait until there is a value in the input field
+		if (nickname.length < 1) return;
+
+		timeoutId = window.setTimeout(async () => {
+			try {
+				isNickAvailable = await checkNicknameExistApi(nickname);
+			} catch (error) {
+				isNickAvailable = false;
+			}
+		}, debounceTime);
 	};
 
 	const checkEntropy = async (password: string) => {
@@ -243,20 +257,6 @@
 	onDestroy(() => {
 		if (browser) {
 			localStorage.removeItem('email_or_username');
-			email_input.removeEventListener('keyup', () => {
-				clearTimeout(checkTimeout);
-				checkTimeout = setTimeout(async () => {
-					email = email_input.value;
-					await checkExists();
-				}, 1000);
-			});
-			nickname_input.removeEventListener('keyup', () => {
-				clearTimeout(checkTimeout);
-				checkTimeout = setTimeout(async () => {
-					nickname = nickname_input.value;
-					await checkExists();
-				}, 1000);
-			});
 		}
 	});
 </script>
@@ -269,22 +269,48 @@
 			<input
 				bind:this={email_input}
 				bind:value={email}
+				on:blur={() => checkEmailExists(email, 1000)}
 				type="email"
 				class="input"
 				id="email_input"
 				required
 				aria-label="Email"
 			/>
-
+			{#if email.length > 0}
+				{#if isEmailAvailable && email_input.validity.valid}
+					<p>Email is available</p>
+				{:else if !email.match(/(\w+)@(\w+)\.(\w+)/)}
+					<span class="spinner" />
+				{:else}
+					<p class="error-message">
+						Email is not available. Try <a href="https://librate.fediverse.observer/"
+							>another instance</a
+						>
+						or <a href="/form/account/recover">recover your password</a>
+					</p>
+				{/if}
+			{/if}
 			<label for="nickname">Nickname:</label>
 			<input
 				type="text"
 				bind:this={nickname_input}
 				bind:value={nickname}
+				on:blur={() => checkNicknameExists(nickname, 1100)}
 				required
 				class="input"
 				id="nickname_input"
 			/>
+			{#if nickname.length > 0}
+				{#if isNickAvailable}
+					<p class="info-message">Nickname available</p>
+				{:else}
+					<p class="error-message">
+						Nickname not available. Try
+						<a href="https://librate.fediverse.observer/">another instance</a>
+						or <a href="/form/account/recover">recover your account</a>
+					</p>
+				{/if}
+			{/if}
 			<label for="password">Password:</label>
 			<PasswordInput
 				bind:value={password}
@@ -326,7 +352,7 @@
 
 			<!-- FIXME: this is not getting updated properly -->
 			<!--
-			{#if isAvailable}
+			{#if  isAvailable}
 				<p>Nickname is available</p>
 			{:else}
 				<p>Nickname is not available</p>
@@ -397,10 +423,20 @@
 	.error-message {
 		color: var(--error-color);
 		background-color: var(--error-background);
-		padding: 0.5rem;
+		padding: 0.1rem;
+		margin: 0.2em 0;
+		width: inherit;
+		border-radius: 4px;
 		border: 1px solid var(--error-color);
 		font-weight: bold;
-		font-size: 1.2em;
+		font-size: 0.8em;
+	}
+
+	p.info-message {
+		font-size: 0.75em;
+		margin: 0.2em 0;
+		word-break: break-word;
+		word-wrap: break-word;
 	}
 
 	.error-icon::before {
@@ -462,5 +498,25 @@
 
 	.tooltip:hover::before {
 		display: block;
+	}
+
+	.spinner {
+		border: 4px solid rgba(0, 0, 0, 0.1);
+		border-top: 4px solid #3498db;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		animation: spin 1s linear infinite;
+		margin-left: 10px;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 </style>
