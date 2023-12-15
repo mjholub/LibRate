@@ -3,7 +3,6 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
-	import { memberStore } from '$stores/members/getInfo.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
@@ -340,7 +339,7 @@
 		{#if isRegistration}
 			<label for="passwordConfirm">Confirm Password:</label>
 			<PasswordInput
-				id="passwordConfirm"
+				id="password"
 				bind:value={passwordConfirm}
 				onInput={() => Promise.resolve(void 0)}
 				{showPassword}
@@ -387,12 +386,15 @@
 	.input {
 		font-family: inherit;
 		font-size: inherit;
-		padding: 0.4em;
-		margin: 0 0 0.5em 0;
+		display: inline-table;
+		padding: 0.2em 0.4em;
+		margin: 0.1em 0 0.1em 0;
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 4px;
-		width: 100%; /* Ensuring inputs take full width */
+		width: calc(98% - 0.2em);
+		height: 2rem;
+		left: 0.2em;
 	}
 
 	.error-message {
