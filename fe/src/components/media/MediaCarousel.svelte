@@ -15,6 +15,7 @@
 	let media: (Album | Track | Film | Book)[] = [];
 	let al: Album[] = [];
 	let mediaImgPath = '';
+	export let authenticated: boolean;
 	let creators: Creator[] = [];
 
 	const isAlbum = (mediaItem: Media | Album): mediaItem is Album => {
@@ -293,6 +294,14 @@
 		{:else}
 			{#each media as mediaItem (mediaItem.UUID)}
 				<div class="media-card-wrapper">
+					<p class="edit-prompt">
+						{#if authenticated}
+							<a href="/form/media/edit?${mediaItem.UUID}">(Edit this entry)</a>
+						{:else}
+							Log in to edit this entry.
+						{/if}
+					</p>
+
 					{#if isAlbum(mediaItem)}
 						{#each al as album (album)}
 							<AlbumCard {album} imgPath={mediaImgPath} />
@@ -309,6 +318,13 @@
 </div>
 
 <style>
+	.edit-prompt {
+		font-size: 0.8em;
+		font-style: italic;
+		margin-bottom: 0.5em;
+		display: block;
+	}
+
 	.carousel-container {
 		height: 100%;
 		width: 100%;
@@ -316,8 +332,6 @@
 	.carousel-title {
 		font-size: 1.5em;
 		font-weight: bold;
-		margin-bottom: 1em;
-		margin-block-end: 1em;
 		overflow: hidden;
 	}
 	.carousel {
@@ -326,7 +340,7 @@
 	}
 	.media-card-wrapper {
 		flex: 0 0 auto;
-		width: 30%;
+		width: 60%;
 		height: 40%;
 		padding: 1em;
 	}
