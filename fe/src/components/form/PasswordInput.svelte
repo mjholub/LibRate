@@ -8,7 +8,6 @@
 	export let toggleObfuscation: () => void;
 </script>
 
-<label for={id}>Password:</label>
 <div class="password-container">
 	<input
 		{id}
@@ -16,6 +15,8 @@
 		bind:value
 		type="password"
 		autocomplete="new-password"
+		aria-label="Password"
+		aria-live="polite"
 		required
 		on:input={() => {
 			onInput(value);
@@ -26,9 +27,10 @@
 		class={showPassword ? '' : 'hidden'}
 		bind:value
 		type="text"
+		aria-live="polite"
 		autocomplete="new-password"
 		required
-		aria-label="Password"
+		aria-label="Password confirmation"
 	/>
 	<button
 		class="toggle-btn"

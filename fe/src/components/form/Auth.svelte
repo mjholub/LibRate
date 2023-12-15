@@ -276,6 +276,7 @@
 				class="input"
 			/>
 
+			<label for="password">Password:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -315,7 +316,7 @@
 				class="input"
 				id="nickname_input"
 			/>
-
+			<label for="password">Password:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -337,7 +338,7 @@
 		{/if}
 
 		{#if isRegistration}
-			<label for="passwordConfirm">Confirm Password:</label>
+			<label for="password">Confirm Password:</label>
 			<PasswordInput
 				id="password"
 				bind:value={passwordConfirm}
