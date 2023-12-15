@@ -213,8 +213,7 @@
 		<div class="member-image-container">
 			<img
 				class="member-image"
-				src="https://www.gravatar.com/avatar/000
-    ?d=mp"
+				src="/static/avatar-placeholder.png"
 				alt="{member.memberName}'s profile picture"
 			/>
 			<button
