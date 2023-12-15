@@ -3,7 +3,6 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { authStore } from '../../stores/members/auth.ts';
-	import { memberStore } from '$stores/members/getInfo.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import type { AuthStoreState } from '$stores/members/auth.ts';
 	import { PasswordMeter } from 'password-meter';
@@ -56,7 +55,6 @@
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
-	let authState: AuthStoreState = $authStore;
 	let strength: number;
 
 	const toggleObfuscation = () => {
@@ -178,7 +176,6 @@
 					authStore.set({
 						isAuthenticated: true
 					});
-					console.debug('authState updated to ', authState);
 					localStorage.removeItem('email_or_username');
 					window.location.href = '/';
 					console.info('Registration successful');
@@ -267,35 +264,7 @@
 <!-- Form submission handler -->
 <form on:submit|preventDefault={isRegistration ? register : login}>
 	<div class="input">
-		{#if !isRegistration}
-			<label for="email_or_username">Email or Username:</label>
-			<input
-				type="text"
-				id="email_or_username"
-				bind:value={email_or_username}
-				required
-				class="input"
-			/>
-
-			<PasswordInput
-				bind:value={password}
-				id="password"
-				onInput={async () => void 0}
-				{showPassword}
-				{toggleObfuscation}
-			/>
-			<label for="rememberMe"
-				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
-			>
-			<input
-				type="checkbox"
-				id="rememberMe"
-				name="rememberMe"
-				value="rememberMe"
-				on:change={setRememberMe}
-			/>
-		{:else}
-			<!-- Registration form -->
+		{#if isRegistration}
 			<label for="email">Email:</label>
 			<input
 				bind:this={email_input}
@@ -316,7 +285,7 @@
 				class="input"
 				id="nickname_input"
 			/>
-
+			<label for="password">Password:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -325,6 +294,34 @@
 				}}
 				{showPassword}
 				{toggleObfuscation}
+			/>
+		{:else}
+			<label for="email_or_username">Email or Username:</label>
+			<input
+				type="text"
+				id="email_or_username"
+				bind:value={email_or_username}
+				required
+				class="input"
+			/>
+
+			<label for="password">Password:</label>
+			<PasswordInput
+				bind:value={password}
+				id="password"
+				onInput={async () => void 0}
+				{showPassword}
+				{toggleObfuscation}
+			/>
+			<label for="rememberMe"
+				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
+			>
+			<input
+				type="checkbox"
+				id="rememberMe"
+				name="rememberMe"
+				value="rememberMe"
+				on:change={setRememberMe}
 			/>
 
 			<!-- FIXME: this is not getting updated properly -->
@@ -338,9 +335,9 @@
 		{/if}
 
 		{#if isRegistration}
-			<label for="passwordConfirm">Confirm Password:</label>
+			<label for="password">Confirm Password:</label>
 			<PasswordInput
-				id="passwordConfirm"
+				id="password"
 				bind:value={passwordConfirm}
 				onInput={() => Promise.resolve(void 0)}
 				{showPassword}
@@ -371,14 +368,13 @@
 			<button type="submit" on:click={login}>Sign In</button>
 			<button type="button" on:click={startRegistration}>Sign Up</button>
 		{:else}
-			<button type="submit">Sign Up</button>
 			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
+			<button type="submit">Sign Up</button>
 		{/if}
 	</div>
 </form>
 
 <style>
-	/* very important for the colorblind for example */
 	:root {
 		--error-color: red;
 		--error-background: #ffe6e6;
@@ -387,12 +383,15 @@
 	.input {
 		font-family: inherit;
 		font-size: inherit;
-		padding: 0.4em;
-		margin: 0 0 0.5em 0;
+		display: inline-table;
+		padding: 0.2em 0.4em;
+		margin: 0.1em 0 0.1em 0;
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 4px;
-		width: 100%; /* Ensuring inputs take full width */
+		width: calc(98% - 0.2em);
+		height: 2rem;
+		left: 0.2em;
 	}
 
 	.error-message {
@@ -413,8 +412,19 @@
 
 	.button-container {
 		display: flex;
+		width: 95% !important;
 		justify-content: space-around;
 		width: 100%; /* Ensuring buttons take full width */
+	}
+
+	form {
+		display: block;
+	}
+
+	@media (max-width: 600px) {
+		.button-container {
+			flex-direction: column;
+		}
 	}
 
 	.button-container button {

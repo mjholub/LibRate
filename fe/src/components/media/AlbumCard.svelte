@@ -19,7 +19,8 @@
 		durationStr = durationDate.toLocaleTimeString(undefined, {
 			hour: 'numeric',
 			minute: 'numeric',
-			second: 'numeric'
+			second: 'numeric',
+			hour12: false
 		});
 	}
 	export let imgPath: string;
@@ -110,7 +111,6 @@
 		--input-background-color-focus: #fff;
 		--input-text: #000;
 		--border-radius: 2px;
-		--pwd-container-display: inline flow-root list-item;
 		--toggle-btn-bgcolor: #4caf50;
 		--toggle-btn-hover-bgcolor: #45a049;
 	}

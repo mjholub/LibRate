@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { EyeIcon, EyeOffIcon } from 'svelte-feather-icons';
+
 	export let value: string;
 	export let id: string;
 	export let onInput: (password: string) => Promise<void>;
@@ -6,7 +8,6 @@
 	export let toggleObfuscation: () => void;
 </script>
 
-<label for={id}>Password:</label>
 <div class="password-container">
 	<input
 		{id}
@@ -14,6 +15,8 @@
 		bind:value
 		type="password"
 		autocomplete="new-password"
+		aria-label="Password"
+		aria-live="polite"
 		required
 		on:input={() => {
 			onInput(value);
@@ -24,9 +27,10 @@
 		class={showPassword ? '' : 'hidden'}
 		bind:value
 		type="text"
+		aria-live="polite"
 		autocomplete="new-password"
 		required
-		aria-label="Password"
+		aria-label="Password confirmation"
 	/>
 	<button
 		class="toggle-btn"
@@ -36,9 +40,9 @@
 	>
 		<span class="icon">
 			{#if showPassword}
-				👁️
+				<EyeIcon />
 			{:else}
-				<span class="crossed-out-eye">👁️⃠</span>
+				<EyeOffIcon />
 			{/if}
 		</span>
 	</button>
@@ -52,32 +56,34 @@
 		--input-background-color: #fff;
 		--input-background-color-focus: #fff;
 		--input-text: #000;
-		--border-radius: 2px;
-		--pwd-container-display: inline flow-root list-item;
+		--border-radius: 4px;
+		--pwd-container-display: inline-block;
 	}
 
 	.password-container {
 		position: relative;
-		overflow: hidden;
-		display: var(--pwd-container-display);
+		overflow: visible;
+		display: var(--pwd-container-display) !important;
 		border: 1px solid var(--input-border-color);
 		border-radius: var(--border-radius);
 		color: var(--input-text);
 		background-color: var(--input-background-color);
+		width: calc(98% - 0.2em);
+		height: 2rem;
 	}
 
-	.hidden {
-		display: none;
-	}
-
-	.toggle-btn {
-		position: absolute;
-		right: 0.6rem;
-		top: 50%;
-		transform: translateY(-50%);
-		background: transparent;
+	input#password {
+		font-family: inherit;
+		font-size: inherit;
+		-webkit-padding: 0.4em 0;
+		padding: 0.2em 0 0.2em 0;
+		margin: 0.1em 0 0.1em 0;
+		box-sizing: border-box;
 		border: none;
-		cursor: pointer;
+		border-radius: 4px;
+		width: inherit;
+		display: inline-block;
+		position: relative;
 	}
 
 	.icon {
@@ -101,14 +107,17 @@
 		-moz-osx-font-smoothing: grayscale;
 		font-feature-settings: 'liga';
 	}
+	.hidden {
+		display: none;
+	}
 
-	.crossed-out-eye {
-		position: absolute;
-		display: inline-block;
-		font-family: sans-serif; /* decoration won't look properly on monospace */
-		font-size: 1.2rem;
-		right: -0.4rem;
-		bottom: -50%;
-		text-decoration: line-through;
+	.toggle-btn {
+		position: relative;
+		right: 0.6rem;
+		top: 30%;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		display: ruby-text-container;
 	}
 </style>

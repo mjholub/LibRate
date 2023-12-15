@@ -184,7 +184,6 @@
 		--input-background-color-focus: #fff;
 		--input-text: #000;
 		--border-radius: 2px;
-		--pwd-container-display: inline flow-root list-item;
 		--box-padding: 0.5em;
 		--box-marigin-btm: 0.5em;
 	}
