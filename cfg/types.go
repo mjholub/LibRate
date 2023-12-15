@@ -17,6 +17,7 @@ type Config struct {
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
 	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
+	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 }
 
 // nolint: musttag // tagged in the struct above
@@ -45,22 +46,27 @@ type RedisConfig struct {
 
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
-	Host            string `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
-	Domain          string `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
-	Port            int    `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
-	Prefork         bool   `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
-	ReduceMemUsage  bool   `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
-	StaticDir       string `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
-	PowInterval     int    `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
-	PowDifficulty   int    `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
-	RequestTimeout  int    `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
-	TLS             bool   `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
-	ShutdownTimeout int    `yaml:"shutdownTimeout" default:"10" env:"LIBRATE_SHUTDOWN_TIMEOUT"`
-	MaxUploadSize   int64  `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_UPLOAD_SIZE"`
+	Host           string `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
+	Domain         string `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
+	Port           int    `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
+	Prefork        bool   `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
+	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
+	StaticDir      string `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
+	PowInterval    int    `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
+	PowDifficulty  int    `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
+	RequestTimeout int    `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
+	TLS            bool   `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
+	MaxUploadSize  int64  `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_UPLOAD_SIZE"`
 }
 
 // KeysConfig defines the location of keys used for TLS
 type KeysConfig struct {
 	Private string `yaml:"private" default:"./keys/private.pem" env:"LIBRATE_PRIVATE_KEY"`
 	Public  string `yaml:"public" default:"./keys/public.pem" env:"LIBRATE_PUBLIC_KEY"`
+}
+
+type GrpcConfig struct {
+	Host            string `yaml:"host" default:"localhost" env:"LIBRATE_GRPC_HOST"`
+	Port            int    `yaml:"port" default:"3030" env:"LIBRATE_GRPC_PORT"`
+	ShutdownTimeout int    `yaml:"shutdownTimeout" default:"10" env:"LIBRATE_SHUTDOWN_TIMEOUT"`
 }

@@ -127,24 +127,17 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
 
+	s := &cmd.GrpcServer{
+		App:    app,
+		Log:    &log,
+		Config: &conf.GRPC,
+	}
+	go cmd.RunGrpcServer(s)
 	// Listen on chosen port, host and protocol
 	// (disabling HTTPS still works if you use reverse proxy)
 	err = modularListen(conf, app)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to listen")
-	}
-
-	// Graceful or timed shutdown
-	if conf.Fiber.ShutdownTimeout >= 0 {
-		err = app.ShutdownWithTimeout(time.Second * time.Duration(conf.Fiber.ShutdownTimeout))
-		if err != nil {
-			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
-		}
-	} else {
-		err = app.Shutdown()
-		if err != nil {
-			log.Panic().Err(err).Msgf("Failed to shutdown app: %v", err)
-		}
 	}
 }
 
@@ -235,19 +228,20 @@ func parseFlags() FlagArgs {
 		pathUse         = "Path to migrations to apply"
 		exitVal         = false
 		exitUse         = "Exit after running migrations"
+		short           = " (shorthand)"
 	)
 	flag.BoolVar(&init, "init", initVal, initUse)
-	flag.BoolVar(&init, "i", initVal, initUse+" (&shorthand)")
+	flag.BoolVar(&init, "i", initVal, initUse+short)
 	flag.BoolVar(&ExternalDBHealthCheck, "external-db-health-check", externalDBHCVal, exDBHCUse)
-	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+" (&shorthand)")
+	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+short)
 	flag.StringVar(&configFile, "config", confVal, confUse)
-	flag.StringVar(&configFile, "c", confVal, confUse+" (&shorthand)")
+	flag.StringVar(&configFile, "c", confVal, confUse+short)
 	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
-	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+" (&shorthand)")
+	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+short)
 	flag.StringVar(&path, "path", pathVal, pathUse)
-	flag.StringVar(&path, "p", pathVal, pathUse+" (&shorthand)")
+	flag.StringVar(&path, "p", pathVal, pathUse+short)
 	flag.BoolVar(&exit, "exit", exitVal, exitUse)
-	flag.BoolVar(&exit, "x", exitVal, exitUse+" (&shorthand)")
+	flag.BoolVar(&exit, "x", exitVal, exitUse+short)
 
 	flag.Parse()
 
