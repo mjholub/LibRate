@@ -6,6 +6,7 @@ toolchain go1.21.4
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20231124054911-51fe1f6ba5f6
+	codeberg.org/mjh/lrctl v0.1.1
 	filippo.io/age v1.1.1
 	github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a
 	github.com/AlecAivazis/survey/v2 v2.3.7

@@ -43,7 +43,11 @@ logging:
   timestamp:
     enabled: true
     format: "2006-01-0215:04:05.000Z07:00" 
-# developmen or production
+grpc:
+  host: "127.0.0.1"
+  port: 3030
+  shutdownTimeout: 10
+# development or production
 librateEnv: "production"
 jwtSecret: "librate-jwt-secret"
 # relative paths supported
