@@ -19,7 +19,8 @@
 		durationStr = durationDate.toLocaleTimeString(undefined, {
 			hour: 'numeric',
 			minute: 'numeric',
-			second: 'numeric'
+			second: 'numeric',
+			hour12: false
 		});
 	}
 	export let imgPath: string;
