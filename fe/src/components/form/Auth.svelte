@@ -55,7 +55,6 @@
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
 	let errorMessage = '';
-	let authState: AuthStoreState = $authStore;
 	let strength: number;
 
 	const toggleObfuscation = () => {
@@ -177,7 +176,6 @@
 					authStore.set({
 						isAuthenticated: true
 					});
-					console.debug('authState updated to ', authState);
 					localStorage.removeItem('email_or_username');
 					window.location.href = '/';
 					console.info('Registration successful');
@@ -266,36 +264,7 @@
 <!-- Form submission handler -->
 <form on:submit|preventDefault={isRegistration ? register : login}>
 	<div class="input">
-		{#if !isRegistration}
-			<label for="email_or_username">Email or Username:</label>
-			<input
-				type="text"
-				id="email_or_username"
-				bind:value={email_or_username}
-				required
-				class="input"
-			/>
-
-			<label for="password">Password:</label>
-			<PasswordInput
-				bind:value={password}
-				id="password"
-				onInput={async () => void 0}
-				{showPassword}
-				{toggleObfuscation}
-			/>
-			<label for="rememberMe"
-				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
-			>
-			<input
-				type="checkbox"
-				id="rememberMe"
-				name="rememberMe"
-				value="rememberMe"
-				on:change={setRememberMe}
-			/>
-		{:else}
-			<!-- Registration form -->
+		{#if isRegistration}
 			<label for="email">Email:</label>
 			<input
 				bind:this={email_input}
@@ -325,6 +294,34 @@
 				}}
 				{showPassword}
 				{toggleObfuscation}
+			/>
+		{:else}
+			<label for="email_or_username">Email or Username:</label>
+			<input
+				type="text"
+				id="email_or_username"
+				bind:value={email_or_username}
+				required
+				class="input"
+			/>
+
+			<label for="password">Password:</label>
+			<PasswordInput
+				bind:value={password}
+				id="password"
+				onInput={async () => void 0}
+				{showPassword}
+				{toggleObfuscation}
+			/>
+			<label for="rememberMe"
+				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
+			>
+			<input
+				type="checkbox"
+				id="rememberMe"
+				name="rememberMe"
+				value="rememberMe"
+				on:change={setRememberMe}
 			/>
 
 			<!-- FIXME: this is not getting updated properly -->
@@ -378,7 +375,6 @@
 </form>
 
 <style>
-	/* very important for the colorblind for example */
 	:root {
 		--error-color: red;
 		--error-background: #ffe6e6;
