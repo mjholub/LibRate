@@ -13,7 +13,7 @@ import (
 )
 
 func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
-	// TODO: implement usign ActivityPub
+	// TODO: implement using ActivityPub
 	return nil
 }
 
@@ -30,7 +30,7 @@ func (mc *MemberController) Check(c *fiber.Ctx) error {
 	}
 	mc.log.Debug().Msgf("Member: %+v", member)
 
-	if member.MemberName == "" || member.Email == "" {
+	if member.MemberName == "" && member.Email == "" {
 		return h.Res(c, fiber.StatusBadRequest, "No nickname or email provided")
 	}
 
