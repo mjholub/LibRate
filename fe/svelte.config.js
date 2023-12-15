@@ -31,12 +31,15 @@ const config = {
       assets: 'build',
       fallback: '404.html',
       precompress: false,
-      strict: true
+      strict: false,
     }),
     alias: {
       $components: './src/components',
       $stores: './src/stores',
       $lib: './src/lib'
+    },
+    version: {
+      name: ""
     },
   },
 
