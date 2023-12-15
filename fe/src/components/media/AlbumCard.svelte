@@ -60,15 +60,13 @@
 				</div>
 			{/if}
 		</dd>
-
 		<dt>Release Date:</dt>
 		<dd>{album.release_date}</dd>
-
 		<dt>Tracklist:</dt>
 		<dd class="album-tracklist">
 			{#each album.tracks as track (track.media_id)}
 				<div class="album-track">
-					<span>{track.track_number++}</span>
+					<span>{track.track_number + 1}</span>
 					<span>{track.name}</span>
 					<span>{track.duration}</span>
 				</div>
@@ -113,18 +111,26 @@
 		--border-radius: 2px;
 		--toggle-btn-bgcolor: #4caf50;
 		--toggle-btn-hover-bgcolor: #45a049;
+		--album-card-width: 100%;
+		--album-card-height: 100%;
+	}
+
+	img.media-image {
+		width: var(--album-card-width);
+		height: var(--album-card-height);
+		display: inline-flex;
 	}
 
 	.album-details {
-		display: flex;
-		width: 100%;
-		flex-direction: column;
+		display: inline-grid;
+		width: var(--album-card-width);
 	}
 	.album-tracklist {
-		display: flex;
-		flex-direction: column;
+		display: inline-block;
 		width: 100%;
 		overflow-x: auto;
+		clear: left;
+		position: static;
 	}
 	.album-track {
 		display: flex;
@@ -161,5 +167,11 @@
 		flex-direction: row;
 		font-size: 1em;
 		color: #ffffff;
+	}
+	dt {
+		font-weight: bold;
+	}
+	dd {
+		margin-left: 0.1em;
 	}
 </style>

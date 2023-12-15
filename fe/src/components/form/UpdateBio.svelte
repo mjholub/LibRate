@@ -14,26 +14,46 @@
 
 	// TODO: use this to reactively hide the bio contents when editing is active
 
-	const showBioInput = () => {
+	const getBioComponents = () => {
 		const bioInput = document.getElementById('bio-input') as HTMLTextAreaElement;
 		const editBio = document.getElementById('edit-bio') as HTMLAnchorElement;
 		const saveBio = document.getElementById('save-bio-button') as HTMLButtonElement;
 		const cancelBio = document.getElementById('cancel-bio-button') as HTMLButtonElement;
+		const bioContents = document.getElementById('member-bio') as HTMLDivElement;
+		return { bioInput, editBio, saveBio, cancelBio, bioContents };
+	};
+
+	const showBioInput = () => {
+		const { bioInput, editBio, saveBio, cancelBio, bioContents } = getBioComponents();
 		if (bioInput && editBio) {
 			bioInput.style.display = 'block';
 			editBio.style.display = 'none';
-			saveBio.style.display = 'inline-block';
-			cancelBio.style.display = 'inline-block';
+			saveBio.style.display = 'contents';
+			cancelBio.style.display = 'contents';
+			if (bioContents) {
+				bioContents.style.display = 'none';
+			}
 			bioInput.focus();
 			inputActive = true;
 		}
 	};
 
+	const hideBioInput = () => {
+		const { bioInput, editBio, saveBio, cancelBio, bioContents } = getBioComponents();
+		if (bioInput && editBio) {
+			bioInput.style.display = 'none';
+			editBio.style.display = 'contents';
+			saveBio.style.display = 'none';
+			cancelBio.style.display = 'none';
+			if (bioContents) {
+				bioContents.style.display = 'inline-block';
+			}
+			inputActive = false;
+		}
+	};
+
 	const saveBio = async () => {
-		const bioInput = document.getElementById('bio-input') as HTMLTextAreaElement;
-		const editBio = document.getElementById('edit-bio') as HTMLAnchorElement;
-		const cancelBio = document.getElementById('cancel-bio-button') as HTMLButtonElement;
-		const saveBio = document.getElementById('save-bio-button') as HTMLButtonElement;
+		const { bioInput, editBio, saveBio, cancelBio } = getBioComponents();
 		if (bioInput && editBio && cancelBio && saveBio) {
 			const csrfToken = document.cookie
 				.split('; ')
@@ -55,7 +75,7 @@
 			}
 
 			bioSaved = true;
-			inputActive = false;
+			hideBioInput();
 		}
 	};
 </script>
@@ -66,6 +86,16 @@
 			<Edit2Icon />
 		</span>
 	</button>
+	<button
+		aria-label="Close"
+		on:click={hideBioInput}
+		on:keypress={hideBioInput}
+		id="cancel-bio-button"
+	>
+		<span class="close-icon">
+			<XIcon />
+		</span>
+	</button>
 	<textarea id="bio-input">
 		{bio}
 	</textarea>
@@ -73,38 +103,29 @@
 	<a id="edit-bio" on:click={showBioInput} on:keypress={showBioInput} role="button" tabindex="0"
 		>Add bio</a
 	>
+	<button
+		aria-label="Close"
+		on:click={hideBioInput}
+		on:keypress={hideBioInput}
+		id="cancel-bio-button"
+	>
+		<span class="close-icon">
+			<XIcon />
+		</span>
+	</button>
+
 	<textarea id="bio-input" placeholder="Enter bio here" />
 {/if}
-<button
-	aria-label="Close"
-	on:click={showBioInput}
-	on:keypress={showBioInput}
-	id="cancel-bio-button"
->
-	<span class="close-icon">
-		<XIcon />
-	</span>
-</button>
 <button aria-label="Save bio" on:click={saveBio} on:keypress={saveBio} id="save-bio-button">
 	{#if bioSaved}
-		<span class="icon">
+		<span class="save-icon" aria-label="Changes saved!">
 			<CheckIcon />
 		</span>
 	{:else}
-		<span class="icon">
+		<span class="save-icon" aria-label="Save changes">
 			<SaveIcon />
 		</span>
 	{/if}
-</button>
-<button
-	aria-label="Cancel changes"
-	on:click={showBioInput}
-	on:keypress={showBioInput}
-	id="cancel-bio-button"
->
-	<span class="icon">
-		<XCircleIcon />
-	</span>
 </button>
 
 <style>
@@ -112,7 +133,7 @@
 		--edit-icon-color: #ffcbcc;
 		--edit-icon-color-hover: calc(var(--icon-color) + 0.2);
 		--button-bg: #606051;
-		--button-radius: 20%;
+		--button-radius: 4px;
 		--bio-input-font-size: 11pt;
 		--bio-input-height: 6em;
 	}
@@ -125,10 +146,11 @@
 	}
 	#edit-bio {
 		color: var(--edit-icon-color) !important;
-		display: flex;
+		display: contents;
 		position: relative;
-		bottom: 15%;
-		left: 90%;
+		bottom: 1%;
+		left: 1%;
+		padding: 0.1em 0.2em;
 		width: 1.75em !important;
 		height: 1.75em !important;
 		background-color: var(--button-bg);
@@ -140,6 +162,9 @@
 		height: 1.75em !important;
 		width: 1.75em !important;
 		margin-right: 0.5em;
+	}
+	#cancel-bio-button {
+		margin-left: 93%;
 	}
 	#save-bio-button:hover,
 	#cancel-bio-button:hover {
@@ -165,6 +190,16 @@
 	}
 	#edit-bio:active {
 		transform: scale(0.9);
+	}
+
+	span.close-icon {
+		margin-left: 92%;
+	}
+
+	span.save-icon {
+		position: relative;
+		margin-bottom: 3%;
+		margin-left: 1%;
 	}
 
 	.icon {

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import axios from 'axios';
 	import type { SearchItem } from '$lib/types/search.ts';
+	import { SearchIcon } from 'svelte-feather-icons';
 
 	let search = '';
 	let items: SearchItem[] | null = null;
@@ -43,6 +44,7 @@
 <div class="search-bar">
 	<input
 		type="text"
+		class="search-input"
 		bind:value={search}
 		placeholder="Enter search keywords..."
 		on:input={searchItems}
@@ -52,7 +54,7 @@
 			}
 		}}
 	/>
-	<button on:click={searchItems}>Search</button>
+	<button on:click={searchItems} id="search-button"><SearchIcon /></button>
 </div>
 
 {#if error}
@@ -79,6 +81,11 @@
 {/if}
 
 <style>
+	:root {
+		--search-input-background: #ececec;
+		--search-input-padding: 0.6em 1em;
+	}
+
 	.search-result-container {
 		display: flex;
 		flex-direction: column;
@@ -87,13 +94,24 @@
 	}
 
 	.search-bar {
-		margin-block-end: 0.8em;
-		width: 50%; /* initial width */
-		transition: width 0.4s ease-in-out;
+		margin-block-end: 0.2em;
+		width: 100%; /* initial width */
+		padding-left: 1em;
 	}
 
-	.search-bar:focus {
-		width: 80%;
+	button#search-button {
+		display: inline-block;
+		position: absolute;
+	}
+
+	.search-input {
+		background-color: var(--search-input-background);
+		padding: var(--search-input-padding);
+	}
+
+	.search-input:focus {
+		transition: padding 1s ease-in-out;
+		padding-right: 70%;
 	}
 
 	.search-results {

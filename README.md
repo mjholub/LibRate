@@ -27,10 +27,10 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 ## Roadmap:
 
-### **Social features**:
+### **Social features**
   - [x] Basic registration support
   - [x] User profile cards
-  - [x] (**WIP**)Full profile pages
+  - [x] Full profile pages
   - [ ] Tagging and mentions
   - [x] (WIP) Advanced profile and UI customization
   - [ ] Groups

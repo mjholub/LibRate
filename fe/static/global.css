@@ -43,6 +43,13 @@ button {
   z-index: 1;
 }
 
+img.media-image {
+  display: block;
+  position: relative;
+  max-width: 60%;
+  max-height: 60%;
+}
+
 svg {
   vertical-align: baseline;
   z-index: 100;
