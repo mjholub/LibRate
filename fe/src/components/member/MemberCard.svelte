@@ -233,7 +233,7 @@
 	{/if}
 	<div class="member-name">@{member.memberName}</div>
 	{#if member.bio.Valid}
-		<div class="member-bio">{member.bio.String}</div>
+		<div id="member-bio">{member.bio.String}</div>
 		<UpdateBio
 			memberName={member.memberName}
 			isBioPresent={member.bio.Valid}
@@ -385,7 +385,7 @@
 		margin-bottom: 0.5em;
 	}
 
-	.member-bio {
+	div#member-bio {
 		font-size: 0.9em;
 		color: #666;
 		margin-bottom: 1em;
