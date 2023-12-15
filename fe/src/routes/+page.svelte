@@ -71,7 +71,7 @@
 	</div>
 	<div class="content">
 		<div id="left">
-			<MediaCarousel />
+			<MediaCarousel authenticated={isAuthenticated} />
 		</div>
 		<div class="center">
 			<div class="feed">
@@ -81,7 +81,7 @@
 		</div>
 		<div class="right">
 			{#await handleAuthentication()}
-				<p>loading...</p>
+				<span class="spinner" />
 			{:then}
 				{#if !isAuthenticated}
 					<Auth />
@@ -125,7 +125,7 @@
 		background-color: var(--main-bg-color);
 		color: var(--text-color);
 		padding: 1rem 0;
-		text-align: center;
+		text-align: left;
 		display: block;
 	}
 
@@ -137,19 +137,19 @@
 		flex: 1;
 	}
 
-	.left,
+	div#left,
 	.center,
 	.right {
 		display: flex;
 		flex-direction: column;
 	}
 
-	.left {
-		width: 40%;
+	div#left {
+		width: 34%;
 	}
 
 	.center {
-		width: 30%;
+		width: 33%;
 		justify-content: center;
 	}
 
@@ -158,7 +158,7 @@
 	}
 
 	.right {
-		width: 30%;
+		width: 33%;
 	}
 
 	.footer {
@@ -166,5 +166,25 @@
 		background-color: var(--main-bg-color);
 		color: var(--text-color);
 		text-align: center;
+	}
+
+	.spinner {
+		border: 4px solid rgba(0, 0, 0, 0.1);
+		border-top: 4px solid #3498db;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		animation: spin 1s linear infinite;
+		margin-left: 10px;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 </style>
