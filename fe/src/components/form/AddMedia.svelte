@@ -36,12 +36,58 @@
 	};
 </script>
 
-<div class="form-body" />
-<Search />
-<h2 class="form-title">Add Media</h2>
-<form on:submit|preventDefault={handleSubmit} />
-<select bind:value={media.kind} />
-{#if media.kind === 'album'}
-	<AddAlbum />
-{/if}
+<div class="form-body">
+	<Search />
+	<h2 class="form-title">Add Media</h2>
+	<form on:submit|preventDefault={handleSubmit}>
+		<label for="kind">Select media type:</label>
+		<select bind:value={media.kind} id="kind">
+			<option value="album">Album</option>
+			<option value="track">Track</option>
+			<option value="film">Film</option>
+			<option value="tv_show">TV Show</option>
+			<option value="book">Book</option>
+			<option value="anime">Anime</option>
+			<option value="manga">Manga</option>
+			<option value="comic">Comic</option>
+			<option value="game">Game</option>
+		</select>
+
+		{#if media.kind === 'album'}
+			<AddAlbum />
+		{/if}
+
+		{#if media.kind === 'track'}
+			<AddTrack />
+		{/if}
+
+		{#if media.kind === 'film'}
+			<AddFilm />
+		{/if}
+
+		{#if media.kind === 'tv_show'}
+			<AddTVShow />
+		{/if}
+
+		{#if media.kind === 'book'}
+			<AddBook />
+		{/if}
+
+		{#if media.kind === 'anime'}
+			<AddAnime />
+		{/if}
+
+		{#if media.kind === 'manga'}
+			<AddManga />
+		{/if}
+
+		{#if media.kind === 'comic'}
+			<AddComic />
+		{/if}
+
+		{#if media.kind === 'game'}
+			<AddGame />
+		{/if}
+	</form>
+</div>
 <Footer />
