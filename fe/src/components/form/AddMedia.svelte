@@ -4,6 +4,7 @@
 	import type { Media } from '$lib/types/media';
 	import Search from '$components/utility/Search.svelte';
 	import Footer from '$components/footer/footer.svelte';
+	import AddAlbum from './media/AddAlbum.svelte';
 
 	let media: Media;
 
@@ -39,4 +40,8 @@
 <Search />
 <h2 class="form-title">Add Media</h2>
 <form on:submit|preventDefault={handleSubmit} />
+<select bind:value={media.kind} />
+{#if media.kind === 'album'}
+	<AddAlbum />
+{/if}
 <Footer />

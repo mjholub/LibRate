@@ -16,7 +16,7 @@ export interface Album extends Media {
   //languages?: string[];
 }
 
-type AlbumArtists = {
+export type AlbumArtists = {
   person_artist: Person[];
   group_artist: Group[];
 }
