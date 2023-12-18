@@ -2,6 +2,12 @@ package static
 
 import (
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"mime/multipart"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"codeberg.org/mjh/LibRate/models/static"
 )
 
 // UploadImage takes the nickname of the uploader (always), image type:
@@ -19,7 +26,7 @@ import (
 // The image is saved to the filesystem, and the path is saved to the database.
 // This handler returns the ID of the image in the database.
 // When a profile picture/banner upload is requested, it still needs to be confirmed by the user.
-// WARN: this is not concurrency-safe yet
+// INFO: currently supported arguments for imageType: "profile", "album_cover"
 func (s *StaticController) UploadImage(c *fiber.Ctx) error {
 	member := c.Locals("jwtToken").(*jwt.Token)
 	claims := member.Claims.(jwt.MapClaims)
@@ -47,7 +54,18 @@ func (s *StaticController) UploadImage(c *fiber.Ctx) error {
 	split := strings.Split(file.Filename, ".")
 	ext := split[len(split)-1]
 
-	savePath, imageID, err := s.storage.AddImage(c.UserContext(), imageType, ext, memberName, nil)
+	var savePath string
+	var imageID int64
+	if imageType == "profile" {
+		savePath, imageID, err = s.saveProfileImage(c.UserContext(), memberName, ext, file)
+	} else {
+		props := static.MediaProps{
+			Uploader:  memberName,
+			Ext:       ext,
+			ImageType: imageType,
+		}
+		savePath, imageID, err = s.storage.AddImage(c.UserContext(), &props)
+	}
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to add image")
 		return fiber.ErrInternalServerError
@@ -64,6 +82,40 @@ func (s *StaticController) UploadImage(c *fiber.Ctx) error {
 	return h.ResData(c, 201, "Success", fiber.Map{
 		"pic_id": imageID,
 	})
+}
+
+func (s *StaticController) saveProfileImage(
+	ctx context.Context,
+	memberName, ext string,
+	file *multipart.FileHeader,
+) (string, int64, error) {
+	// check if the image already exists
+	hash, err := calculateHash(file)
+	if err != nil {
+		s.log.Error().Err(err).Msgf("Failed to calculate hash for image with name:%s, uploaded by %s: %v", file.Filename, memberName, err)
+		return "", 0, fiber.ErrInternalServerError
+	}
+	id, err := s.storage.LookupHash(ctx, hash)
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Error().Err(err).
+			Msgf("Failed to lookup hash for image with name:%s, uploaded by %s",
+				file.Filename, memberName)
+		return "", 0, fiber.ErrInternalServerError
+	}
+
+	if id != 0 {
+		s.log.Debug().Msgf("Image with hash %s already exists", hash)
+		return "", 0, fiber.ErrConflict
+	}
+
+	props := static.MediaProps{
+		Uploader:  memberName,
+		Ext:       ext,
+		Hash:      hash,
+		ImageType: "profile",
+	}
+
+	return s.storage.AddImage(ctx, &props)
 }
 
 func (s *StaticController) DeleteImage(c *fiber.Ctx) error {
@@ -100,4 +152,22 @@ func (s *StaticController) DeleteImage(c *fiber.Ctx) error {
 	}
 
 	return h.Res(c, 200, "Success")
+}
+
+func calculateHash(file *multipart.FileHeader) (string, error) {
+	f, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+
+	defer f.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	hashSum := hasher.Sum(nil)
+
+	return hex.EncodeToString(hashSum), nil
 }
