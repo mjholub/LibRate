@@ -115,9 +115,18 @@
 		outline: var(--search-box-outline);
 	}
 
-	.search-input:focus {
-		transition: padding 1s ease-in-out;
-		padding-right: 70%;
+	@media (max-width: 768px) {
+		.search-input {
+			width: 70%;
+			padding-left: 0.25em;
+		}
+	}
+
+	@media (min-width: 768px) {
+		.search-input:focus {
+			transition: padding 1s ease-in-out;
+			padding-right: 70%;
+		}
 	}
 
 	.search-results {
