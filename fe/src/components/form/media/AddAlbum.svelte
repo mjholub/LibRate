@@ -2,6 +2,23 @@
 	import { PlusIcon, XIcon } from 'svelte-feather-icons';
 	import type { Album } from '$lib/types/music';
 	import type { Genre } from '$lib/types/media';
+	import { getMaxFileSize } from '$stores/form/upload';
+	import { onMount, onDestroy } from 'svelte';
+
+	let maxFileSize: number;
+	let maxFileSizeString: string;
+	onMount(async () => {
+		maxFileSize = await getMaxFileSize();
+	});
+
+	onDestroy(() => {
+		maxFileSize = 0;
+	});
+
+	$: {
+		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
+	}
+
 	let album: Album = {
 		UUID: '',
 		kind: 'album',
@@ -36,9 +53,12 @@
 	let genres: string = '';
 </script>
 
+<!-- svelte-ignore  a11y-no-noninteractive-element-interactions -->
 <div
 	class="drop-area"
 	on:drop={addImage}
+	on:click={addImage}
+	on:keydown={(e) => e.key === 'Space' && addImage()}
 	on:dragover={(e) => e.preventDefault()}
 	aria-dropeffect="copy"
 	role="region"

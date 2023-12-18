@@ -7,6 +7,7 @@
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
+	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	function splitNullable(input: NullableString, separator: string): string[] {
@@ -36,13 +37,22 @@
 	let regDate: string;
 	export let member: Member;
 
+	let maxFileSize: number;
+	let maxFileSizeString: string;
 	onMount(async () => {
-		await getMaxFileSize();
+		maxFileSize = await getMaxFileSize();
 	});
 
 	onDestroy(() => {
 		maxFileSize = 0;
 	});
+
+	let uploaded: boolean;
+
+	$: {
+		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
+		uploaded = false;
+	}
 
 	const logout = async () => {
 		try {
@@ -65,36 +75,11 @@
 
 	let isUploading = false;
 	let showModal = false;
-	let maxFileSize: number;
-	let maxFileSizeString: string;
-
-	const getMaxFileSize = async () => {
-		try {
-			const response = await axios.get('/api/upload/max-file-size');
-			maxFileSize = response.data.maxFileSize;
-		} catch (error) {
-			maxFileSize = 4 * 1024 * 1024;
-		}
-	};
-
-	$: {
-		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
-	}
 
 	const toggleModal = () => {
 		showModal = !showModal;
 	};
 	const jwtToken = localStorage.getItem('jwtToken');
-
-	const openFilePicker = () => {
-		if (browser) {
-			const fileInput = document.createElement('input');
-			fileInput.type = 'file';
-			fileInput.accept = 'image/*';
-			fileInput.addEventListener('change', handleFileSelection);
-			fileInput.click();
-		}
-	};
 
 	const handleFileSelection = async (e: Event) => {
 		return new Promise(async (resolve, reject) => {
@@ -110,11 +95,7 @@
 				if (!file) {
 					return;
 				}
-				await getMaxFileSize();
-				if (file.size > maxFileSize) {
-					alert('File too large.');
-					reject();
-				}
+				// checking file size is done in the backend
 				isUploading = true;
 				const formData = new FormData();
 				formData.append('fileData', file);
@@ -198,8 +179,8 @@
 			<button
 				aria-label="Change profile picture (max. {maxFileSizeString})"
 				id="change-profile-pic-button"
-				on:click={openFilePicker}
-				on:keypress={openFilePicker}
+				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
 				><span class="tooltip" aria-label={tooltipMessage} />
 				<div class="edit-button">
 					<EditIcon />
@@ -219,8 +200,8 @@
 			<button
 				aria-label="Change profile picture (max. {maxFileSizeString})"
 				id="change-profile-pic-button"
-				on:click={openFilePicker}
-				on:keypress={openFilePicker}
+				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
 				><span class="tooltip" aria-label={tooltipMessage} />
 				<div class="edit-button">
 					<EditIcon />
