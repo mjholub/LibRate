@@ -8,6 +8,8 @@
 	import { authStore } from '$stores/members/auth';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
 	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
+	import type { CustomHttpError } from '$lib/types/error';
+	import ErrorModal from '$components/modal/ErrorModal.svelte';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	function splitNullable(input: NullableString, separator: string): string[] {
@@ -36,9 +38,9 @@
 
 	let regDate: string;
 	export let member: Member;
-
 	let maxFileSize: number;
 	let maxFileSizeString: string;
+	let errorMessages: CustomHttpError[] = [];
 	onMount(async () => {
 		maxFileSize = await getMaxFileSize();
 	});
@@ -110,12 +112,16 @@
 					}
 				});
 				if (response.status !== 201) {
-					alert('Error uploading file');
-					reject();
+					errorMessages.push({
+						message: 'Error uploading profile picture',
+						status: response.status
+					});
+					reject(response.status);
 				}
-				console.log('uploaded');
+				console.log('uploaded!');
+				uploaded = true;
 				isUploading = false;
-				console.log(response.data);
+				// console.log(response.data);
 				const pic_id = response.data.data.pic_id;
 				console.log(pic_id);
 				const confirmSave = confirm('Save new profile picture?');
@@ -135,7 +141,10 @@
 						}
 					);
 					if (res.status !== 200) {
-						alert('Error saving profile picture');
+						errorMessages.push({
+							message: 'Error updating profile picture',
+							status: res.status
+						});
 						reject();
 					}
 				} else {
@@ -146,7 +155,10 @@
 						}
 					});
 					if (res.status !== 200) {
-						alert('Error deleting profile picture');
+						errorMessages.push({
+							message: 'Error deleting profile picture',
+							status: res.status
+						});
 						reject();
 					}
 				}
@@ -155,6 +167,12 @@
 			}
 		});
 	};
+
+	$: {
+		if (uploaded) {
+			member.profile_pic = `/static/img/profile/${member.memberName}.png`;
+		}
+	}
 </script>
 
 <div class="member-card">
@@ -188,6 +206,9 @@
 			</button>
 			{#if isUploading}
 				<div class="spinner" />
+			{/if}
+			{#if errorMessages.length > 0}
+				<ErrorModal {errorMessages} />
 			{/if}
 		</div>
 	{:else}

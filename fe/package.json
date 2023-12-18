@@ -53,11 +53,14 @@
   },
   "type": "module",
   "dependencies": {
+    "@types/http-errors": "^2.0.4",
     "axios": "^1.5.0",
     "feather-icons": "^4.29.1",
+    "http-errors": "^2.0.0",
     "password-meter": "^3.10.2",
     "sass": "^1.69.5",
     "scss": "^0.2.4",
+    "svelte-feather-icons": "^4.1.0",
     "xss": "^1.0.14"
   }
 }
