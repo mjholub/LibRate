@@ -2,8 +2,6 @@
 	import { onDestroy } from 'svelte';
 	import { submitMediaForm } from '$stores/form/add_media';
 	import type { Media } from '$lib/types/media';
-	import Search from '$components/utility/Search.svelte';
-	import Footer from '$components/footer/footer.svelte';
 	import AddAlbum from './media/AddAlbum.svelte';
 
 	let media: Media;
@@ -41,8 +39,8 @@
 	<form on:submit|preventDefault={handleSubmit}>
 		<label for="kind">Select media type:</label>
 		<select bind:value={media.kind} id="kind">
+			<option value="none">---</option>
 			<option value="album">Album</option>
-			<option value="track">Track</option>
 			<option value="film">Film</option>
 			<option value="tv_show">TV Show</option>
 			<option value="book">Book</option>
@@ -52,12 +50,12 @@
 			<option value="game">Game</option>
 		</select>
 
-		{#if media.kind === 'album'}
-			<AddAlbum />
+		{#if media.kind == 'none'}
+			<p>Please select a media type.</p>
 		{/if}
 
-		{#if media.kind === 'track'}
-			<AddTrack />
+		{#if media.kind === 'album'}
+			<AddAlbum />
 		{/if}
 
 		{#if media.kind === 'film'}
@@ -89,4 +87,3 @@
 		{/if}
 	</form>
 </div>
-<Footer />
