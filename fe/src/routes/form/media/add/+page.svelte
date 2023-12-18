@@ -2,6 +2,8 @@
 	import type { authData } from '$stores/members/auth.ts';
 	import Auth from '$components/form/Auth.svelte';
 	import AddMedia from '$components/form/AddMedia.svelte';
+	import Footer from '$components/footer/footer.svelte';
+	import Header from '$components/header/Header.svelte';
 
 	import { browser } from '$app/environment';
 	let authstatus: authData;
@@ -30,10 +32,14 @@
 	<span class="spinner" />
 {:then}
 	{#if !isAuthenticated}
+		<Header authenticated={isAuthenticated} nickname="" />
 		<p>Log in first</p>
 		<Auth />
+		<Footer />
 	{:else}
+		<Header authenticated={isAuthenticated} nickname={authstatus.memberName} />
 		<AddMedia />
+		<Footer />
 	{/if}
 {:catch error}
 	<p>{error.message}</p>

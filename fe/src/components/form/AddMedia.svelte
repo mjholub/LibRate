@@ -37,7 +37,6 @@
 </script>
 
 <div class="form-body">
-	<Search />
 	<h2 class="form-title">Add Media</h2>
 	<form on:submit|preventDefault={handleSubmit}>
 		<label for="kind">Select media type:</label>

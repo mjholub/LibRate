@@ -84,6 +84,7 @@
 	:root {
 		--search-input-background: #ececec;
 		--search-input-padding: 0.6em 1em;
+		--search-box-outline: none;
 	}
 
 	.search-result-container {
@@ -94,19 +95,24 @@
 	}
 
 	.search-bar {
-		margin-block-end: 0.2em;
 		width: 100%; /* initial width */
 		padding-left: 1em;
+		display: inline-flex;
 	}
 
 	button#search-button {
-		display: inline-block;
-		position: absolute;
+		display: inline-flex;
+		align-items: center;
+		position: sticky;
+		width: 2em;
+		border-radius: 0 4px 4px 0;
 	}
 
 	.search-input {
 		background-color: var(--search-input-background);
 		padding: var(--search-input-padding);
+		border-radius: 4px 0 0 4px;
+		outline: var(--search-box-outline);
 	}
 
 	.search-input:focus {
