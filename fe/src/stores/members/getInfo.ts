@@ -25,6 +25,7 @@ export const memberInfo: Member = {
 
 interface MemberStore extends Writable<Member> {
   getMember: (jwtToken: string, email_or_username: string) => Promise<Member>;
+  checkFollowing: (jwtToken: string, follower: string, followee: string) => Promise<boolean>;
 }
 
 function createMemberStore(): MemberStore {
@@ -46,6 +47,17 @@ function createMemberStore(): MemberStore {
       const member: Member = res.data.data;
       console.debug('member data retrieved from API: ', member);
       return member;
+    },
+    checkFollowing: async (jwtToken: string, follower: string, followee: string) => {
+      return new Promise(async (resolve, reject) => {
+        const res = await axios.get(`/api/members/is_following/${followee}?follower=${follower}`, {
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`
+          }
+        });
+
+        res.status === 200 ? resolve(res.data.message) : reject(Error);
+      });
     },
   };
 }

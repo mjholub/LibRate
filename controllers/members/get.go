@@ -17,6 +17,17 @@ func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
 	return nil
 }
 
+func (mc *MemberController) IsFollowing(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	followStatus, err := mc.storage.IsFollowing(ctx, c.Query("follower"), c.Params("followee"))
+	if err != nil {
+		return err
+	}
+	return h.ResData(c, fiber.StatusOK, "success", followStatus)
+}
+
 // check checks for the existence of a member
 // it requires both nickname and email to be provided
 func (mc *MemberController) Check(c *fiber.Ctx) error {
@@ -51,7 +62,7 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	// 2. if the keys match, proceed with parsing the requester's identity as valid
 	// 3. if the keys don't match, check if the member is public
 	// 4. by default, we fall back to noauth
-	requester := member.Member{} // works like "noauth" in gotosocial
+	//	requester := member.Member{} // works like "noauth" in gotosocial
 
 	authorized := c.Request().Header.Peek("Authorization")
 
@@ -83,17 +94,19 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	}
 	// TODO: check if the requester is a follower when
 	// member.Visibility == "followers_only"
-	if member.Visibility == "followers_only" {
-		followStatus, err := requester.IsFollowing(ctx, member.ID)
-		if err != nil {
-			// TODO: use webfingers, since MemberName (nick) is bound to current instance
-			mc.log.Error().Msgf("Error checking if %s is following %s: %v", requester.MemberName, member.MemberName, err)
-			return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+	/*
+		if member.Visibility == "followers_only" {
+			followStatus, err := requester.IsFollowing(ctx, member.ID)
+			if err != nil {
+				// TODO: use webfingers, since MemberName (nick) is bound to current instance
+				mc.log.Error().Msgf("Error checking if %s is following %s: %v", requester.MemberName, member.MemberName, err)
+				return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+			}
+			if !followStatus {
+				return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
+			}
 		}
-		if !followStatus {
-			return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
-		}
-	}
+	*/
 
 	if member.ProfilePicID.Valid {
 		member.ProfilePicSource, err = mc.images.GetImageSource(c.UserContext(), member.ProfilePicID.Int64)

@@ -85,6 +85,7 @@ type (
 		LookupDevice(ctx context.Context, deviceID uuid.UUID) error
 		CreateSession(ctx context.Context, member *Member) (string, error)
 		RequestFollow(ctx context.Context, fr *FollowRequest) error
+		IsFollowing(ctx context.Context, follower, followee string) (bool, error)
 	}
 
 	PgMemberStorage struct {

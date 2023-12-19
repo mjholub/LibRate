@@ -84,6 +84,7 @@ func Setup(
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
+	members.Get("/is_following/:followee", middleware.Protected(sess, logger, conf), memberSvc.IsFollowing)
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
