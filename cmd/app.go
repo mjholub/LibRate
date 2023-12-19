@@ -13,7 +13,6 @@ import (
 	"github.com/samber/lo"
 
 	"codeberg.org/mjh/LibRate/cfg"
-	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/middleware/render"
 
 	"github.com/gofiber/contrib/fiberzerolog"
@@ -77,7 +76,6 @@ func SetupMiddlewares(conf *cfg.Config,
 		}),
 		csrf.New(csrf.Config{
 			ErrorHandler: func(c *fiber.Ctx, err error) error {
-				accepts := c.Accepts("form/multipart", "application/json")
 				path := c.Path()
 				if conf.LibrateEnv == "development" {
 					switch err {
@@ -91,9 +89,6 @@ func SetupMiddlewares(conf *cfg.Config,
 						logger.Warn().Str("path", path).Msgf("invalid CSRF token: %s", c.Cookies("csrf_"))
 					default:
 						logger.Warn().Str("path", path).Msgf("CSRF error: %s", err.Error())
-					}
-					if strings.Contains(accepts, string(c.Request().Header.Peek("Accept"))) {
-						return h.Res(c, fiber.StatusForbidden, "Forbidden")
 					}
 					return c.Status(fiber.StatusForbidden).Render("error", fiber.Map{
 						"Title":   "Forbidden",

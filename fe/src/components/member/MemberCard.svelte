@@ -12,6 +12,7 @@
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
+	export let member: Member;
 	function splitNullable(input: NullableString, separator: string): string[] {
 		if (input.Valid) {
 			return input.String.split(separator);
@@ -37,7 +38,6 @@
 	}
 
 	let regDate: string;
-	export let member: Member;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
 	let errorMessages: CustomHttpError[] = [];
