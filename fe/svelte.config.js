@@ -12,7 +12,6 @@ const config = {
       // these options are set automatically — see below
       paths: {
         assets: './static',
-        profiles: '',
       },
       pages: 'build',
       assets: 'build',
