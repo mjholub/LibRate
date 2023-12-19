@@ -71,6 +71,11 @@
 				localStorage.removeItem('jwtToken');
 			}
 		} catch (error) {
+			errorMessages.push({
+				message: 'Error logging out: ' + error,
+				status: 500
+			});
+			errorMessages = [...errorMessages];
 			console.error(error);
 		}
 	};
@@ -107,7 +112,6 @@
 					headers: {
 						'Content-Type': 'multipart/form-data',
 						Authorization: `Bearer ${jwtToken}`,
-						Expect: '100-continue',
 						'X-CSRF-Token': csrfToken || ''
 					}
 				});
@@ -116,6 +120,7 @@
 						message: 'Error uploading profile picture',
 						status: response.status
 					});
+					errorMessages = [...errorMessages];
 					reject(response.status);
 				}
 				console.log('uploaded!');
@@ -134,7 +139,6 @@
 						{
 							headers: {
 								'Content-Type': 'multipart/form-data',
-								Expect: '100-continue',
 								Authorization: `Bearer ${jwtToken}`,
 								'X-CSRF-Token': csrfToken || ''
 							}
@@ -145,6 +149,7 @@
 							message: 'Error updating profile picture',
 							status: res.status
 						});
+						errorMessages = [...errorMessages];
 						reject();
 					}
 				} else {
@@ -159,6 +164,7 @@
 							message: 'Error deleting profile picture',
 							status: res.status
 						});
+						errorMessages = [...errorMessages];
 						reject();
 					}
 				}

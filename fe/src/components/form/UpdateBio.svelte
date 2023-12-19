@@ -66,7 +66,6 @@
 				headers: {
 					'Content-Type': 'multipart/form-data',
 					Authorization: `Bearer ${jwtToken}`,
-					Expect: '100-continue',
 					'X-CSRF-Token': csrfToken || ''
 				}
 			});
