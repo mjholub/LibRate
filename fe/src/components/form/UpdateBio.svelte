@@ -1,18 +1,18 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { XCircleIcon, SaveIcon, CheckIcon, Edit2Icon, XIcon } from 'svelte-feather-icons';
+	import { createEventDispatcher } from 'svelte';
+	import { SaveIcon, CheckIcon, Edit2Icon, XIcon } from 'svelte-feather-icons';
+
+	const dispatch = createEventDispatcher();
 
 	export let memberName: string;
 	export let isBioPresent: boolean;
 	export let bio: string;
-	//export let inputActive: boolean;
-	let inputActive = false;
-	let bioSaved = false;
+	$: inputActive = false;
+	$: bioSaved = false;
 	const jwtToken = localStorage.getItem('jwtToken') || '';
 
 	const errorMessages: string[] = [];
-
-	// TODO: use this to reactively hide the bio contents when editing is active
 
 	const getBioComponents = () => {
 		const bioInput = document.getElementById('bio-input') as HTMLTextAreaElement;
@@ -59,7 +59,6 @@
 				.split('; ')
 				.find((row) => row.startsWith('csrf_'))
 				?.split('=')[1];
-			const bio = bioInput.value;
 			const formData = new FormData();
 			formData.append('bio', bio);
 			const response = await axios.patch(`/api/members/update/${memberName}`, formData, {
@@ -74,9 +73,15 @@
 			}
 
 			bioSaved = true;
+			bio = bioInput.value;
+			dispatch('bioUpdated', {
+				newBio: bio
+			});
 			hideBioInput();
 		}
 	};
+
+	//	$: bio = bio || '';
 </script>
 
 {#if isBioPresent}
@@ -95,9 +100,13 @@
 			<XIcon />
 		</span>
 	</button>
-	<textarea id="bio-input">
-		{bio}
-	</textarea>
+	<textarea
+		id="bio-input"
+		bind:value={bio}
+		on:input={() => {
+			bioSaved = false;
+		}}
+	/>
 {:else}
 	<a id="edit-bio" on:click={showBioInput} on:keypress={showBioInput} role="button" tabindex="0"
 		>Add bio</a
@@ -113,10 +122,17 @@
 		</span>
 	</button>
 
-	<textarea id="bio-input" placeholder="Enter bio here" />
+	<textarea
+		id="bio-input"
+		placeholder="Enter bio here"
+		bind:value={bio}
+		on:input={() => {
+			bioSaved = false;
+		}}
+	/>
 {/if}
 <button aria-label="Save bio" on:click={saveBio} on:keypress={saveBio} id="save-bio-button">
-	{#if bioSaved}
+	{#if bioSaved && inputActive}
 		<span class="save-icon" aria-label="Changes saved!">
 			<CheckIcon />
 		</span>

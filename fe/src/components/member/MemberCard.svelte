@@ -179,6 +179,11 @@
 			member.profile_pic = `/static/img/profile/${member.memberName}.png`;
 		}
 	}
+
+	const reloadBio = (event: CustomEvent) => {
+		member.bio.Valid = true;
+		member.bio.String = event.detail.newBio;
+	};
 </script>
 
 <div class="member-card">
@@ -246,9 +251,16 @@
 			memberName={member.memberName}
 			isBioPresent={member.bio.Valid}
 			bio={member.bio.String}
+			on:bioUpdated={reloadBio}
 		/>
 	{:else}
-		<UpdateBio memberName={member.memberName} isBioPresent={member.bio.Valid} bio="" />
+		<UpdateBio
+			memberName={member.memberName}
+			isBioPresent={member.bio.Valid}
+			bio=""
+			on:bioUpdated={reloadBio}
+		/>
+		/>
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
 	Other links and contact info for @{member.memberName}:
