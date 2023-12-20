@@ -1,5 +1,5 @@
 -- We already have a lot of junction tables. While this seems like a good idea
--- for mapping many-to-many relationships, it makes the whole database more bloater, harder to maintain
+-- for mapping many-to-many relationships, it makes the whole database more bloated, harder to maintain
 -- and harder to query.
 -- Instead, we'll use people.cast column, which contains an ID (bigserial) and the media ID (uuid).
 -- Then, a media.films column can reference the ID of said cast.

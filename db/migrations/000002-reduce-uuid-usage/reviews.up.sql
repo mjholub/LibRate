@@ -20,4 +20,5 @@ DROP TABLE reviews.ratings;
 -- 4. Rename the temporary table to the original table name
 ALTER TABLE reviews.ratings_temp RENAME TO ratings;
 
-ALTER TABLE reviews.ratings ADD CONSTRAINT ratings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.members(id);
+ALTER TABLE reviews.ratings
+ADD CONSTRAINT ratings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.members(id);
