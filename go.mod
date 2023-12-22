@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20231124054911-51fe1f6ba5f6
-	codeberg.org/mjh/lrctl v0.1.1
+	codeberg.org/mjh/lrctl v0.1.6
 	filippo.io/age v1.1.1
 	github.com/154pinkchairs/imaging v0.0.0-20230921021820-3696c3a0545a
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -15,6 +15,7 @@ require (
 	github.com/dm764/go-sqlcipher/v4 v4.5.4
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/contrib/fiberzerolog v0.2.2
 	github.com/gofiber/contrib/jwt v1.0.7
@@ -25,6 +26,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-jwt/jwt/v5 v5.1.0
+	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/mock v1.6.0
 	github.com/gookit/config/v2 v2.2.4
 	github.com/imdario/mergo v0.3.16
@@ -41,7 +43,7 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.8
 	go.uber.org/mock v0.3.0
-	golang.org/x/crypto v0.15.0
+	golang.org/x/crypto v0.17.0
 	google.golang.org/grpc v1.59.0
 )
 
@@ -60,7 +62,7 @@ require (
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
-	github.com/aws/aws-sdk-go v1.48.3 // indirect
+	github.com/aws/aws-sdk-go v1.49.6 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.21.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.18.44 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.42 // indirect
@@ -87,6 +89,8 @@ require (
 	github.com/go-ap/errors v0.0.0-20231003111023-183eef4b31b7 // indirect
 	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/go-playground/locales v0.13.0 // indirect
+	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/goccy/go-yaml v1.11.2 // indirect
 	github.com/gofiber/template v1.8.2 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
@@ -118,6 +122,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.17.3 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -143,17 +148,18 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/image v0.14.0 // indirect
-	golang.org/x/net v0.18.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/oauth2 v0.14.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/api v0.149.0 // indirect
+	google.golang.org/api v0.150.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231030173426-d783a09b4405 // indirect

@@ -22,7 +22,7 @@ type Config struct {
 
 // nolint: musttag // tagged in the struct above
 type DBConfig struct {
-	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE"`
+	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE" validate:"required, oneof=postgres mariadb sqlite"`
 	Host               string `yaml:"host" default:"localhost" env:"LIBRATE_DB_HOST"`
 	Port               uint16 `yaml:"port" default:"5432" env:"LIBRATE_DB_PORT"`
 	Database           string `yaml:"database" default:"librate" env:"LIBRATE_DB_NAME"`

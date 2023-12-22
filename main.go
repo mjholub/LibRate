@@ -14,6 +14,7 @@ import (
 	"codeberg.org/mjh/LibRate/routes"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
@@ -53,8 +54,9 @@ func main() {
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		err  error
-		conf *cfg.Config
+		err       error
+		conf      *cfg.Config
+		validator = validator.New()
 	)
 
 	if flags.ConfigFile == "" {
@@ -65,6 +67,15 @@ func main() {
 			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", flags.ConfigFile, err)
 		}
 	}
+
+	validationErrors := cfg.Validate(conf, validator)
+	if len(validationErrors) > 0 {
+		for i := range validationErrors {
+			log.Warn().Msgf("Validation error: %+v", validationErrors[i])
+		}
+		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
+	}
+
 	log = initLogging(&conf.Logging)
 	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
 
