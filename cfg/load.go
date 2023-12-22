@@ -1,7 +1,10 @@
 package cfg
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 
 	"codeberg.org/mjh/LibRate/cfg/parser"
@@ -83,13 +86,22 @@ func LoadConfig() mo.Result[*Config] {
 // parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
 	conf = &Config{}
-	// decrypt the config file
-	decrypted, err := decrypt.File(configLocation, "yaml")
-	if err != nil {
-		return nil, err
+	var file []byte
+	// decrypt the config file or read from plain text
+	if os.Getenv("USE_SOPS") == "true" {
+		file, err = decrypt.File(configLocation, "yaml")
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt config file %s: %w", configLocation, err)
+		} else {
+			r := bufio.NewReader(bytes.NewReader(file))
+			file, err = io.ReadAll(r)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read config file %s: %w", configLocation, err)
+			}
+		}
 	}
 
-	configRaw, err := parser.Parse(decrypted)
+	configRaw, err := parser.Parse(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
