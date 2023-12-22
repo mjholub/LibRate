@@ -40,10 +40,8 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(conf *cfg.Config) (*sqlx.DB, error) {
+func Connect(engine, dsn string) (*sqlx.DB, error) {
 	// create a whitelist of launch commands to avond arbitrary code execution
-
-	data := CreateDsn(&conf.DBConfig)
 	var db *sqlx.DB
 
 	err := retry.Do(
@@ -51,7 +49,7 @@ func Connect(conf *cfg.Config) (*sqlx.DB, error) {
 			var err error
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
+			db, err = sqlx.ConnectContext(ctx, engine, dsn)
 			return err
 		},
 		retry.Attempts(5),
@@ -91,7 +89,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
+func InitDB(conf *cfg.DBConfig, exitAfter bool, log *zerolog.Logger) error {
 	if exitAfter {
 		// nolint:revive
 		defer func() {
@@ -99,7 +97,10 @@ func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
 			os.Exit(0)
 		}()
 	}
-	db, err := Connect(conf)
+
+	dsn := CreateDsn(conf)
+
+	db, err := Connect(conf.Engine, dsn)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

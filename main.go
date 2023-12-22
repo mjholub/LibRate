@@ -174,26 +174,17 @@ func setupPOW(conf *cfg.Config, app []*fiber.App) {
 	}
 }
 
-func initDB(conf *cfg.Config, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(dbConf *cfg.DBConfig, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
-	dbRunning := DBRunning(externalHC, conf.Port)
+	dbRunning := DBRunning(externalHC, dbConf.Port)
 	if dbRunning {
-		logger.Warn().Msgf("Database already running on port %d. Not initializing.", conf.Port)
+		logger.Warn().Msgf("Database already running on port %d. Not initializing.", dbConf.Port)
 		return nil
 	}
-	// retry connecting to database
-	err := retry.Do(
-		func() error {
-			return db.InitDB(conf, exitAfter, logger)
-		},
-		retry.Attempts(5),
-		retry.Delay(3*time.Second), // Delay between retries
-		retry.OnRetry(func(n uint, err error) {
-			logger.Info().Msgf("Attempt %d in initDB() failed: %v; retrying...", n, err)
-		}),
-	)
+
+	err := db.InitDB(dbConf, exitAfter, logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -290,6 +281,7 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 		err    error
 		dbConn *sqlx.DB
 	)
+
 	switch conf.Engine {
 	// TODO: add validate... oneof tags to config struct
 	case "postgres", "mariadb", "sqlite":
