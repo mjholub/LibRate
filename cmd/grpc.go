@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 
+	protodb "codeberg.org/mjh/lrctl/grpc/db"
 	"codeberg.org/mjh/lrctl/grpc/shutdown"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -15,11 +16,15 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/db"
 )
 
 type GrpcServer struct {
 	shutdown.UnimplementedShutdownServiceServer
+	protodb.UnimplementedDBServer
 	App    *fiber.App
 	Log    *zerolog.Logger
 	Config *cfg.GrpcConfig
@@ -37,6 +42,7 @@ func registerGRPC(srv *GrpcServer) {
 	s := grpc.NewServer()
 
 	shutdown.RegisterShutdownServiceServer(s, srv)
+	protodb.RegisterDBServer(s, srv)
 
 	reflection.Register(s)
 
@@ -81,4 +87,56 @@ func (s *GrpcServer) SendShutdown(ctx context.Context, req *shutdown.ShutdownReq
 	}
 	s.Log.Info().Msg("shutdown complete")
 	return &shutdown.ShutdownResponse{Received: true}, nil
+}
+
+func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*protodb.InitResponse, error) {
+	s.Log.Info().Msg("database initialization request received")
+
+	ssl := *req.Ssl
+	if req.Ssl == nil {
+		ssl = "disable"
+	}
+
+	dsn := cfg.DBConfig{
+		Engine:   req.Engine,
+		Host:     req.Host,
+		Port:     uint16(req.Port),
+		User:     req.User,
+		Password: req.Password,
+		Database: req.Database,
+		SSL:      ssl,
+	}
+
+	if err := db.InitDB(&dsn, false, s.Log); err != nil {
+		s.Log.Error().Err(err).Msg("failed to initialize database")
+		return &protodb.InitResponse{Success: false}, err
+	}
+	s.Log.Info().Msg("database initialized")
+	return &protodb.InitResponse{Success: true}, nil
+}
+
+func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (*protodb.MigrateResponse, error) {
+	s.Log.Info().Msg("database migration request received")
+
+	ssl := *req.Ssl
+	if req.Ssl == nil {
+		ssl = "disable"
+	}
+
+	dsn := cfg.DBConfig{
+		Engine:   req.Engine,
+		Host:     req.Host,
+		Port:     uint16(req.Port),
+		User:     req.User,
+		Password: req.Password,
+		Database: req.Database,
+		SSL:      ssl,
+	}
+
+	data := db.CreateDsn(&dsn)
+	_ = data
+	// TODO: move most implementation details to a refactored db.Migrate() function
+
+	s.Log.Info().Msg("database migrated")
+	return &protodb.MigrateResponse{Success: true}, nil
 }
