@@ -95,7 +95,7 @@ func (s *StaticController) saveProfileImage(
 		s.log.Error().Err(err).Msgf("Failed to calculate hash for image with name:%s, uploaded by %s: %v", file.Filename, memberName, err)
 		return "", 0, fiber.ErrInternalServerError
 	}
-	id, err := s.storage.LookupHash(ctx, hash)
+	id, err := s.storage.LookupHash(ctx, hash, memberName)
 	if err != nil && err != sql.ErrNoRows {
 		s.log.Error().Err(err).
 			Msgf("Failed to lookup hash for image with name:%s, uploaded by %s",

@@ -215,12 +215,12 @@ func (s *Storage) DeleteImage(ctx context.Context, imageID int64) (path string, 
 	}
 }
 
-func (s *Storage) LookupHash(ctx context.Context, hash string) (id int64, err error) {
+func (s *Storage) LookupHash(ctx context.Context, hash, uploader string) (id int64, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
-		err = s.db.GetContext(ctx, &id, `SELECT id FROM cdn.images WHERE sha256sum = $1`, hash)
+		err = s.db.GetContext(ctx, &id, `SELECT id FROM cdn.images WHERE sha256sum = $1 AND uploader = $2`, hash, uploader)
 		if err != nil {
 			return 0, err
 		}
