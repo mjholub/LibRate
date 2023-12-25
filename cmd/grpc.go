@@ -16,8 +16,6 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/db"
 )
@@ -118,24 +116,67 @@ func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*proto
 func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (*protodb.MigrateResponse, error) {
 	s.Log.Info().Msg("database migration request received")
 
-	ssl := *req.Ssl
-	if req.Ssl == nil {
+	ssl := *req.Dsn.Ssl
+	if req.Dsn.Ssl == nil {
 		ssl = "disable"
 	}
 
 	dsn := cfg.DBConfig{
-		Engine:   req.Engine,
-		Host:     req.Host,
-		Port:     uint16(req.Port),
-		User:     req.User,
-		Password: req.Password,
-		Database: req.Database,
+		Engine:   req.Dsn.Engine,
+		Host:     req.Dsn.Host,
+		Port:     uint16(req.Dsn.Port),
+		User:     req.Dsn.User,
+		Password: req.Dsn.Password,
+		Database: req.Dsn.Database,
 		SSL:      ssl,
 	}
+	conf := cfg.Config{
+		DBConfig: dsn,
+	}
 
-	data := db.CreateDsn(&dsn)
-	_ = data
-	// TODO: move most implementation details to a refactored db.Migrate() function
+	switch {
+	case len(req.Migrations) == 0 || *req.All:
+		if err := db.Migrate(&conf); err != nil {
+			return &protodb.MigrateResponse{
+				Success: false,
+				Errors: []*protodb.MigrationError{
+					{
+						MigrationPath: "migrations", // TODO: add more precise extraction of exception path
+						Message:       err.Error(),
+					},
+				},
+			}, err
+		}
+		return &protodb.MigrateResponse{
+			Success: true,
+			Errors:  nil,
+		}, nil
+	default:
+		count := len(req.Migrations)
+		for i, migration := range req.Migrations {
+			if err := db.Migrate(&conf, migration); err != nil {
+				if req.Hardfail {
+					if i < count {
+						s.Log.Warn().Msgf("error while running migration at %s: %v", migration, err)
+					} else {
+						goto fail
+					}
+				} else {
+					goto fail
+				}
+			fail:
+				return &protodb.MigrateResponse{
+					Success: false,
+					Errors: []*protodb.MigrationError{
+						{
+							MigrationPath: migration,
+							Message:       err.Error(),
+						},
+					},
+				}, err
+			}
+		}
+	}
 
 	s.Log.Info().Msg("database migrated")
 	return &protodb.MigrateResponse{Success: true}, nil

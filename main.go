@@ -13,7 +13,6 @@ import (
 	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
-	"github.com/avast/retry-go/v4"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
@@ -51,9 +50,11 @@ func main() {
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
+
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
+		dbConn    *sqlx.DB
 		err       error
 		conf      *cfg.Config
 		validator = validator.New()
@@ -68,6 +69,8 @@ func main() {
 		}
 	}
 
+	log = initLogging(&conf.Logging)
+	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
 	validationErrors := cfg.Validate(conf, validator)
 	if len(validationErrors) > 0 {
 		for i := range validationErrors {
@@ -76,24 +79,33 @@ func main() {
 		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
 	}
 
-	log = initLogging(&conf.Logging)
-	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
+	// Create a new Fiber instance
+	app := cmd.CreateApp(conf)
+	s := &cmd.GrpcServer{
+		App:    app,
+		Log:    &log,
+		Config: &conf.GRPC,
+	}
+	cmd.RunGrpcServer(s)
 
 	// database first-run initialization
-	// If the healtheck is to be handled externally, skip it
-	dbConn, err := connectDB(conf)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
-	}
-	log.Info().Msg("Connected to database")
-	defer func() {
-		if dbConn != nil {
-			dbConn.Close()
+	if !flags.ExternalDBHealthCheck {
+		dbConn, err = connectDB(conf)
+		if err != nil {
+			log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 		}
-	}()
+		log.Info().Msg("Connected to database")
+		defer func() {
+			if dbConn != nil {
+				dbConn.Close()
+			}
+		}()
 
-	if err = initDB(conf, flags.Init, flags.ExternalDBHealthCheck, flags.Exit, &log); err != nil {
-		log.Panic().Err(err).Msg("Failed to initialize database")
+		if flags.Init {
+			if err = initDB(&conf.DBConfig, flags.Init, flags.ExternalDBHealthCheck, flags.Exit, &log); err != nil {
+				log.Panic().Err(err).Msg("Failed to initialize database")
+			}
+		}
 	}
 
 	err = handleMigrations(conf, &log, flags.Path)
@@ -112,8 +124,6 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
-	// Create a new Fiber instance
-	app := cmd.CreateApp(conf)
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	go func() {
 		for i := range middlewares {
@@ -138,12 +148,6 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
 
-	s := &cmd.GrpcServer{
-		App:    app,
-		Log:    &log,
-		Config: &conf.GRPC,
-	}
-	go cmd.RunGrpcServer(s)
 	// Listen on chosen port, host and protocol
 	// (disabling HTTPS still works if you use reverse proxy)
 	err = modularListen(conf, app)
@@ -282,10 +286,11 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 		dbConn *sqlx.DB
 	)
 
+	dsn := db.CreateDsn(&conf.DBConfig)
+
 	switch conf.Engine {
-	// TODO: add validate... oneof tags to config struct
 	case "postgres", "mariadb", "sqlite":
-		dbConn, err = db.Connect(conf)
+		dbConn, err = db.Connect(conf.Engine, dsn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}
