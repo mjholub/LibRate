@@ -12,7 +12,7 @@ type Config struct {
 	// used to encrypt sessions database
 	Secret string `json:"secret,omitempty" yaml:"secret" mapstructure:"secret" env:"LIBRATE_SECRET"`
 	// default to production for security reasons
-	LibrateEnv string         `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv" env:"LIBRATE_ENV"`
+	LibrateEnv string         `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv" env:"LIBRATE_ENV" validate:"oneof='test' 'development' 'production'"`
 	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
 	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
@@ -22,7 +22,7 @@ type Config struct {
 
 // nolint: musttag // tagged in the struct above
 type DBConfig struct {
-	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE" validate:"required, oneof=postgres mariadb sqlite"`
+	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE" validate:"required,oneof='postgres' 'mariadb' 'sqlite'"`
 	Host               string `yaml:"host" default:"localhost" env:"LIBRATE_DB_HOST"`
 	Port               uint16 `yaml:"port" default:"5432" env:"LIBRATE_DB_PORT"`
 	Database           string `yaml:"database" default:"librate" env:"LIBRATE_DB_NAME"`

@@ -1,10 +1,7 @@
 package cfg
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 
 	"codeberg.org/mjh/LibRate/cfg/parser"
@@ -92,12 +89,11 @@ func parseRaw(configLocation string) (conf *Config, err error) {
 		file, err = decrypt.File(configLocation, "yaml")
 		if err != nil {
 			return nil, fmt.Errorf("failed to decrypt config file %s: %w", configLocation, err)
-		} else {
-			r := bufio.NewReader(bytes.NewReader(file))
-			file, err = io.ReadAll(r)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read config file %s: %w", configLocation, err)
-			}
+		}
+	} else {
+		file, err = os.ReadFile(configLocation)
+		if err != nil {
+			return nil, fmt.Errorf("error while reading plaintext config: %v", err)
 		}
 	}
 

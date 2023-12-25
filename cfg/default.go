@@ -3,7 +3,10 @@
 
 package cfg
 
-import "github.com/gofrs/uuid/v5"
+import (
+	"codeberg.org/mjh/LibRate/internal/logging"
+	"github.com/gofrs/uuid/v5"
+)
 
 var (
 	// nolint:gochecknoglobals
@@ -43,6 +46,16 @@ var (
 			PGConfig:           "/usr/bin/pg_config",
 			AutoMigrate:        true,
 			ExitAfterMigration: false,
+		},
+		Logging: logging.Config{
+			Level:  "debug",
+			Target: "stdout",
+			Format: "json",
+			Caller: true,
+			Timestamp: logging.TimestampConfig{
+				Enabled: false,
+				Format:  "2006-01-0215:04:05.000Z07:00",
+			},
 		},
 		Redis: RedisConfig{
 			Host:     "localhost",
