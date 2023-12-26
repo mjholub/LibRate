@@ -31,6 +31,7 @@ require (
 	github.com/gookit/config/v2 v2.2.4
 	github.com/imdario/mergo v0.3.16
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/mitchellh/mapstructure v1.5.0
