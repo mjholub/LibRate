@@ -19,8 +19,8 @@ func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, v
 		return errors.New("no values for the enum type were provided, but are required")
 	}
 
-	_, err := db.ExecContext(ctx, `CREATE TYPE $1.$2 AS ENUM ($3)`,
-		schema, typeName, formatValues(values))
+	_, err := db.ExecContext(ctx, fmt.Sprintf("CREATE TYPE %s.%s AS ENUM (%s)",
+		schema, typeName, formatValues(values)))
 	if err != nil {
 		pgErr, ok := err.(*pq.Error)
 		if !ok {

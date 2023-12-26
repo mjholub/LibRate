@@ -23,11 +23,11 @@ func Migrate(conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
 	if paths == nil {
 		m, err := migrate.New(
-			"file:///migrations",
+			"file:///app/data/migrations",
 			dsn,
 		)
 		if err != nil {
-			return fmt.Errorf("error preparing migrations: %v")
+			return fmt.Errorf("error preparing migrations: %v", err)
 		}
 		err = m.Up()
 		if err != nil {
@@ -41,22 +41,24 @@ func Migrate(conf *cfg.Config, paths ...string) error {
 				return err
 			}
 			m, err := migrate.New(
-				fmt.Sprintf("file:///migrations/%s", paths[i]),
+				fmt.Sprintf("file:///app/data/migrations/%s", paths[i]),
 				dsn,
 			)
 			if err != nil {
+				return fmt.Errorf("error preparing migration for directory: %s: %v", paths[i], err)
+			}
+			if err := m.Steps(int(count)); err != nil {
 				return fmt.Errorf("error running migration for directory: %s: %v", paths[i], err)
 			}
-			m.Steps(int(count))
 		}
 		return nil
 	}
 }
 
 func countFiles(path string) (count uint8, err error) {
-	dir, err := os.ReadDir(filepath.Join(".", "migrations", path))
+	dir, err := getDir(path)
 	if err != nil {
-		return 0, fmt.Errorf("error reading filesystem: %v", err)
+		return 0, err
 	}
 	// we know each subdir of migrations contains files only
 	// but check just in case
@@ -68,4 +70,19 @@ func countFiles(path string) (count uint8, err error) {
 	}
 	count = uint8(len(dir))
 	return count, nil
+}
+
+// getDir is an easy way to stat a path that should
+// work in both container (absolute path /app/data/migrations/...)
+// and with relative paths (./migrations/)
+func getDir(basePath string) ([]os.DirEntry, error) {
+	// nolint: gocritic // must use absolute path
+	dir, err := os.ReadDir(filepath.Join("/app", "data", "migrations", basePath))
+	if err != nil {
+		if dir, e := os.ReadDir(filepath.Join(".", "migrations", basePath)); e == nil {
+			return dir, nil
+		}
+		return nil, fmt.Errorf("error reading filesystem: %v", err)
+	}
+	return dir, nil
 }

@@ -34,3 +34,10 @@ func TestCreateEnumtype(t *testing.T) {
 	err = createEnumType(ctx, db, typeName, schema, values...)
 	require.NoErrorf(t, err, "failed to create enum: %v", err)
 }
+
+func TestFormatValues(t *testing.T) {
+	mediaKinds := []string{"album", "track", "film"}
+	fmted := formatValues(mediaKinds)
+
+	require.Equal(t, fmted, "'album', 'track', 'film'")
+}
