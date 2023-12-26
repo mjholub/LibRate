@@ -4,14 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/lib/pq"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -23,52 +19,15 @@ func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, v
 		return errors.New("no values for the enum type were provided, but are required")
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory %v", err)
-	}
-
-	librateDir := filepath.Join(home, ".local", "share", "LibRate", "lib")
-
-	sqlFile, err := os.ReadFile(filepath.Join(librateDir, "create_type_if_ne.sql"))
-	if err != nil {
-		return fmt.Errorf("failed to read SQL file: %w", err)
-	}
-
-	hash, err := uuid.NewV4()
-	if err != nil {
-		return fmt.Errorf("failed to generate UUID: %w", err)
-	}
-
-	tempFile, err := os.CreateTemp("", fmt.Sprintf("temp_create_enum_%s.sql", hash.String()))
-	if err != nil {
-		return fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer os.Remove(tempFile.Name())
-
-	replacements := map[string]string{
-		"{{schema}}":      schema,
-		"{{typeName}}":    typeName,
-		"{{enum_values}}": formatValues(values),
-	}
-
-	re := regexp.MustCompile(`{{\w+}}`)
-	substitutedSQL := re.ReplaceAllStringFunc(string(sqlFile), func(match string) string {
-		return replacements[match]
-	})
-
-	_, err = tempFile.WriteString(substitutedSQL)
-	if err != nil {
-		return fmt.Errorf("failed to write to temporary file: %w", err)
-	}
-
-	_, err = sqlx.LoadFileContext(ctx, db, tempFile.Name())
+	_, err := db.ExecContext(ctx, `CREATE TYPE $1.$2 AS ENUM ($3)`,
+		schema, typeName, formatValues(values))
 	if err != nil {
 		pgErr, ok := err.(*pq.Error)
-		// skip if the type already exists (we're using a custom exception)
-		// TODO: check if we can get rid of an external PL/pgSQL and just check here
-		// if the pgErr.Code == "42P07" || pgErr.Code == "42710"
-		if ok && pgErr.Error() == "pq: type_exists" {
+		if !ok {
+			return fmt.Errorf("type assertion to *pq.Error failed. Error: %v", err)
+		}
+		// skip if the type already exist
+		if pgErr.Code == "42P07" || pgErr.Code == "42710" {
 			return nil
 		}
 		return fmt.Errorf(

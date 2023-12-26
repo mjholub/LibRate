@@ -3,7 +3,6 @@ pgdata
 recommendation/target
 recommendation/go/services
 config.yml
-LibRate
 node_modules
 fe/_app
 *.pem
@@ -19,5 +18,8 @@ config_enc.yml
 config._enc.yml.old
 package.json
 pnpm-lock.yaml
+# build artifacts
 librate
 lrctl
+LibRate-*
+LibRate

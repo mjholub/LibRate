@@ -6,11 +6,7 @@ alias t := test
 
 target_dir := "$HOME/.local/share/LibRate"
 
-all: tidy copy_libs build build_frontend
-
-copy_libs:
-	mkdir -p {{ target_dir }}/lib
-	cp -rf lib/* {{ target_dir }}/lib
+all: tidy build build_frontend
 
 first_run: all
 	sh copy_config.sh
@@ -40,7 +36,7 @@ build_frontend:
 	fi
 
 build:
-  go build -o LibRate
+  go build -ldflags "-w" -o LibRate
 
 test:
 	go test -v ./...
