@@ -10,6 +10,7 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/imdario/mergo"
+	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 	"github.com/samber/mo"
 )
@@ -23,13 +24,18 @@ var log = logging.Init(&logging.Config{
 
 // LoadFromFile loads the config from the config file, or tries to call LoadConfig.
 func LoadFromFile(path string) (conf *Config, err error) {
-	conf = &Config{}
 	if path == "env" {
-		err = env.Parse(&conf)
-		if err != nil {
-			return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to load config from environment variables: %w", err)
+		var config Config
+		if err = godotenv.Load(); err != nil {
+			return nil, fmt.Errorf("failed to parse .env file: %v", err)
 		}
-		log.Info().Msgf("loaded config from environment variables: %+v", conf)
+		err = env.Parse(&config)
+		if err != nil {
+			return LoadConfig().OrElse(&DefaultConfig),
+				fmt.Errorf("failed to load config from environment variables: %w", err)
+		}
+		log.Info().Msgf("loaded config from environment variables: %+v", config)
+		conf = &config
 		return conf, nil
 	}
 	if path == "" {
