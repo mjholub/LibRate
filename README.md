@@ -10,20 +10,21 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 <!-- toc -->
 
-  * [Roadmap:](#roadmap)
-    + [**Social features**](#social-features)
-    + [**Media features**](#media-features)
-    + [**Reviews**](#reviews)
-    + [**Recommendations**](#recommendations)
-    + [**Other**](#other)
-  * [Deploying with Docker](#deploying-with-docker)
-  * [Prerequisites for running natively:](#prerequisites-for-running-natively)
-    + [Get the Dependencies](#get-the-dependencies)
-    + [Setup secrets](#setup-secrets)
-- [IMPORTANT: Updating the app and instance administration](#important-updating-the-app-and-instance-administration)
-  * [Development prerequisites](#development-prerequisites)
-  * [Building and installing](#building-and-installing)
-- [Testing](#testing)
+- [Roadmap:](#roadmap)
+  - [**Social features**](#social-features)
+  - [**Media features**](#media-features)
+  - [**Reviews**](#reviews)
+  - [**Recommendations**](#recommendations)
+  - [**Other**](#other)
+- [Deploying with Docker](#deploying-with-docker)
+- [Prerequisites for running natively:](#prerequisites-for-running-natively)
+  - [Get the Dependencies](#get-the-dependencies)
+  - [Setup secrets](#setup-secrets)
+
+* [IMPORTANT: Updating the app and instance administration](#important-updating-the-app-and-instance-administration)
+  - [Development prerequisites](#development-prerequisites)
+  - [Building and installing](#building-and-installing)
+* [Testing](#testing)
 
 <!-- tocstop -->
 
@@ -113,7 +114,7 @@ docker build -t librate-db . && \
 docker run -it --network=librate_librate-net --hostname "librate-db" librate-db:latest
 ```
 
-4. Create an .env file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/.env). Alternatively you can configure the container to use the .yml config, but .env is somewhat more reliable.
+4. Create an .env file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/.env.example). Alternatively you can configure the container to use the .yml config, but .env is somewhat more reliable.
 
 5. Build and run the app. You can either uncomment the parts of
    Dockerfile needed to build the app manually or download a build artifact for linux and put it in the LibRate directory, which is faster.
