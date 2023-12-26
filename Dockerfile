@@ -28,10 +28,11 @@ WORKDIR /app
 # Releases on Codeberg) instead.
 # Add a directive to copy everything from cwd to /app and uncomment the line
 # above if you want to compile the app yourself anyway
+ENV GO_BIN=/app/bin
 COPY .env /app/.env
 COPY ./lrctl /app/bin/lrctl
 COPY ./start.sh /app/start.sh
-COPY ./librate /app/bin/librate
+RUN go install codeberg.org/mjh/lrctl@latest
 COPY ./config.yml /app/data/config.yml
 COPY ./static/ /app/data/static
 COPY ./db/migrations/ /app/data/migrations
