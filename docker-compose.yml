@@ -21,33 +21,27 @@ services:
       timeout: 4s
       retries: 3
   db:
+    hostname: "librate-db"
+    networks:
+      - librate-net
     restart: always
     build:
       context: ./db
     ports:
-      - 5432:5432
+      - "5432:5432"
     shm_size: 256mb
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    environment:
-      - "POSTGRES_DB=librate"
-      - "POSTGRES_USER=postgres"
-      - "POSTGRES_PASSWORD=postgres"
-    volumes:
-      - pg-data:/var/lib/postgresql/data
+    env_file:
+      - ./db/.env
   redis:
     restart: always
     image: redis:7-alpine
-    volumes:
-      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-volumes:
-  pg-data:
-  redis-data:

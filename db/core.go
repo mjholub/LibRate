@@ -55,7 +55,7 @@ func Connect(engine, dsn string) (*sqlx.DB, error) {
 		retry.Attempts(5),
 		retry.Delay(1*time.Second), // Delay between retries
 		retry.OnRetry(func(n uint, _ error) {
-			fmt.Printf("Attempt %d failed; retrying...", n)
+			fmt.Printf("Attempt %d to connect to database failed; retrying...", n)
 		},
 		),
 	)
