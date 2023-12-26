@@ -105,6 +105,8 @@ func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*proto
 		SSL:      ssl,
 	}
 
+	s.Log.Debug().Msgf("Initialization request parameters: %+v", req)
+
 	if err := db.InitDB(&dsn, false, s.Log); err != nil {
 		s.Log.Error().Err(err).Msg("failed to initialize database")
 		return &protodb.InitResponse{Success: false}, err
@@ -133,6 +135,8 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 	conf := cfg.Config{
 		DBConfig: dsn,
 	}
+
+	s.Log.Debug().Msgf("Migration request parameters: %+v", req)
 
 	switch {
 	case len(req.Migrations) == 0 || *req.All:
