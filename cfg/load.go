@@ -7,7 +7,7 @@ import (
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
-	"github.com/codingconcepts/env"
+	"github.com/caarlos0/env/v10"
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
@@ -25,7 +25,7 @@ var log = logging.Init(&logging.Config{
 func LoadFromFile(path string) (conf *Config, err error) {
 	conf = &Config{}
 	if path == "env" {
-		err = env.Set(&conf)
+		err = env.Parse(&conf)
 		if err != nil {
 			return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to load config from environment variables: %w", err)
 		}

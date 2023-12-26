@@ -29,8 +29,6 @@ type DBConfig struct {
 	User               string `yaml:"user" default:"postgres" env:"LIBRATE_DB_USER"`
 	Password           string `yaml:"password,omitempty" default:"postgres" env:"LIBRATE_DB_PASSWORD"`
 	SSL                string `yaml:"SSL" default:"unknown" env:"LIBRATE_DB_SSL"`
-	PGConfig           string `yaml:"pgConfig,omitempty" default:"/usr/bin/pg_config" env:"PG_CONFIG_PATH"`
-	AutoMigrate        bool   `yaml:"autoMigrate,omitempty" default:"true" env:"LIBRATE_AUTO_MIGRATE"`
 	ExitAfterMigration bool   `yaml:"exitAfterMigration,omitempty" default:"false" env:"LIBRATE_EXIT_AFTER_MIGRATION"`
 }
 
@@ -56,7 +54,7 @@ type FiberConfig struct {
 	PowDifficulty  int    `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
 	RequestTimeout int    `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
 	TLS            bool   `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
-	MaxUploadSize  int64  `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_UPLOAD_SIZE"`
+	MaxUploadSize  int64  `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_SIZE"`
 }
 
 // KeysConfig defines the location of keys used for TLS

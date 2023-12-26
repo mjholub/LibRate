@@ -59,7 +59,6 @@ func TestRunMigrations(t *testing.T) {
 			name: "FailOnMissingFile", // must return an error if auto-migrate flag is not set
 			inputs: func(t *testing.T) {
 				config := cfg.TestConfig
-				config.AutoMigrate = false
 				err := Migrate(&config, "aaaaa.sql")
 				require.Error(t, err)
 			},

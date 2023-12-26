@@ -19,3 +19,5 @@ config_enc.yml
 config._enc.yml.old
 package.json
 pnpm-lock.yaml
+librate
+lrctl

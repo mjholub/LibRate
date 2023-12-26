@@ -25,8 +25,6 @@ func TestLoadFromFile(t *testing.T) {
 			Database:           "librate",
 			User:               "postgres",
 			Password:           "postgres",
-			PGConfig:           "/usr/bin/pg_config",
-			AutoMigrate:        true,
 			ExitAfterMigration: false,
 		},
 		Fiber: FiberConfig{

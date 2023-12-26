@@ -22,7 +22,6 @@ var (
 			User:     "postgres",
 			Password: "postgres",
 			SSL:      "unknown",
-			PGConfig: "/usr/bin/pg_config",
 		},
 		Fiber: FiberConfig{
 			Host:    "localhost",
@@ -43,8 +42,6 @@ var (
 			User:               "postgres",
 			Password:           "postgres",
 			SSL:                "disable",
-			PGConfig:           "/usr/bin/pg_config",
-			AutoMigrate:        true,
 			ExitAfterMigration: false,
 		},
 		Logging: logging.Config{
