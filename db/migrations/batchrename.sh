@@ -15,16 +15,11 @@ for dir in ./*; do
 			#printf "\"base name\": \"%s\",\n" $base
 			file_head="$(echo "$base" | awk -F '.' ' { print $1 }')"
 			file_tail="$(echo "$base" | cut -d"." -f2-)"
-			in=1
-      if [[ ("$i" -gt 1) ]]; then
-        if [$(("$i" % 2  == 0)) ]; then
-          # 0 and 1 -> 1, 5-(5%4) == 4
-          in=$(($i - ($i % $i-1)))
-			fi
-			idx=$((in + 1))
+			in=$((i / 2 + 1))
+			idx=$((in - 1))
 			#printf "\"index (incremented by 1)\": \"%d\"},\n" $idx
 			#	printf "would rename %s to %s/%d_%s_migration.%s" "$f" "$dir" $idx "${numerals[$i]}" "$file_tail"
-			git mv -vn "$f" "$dir"/${in}_"${numerals[$idx]}"_migration.$file_tail
+			git mv "$f" "$dir"/${in}_"${numerals[$idx]}"_migration.$file_tail
 		done
 	fi
 done

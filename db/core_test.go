@@ -55,13 +55,14 @@ func TestConnect(t *testing.T) {
 			Name: "HappyPath",
 			Inputs: &cfg.Config{
 				DBConfig: cfg.DBConfig{
-					Engine:   "postgres",
-					Host:     "localhost",
-					Port:     5432,
-					Database: "librate_test",
-					User:     "postgres",
-					Password: "postgres",
-					SSL:      "disable",
+					Engine:        "postgres",
+					Host:          "localhost",
+					Port:          5432,
+					Database:      "librate_test",
+					User:          "postgres",
+					Password:      "postgres",
+					SSL:           "disable",
+					RetryAttempts: 2,
 				},
 			},
 			WantErr: false,
@@ -70,13 +71,14 @@ func TestConnect(t *testing.T) {
 			Name: "BadEngine",
 			Inputs: &cfg.Config{
 				DBConfig: cfg.DBConfig{
-					Engine:   "badengine",
-					Host:     "localhost",
-					Port:     5432,
-					Database: "librate_test",
-					User:     "postgres",
-					Password: "postgres",
-					SSL:      "disable",
+					Engine:        "badengine",
+					Host:          "localhost",
+					Port:          5432,
+					Database:      "librate_test",
+					User:          "postgres",
+					Password:      "postgres",
+					SSL:           "disable",
+					RetryAttempts: 1,
 				},
 			},
 			WantErr: true,
@@ -85,7 +87,7 @@ func TestConnect(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			dsn := CreateDsn(&tc.Inputs.DBConfig)
-			got, err := Connect(tc.Inputs.Engine, dsn)
+			got, err := Connect(tc.Inputs.Engine, dsn, tc.Inputs.RetryAttempts)
 			if tc.WantErr {
 				assert.Error(t, err)
 				return

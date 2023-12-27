@@ -40,8 +40,16 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(engine, dsn string) (*sqlx.DB, error) {
+func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
 	var db *sqlx.DB
+
+	if attempts < 0 {
+		attempts = 2147483647
+	}
+	// ensure default value is actually loaded
+	if attempts == 0 {
+		attempts = 15
+	}
 
 	err := retry.Do(
 		func() error {
@@ -51,7 +59,7 @@ func Connect(engine, dsn string) (*sqlx.DB, error) {
 			db, err = sqlx.ConnectContext(ctx, engine, dsn)
 			return err
 		},
-		retry.Attempts(5),
+		retry.Attempts(uint(attempts)),
 		retry.Delay(1*time.Second), // Delay between retries
 		retry.OnRetry(func(n uint, err error) {
 			fmt.Printf("Attempt %d to connect to database failed: %v; retrying...",
@@ -101,7 +109,7 @@ func InitDB(conf *cfg.DBConfig, exitAfter bool, log *zerolog.Logger) error {
 
 	dsn := CreateDsn(conf)
 
-	db, err := Connect(conf.Engine, dsn)
+	db, err := Connect(conf.Engine, dsn, conf.RetryAttempts)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
