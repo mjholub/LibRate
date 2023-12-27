@@ -50,7 +50,6 @@ func main() {
 	// first, start logging with some opinionated defaults, just for the config loading phase
 	log := initLogging(nil)
 
-
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
@@ -290,7 +289,7 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 
 	switch conf.Engine {
 	case "postgres", "mariadb", "sqlite":
-		dbConn, err = db.Connect(conf.Engine, dsn)
+		dbConn, err = db.Connect(conf.Engine, dsn, conf.RetryAttempts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
 		}

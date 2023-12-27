@@ -160,7 +160,11 @@ func TestGetMember(t *testing.T) {
 	emailDomain := nameParts[1]
 	email := fmt.Sprintf("%s@%s.com", emailName, emailDomain)
 
-	conn, err := db.Connect(&cfg.TestConfig)
+	conn, err := db.Connect(
+		cfg.TestConfig.Engine,
+		db.CreateDsn(&cfg.TestConfig.DBConfig),
+		cfg.TestConfig.RetryAttempts,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, conn)
 	defer conn.Close()

@@ -30,6 +30,7 @@ type DBConfig struct {
 	Password           string `yaml:"password,omitempty" default:"postgres" env:"LIBRATE_DB_PASSWORD"`
 	SSL                string `yaml:"SSL" default:"unknown" env:"LIBRATE_DB_SSL"`
 	ExitAfterMigration bool   `yaml:"exitAfterMigration,omitempty" default:"false" env:"LIBRATE_EXIT_AFTER_MIGRATION"`
+	RetryAttempts      int32  `yaml:"retryAttempts,omitempty" default:"10" env:"LIBRATE_DB_RETRY_ATTEMPTS"`
 }
 
 type RedisConfig struct {
