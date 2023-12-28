@@ -8,22 +8,20 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
-	"github.com/gofrs/uuid/v5"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/middleware/render"
+	"codeberg.org/mjh/LibRate/middleware/security"
 
 	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/earlydata"
 	"github.com/gofiber/fiber/v2/middleware/etag"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
@@ -55,70 +53,15 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 func SetupMiddlewares(conf *cfg.Config,
 	logger *zerolog.Logger,
 ) []fiber.Handler {
-	fh := conf.Fiber.Host
-	fp := conf.Fiber.Port
-	localAliases := strings.ReplaceAll(fmt.Sprintf(`%s:%d https://%s:%d http://%s:%d https://lr.localhost`,
-		fh, fp, fh, fp, fh, fp), "'", "")
 	return []fiber.Handler{
 		idempotency.New(idempotency.Config{
 			Next: func(c *fiber.Ctx) bool {
 				return lo.Contains([]string{"/api/authenticate", "/api/media/random"}, c.Path())
 			},
 		}),
-		helmet.New(helmet.Config{
-			XSSProtection:  "1; mode=block",
-			ReferrerPolicy: "no-referrer-when-downgrade",
-			ContentSecurityPolicy: fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
-				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
-				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
-			img-src 'self' https://www.gravatar.com %s data: blob:;`,
-				localAliases, localAliases, localAliases),
-		}),
-		csrf.New(csrf.Config{
-			ErrorHandler: func(c *fiber.Ctx, err error) error {
-				path := c.Path()
-				if conf.LibrateEnv == "development" {
-					switch err {
-					case csrf.ErrTokenNotFound:
-						logger.Warn().Str("path", path).Msg("CSRF token not found")
-					case csrf.ErrBadReferer:
-						logger.Warn().Str("path", path).Msg("CSRF bad referer")
-					case csrf.ErrNoReferer:
-						logger.Warn().Str("path", path).Msg("CSRF no referer")
-					case csrf.ErrTokenInvalid:
-						logger.Warn().Str("path", path).Msgf("invalid CSRF token: %s", c.Cookies("csrf_"))
-					default:
-						logger.Warn().Str("path", path).Msgf("CSRF error: %s", err.Error())
-					}
-					return c.Status(fiber.StatusForbidden).Render("error", fiber.Map{
-						"Title":   "Forbidden",
-						"Status":  fiber.StatusForbidden,
-						"Message": "I see what you did there.",
-					}, "error")
-				}
-				return c.Next()
-			},
-			KeyLookup:         "header:X-CSRF-Token",
-			CookieName:        "csrf_",
-			CookieSessionOnly: true,
-			CookieSameSite:    "Lax",
-			Expiration:        2 * time.Hour,
-			KeyGenerator:      uuid.Must(uuid.NewV4()).String,
-			Storage: redis.New(redis.Config{
-				Host:     conf.Redis.Host,
-				Port:     conf.Redis.Port,
-				Username: conf.Redis.Username,
-				Password: conf.Redis.Password,
-				Database: conf.Redis.CsrfDB,
-			}),
-		}),
-		cors.New(cors.Config{
-			AllowOrigins: fmt.Sprintf(
-				`%s, %s, https://gnu.org, https://gravatar.com, https://unpkg.com/htmx.org@latest`,
-				conf.Fiber.Domain, conf.Fiber.Host),
-			AllowHeaders: "Origin, Content-Type, Accept, X-Requested-With, X-Csrf-Token",
-			AllowMethods: "GET, POST, PUT, DELETE, HEAD, PATCH, OPTIONS",
-		}),
+		security.SetupHelmet(conf),
+		security.SetupCSRF(conf, logger),
+		security.SetupCORS(conf),
 		recover.New(),
 		earlydata.New(),
 		etag.New(),
