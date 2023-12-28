@@ -49,10 +49,7 @@ func LoadFromFile(path string) (conf *Config, err error) {
 	if err != nil {
 		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to parse config: %w. Current workdir: %s", err, cwd)
 	}
-	if err = mergo.Merge(conf, loaded); err != nil {
-		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to merge config structs: %w", err)
-	}
-	return conf, nil
+	return loaded, nil
 }
 
 // LoadConfig loads the config from the config file, or falls back to defaults.
