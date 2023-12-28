@@ -1,11 +1,14 @@
 package auth
 
 import (
-	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +17,6 @@ import (
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
-// TODO: add saving logic (needed for bans etc)
 type SessionData struct {
 	IP         string    `json:"ip"`
 	UserAgent  string    `json:"user_agent"`
@@ -55,42 +57,27 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
 	}
 	a.log.Debug().Msgf("Creating session with ID: %s", sess.ID())
+	var mu sync.Mutex
 
-	sess.Set("member_name", member.MemberName)
-	sess.Set("session_id", sess.ID())
-	sess.Set("device_id", deviceHash)
-	sess.Set("ip", c.IP())
-	sess.Set("user_agent", string(c.Request().Header.UserAgent()))
+	mu.Lock()
+	go sess.Set("member_name", member.MemberName)
+	go sess.Set("session_id", sess.ID())
+	go sess.Set("device_id", deviceHash)
+	go sess.Set("ip", c.IP())
+	go sess.Set("user_agent", string(c.Request().Header.UserAgent()))
 	timeout, err := a.GetSessionTimeoutPrefs(rememberMe)
 	if err != nil {
 		return err
 	}
 	sess.SetExpiry(timeout)
 
-	// TODO: add role checking that works with pq.StringArray
-	claims := jwt.MapClaims{
-		"member_name": member.MemberName,
-		"session_id":  sess.ID(),
-		"roles":       []string{"member"},
-		"exp":         time.Now().Add(timeout).Unix(),
-	}
-	sess.Set("claims_exp", claims["exp"])
-	sess.Set("claims_roles", claims["roles"])
-
-	a.log.Debug().Msgf("Claims: %+v", claims)
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-
-	if token == nil {
-		a.log.Error().Msg("Failed to create token")
-		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
-	}
-
-	signedToken, err := token.SignedString([]byte(a.conf.JWTSecret))
+	signedToken, err := a.createToken(member, &timeout, sess)
 	if err != nil {
-		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
-		return h.Res(c, http.StatusInternalServerError, "Failed to create session")
+		a.log.Err(err)
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to prepare session")
 	}
+
+	mu.Unlock()
 
 	if err = sess.Save(); err != nil {
 		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
@@ -102,6 +89,31 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 		"token":      signedToken,
 		"memberName": member.MemberName,
 	})
+}
+
+func (a *Service) createToken(member *member.Member, timeout *time.Duration, sess *session.Session) (t string, err error) {
+	// TODO: add role checking that works with pq.StringArray
+	claims := jwt.MapClaims{
+		"member_name": member.MemberName,
+		"session_id":  sess.ID(),
+		"roles":       []string{"member"},
+		"exp":         time.Now().Add(*timeout).Unix(),
+	}
+	sess.Set("claims_exp", claims["exp"])
+	sess.Set("claims_roles", claims["roles"])
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+
+	if token == nil {
+		return "", errors.New("failed to create token")
+	}
+
+	signedToken, err := token.SignedString([]byte(a.conf.JWTSecret))
+	if err != nil {
+		return "", fmt.Errorf("failed to create a signed token: %v", err)
+	}
+
+	return signedToken, nil
 }
 
 func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
@@ -177,27 +189,4 @@ func (a *Service) GetSessionTimeoutPrefs(rememberMe bool) (timeout time.Duration
 		return time.ParseDuration("2160h") // 90 days
 	}
 	return time.ParseDuration("1h")
-}
-
-// isKnownDevice queries the database to check if the device has been saved.
-// Since we use uuids to assign device IDs, the member ID is redundant
-func (a *Service) isKnownDevice(c *fiber.Ctx) (bool, error) {
-	deviceStr := c.Cookies("device_id")
-	if deviceStr == "" {
-		return false, nil
-	}
-
-	deviceID, err := uuid.FromString(deviceStr)
-	if err != nil {
-		return false, h.Res(c, http.StatusBadRequest, "Invalid device ID")
-	}
-
-	// query the db
-	err = a.ms.LookupDevice(c.Context(), deviceID)
-	if err == sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-	return true, nil
 }
