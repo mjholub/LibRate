@@ -38,7 +38,7 @@
 		<Footer />
 	{:else}
 		<Header authenticated={isAuthenticated} nickname={authstatus.memberName} />
-		<AddMedia />
+		<AddMedia nickname={authstatus.memberName} />
 		<Footer />
 	{/if}
 {:catch error}

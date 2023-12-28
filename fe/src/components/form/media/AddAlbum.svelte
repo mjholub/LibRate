@@ -1,22 +1,57 @@
 <script lang="ts">
+	import axios from 'axios';
 	import { PlusIcon, XIcon } from 'svelte-feather-icons';
 	import type { Album } from '$lib/types/music';
-	import type { Genre } from '$lib/types/media';
+	import { lookupGenre } from '$lib/types/media';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { onMount, onDestroy } from 'svelte';
+	import { openFilePicker } from '$stores/form/upload';
+	import type { CustomHttpError } from '$lib/types/error';
 
+	export let nickname: string;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
+	let imagePaths: string[] = [];
+	let errorMessages: CustomHttpError[] = [];
+	let isUploading: boolean = false;
 	onMount(async () => {
 		maxFileSize = await getMaxFileSize();
+		addEventListener('load', () => {
+			const dropArea = document.querySelector('.drop-area');
+			if (dropArea) {
+				dropArea.addEventListener('dragover', (e) => {
+					e.preventDefault();
+					dropArea.classList.add('highlight');
+				});
+				dropArea.addEventListener('dragleave', () => {
+					dropArea.classList.remove('highlight');
+				});
+				dropArea.addEventListener('drop', async (e) => {
+					e.preventDefault();
+					dropArea.classList.remove('highlight');
+					try {
+						await addImage(e);
+					} catch (error) {
+						errorMessages.push({
+							message: "Couldn't upload image",
+							status: 500
+						});
+						errorMessages = [...errorMessages];
+					}
+				});
+			}
+		});
 	});
 
 	onDestroy(() => {
 		maxFileSize = 0;
+		isUploading = false;
 	});
 
 	$: {
 		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
+		imagePaths = album.image_paths || [];
+		isUploading = imagePaths.length !== 0;
 	}
 
 	let album: Album = {
@@ -44,12 +79,93 @@
 	};
 
 	const addMore = () => {};
-	const addImage = () => {};
+	// TODO: reactively update the displayed image
+	// but then, only submit once the form has been filled out
+	// This is because we cannot add an image without a media_id
+	const addImage = async (e: Event) => {
+		return new Promise((resolve, reject) => {
+			isUploading = true;
+			console.debug('addImage');
+			const files = (e.target as HTMLInputElement).files;
+			if (files) {
+				console.debug('files', files);
+				const file = files[0];
+				if (file.size > maxFileSize) {
+					isUploading = false;
+					reject(new Error(`File size must be less than ${maxFileSizeString}`));
+				}
+				const reader = new FileReader();
+				console.info('file reader initialized');
+				let csrfToken: string | undefined;
+				csrfToken = document.cookie
+					.split('; ')
+					.find((row) => row.startsWith('csrf_'))
+					?.split('=')[1];
+
+				reader.onload = async (e) => {
+					console.debug('reader onload');
+					const data = e.target?.result;
+					if (data) {
+						console.debug('data', data);
+						const formData = new FormData();
+						console.info('form data initialized');
+						formData.append('fileData', file);
+						formData.append('imageType', 'album_cover');
+						formData.append('member', nickname);
+						try {
+							const res = await axios.post('/api/upload/image', formData, {
+								headers: {
+									'Content-Type': 'multipart/form-data',
+									Authorization: `Bearer ${localStorage.getItem('jwtToken')}`,
+									'X-CSRF-Token': csrfToken || ''
+								}
+							});
+							if (res.status === 200) {
+								album.image_paths = [res.data.path];
+								imagePaths = [res.data.path];
+								isUploading = false;
+								resolve(res.data.path);
+							} else {
+								errorMessages.push({
+									message: res.data.message,
+									status: res.status
+								});
+								isUploading = false;
+								reject(res.status);
+							}
+						} catch (error) {
+							errorMessages.push({
+								message: 'Something went wrong',
+								status: 500
+							});
+							isUploading = false;
+							reject(error);
+						}
+					}
+				};
+				reader.readAsDataURL(file);
+			}
+		});
+	};
+
 	const removeGenre = (index: number) => {
 		if (album.genres) {
 			album.genres.splice(index, 1);
 		}
 	};
+
+	const handleGenreAdd = async (e: Event) => {
+		e.preventDefault();
+		if (genres) {
+			const genreNames = genres.split(',');
+			await listGenres(genreNames);
+		}
+	};
+
+	const handleSubmit = async (e: Event) => {
+		e.preventDefault();
+	};
+
 	let genres: string = '';
 </script>
 
@@ -57,14 +173,21 @@
 <div
 	class="drop-area"
 	on:drop={addImage}
-	on:click={addImage}
-	on:keydown={(e) => e.key === 'Space' && addImage()}
+	on:click={() => openFilePicker(addImage, 'image/*')}
+	on:keydown={(e) => (e.key === 'Space' ? openFilePicker(addImage, 'image/*') : null)}
 	on:dragover={(e) => e.preventDefault()}
 	aria-dropeffect="copy"
 	role="region"
 	aria-labelledby="drop-area-label"
 >
-	<p id="drop-area-label">Drop or click to add album cover here</p>
+	<p id="drop-area-label">
+		<a on:click={() => openFilePicker(addImage, 'image/*')}>Drop or click to add album cover here</a
+		>
+	</p>
+
+	{#if isUploading}
+		<div class="spinner" />
+	{/if}
 	{#if album.image_paths}
 		<img src={album.image_paths[0]} alt="Album Cover" />
 	{/if}
@@ -114,6 +237,8 @@
 <p>Tracks:</p>
 <p>Tracks:</p>
 
+<button on:click={handleSubmit}>Submit</button>
+
 <style>
 	.drop-area {
 		border: 2px dashed #ccc;
@@ -144,5 +269,25 @@
 		right: 8px;
 		transform: translateY(-50%);
 		color: #888;
+	}
+
+	.spinner {
+		border: 4px solid rgba(0, 0, 0, 0.1);
+		border-top: 4px solid #3498db;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		animation: spin 1s linear infinite;
+		margin-left: 10px;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 </style>

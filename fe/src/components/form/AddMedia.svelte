@@ -3,8 +3,16 @@
 	import { submitMediaForm } from '$stores/form/add_media';
 	import type { Media } from '$lib/types/media';
 	import AddAlbum from './media/AddAlbum.svelte';
+	import AddFilm from './media/AddFilm.svelte';
+	import AddTVShow from './media/AddTVShow.svelte';
+	import AddBook from './media/AddBook.svelte';
+	import AddAnime from './media/AddAnime.svelte';
+	import AddManga from './media/AddManga.svelte';
+	import AddComic from './media/AddComic.svelte';
+	import AddGame from './media/AddGame.svelte';
 
 	let media: Media;
+	export let nickname: string;
 
 	const unsubscribe = submitMediaForm.subscribe((value) => {
 		media = value;
@@ -55,7 +63,7 @@
 		{/if}
 
 		{#if media.kind === 'album'}
-			<AddAlbum />
+			<AddAlbum {nickname} />
 		{/if}
 
 		{#if media.kind === 'film'}

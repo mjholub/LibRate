@@ -91,12 +91,6 @@
 	const handleFileSelection = async (e: Event) => {
 		return new Promise(async (resolve, reject) => {
 			if (browser) {
-				let csrfToken: string | undefined;
-				csrfToken = document.cookie
-					.split('; ')
-					.find((row) => row.startsWith('csrf_'))
-					?.split('=')[1];
-
 				const fileInput = e.target as HTMLInputElement;
 				const file = fileInput.files?.[0];
 				if (!file) {
@@ -108,6 +102,11 @@
 				formData.append('fileData', file);
 				formData.append('imageType', 'profile');
 				formData.append('member', member.memberName);
+				let csrfToken: string | undefined;
+				csrfToken = document.cookie
+					.split('; ')
+					.find((row) => row.startsWith('csrf_'))
+					?.split('=')[1];
 				const response = await axios.post('/api/upload/image', formData, {
 					headers: {
 						'Content-Type': 'multipart/form-data',
