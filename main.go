@@ -85,7 +85,7 @@ func main() {
 		Log:    &log,
 		Config: &conf.GRPC,
 	}
-	cmd.RunGrpcServer(s)
+	go cmd.RunGrpcServer(s)
 
 	// database first-run initialization
 	if !flags.ExternalDBHealthCheck {
