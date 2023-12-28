@@ -33,11 +33,13 @@ func (s *Controller) UploadImage(c *fiber.Ctx) error {
 	name := claims["member_name"].(string)
 	memberName := c.FormValue("member")
 	if name != memberName {
+		s.log.Warn().Msgf("Member %s tried to upload an image for %s", name, memberName)
 		return fiber.ErrForbidden
 	}
 	imageType := c.FormValue("imageType")
 	file, err := c.FormFile("fileData")
 	if err != nil {
+		s.log.Error().Err(err).Msg("Failed to get file from form")
 		return fiber.ErrBadRequest
 	}
 
