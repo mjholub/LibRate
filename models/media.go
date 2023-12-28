@@ -25,6 +25,7 @@ type (
 		Delete(ctx context.Context, key string) error
 	}
 
+	// nolint:musttag // false positive, can only annotate fields, not types
 	Media struct {
 		ID       uuid.UUID     `json:"id" db:"id,pk,unique"`
 		Title    string        `json:"title" db:"title"`

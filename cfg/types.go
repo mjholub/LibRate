@@ -12,6 +12,7 @@ type Config struct {
 	// used to encrypt sessions database
 	Secret string `json:"secret,omitempty" yaml:"secret" mapstructure:"secret" env:"LIBRATE_SECRET"`
 	// default to production for security reasons
+	// nolint: revive
 	LibrateEnv string         `json:"librateEnv,omitempty" yaml:"librateEnv" default:"production" mapstructure:"librateEnv" env:"LIBRATE_ENV" validate:"oneof='test' 'development' 'production'"`
 	Redis      RedisConfig    `json:"redis,omitempty" yaml:"redis" mapstructure:"redis"`
 	Logging    logging.Config `json:"logging,omitempty" yaml:"logging" mapstructure:"logging"`
@@ -20,7 +21,7 @@ type Config struct {
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 }
 
-// nolint: musttag // tagged in the struct above
+// nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
 type DBConfig struct {
 	Engine             string `yaml:"engine" default:"postgres" env:"LIBRATE_DB_ENGINE" validate:"required,oneof='postgres' 'mariadb' 'sqlite'"`
 	Host               string `yaml:"host" default:"localhost" env:"LIBRATE_DB_HOST"`

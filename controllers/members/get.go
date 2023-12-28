@@ -13,8 +13,7 @@ import (
 )
 
 func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
-	// TODO: implement using ActivityPub
-	return nil
+	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
 // check checks for the existence of a member
@@ -72,8 +71,12 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
 	}
 
-	if accept == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"" || strings.HasPrefix(accept, "application/activity+json") {
-		actor, err := MemberToActor(c, member)
+	const activityStreams = "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""
+
+	var actor []byte
+
+	if accept == activityStreams || strings.HasPrefix(accept, "application/activity+json") {
+		actor, err = MemberToActor(c, member)
 		if err != nil {
 			mc.log.Error().Msgf("Error converting member to actor: %v", err)
 			return c.SendStatus(fiber.StatusBadRequest)
@@ -83,8 +86,9 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	}
 	// TODO: check if the requester is a follower when
 	// member.Visibility == "followers_only"
+	var followStatus bool
 	if member.Visibility == "followers_only" {
-		followStatus, err := requester.IsFollowing(ctx, member.ID)
+		followStatus, err = requester.IsFollowing(ctx, member.ID)
 		if err != nil {
 			// TODO: use webfingers, since MemberName (nick) is bound to current instance
 			mc.log.Error().Msgf("Error checking if %s is following %s: %v", requester.MemberName, member.MemberName, err)

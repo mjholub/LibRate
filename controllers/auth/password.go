@@ -20,13 +20,20 @@ const (
 	saltLen        = 28
 )
 
-var threads = uint8(runtime.NumCPU() - 1)
-
 func hashWithArgon(password []byte) (fmtedHash string, err error) {
 	salt, err := byteGen(saltLen)
 	if err != nil {
 		return "", err
 	}
+
+	var threads uint8
+	numCPU := runtime.NumCPU()
+	if numCPU > 1 {
+		threads = uint8(numCPU - 1)
+	} else {
+		threads = 1
+	}
+
 	hash := argon2.IDKey(password, salt, timeComplexity, mem, threads, keyLen)
 
 	encSalt := base64.RawStdEncoding.EncodeToString(salt)
@@ -61,6 +68,14 @@ func checkArgonPassword(password, hash string) bool {
 		return false
 	}
 	// Hash password
+
+	var threads uint8
+	numCPU := runtime.NumCPU()
+	if numCPU > 1 {
+		threads = uint8(numCPU - 1)
+	} else {
+		threads = 1
+	}
 	hashedPassword := argon2.IDKey([]byte(password), salt, timeComplexity, mem, threads, keyLen)
 
 	return bytes.Equal(encHash, hashedPassword)

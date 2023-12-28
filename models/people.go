@@ -173,38 +173,38 @@ func (g *Group) Validate() error {
 	return fmt.Errorf("invalid group kind: %s, must be one of %s", g.Kind, strings.Join(GroupKinds, ", "))
 }
 
-func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (ID int32, err error) {
+func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (id int32, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
 		switch kind {
 		case "group":
-			err := p.dbConn.GetContext(ctx, &ID,
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.group WHERE name = $1 AND kind = $2 LIMIT 1",
 				name, kind)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		case "person":
-			first_name := strings.Split(name, " ")[0]
-			last_name := strings.Split(name, " ")[1]
-			err := p.dbConn.GetContext(ctx, &ID,
+			firstName := strings.Split(name, " ")[0]
+			lastName := strings.Split(name, " ")[1]
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.person WHERE first_name = $1 AND last_name = $2 LIMIT 1",
-				first_name, last_name)
+				firstName, lastName)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		case "studio":
-			err := p.dbConn.GetContext(ctx, &ID,
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.studio WHERE name = $1 LIMIT 1",
 				name)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		default:
 			return 0, fmt.Errorf("invalid kind: %s", kind)
 		}

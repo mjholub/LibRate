@@ -45,6 +45,7 @@ func (a *Service) Register(c *fiber.Ctx) error {
 	})
 }
 
+// nolint:gocritic
 func (r RegisterInput) Validate() (*member.Input, error) {
 	if r.Email == "" && r.MemberName == "" {
 		return nil, fmt.Errorf("email or nickname required")

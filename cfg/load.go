@@ -7,9 +7,9 @@ import (
 	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
+	"dario.cat/mergo"
 	"github.com/caarlos0/env/v10"
 	"github.com/getsops/sops/v3/decrypt"
-	"github.com/imdario/mergo"
 	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 	"github.com/samber/mo"
