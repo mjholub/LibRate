@@ -12,6 +12,7 @@ import (
 )
 
 type (
+	// nolint: revive
 	RatingInput struct {
 		// TODO: allow for setting dynamic rating scales
 		NumStars    int8      `json:"numstars" binding:"required" validate:"min=0,max=10" error:"numstars must be between 1 and 15" db:"stars"`
@@ -22,6 +23,7 @@ type (
 		MediaID     uuid.UUID `json:"mediaid" db:"media_id"`
 	}
 
+	//nolint: revive
 	Review struct {
 		ID               int64              `json:"_key" db:"id,pk"`
 		CreatedAt        time.Time          `json:"created_at" db:"created_at"`
@@ -55,11 +57,12 @@ type (
 	}
 
 	// TODO: add migration
+	// nolint: revive
 	SecondaryRating struct {
 		ID       int64      `json:"_key" db:"id,pk"`
 		MediaID  *uuid.UUID `json:"media_id" db:"media_id"`
 		Kind     string     `json:"kind" validate:"required,oneof=track plotline soundtrack acting scenography scenario theme" db:"kind"`
-		NumStars int8       `json: "numstars" binding:"required" validate:"min=1,max=10" error:"numstars must be between 1 and 10" db:"stars" `
+		NumStars int8       `json:"numstars" binding:"required" validate:"min=1,max=10,error='numstars must be between 1 and 10'" db:"stars"`
 		UserID   uint32     `json:"userid" db:"user_id"`
 	}
 
@@ -78,7 +81,7 @@ type (
 )
 
 func NewRatingStorage(db *sqlx.DB, log *zerolog.Logger) *RatingStorage {
-	return &RatingStorage{}
+	return &RatingStorage{db, log}
 }
 
 func (rs *RatingStorage) New(ctx context.Context, rating *RatingInput) error {
