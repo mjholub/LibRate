@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func addAlbum(ctx context.Context, db *sqlx.DB, album Album) error {
+func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 	// Insert the album into the media.albums table
 	_, err := db.ExecContext(ctx, `
 		INSERT INTO media.albums (media_id, name, release_date, duration)
