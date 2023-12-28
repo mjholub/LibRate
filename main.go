@@ -132,17 +132,9 @@ func main() {
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
 
-	// setup secondary apps
-	profilesApp, err := setupSecondaryApps(app, middlewares)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to setup secondary apps")
-	}
-	apps := []*fiber.App{app, profilesApp}
+	setupPOW(conf, app)
 
-	setupPOW(conf, apps)
-
-	err = setupRoutes(conf, &log, fzlog, dbConn, app,
-		profilesApp, sess)
+	err = setupRoutes(conf, &log, fzlog, dbConn, app, sess)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -155,26 +147,24 @@ func main() {
 	}
 }
 
-func setupPOW(conf *cfg.Config, app []*fiber.App) {
+func setupPOW(conf *cfg.Config, app *fiber.App) {
 	if conf.Fiber.PowDifficulty == 0 {
 		conf.Fiber.PowDifficulty = 60000
 	}
-	for i := range app {
-		app[i].Use(fiberpow.New(fiberpow.Config{
-			PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
-			Difficulty:  conf.Fiber.PowDifficulty,
-			Filter: func(c *fiber.Ctx) bool {
-				return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "development"
-			},
-			Storage: redis.New(redis.Config{
-				Host:     conf.Redis.Host,
-				Port:     conf.Redis.Port,
-				Username: conf.Redis.Username,
-				Password: conf.Redis.Password,
-				Database: conf.Redis.PowDB,
-			}),
-		}))
-	}
+	app.Use(fiberpow.New(fiberpow.Config{
+		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
+		Difficulty:  conf.Fiber.PowDifficulty,
+		Filter: func(c *fiber.Ctx) bool {
+			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "development"
+		},
+		Storage: redis.New(redis.Config{
+			Host:     conf.Redis.Host,
+			Port:     conf.Redis.Port,
+			Username: conf.Redis.Username,
+			Password: conf.Redis.Password,
+			Database: conf.Redis.PowDB,
+		}),
+	}))
 }
 
 func initDB(dbConf *cfg.DBConfig, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
@@ -299,21 +289,6 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 	}
 }
 
-// unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App,
-	middlewares []fiber.Handler,
-) (*fiber.App, error) {
-	profilesApp := fiber.New(fiber.Config{
-		EnableTrustedProxyCheck: true,
-	})
-	profilesApp.Static("/", "./fe/build/")
-	for i := range middlewares {
-		profilesApp.Use(middlewares[i])
-	}
-	mainApp.Mount("/profiles", profilesApp)
-	return profilesApp, nil
-}
-
 func modularListen(conf *cfg.Config, app *fiber.App) error {
 	listenPort := strconv.Itoa(conf.Fiber.Port)
 	if listenPort == "" {
@@ -342,14 +317,9 @@ func setupRoutes(
 	log *zerolog.Logger,
 	fzlog fiber.Handler,
 	dbConn *sqlx.DB,
-	app, profilesApp *fiber.App,
+	app *fiber.App,
 	sess *fiberSession.Store,
 ) (err error) {
-	err = routes.SetupProfiles(log, conf, dbConn, profilesApp)
-	if err != nil {
-		return fmt.Errorf("failed to setup profiles routes: %w", err)
-	}
-
 	// Setup routes
 	err = routes.Setup(log, fzlog, conf, dbConn, app, sess)
 	if err != nil {
