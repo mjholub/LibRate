@@ -10,6 +10,7 @@ fe/_app
 *.pub
 *.prof
 *.pdf
+*.out
 todo.md
 .env
 tmp
@@ -24,3 +25,4 @@ lrctl
 LibRate-*
 LibRate
 static/img
+static
