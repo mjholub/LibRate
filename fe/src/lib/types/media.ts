@@ -41,3 +41,26 @@ export type Keyword = {
   vote_count: number;
   avg_score?: number | null;
 };
+
+export const lookupGenre = async (name: string): Promise<Genre | null> => {
+  return new Promise(async (resolve, reject) => {
+    const res = await fetch(`/api/genres/${name}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+    switch (res.status) {
+      case 200:
+        resolve(await res.json());
+        break;
+      case 404:
+        resolve(null);
+        break;
+      default:
+        reject(res.statusText);
+        break;
+    }
+  });
+};
