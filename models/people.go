@@ -80,16 +80,6 @@ type (
 	}
 )
 
-var GroupKinds = []string{
-	"Orchestra",
-	"Choir",
-	"Ensemble",
-	"Collective",
-	"Band",
-	"Troupe",
-	"Other",
-}
-
 func NewPeopleStorage(dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
 	return &PeopleStorage{
 		dbConn: dbConn,
@@ -168,6 +158,15 @@ func (p *PeopleStorage) GetGroupName(ctx context.Context, id int32) (Group, erro
 }
 
 func (g *Group) Validate() error {
+	GroupKinds := []string{
+		"Orchestra",
+		"Choir",
+		"Ensemble",
+		"Collective",
+		"Band",
+		"Troupe",
+		"Other",
+	}
 	if lo.Contains(GroupKinds, g.Kind) {
 		return nil
 	}
