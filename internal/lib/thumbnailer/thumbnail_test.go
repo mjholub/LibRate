@@ -15,3 +15,14 @@ func TestThumbnail(t *testing.T) {
 	assert.Equal(t, 512, bounds.Dx())
 	assert.Equal(t, 512, bounds.Dy())
 }
+
+func BenchmarkThumbnail(b *testing.B) {
+	dims := Dims{Width: 512, Height: 512}
+
+	for i := 0; i < b.N; i++ {
+		_, err := Thumbnail(dims, "gopher.jpg")
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

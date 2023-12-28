@@ -1,38 +1,36 @@
 package thumbnailer
 
 import (
-	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 
-	"github.com/154pinkchairs/imaging"
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	_ "golang.org/x/image/webp"
+
+	xdraw "golang.org/x/image/draw"
 )
 
 type Dims struct {
 	Width, Height uint
 }
 
+// experimental implementation with image/draw, w/o ffmpeg dependency
 func Thumbnail(dims Dims, inputFile string) (thumb image.Image, err error) {
-	buf := bytes.NewBuffer(nil)
-	err = ffmpeg.Input(inputFile).
-		Filter("select", ffmpeg.Args{fmt.Sprintf("eq(n,%d)", 0)}).
-		Output("pipe:", ffmpeg.KwArgs{"vframes": 1, "format": "image2", "vcodec": "mjpeg"}).
-		WithOutput(buf, os.Stdout).
-		Run()
+	f, err := os.Open(inputFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file: %v", err)
 	}
+	defer f.Close()
 
-	thumb, _, err = image.Decode(buf)
+	img, _, err := image.Decode(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding image: %v", err)
 	}
-	thumbNRGBA := imaging.Resize(thumb, int(dims.Width), int(dims.Height), imaging.Lanczos)
-	centreX := float64(dims.Width)
-	centreY := float64(dims.Height)
-	thumb = imaging.CropCenter(thumbNRGBA, int(centreX), int(centreY))
-
-	return thumb, err
+	resized := image.NewRGBA(image.Rect(0, 0, int(dims.Width), int(dims.Height)))
+	xdraw.CatmullRom.Scale(resized, resized.Bounds(), img, img.Bounds(), draw.Over, nil)
+	return resized, nil
 }
