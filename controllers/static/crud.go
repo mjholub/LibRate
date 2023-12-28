@@ -27,7 +27,7 @@ import (
 // This handler returns the ID of the image in the database.
 // When a profile picture/banner upload is requested, it still needs to be confirmed by the user.
 // INFO: currently supported arguments for imageType: "profile", "album_cover"
-func (s *StaticController) UploadImage(c *fiber.Ctx) error {
+func (s *Controller) UploadImage(c *fiber.Ctx) error {
 	member := c.Locals("jwtToken").(*jwt.Token)
 	claims := member.Claims.(jwt.MapClaims)
 	name := claims["member_name"].(string)
@@ -84,7 +84,7 @@ func (s *StaticController) UploadImage(c *fiber.Ctx) error {
 	})
 }
 
-func (s *StaticController) saveProfileImage(
+func (s *Controller) saveProfileImage(
 	ctx context.Context,
 	memberName, ext string,
 	file *multipart.FileHeader,
@@ -118,7 +118,7 @@ func (s *StaticController) saveProfileImage(
 	return s.storage.AddImage(ctx, &props)
 }
 
-func (s *StaticController) DeleteImage(c *fiber.Ctx) error {
+func (s *Controller) DeleteImage(c *fiber.Ctx) error {
 	// 1. get the image id
 	idStr := c.Params("id")
 	id, err := strconv.Atoi(idStr)

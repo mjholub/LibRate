@@ -13,7 +13,7 @@ import (
 )
 
 // GetRandom fetches up to 5 random media items to be displayed in a carousel on the home page
-func (mc *MediaController) GetRandom(c *fiber.Ctx) error {
+func (mc *Controller) GetRandom(c *fiber.Ctx) error {
 	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
