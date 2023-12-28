@@ -72,25 +72,10 @@ func (ms *MediaStorage) AddBook(
 			return fmt.Errorf("error getting publisher ID: %w", err)
 		}
 
-		var created time.Time
-		if book.PublicationDate.Valid {
-			created = book.PublicationDate.Time
-		} else {
-			created = time.Now()
-		}
-
-		media := Media{
-			Title:    book.Title,
-			Kind:     "book",
-			Created:  created,
-			Creators: book.Authors,
-		}
-
-		mediaID, err := ms.Add(ctx, &media)
+		mediaID, err := ms.addBookAsMedia(ctx, book)
 		if err != nil {
-			return fmt.Errorf("error adding media: %w", err)
+			return err
 		}
-		ms.Log.Info().Msgf("added media with ID %s", mediaID)
 
 		_, err = ms.db.NamedExecContext(ctx, `
 		INSERT INTO media.books (
@@ -103,58 +88,96 @@ func (ms *MediaStorage) AddBook(
 		if err != nil {
 			return fmt.Errorf("error adding book: %w", err)
 		}
-		authorIDs := make([]int32, len(book.Authors))
-		for i := range book.Authors {
-			authorID := book.Authors[i].ID
-			authorIDs = append(authorIDs, authorID)
+
+		if err := ms.addBookAuthors(ctx, *mediaID, book.Authors); err != nil {
+			return err
 		}
 
-		for i := range authorIDs {
-			_, err = ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_authors (
-		book, person
-		) VALUES (
-		$1, $2
-		)`, mediaID, authorIDs[i])
-			if err != nil {
-				ms.Log.Error().Err(err).Msgf("error adding author %s to book with ID %s", authorIDs[i], mediaID)
-			}
+		if err := ms.addBookGenres(ctx, *mediaID, book.Genres); err != nil {
+			return err
 		}
 
-		genres := make([]int16, len(book.Genres))
-		for i := range book.Genres {
-			genreID := book.Genres[i].ID
-			genres = append(genres, genreID)
-		}
-		for i := range genres {
-			_, err = ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_genres (
-		book, genre
-		) VALUES (
-		$1, $2
-		)`, mediaID, genres[i])
-			if err != nil {
-				ms.Log.Error().Err(err).Msgf("error adding genre %s to book with ID %s", genres[i], mediaID)
-			}
-		}
-
-		for i := range book.Languages {
-			langID, err := ReverseLookupLangID(book.Languages[i])
-			if err != nil {
-				ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", book.Languages[i], mediaID)
-			}
-			_, err = ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_languages (
-		book, lang
-		) VALUES (
-		$1, $2
-		)`, mediaID, langID)
-			if err != nil {
-				ms.Log.Error().Err(err).
-					Msgf("error adding language %s to book with ID %s", book.Languages[i], mediaID)
-			}
+		if err := ms.addBookLanguages(ctx, *mediaID, book.Languages); err != nil {
+			return err
 		}
 
 		return nil
 	}
+}
+
+func (ms *MediaStorage) addBookAsMedia(ctx context.Context, book *Book) (mediaID *uuid.UUID, err error) {
+	var created time.Time
+	if book.PublicationDate.Valid {
+		created = book.PublicationDate.Time
+	} else {
+		created = time.Now()
+	}
+
+	media := Media{
+		Title:    book.Title,
+		Kind:     "book",
+		Created:  created,
+		Creators: book.Authors,
+	}
+
+	mediaID, err = ms.Add(ctx, &media)
+	if err != nil {
+		return nil, fmt.Errorf("error adding media: %w", err)
+	}
+	ms.Log.Info().Msgf("added media with ID %s", mediaID)
+
+	return mediaID, nil
+}
+
+func (ms *MediaStorage) addBookAuthors(ctx context.Context, bookID uuid.UUID, authors []Person) error {
+	for i := range authors {
+		authorID := authors[i].ID
+		_, err := ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_authors (
+		book, person
+		) VALUES (
+		$1, $2
+		)`, bookID, authorID)
+		if err != nil {
+			return fmt.
+				Errorf("error adding author %s %s to book with ID %s: %v",
+					authors[i].FirstName, authors[i].LastName, bookID.String(), err)
+		}
+	}
+	return nil
+}
+
+func (ms *MediaStorage) addBookGenres(ctx context.Context, bookID uuid.UUID, genres []Genre) error {
+	for i := range genres {
+		genreID := genres[i].ID
+		_, err := ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_genres (
+		book, genre
+		) VALUES (
+		$1, $2
+		)`, bookID, genreID)
+		if err != nil {
+			return fmt.Errorf("error adding genre %s to book with ID %s: %v", genres[i].Name, bookID.String(), err)
+		}
+	}
+	return nil
+}
+
+func (ms *MediaStorage) addBookLanguages(ctx context.Context, bookID uuid.UUID, languages []string) error {
+	for i := range languages {
+		langID, err := ReverseLookupLangID(languages[i])
+		if err != nil {
+			ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", languages[i], bookID)
+		}
+		_, err = ms.db.ExecContext(ctx, `
+		INSERT INTO media.book_languages (
+		book, lang
+		) VALUES (
+		$1, $2
+		)`, bookID, langID)
+		if err != nil {
+			ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", languages[i], bookID)
+		}
+	}
+	return nil
 }
