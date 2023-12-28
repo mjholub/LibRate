@@ -7,12 +7,14 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { openFilePicker } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
+	import AddTrack from './AddTrack.svelte';
 
 	export let nickname: string;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
 	let imagePaths: string[] = [];
 	let errorMessages: CustomHttpError[] = [];
+	let genreLinks: string[] = [];
 	let isUploading: boolean = false;
 	onMount(async () => {
 		maxFileSize = await getMaxFileSize();
@@ -48,9 +50,34 @@
 		isUploading = false;
 	});
 
+	// call lookupGenre to check if genre exists in db
+	// then split the genres into an array of links to each genre's page
+	// If a genre is found, album's genres are updated with the genre's info
+	const listGenres = async (genreNames: string[]) => {
+		let genreLinks: string[] = [];
+		genreNames.forEach(async (genreName) => {
+			const genre = await lookupGenre(genreName);
+			if (genre) {
+				album.genres?.push(genre);
+				album.genres = [...(album.genres || [])];
+				genreLinks.push(`<a href="/genre/${genre.id}">${genre.name}</a>`);
+				genreLinks = [...genreLinks];
+			} else {
+				errorMessages.push({
+					message: `Genre ${genreName} not found`,
+					status: 404
+				});
+				errorMessages = [...errorMessages];
+			}
+		});
+		return genreLinks;
+	};
+
 	$: {
 		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
 		imagePaths = album.image_paths || [];
+		album.genres = album.genres || [];
+		genreLinks = [];
 		isUploading = imagePaths.length !== 0;
 	}
 
@@ -211,8 +238,8 @@
 
 <label for="genres">Genres (comma separated):</label>
 <div>
-	{#if album.genres}
-		{#each album.genres as genre, index}
+	{#if genreLinks}
+		{#each genreLinks as genre, index}
 			<div class="genre-box">
 				{genre}
 				<span
@@ -229,13 +256,14 @@
 		{/each}
 	{/if}
 </div>
-<input id="genres" bind:value={genres} on:blur={() => (album.genres = genres.split(','))} />
+<!-- pass to listGenres -->
+<input id="genres" bind:value={genres} on:blur={handleGenreAdd} />
 
 <label for="duration">Duration:</label>
 <input id="duration" bind:value={album.duration} type="time" />
 
 <p>Tracks:</p>
-<p>Tracks:</p>
+<AddTrack />
 
 <button on:click={handleSubmit}>Submit</button>
 
