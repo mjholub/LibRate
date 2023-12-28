@@ -26,7 +26,6 @@ func TestLoadConfig(t *testing.T) {
 			User:     "postgres",
 			Password: "postgres",
 			SSL:      "unknown",
-			PGConfig: "/usr/bin/pg_config",
 		},
 		Fiber: cfg.FiberConfig{
 			Host: "localhost",

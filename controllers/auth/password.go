@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/argon2"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Argon2i RFC recommends at least time = 3, mem = 32. Time has been increased to 4
@@ -35,14 +34,6 @@ func hashWithArgon(password []byte) (fmtedHash string, err error) {
 
 	return fmt.Sprintf("$argon2i$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version,
 		mem, timeComplexity, threads, encSalt, encHash), nil
-}
-
-func hashWithBcrypt(password string) (fmtedHash string, err error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hash), nil
 }
 
 func byteGen(n uint32) ([]byte, error) {
@@ -73,9 +64,4 @@ func checkArgonPassword(password, hash string) bool {
 	hashedPassword := argon2.IDKey([]byte(password), salt, timeComplexity, mem, threads, keyLen)
 
 	return bytes.Equal(encHash, hashedPassword)
-}
-
-func checkBcryptPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }
