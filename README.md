@@ -102,7 +102,7 @@ docker network create --subnet 172.20.0.0/16 librate-net
 2. Run the redis container with
 
 ```sh
- docker run -it --network=librate_librate-net --hostname "librate-redis"
+ docker run -d --rm --network=librate-net --hostname "librate-redis"
  redis:alpine
 ```
 
@@ -111,7 +111,7 @@ docker network create --subnet 172.20.0.0/16 librate-net
 ```sh
 cd db && \
 docker build -t librate-db . && \
-docker run -it --network=librate_librate-net --hostname "librate-db" librate-db:latest
+docker run -it --network=librate-net --hostname "librate-db" librate-db:latest
 ```
 
 4. Create an .env file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/.env.example). Alternatively you can configure the container to use the .yml config, but .env is somewhat more reliable.
@@ -120,7 +120,7 @@ docker run -it --network=librate_librate-net --hostname "librate-db" librate-db:
    Dockerfile needed to build the app manually or download a build artifact for linux and put it in the LibRate directory, which is faster.
 
    ```sh
-    docker run -it --network=librate_librate-net --hostname "librate-app" -p 3000:3000 -p 3030:3030 librate-app:latest
+    docker run -it --network=librate-net --hostname "librate-app" -p 3000:3000 -p 3030:3030 librate-app:latest
 
    ```
 
