@@ -12,6 +12,8 @@ import (
 
 func Setup(conf *cfg.Config) (*sess.Store, error) {
 	sessionStorage := postgres.New(postgres.Config{
+		Host:       conf.DBConfig.Host,
+		Port:       int(conf.DBConfig.Port),
 		Database:   "librate_sessions",
 		Table:      "sessions",
 		Username:   conf.DBConfig.User,

@@ -37,7 +37,7 @@ RUN go build -ldflags "-w -s" -o /app/bin/librate
 WORKDIR /app/data
 COPY ./config.yml /app/data/config.yml
 COPY ./static/ /app/data/static
-COPY ./db/migrations/ /app/data/migrations
+COPY ./src/db/migrations/ /app/data/migrations
 
 WORKDIR /app/bin
 # add live reload
