@@ -1,3 +1,10 @@
+# Build frontend
+FROM node:lts-alpine AS fe-builder
+RUN npm install -g "pnpm@latest"
+WORKDIR /app/fe
+COPY ./fe /app/fe
+RUN pnpm install && pnpm run build
+
 FROM golang:1.21-alpine AS app
 
 RUN addgroup -S librate && adduser -S librate -G librate
@@ -7,19 +14,11 @@ VOLUME /app
 ENV HOME /app
 ENV PATH /app/bin:$PATH
 
-WORKDIR /app/fe
-COPY ./fe /app/fe
-RUN apk add --no-cache pnpm -X "https://dl-cdn.alpinelinux.org/alpine/edge/testing" && \
-  pnpm install && pnpm run build
-
 RUN if [ "$(addgroup -S librate $?)" != 0 ]; \
   then echo ""; \
-  else true; \
   fi 
-RUN if [ "$(adduser -S librate -G librate $?)" != 0 ]; then echo ""; else true; fi
-
-
-#COPY . /app
+RUN if [ "$(adduser -S librate -G librate $?)" != 0 ]; then echo ""; fi
+COPY --from=fe-builder /app/fe/build /app/bin/fe/build
 
 WORKDIR /app
 #RUN go mod tidy && \
@@ -31,7 +30,6 @@ WORKDIR /app
 ENV GO_BIN=/app/bin
 COPY .env /app/.env
 COPY ./lrctl /app/bin/lrctl
-COPY ./start.sh /app/start.sh
 RUN go install codeberg.org/mjh/lrctl@latest
 COPY ./config.yml /app/data/config.yml
 COPY ./static/ /app/data/static
