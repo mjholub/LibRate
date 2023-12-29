@@ -1,4 +1,4 @@
-FROM postgres:15-alpine
+FROM postgres:16-alpine
 
 WORKDIR /tmp/
 COPY ./start.sh /usr/bin/start.sh
