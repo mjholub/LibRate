@@ -1,4 +1,5 @@
-FROM postgres:16-alpine
+# WARN: version 16 does not seem to parse network mask correctly
+FROM postgres:15-alpine
 
 WORKDIR /tmp/
 COPY ./start.sh /usr/bin/start.sh
