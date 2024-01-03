@@ -4,7 +4,7 @@ This project aims to bring a website combining the functionality of such project
 
 This project is currently in early beta stage, bugs are expected and PRs are very welcome.
 
-**The first public beta instance is expected to launch by the end of December 2023.**
+**The first public beta instance is expected to launch in Q1 2024. Bleeding edge branch can be found [here](https://codeberg.org/mjh/LibRate/src/branch/dev)**
 
 # Table of contents
 <!-- toc -->
@@ -96,7 +96,6 @@ The git tag part is needed only for displaying the version in the footer
 
 - [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for handling secrets
 - `pnpm`, `yarn` or `npm`, for building the frontend
-- ~~Python 3 for setting up the uint Postgres extension~~
 - working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 
