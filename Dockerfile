@@ -1,10 +1,3 @@
-# Build frontend
-FROM node:lts-alpine AS fe-builder
-RUN npm install -g "pnpm@latest"
-WORKDIR /app/fe
-COPY ./fe /app/fe
-RUN pnpm install && pnpm run build
-
 FROM golang:1.21-alpine AS app
 
 RUN addgroup -S librate && adduser -S librate -G librate
@@ -14,11 +7,12 @@ VOLUME /app
 ENV HOME /app
 ENV PATH /app/bin:$PATH
 
-RUN if [ "$(addgroup -S librate $?)" != 0 ]; \
-  then echo ""; \
-  fi 
-RUN if [ "$(adduser -S librate -G librate $?)" != 0 ]; then echo ""; fi
-COPY --from=fe-builder /app/fe/build /app/bin/fe/build
+WORKDIR /app/fe
+COPY --chown=librate:librate ./fe /app/fe
+RUN apk add --no-cache pnpm -X "https://dl-cdn.alpinelinux.org/alpine/edge/testing" && \
+  pnpm install && pnpm run build
+
+#COPY . /app
 
 WORKDIR /app
 #RUN go mod tidy && \
@@ -27,31 +21,14 @@ WORKDIR /app
 # Releases on Codeberg) instead.
 # Add a directive to copy everything from cwd to /app and uncomment the line
 # above if you want to compile the app yourself anyway
-ENV GO_BIN=/app/bin
-COPY .env /app/.env
-COPY .air.toml /app/data/.air.toml
-RUN go install codeberg.org/mjh/lrctl@latest
-COPY ./src /app/src
-WORKDIR /app/src
-RUN go build -ldflags "-w -s" -o /app/bin/librate
-WORKDIR /app/data
-COPY ./config.yml /app/data/config.yml
-COPY ./static/ /app/data/static
-COPY ./src/db/migrations/ /app/data/migrations
+COPY --chown=librate:librate .env /app/.env
+COPY --chown=librate:librate ./lrctl /app/bin/lrctl
+COPY --chown=librate:librate ./librate /app/bin/librate
+COPY --chown=librate:librate ./config.yml /app/data/config.yml
+COPY --chown=librate:librate ./static/ /app/data/static
+COPY --chown=librate:librate ./src/db/migrations/ /app/data/migrations
 
-WORKDIR /app/bin
-# add live reload
-# when the container is started, the source code directory must be mounted to /app
-RUN apk add --no-cache inotify-tools && \
-  apk add --no-cache -X "https://dl-cdn.alpinelinux.org/alpine/edge/testing" air
-
-COPY ./fe/entrypoint.sh /app/bin/fe-entrypoint.sh
-RUN chmod +x /app/bin/fe-entrypoint.sh
-
-COPY ./entrypoint.sh /app/bin/entrypoint.sh
-RUN chmod +x /app/bin/entrypoint.sh
-
-RUN chown -R librate:librate /app
+#RUN chown -R librate:librate /app
 
 USER librate 
 ENV USE_SOPS=false
@@ -60,5 +37,4 @@ ENV USE_SOPS=false
 #  chmod +x /app/bin/librate
 
 EXPOSE 3000
-#CMD [ "/app/bin/librate", "-c", "env", "-e" ]
-CMD [ "/app/bin/entrypoint.sh" ]
+CMD [ "/app/bin/librate", "-c", "env", "-e" ]
