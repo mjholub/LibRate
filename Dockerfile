@@ -1,40 +1,51 @@
-FROM golang:1.21-alpine AS app
+FROM opensuse/leap:15 AS app
 
-RUN addgroup -S librate && adduser -S librate -G librate
+RUN --mount=type=cache,target=/var/cache/zypp \
+  zypper --non-interactive \
+  install --no-recommends \
+  go \
+  unzip 
 
+RUN useradd -U -m -r librate \
+  -d /app
+
+USER librate
 WORKDIR /app
+RUN --mount=type=cache,target=/app/.cache \
+  curl -fsSL https://bun.sh/install | bash
+RUN source /app/.bashrc
+
 VOLUME /app
 ENV HOME /app
 ENV PATH /app/bin:$PATH
+ENV GOPATH /app
 
 WORKDIR /app/fe
 COPY --chown=librate:librate ./fe /app/fe
-RUN apk add --no-cache pnpm -X "https://dl-cdn.alpinelinux.org/alpine/edge/testing" && \
-  pnpm install && pnpm run build
+RUN /app/.bun/bin/bun install && /app/.bun/bin/bun run build
 
-#COPY . /app
-
+USER root
+WORKDIR /app/src
+COPY . /app/src
+RUN --mount=type=cache,target=/app/pkg/mod \
+  --mount=type=cache,target=/var/cache/go-build \
+  go mod tidy && \
+  CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s" -o /app/bin/librate && \
+  go install codeberg.org/mjh/lrctl@latest
 WORKDIR /app
-#RUN go mod tidy && \
-#  CGO_ENABLED=0 GOOS=linux go build -ldflags "-w" -o /app/bin/librate
-# skip compilation since it can take some time, use pre-built binaries (see
-# Releases on Codeberg) instead.
-# Add a directive to copy everything from cwd to /app and uncomment the line
-# above if you want to compile the app yourself anyway
 COPY --chown=librate:librate .env /app/.env
-COPY --chown=librate:librate ./lrctl /app/bin/lrctl
-COPY --chown=librate:librate ./librate /app/bin/librate
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
 COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
+# TODO: change the path being used by tke app so that it doesn't hardcode relative directory
+COPY --chown=librate:librate ./views/ /app/bin/views
+RUN chown -R librate:librate /app/bin && \
+  chmod -R 755 /app/bin/
 
-#RUN chown -R librate:librate /app
+USER librate
 
-USER librate 
 ENV USE_SOPS=false
-#RUN go mod tidy && \
-#  go build -ldflags "-w" -o /app/bin/librate && \ 
-#  chmod +x /app/bin/librate
 
 EXPOSE 3000
 CMD [ "/app/bin/librate", "-c", "env", "-e" ]
+# [ "/usr/bin/bash" ]

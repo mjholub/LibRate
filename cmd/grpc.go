@@ -124,13 +124,14 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 	}
 
 	dsn := cfg.DBConfig{
-		Engine:   req.Dsn.Engine,
-		Host:     req.Dsn.Host,
-		Port:     uint16(req.Dsn.Port),
-		User:     req.Dsn.User,
-		Password: req.Dsn.Password,
-		Database: req.Dsn.Database,
-		SSL:      ssl,
+		Engine:         req.Dsn.Engine,
+		Host:           req.Dsn.Host,
+		Port:           uint16(req.Dsn.Port),
+		User:           req.Dsn.User,
+		Password:       req.Dsn.Password,
+		Database:       req.Dsn.Database,
+		SSL:            ssl,
+		MigrationsPath: "/app/data/migrations",
 	}
 	conf := cfg.Config{
 		DBConfig: dsn,

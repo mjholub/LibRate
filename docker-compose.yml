@@ -33,7 +33,7 @@ services:
       - librate-net
     restart: always
     build:
-      context: ./src/db
+      context: ./db
     ports:
       - "5432:5432"
     shm_size: 256mb
