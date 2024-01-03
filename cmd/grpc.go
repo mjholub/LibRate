@@ -141,7 +141,7 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 
 	switch {
 	case len(req.Migrations) == 0 || *req.All:
-		if err := db.Migrate(&conf); err != nil {
+		if err := db.Migrate(s.Log, &conf); err != nil {
 			return &protodb.MigrateResponse{
 				Success: false,
 				Errors: []*protodb.MigrationError{
@@ -159,7 +159,7 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 	default:
 		count := len(req.Migrations)
 		for i, migration := range req.Migrations {
-			if err := db.Migrate(&conf, migration); err != nil {
+			if err := db.Migrate(s.Log, &conf, migration); err != nil {
 				if req.Hardfail {
 					if i < count {
 						s.Log.Warn().Msgf("error while running migration at %s: %v", migration, err)

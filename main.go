@@ -333,7 +333,7 @@ func handleMigrations(conf *cfg.Config, log *zerolog.Logger, path string) error 
 		return nil
 	}
 
-	if err := db.Migrate(conf, path); err != nil {
+	if err := db.Migrate(log, conf, path); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 	log.Info().Msg("Database migrated")

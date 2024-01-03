@@ -3,6 +3,7 @@ package db
 import (
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -39,15 +40,16 @@ func TestMigrate(t *testing.T) {
 		},
 	}
 	var err error
+	log := zerolog.Nop()
 	for _, tc := range tcs {
 		switch tc.inputs {
 		case nil:
-			err = Migrate(conf)
+			err = Migrate(&log, conf)
 		default:
 			if _, ok := tc.inputs.(string); ok {
-				err = Migrate(conf, tc.inputs.(string))
+				err = Migrate(&log, conf, tc.inputs.(string))
 			} else if _, ok := tc.inputs.([]string); ok {
-				err = Migrate(conf, tc.inputs.([]string)...)
+				err = Migrate(&log, conf, tc.inputs.([]string)...)
 			}
 		}
 		if tc.wantErr {

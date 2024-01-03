@@ -9,6 +9,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 )
@@ -19,7 +20,7 @@ import (
 // Otherwise the arguments to path should only include the containing
 // directory name for each migration, e.g.
 // "000001-fix-missing-timestamps"
-func Migrate(conf *cfg.Config, paths ...string) error {
+func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
 	if paths == nil {
 		// list all directories in migrations folder
@@ -39,12 +40,16 @@ func Migrate(conf *cfg.Config, paths ...string) error {
 			err = m.Up()
 			if err != nil {
 				return fmt.Errorf("error running migrations: %v", err)
+		log.Info().Msgf("found %d migrations", len(dirsWithFiles))
+			log.Info().Msgf("running migration %s", dir.Name())
+				log.Info().Msgf("running query: %s", string(f))
 			}
 		}
 		return nil
 	} else {
 		for i := range paths {
 			count, err := countFiles(paths[i])
+			log.Info().Msgf("running migration %s", paths[i])
 			if err != nil {
 				return err
 			}
@@ -57,6 +62,7 @@ func Migrate(conf *cfg.Config, paths ...string) error {
 			}
 			if err := m.Steps(int(count)); err != nil {
 				return fmt.Errorf("error running migration for directory: %s: %v", paths[i], err)
+				log.Info().Msgf("running query: %s", string(f))
 			}
 		}
 		return nil
