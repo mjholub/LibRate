@@ -22,16 +22,24 @@ import (
 func Migrate(conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
 	if paths == nil {
-		m, err := migrate.New(
-			"file:///app/data/migrations",
-			dsn,
-		)
+		// list all directories in migrations folder
+		// then loop through them and run the migrations
+		dir, err := getDir("")
 		if err != nil {
-			return fmt.Errorf("error preparing migrations: %v", err)
+			return err
 		}
-		err = m.Up()
-		if err != nil {
-			return fmt.Errorf("error running migrations: %v", err)
+		for i := range dir {
+			m, err := migrate.New(
+				"file:///app/data/migrations"+"/"+dir[i].Name(),
+				dsn,
+			)
+			if err != nil {
+				return fmt.Errorf("error preparing migrations: %v", err)
+			}
+			err = m.Up()
+			if err != nil {
+				return fmt.Errorf("error running migrations: %v", err)
+			}
 		}
 		return nil
 	} else {

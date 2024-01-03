@@ -40,8 +40,8 @@ func TestMigrate(t *testing.T) {
 	}
 	var err error
 	for _, tc := range tcs {
-		switch {
-		case tc.inputs == nil:
+		switch tc.inputs {
+		case nil:
 			err = Migrate(conf)
 		default:
 			if _, ok := tc.inputs.(string); ok {
@@ -63,4 +63,35 @@ func TestCountFiles(t *testing.T) {
 	count, err := countFiles(testDir)
 	assert.Equal(t, uint8(6), count)
 	assert.NoError(t, err)
+}
+
+func TestGetDir(t *testing.T) {
+	tcs := []testCase{
+		{
+			name:    "empty base path",
+			inputs:  "",
+			wantErr: false,
+		},
+		{
+			name:    "non-existent base path",
+			inputs:  "bajasehyfsayy2347",
+			wantErr: true,
+		},
+		{
+			name:    "an existing migration base path",
+			inputs:  "000001-fix-missing-timestamps",
+			wantErr: false,
+		},
+	}
+	for _, tc := range tcs {
+		if tc.wantErr {
+			dirInfo, err := getDir(tc.inputs.(string))
+			assert.NotNil(t, err)
+			assert.Empty(t, dirInfo)
+		} else {
+			dirInfo, err := getDir(tc.inputs.(string))
+			assert.Nil(t, err)
+			assert.NotEmpty(t, dirInfo)
+		}
+	}
 }
