@@ -26,7 +26,7 @@ COPY --chown=librate:librate ./lrctl /app/bin/lrctl
 COPY --chown=librate:librate ./librate /app/bin/librate
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
-COPY --chown=librate:librate ./src/db/migrations/ /app/data/migrations
+COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
 
 #RUN chown -R librate:librate /app
 
