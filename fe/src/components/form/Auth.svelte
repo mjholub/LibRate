@@ -395,7 +395,7 @@
 			<button type="button" on:click={startRegistration}>Sign Up</button>
 		{:else}
 			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
-			<button type="submit">Sign Up</button>
+			<button type="submit" on:click={register}>Sign Up</button>
 		{/if}
 	</div>
 </form>
