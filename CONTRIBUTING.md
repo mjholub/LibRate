@@ -1,7 +1,3 @@
-# Foreword
-
-Worry not if you're a functional programming wizard who dreads the imperative pardigm. Even though LibRate's backend is written in Go, in several places it takes advantage of the `mo` and `lo` libraries, which provide monads and iterators using generics, respectively.
-
 # Tags, branching
 
 Create your PRs against the upstream dev branch, where they will be tested and if everything is fine, merged with main.
@@ -21,6 +17,7 @@ Although striving towards 100% test coverage is irrational, to say the least, pr
 # Style
 
 Your editor should have support for _eslint_, svelte LSP and _golangci-lint_ installed and enabled. For _golangci-lint_ though, you can also use it as a CLI tool, although a language server version is more convenient.
+Your code should be referentially transparent. It can be self-documenting but if it's more complex, add some short comment.
 
 # Dependencies
 
@@ -36,7 +33,7 @@ When introducing a new dependency, consider the following:
 The topmost functions, like those in the _main_ and _routes_ packages, inject the dependencies (like logger and database connection) into the functions in _models_ and/or _controllers_ packages.  
 
 Resources intensive operations called inside other functions, should be parallelized with goroutines, but make sure they are properly synchronized if needed. For greater predictabilty you can use RxGo, which is a ReactiveX implementation for Go, allowing you to use stuff such as the observer pattern.
- Note however, that it is preferrable to use smaller, dedicated functions with limited or no side effects instead of unnecessarily large ones.
+ Note however, that it is preferable to use smaller, dedicated functions with limited or no side effects instead of unnecessarily large ones.
 
 Long, more complex functions should include a brief comment summarizing their mechanism of action.
 
