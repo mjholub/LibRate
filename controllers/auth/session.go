@@ -76,6 +76,15 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 		a.log.Err(err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to prepare session")
 	}
+	c.Cookie(&fiber.Cookie{
+		HTTPOnly: true,
+		Name:     "session_id",
+		MaxAge:   int(timeout.Seconds()),
+		Domain:   a.conf.Fiber.Domain,
+		SameSite: "Lax",
+		Value:    sess.ID(),
+	},
+	)
 
 	mu.Unlock()
 

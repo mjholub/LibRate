@@ -48,6 +48,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 		}
 		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	}
+	a.log.Debug().Msg("Validated password")
 
 	member := member.Member{
 		Email:      validatedInput.Email,
