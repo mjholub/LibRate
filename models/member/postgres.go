@@ -3,6 +3,7 @@ package member
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -254,6 +255,12 @@ func (s *PgMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) 
 
 // Check checks if a member with the given email or nickname already exists
 func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.log.Error().Msgf("recovered from panic: %v", r)
+		}
+	}()
+
 	select {
 	case <-c.Done():
 		return false, c.Err()
@@ -263,6 +270,10 @@ func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool
 		err := s.client.Get(&id, query, email, nickname)
 		// for example if sql.ErrNoRows is returned, it means that the member does not exist
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				id = 0
+				return false, nil
+			}
 			return false, err
 		}
 		return true, nil
