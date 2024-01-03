@@ -7,7 +7,6 @@ import (
 	"codeberg.org/mjh/LibRate/models/member"
 
 	"github.com/gofiber/fiber/v2"
-	uuid "github.com/gofrs/uuid/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
@@ -49,6 +48,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 		}
 		return h.Res(c, http.StatusUnauthorized, "Invalid credentials")
 	}
+	a.log.Debug().Msg("Validated password")
 
 	member := member.Member{
 		Email:      validatedInput.Email,
@@ -85,12 +85,4 @@ func (a *Service) validatePassword(email, login, password string) error {
 	}
 
 	return nil
-}
-
-func (a *Service) createToken() (string, error) {
-	token, err := uuid.NewV7()
-	if err != nil {
-		return "", err
-	}
-	return token.String(), nil
 }

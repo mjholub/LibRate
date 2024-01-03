@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
-	//import ReviewList from '../components/review/ReviewList.svelte';
+	import ErrorModal from '$components/modal/ErrorModal.svelte';
 	import Auth from '$components/form/Auth.svelte';
 	import Search from '$components/utility/Search.svelte';
 	import Footer from '$components/footer/footer.svelte';
@@ -10,12 +10,16 @@
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { authData } from '$stores/members/auth.ts';
-	import { memberStore } from '$stores/members/getInfo';
+	import { memberStore, memberInfo } from '$stores/members/getInfo';
+	import type { CustomHttpError } from '$lib/types/error';
 
 	let windowWidth: number;
 	let isAuthenticated: boolean;
 	let member: Member;
 	let authstatus: authData;
+	let errors: CustomHttpError[];
+	$: errors = [];
+	$: member = memberInfo;
 	async function handleAuthentication() {
 		if (browser) {
 			const jwtToken = localStorage.getItem('jwtToken');
@@ -38,7 +42,14 @@
 			console.error('jwtToken is null');
 			return;
 		}
-		member = await memberStore.getMember(jwtToken, memberName);
+		try {
+			member = await memberStore.getMember(jwtToken, memberName);
+		} catch (error) {
+			errors.push({
+				message: error as string,
+				status: 500
+			});
+		}
 	}
 	if (browser) {
 		onMount(async () => {
@@ -87,10 +98,11 @@
 					<Auth />
 				{:else if isAuthenticated}
 					{#await getMember(authstatus.memberName)}
-						<p>loading member card...</p>
+						<span class="spinner" />
 					{:then}
 						<MemberCard {member} />
 					{:catch}
+						<ErrorModal errorMessages={errors} />
 						<p>error loading member card</p>
 					{/await}
 				{:else}

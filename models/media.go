@@ -25,6 +25,7 @@ type (
 		Delete(ctx context.Context, key string) error
 	}
 
+	// nolint:musttag // false positive, can only annotate fields, not types
 	Media struct {
 		ID       uuid.UUID     `json:"id" db:"id,pk,unique"`
 		Title    string        `json:"title" db:"title"`
@@ -215,14 +216,14 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 // Add is a generic method that adds an object to the media.media table. It needs to be run
 // BEFORE the object is added to its respective table, since it needs the media ID to be
 // generated first.
-func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID uuid.UUID, err error) {
+func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UUID, err error) {
 	select {
 	case <-ctx.Done():
-		return uuid.Nil, ctx.Err()
+		return nil, ctx.Err()
 	default:
 		// early return on faulty db connection
 		if ms.db == nil {
-			return uuid.Nil, fmt.Errorf("no database connection or nil pointer")
+			return nil, fmt.Errorf("no database connection or nil pointer")
 		}
 		stmt, err := ms.db.PreparexContext(ctx, `	
 		INSERT INTO media.media (
@@ -233,22 +234,22 @@ func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID uuid.UUI
 		RETURNING id
 		`)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
 		err = stmt.GetContext(ctx, mediaID, props.Title, props.Kind, props.Created)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("error executing statement: %w", err)
+			return nil, fmt.Errorf("error executing statement: %w", err)
 		}
-		err = ms.AddCreators(ctx, mediaID, props.Creators)
+		err = ms.AddCreators(ctx, *mediaID, props.Creators)
 		// handle the case in which the said person is not in the database
 		if err == sql.ErrNoRows {
 			ms.Log.Warn().Msg("no rows were affected")
-			return uuid.Nil, fmt.Errorf("no rows were affected: %w", err)
+			return nil, fmt.Errorf("no rows were affected: %w", err)
 		}
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("error adding creators: %w", err)
+			return nil, fmt.Errorf("error adding creators: %w", err)
 		}
 		return mediaID, nil
 	}

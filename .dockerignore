@@ -1,6 +1,6 @@
 .git
 fe/node_modules
+fe/build
 LICENSE
 example_config.yml
-config.yml
 *.md

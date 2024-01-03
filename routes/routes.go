@@ -42,7 +42,6 @@ func Setup(
 
 	var (
 		mStor     member.MemberStorer
-		rStor     *models.RatingStorage
 		mediaStor *models.MediaStorage
 	)
 
@@ -52,45 +51,25 @@ func Setup(
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	rStor = models.NewRatingStorage(dbConn, logger)
 	mediaStor = models.NewMediaStorage(dbConn, logger)
 
-	authSvc := auth.NewService(conf, mStor, logger, sess)
-	reviewSvc := controllers.NewReviewController(*rStor)
 	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
-	mediaCon := media.NewController(*mediaStor)
 	formCon := form.NewController(logger, *mediaStor, conf)
-	uploadSvc := static.NewStaticController(conf, dbConn, logger)
+	uploadSvc := static.NewController(conf, dbConn, logger)
 	sc := controllers.NewSearchController(dbConn)
 
 	app.Get("/api/version", version.Get)
 
-	reviews := api.Group("/reviews")
-	reviews.Get("/latest", reviewSvc.GetLatest)
-	reviews.Post("/", middleware.Protected(sess, logger, conf), reviewSvc.PostRating)
-	reviews.Patch("/:id", middleware.Protected(sess, logger, conf), reviewSvc.UpdateRating)
-	reviews.Delete("/:id", middleware.Protected(sess, logger, conf), reviewSvc.DeleteRating)
-	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
-	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
-	reviews.Get("/:id", reviewSvc.GetByID)
+	setupReviews(api, sess, logger, conf, dbConn)
 
-	authAPI := api.Group("/authenticate")
-	authAPI.Get("/status", authSvc.GetAuthStatus)
-	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
-	authAPI.Post("/logout", authSvc.Logout)
-	authAPI.Post("/register", authSvc.Register)
+	setupAuth(api, sess, logger, conf, mStor)
 
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
-	media := api.Group("/media")
-	media.Get("/random", mediaCon.GetRandom)
-	media.Get("/:media_id/images", mediaCon.GetImagePaths)
-	media.Get("/:id", mediaCon.GetMedia)
-	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
-	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
+	setupMedia(api, mediaStor)
 
 	formAPI := api.Group("/form")
 	// TODO: make the timeouts configurable
@@ -121,6 +100,50 @@ func Setup(
 	logger.Debug().Msg("static files initialized")
 
 	return nil
+}
+
+func setupReviews(api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB) {
+	rStor := models.NewRatingStorage(dbConn, logger)
+	reviewSvc := controllers.NewReviewController(*rStor)
+
+	reviews := api.Group("/reviews")
+	reviews.Get("/latest", reviewSvc.GetLatest)
+	reviews.Post("/", middleware.Protected(sess, logger, conf), reviewSvc.PostRating)
+	reviews.Patch("/:id", middleware.Protected(sess, logger, conf), reviewSvc.UpdateRating)
+	reviews.Delete("/:id", middleware.Protected(sess, logger, conf), reviewSvc.DeleteRating)
+	reviews.Get("/:media_id", reviewSvc.GetMediaReviews)
+	reviews.Get("/:media_id/average", reviewSvc.GetAverageRating)
+	reviews.Get("/:id", reviewSvc.GetByID)
+}
+
+func setupAuth(
+	api fiber.Router,
+	sess *session.Store,
+	logger *zerolog.Logger,
+	conf *cfg.Config,
+	mStor member.MemberStorer,
+) {
+	authSvc := auth.NewService(conf, mStor, logger, sess)
+
+	authAPI := api.Group("/authenticate")
+	authAPI.Get("/status", authSvc.GetAuthStatus)
+	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Post("/logout", authSvc.Logout)
+	authAPI.Post("/register", authSvc.Register)
+}
+
+func setupMedia(
+	api fiber.Router,
+	mediaStor *models.MediaStorage,
+) {
+	mediaCon := media.NewController(*mediaStor)
+
+	media := api.Group("/media")
+	media.Get("/random", mediaCon.GetRandom)
+	media.Get("/:media_id/images", mediaCon.GetImagePaths)
+	media.Get("/:id", mediaCon.GetMedia)
+	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
+	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
 }
 
 func setupStatic(app *fiber.App) error {

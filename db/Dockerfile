@@ -1,6 +1,8 @@
+# WARN: version 16 does not seem to parse network mask correctly
 FROM postgres:15-alpine
 
-COPY ./start.sh .
+WORKDIR /tmp/
+COPY ./start.sh /usr/bin/start.sh
 
 RUN apk update && \
   apk add --no-cache \
@@ -14,17 +16,15 @@ RUN apk update && \
   postgresql-sequential-uuids \
   postgresql15-contrib
 
-
-USER root
-
 # install the 'sequential-uuids' extension
-RUN git clone "https://github.com/tvondra/sequential-uuids/" && \
-  cd sequential-uuids && \
-  make && \
-  make install
+WORKDIR /tmp/sequential-uuids
 
-# Clean up
-RUN rm -rf sequential-uuids
+RUN git clone --depth=1 "https://github.com/tvondra/sequential-uuids/" . && \
+  make && \
+  make install && \
+  if [ "$(mv sequential-uuids/* /usr/share/postgresql/extension/)" ]; then true; fi
+
+WORKDIR /tmp
 
 RUN apk del \
   git \
@@ -32,11 +32,12 @@ RUN apk del \
   gcc \
   clang15-dev \
   llvm15 \
-  postgresql-dev
+  postgresql-dev 
 
+RUN chown postgres:postgres /usr/bin/start.sh && \
+  chown -R postgres:postgres /var/lib/postgresql && \
+  chmod -R 750 /var/lib/postgresql/data 
 USER postgres
-
-CMD ["sh", "start.sh"]
-
+CMD ["sh", "/usr/bin/start.sh"]
 EXPOSE 5432
 

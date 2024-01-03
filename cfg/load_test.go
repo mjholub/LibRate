@@ -2,11 +2,19 @@ package cfg
 
 import (
 	"flag"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )
+
+type testCase struct {
+	Name   string
+	Env    *map[string]string
+	Inputs interface{}
+}
 
 func TestLoadFromFile(t *testing.T) {
 	ExampleConfig := Config{
@@ -17,8 +25,6 @@ func TestLoadFromFile(t *testing.T) {
 			Database:           "librate",
 			User:               "postgres",
 			Password:           "postgres",
-			PGConfig:           "/usr/bin/pg_config",
-			AutoMigrate:        true,
 			ExitAfterMigration: false,
 		},
 		Fiber: FiberConfig{
@@ -55,8 +61,23 @@ func TestLoadFromFile(t *testing.T) {
 }
 
 func TestParseRaw(t *testing.T) {
-	configLocation := filepath.Join("..", "config_enc.yml")
-	conf, err := parseRaw(configLocation)
-	assert.Nil(t, err)
-	assert.Equal(t, conf.DBConfig.Engine, "postgres")
+	testCases := []testCase{
+		{
+			Name:   "encrypted config",
+			Inputs: filepath.Join("..", "config_enc.yml"),
+		}, {
+			Name:   "plain text",
+			Env:    &map[string]string{"USE_SOPS": "false"},
+			Inputs: filepath.Join("..", "example_config.yml"),
+		},
+	}
+	for _, tc := range testCases {
+		if tc.Env != nil {
+			os.Setenv(lo.Keys(*tc.Env)[0], lo.Values(*tc.Env)[0])
+		}
+
+		conf, err := parseRaw(tc.Inputs.(string))
+		assert.Nil(t, err)
+		assert.Equal(t, conf.DBConfig.Engine, "postgres")
+	}
 }

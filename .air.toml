@@ -1,0 +1,14 @@
+root = "/app/data"
+tmp_dir = "./tmp"
+
+[build]
+pre_cmd = ["go mod tidy"]
+cmd = "go build -ldflags '-s -w' -o /app/bin/librate"
+bin = "/app/bin/librate"
+post_cmd = ["/app/bin/lrctl", "shutdown", "\"localhost:3030\"", "5"]
+full_bin = "USE_SOPS=false /app/bin/librate -c \"env\" -e"
+exclude_dir = ["static", "data", "fe"]
+exclude_regex = ["_test\\.go"]
+stop_on_error = false
+log = "/app/data/air.log"
+rerun = true

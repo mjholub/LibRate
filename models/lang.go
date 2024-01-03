@@ -65,6 +65,7 @@ const (
 	Others
 )
 
+// nolint:gochecknoglobals
 var langNameToID = map[string]LangID{
 	"English":    English,
 	"Spanish":    Spanish,
@@ -132,5 +133,5 @@ func ReverseLookupLangID(langName string) (LangID, error) {
 	if id, ok := langNameToID[langName]; ok {
 		return id, nil
 	}
-	return 0, fmt.Errorf("Language name not found: %s", langName)
+	return 0, fmt.Errorf("language name not found: %s", langName)
 }

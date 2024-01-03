@@ -54,9 +54,9 @@ linters-settings:
   dupl:
     threshold: 160 # default is 150
   gocyclo:
-   min-complexity: 15 # default is 30, golangci-lint recommends 10-20 
+   min-complexity: 18 # default is 30, golangci-lint recommends 10-20 
   gocognit:
-    min-complexity: 15 # default is 30, golangci-lint recommends 10-20
+    min-complexity: 18 # default is 30, golangci-lint recommends 10-20
   gocritic:
     # Which checks should be enabled; can't be combined with 'disabled-checks'.
     # See https://go-critic.github.io/overview#checks-overview.
@@ -66,7 +66,7 @@ linters-settings:
       - diagnostic
       - performance
   interfacebloat:
-    max: 12 # default is 10
+    max: 10 # default is 10
   revive:
     #NOTE: this is vital to controlling the likelihood of false positives
     confidence: 0.7 # default is 0.8

@@ -14,18 +14,18 @@ import (
 )
 
 type (
-	// IMediaController is the interface for the media controller
+	// IController is the interface for the media controller
 	// It defines the methods that the media controller must implement
 	// This is useful for mocking the media controller in unit tests
-	IMediaController interface {
+	IController interface {
 		GetMedia(c *fiber.Ctx) error
 		GetRandom(c *fiber.Ctx) error
 		AddMedia(c *fiber.Ctx) error
 	}
 
-	// MediaController is the controller for media endpoints
+	// Controller is the controller for media endpoints
 	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
-	MediaController struct {
+	Controller struct {
 		storage models.MediaStorage
 	}
 
@@ -35,14 +35,14 @@ type (
 	}
 )
 
-func NewController(storage models.MediaStorage) *MediaController {
-	return &MediaController{storage: storage}
+func NewController(storage models.MediaStorage) *Controller {
+	return &Controller{storage: storage}
 }
 
 // GetMedia retrieves media information based on the media ID
 // media ID is a UUID (binary, but passed from the fronetend as a string,
 // since typescript doesn't support binary)
-func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
+func (mc *Controller) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
 		mc.storage.Log.Error().Err(err).
@@ -71,7 +71,7 @@ func (mc *MediaController) GetMedia(c *fiber.Ctx) error {
 }
 
 // TODO: when upload form is implemented, flush the redis cache, since the response might change
-func (mc *MediaController) GetImagePaths(c *fiber.Ctx) error {
+func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

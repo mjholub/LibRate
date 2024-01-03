@@ -40,24 +40,30 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(conf *cfg.Config) (*sqlx.DB, error) {
-	// create a whitelist of launch commands to avond arbitrary code execution
-
-	data := CreateDsn(&conf.DBConfig)
+func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
 	var db *sqlx.DB
+
+	if attempts < 0 {
+		attempts = 2147483647
+	}
+	// ensure default value is actually loaded
+	if attempts == 0 {
+		attempts = 15
+	}
 
 	err := retry.Do(
 		func() error {
 			var err error
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			db, err = sqlx.ConnectContext(ctx, conf.Engine, data)
+			db, err = sqlx.ConnectContext(ctx, engine, dsn)
 			return err
 		},
-		retry.Attempts(5),
+		retry.Attempts(uint(attempts)),
 		retry.Delay(1*time.Second), // Delay between retries
-		retry.OnRetry(func(n uint, _ error) {
-			fmt.Printf("Attempt %d failed; retrying...", n)
+		retry.OnRetry(func(n uint, err error) {
+			fmt.Printf("Attempt %d to connect to database failed: %v; retrying...",
+				n, err)
 		},
 		),
 	)
@@ -82,8 +88,9 @@ func ConnectNeo4j(conf *cfg.Config) (neo4j.DriverWithContext, error) {
 func createExtension(db *sqlx.DB, extName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	// nolint:gocritic // postgres doesn't parse "%q" properly
 	_, err := db.ExecContext(ctx,
-		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%q" SCHEMA public;`, extName))
+		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA public;`, extName))
 	if err != nil {
 		return fmt.Errorf("failed to create extension %s: %w", extName, err)
 	}
@@ -91,7 +98,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
+func InitDB(conf *cfg.DBConfig, exitAfter bool, log *zerolog.Logger) error {
 	if exitAfter {
 		// nolint:revive
 		defer func() {
@@ -99,7 +106,10 @@ func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
 			os.Exit(0)
 		}()
 	}
-	db, err := Connect(conf)
+
+	dsn := CreateDsn(conf)
+
+	db, err := Connect(conf.Engine, dsn, conf.RetryAttempts)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -121,7 +131,7 @@ func InitDB(conf *cfg.Config, exitAfter bool, log *zerolog.Logger) error {
 	var mu sync.Mutex
 	errChan := make(chan error)
 	mu.Lock()
-	extNames := []string{"pgcrypto", "uuid-ossp", "pg_trgm", "sequential_uuids"}
+	extNames := []string{"pgcrypto", "uuid-ossp", "pg_trgm"}
 	log.Info().Msg("Creating extensions...")
 	for i := range extNames {
 		go func(i int) {

@@ -1,9 +1,12 @@
-// this file contaisn an exported global file with defalut config as a fallback if loading the
+// this file contains an exported global file with default config as a fallback if loading the
 // proper config fails.
 
 package cfg
 
-import "github.com/gofrs/uuid/v5"
+import (
+	"codeberg.org/mjh/LibRate/internal/logging"
+	"github.com/gofrs/uuid/v5"
+)
 
 var (
 	// nolint:gochecknoglobals
@@ -12,14 +15,14 @@ var (
 	// Loading it should always be accompanied by a warning.
 	DefaultConfig = Config{
 		DBConfig: DBConfig{
-			Engine:   "postgres",
-			Host:     "localhost",
-			Port:     uint16(5432),
-			Database: "librate",
-			User:     "postgres",
-			Password: "postgres",
-			SSL:      "unknown",
-			PGConfig: "/usr/bin/pg_config",
+			Engine:         "postgres",
+			Host:           "localhost",
+			Port:           uint16(5432),
+			Database:       "librate",
+			User:           "postgres",
+			Password:       "postgres",
+			SSL:            "unknown",
+			MigrationsPath: "/app/data/migrations",
 		},
 		Fiber: FiberConfig{
 			Host:    "localhost",
@@ -40,9 +43,18 @@ var (
 			User:               "postgres",
 			Password:           "postgres",
 			SSL:                "disable",
-			PGConfig:           "/usr/bin/pg_config",
-			AutoMigrate:        true,
 			ExitAfterMigration: false,
+			MigrationsPath:     "./migrations",
+		},
+		Logging: logging.Config{
+			Level:  "debug",
+			Target: "stdout",
+			Format: "json",
+			Caller: true,
+			Timestamp: logging.TimestampConfig{
+				Enabled: false,
+				Format:  "2006-01-0215:04:05.000Z07:00",
+			},
 		},
 		Redis: RedisConfig{
 			Host:     "localhost",

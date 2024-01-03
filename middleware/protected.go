@@ -45,7 +45,6 @@ func Protected(sess *session.Store, log *zerolog.Logger, conf *cfg.Config) fiber
 				}
 				return h.Res(c, fiber.StatusUnauthorized, "Invalid or expired JWT")
 			}
-			c.SendStatus(fiber.StatusContinue)
 			c.Locals("jwtToken", token)
 			return c.Next()
 		},

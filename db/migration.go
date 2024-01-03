@@ -1,63 +1,115 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 )
 
-func Migrate(conf *cfg.Config, path string) error {
-	if err := runMigrations(conf, path); err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
-	}
-	if conf.ExitAfterMigration {
-		// nolint:revive
-		os.Exit(0)
-	}
-	return nil
-}
-
-// TODO: find use for the auto parameter or remove it
-func runMigrations(conf *cfg.Config, path string) error {
-	dbConn := CreateDsn(&conf.DBConfig)
-
-	// connect to database
-	conn, err := sqlx.Connect("postgres", dbConn)
+// Migrate runs the migrations located in the migrations folder
+// paths is a variadic argument, meaning that if no specific path(s)
+// are provided, the program will try to run all of them
+// Otherwise the arguments to path should only include the containing
+// directory name for each migration, e.g.
+// "000001-fix-missing-timestamps"
+func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
+	dsn := CreateDsn(&conf.DBConfig)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
+		return fmt.Errorf("error connecting to database: %v", err)
 	}
-	defer conn.Close()
+	defer conn.Close(ctx)
 
-	// map of migration files and their queries
-	faultyQueries := make([]map[string]string, 0)
-	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	if paths == nil {
+		// list all directories in migrations folder
+		// then loop through them and run the migrations
+		dirsWithFiles, err := getDir("", conf.MigrationsPath)
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), ".sql") {
-			migrationSQL, err := os.ReadFile(path)
-			if err != nil {
-				faultyQueries = append(faultyQueries, map[string]string{info.Name(): err.Error()})
-				return fmt.Errorf("failed to read migration file %s: %w", info.Name(), err)
+		log.Info().Msgf("found %d migrations", len(dirsWithFiles))
+		// iterate through the files in the directory
+		for dir, files := range dirsWithFiles {
+			log.Info().Msgf("running migration %s", dir.Name())
+			dirPath := dir.Name()
+			var downMigrations, upMigrations []string
+			// TODO: find corresponding "down" migration and assign it to it's up-migration
+			for i := range files {
+				if strings.Contains(files[i].Name(), "down") {
+					downMigrations = append(downMigrations, files[i].Name())
+				}
+				if strings.Contains(files[i].Name(), "up") {
+					upMigrations = append(upMigrations, files[i].Name())
+				}
+				for i := range upMigrations {
+					f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dirPath, upMigrations[i]))
+					if err != nil {
+						return fmt.Errorf("error reading migration file: %v", err)
+					}
+					_, err = conn.Exec(ctx, string(f))
+					log.Info().Msgf("running query: %s", string(f))
+					if err != nil {
+						return fmt.Errorf("error running migration: %v", err)
+					}
+				}
 			}
-			if _, err := conn.Exec(string(migrationSQL)); err != nil {
-				faultyQueries = append(faultyQueries, map[string]string{info.Name(): err.Error()})
-				return fmt.Errorf("failed to run migration %s: %w", info.Name(), err)
-			}
-		}
-		if len(faultyQueries) > 0 {
-			return fmt.Errorf("failed to run migrations: %v", faultyQueries)
 		}
 		return nil
-	})
-	if err != nil {
-		return err
+	} else {
+		for i := range paths {
+			log.Info().Msgf("running migration %s", paths[i])
+			files, err := os.ReadDir(filepath.Join(conf.MigrationsPath, paths[i]))
+			if err != nil {
+				return fmt.Errorf("error reading filesystem: %v", err)
+			}
+			for i := range files {
+				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, paths[i], files[i].Name()))
+				if err != nil {
+					return fmt.Errorf("error reading migration file: %v", err)
+				}
+				_, err = conn.Exec(ctx, string(f))
+				log.Info().Msgf("running query: %s", string(f))
+				if err != nil {
+					return fmt.Errorf("error running migration: %v", err)
+				}
+			}
+		}
+		return nil
 	}
-	return nil
+}
+
+// getDir is an easy way to stat a path that should
+// work in both container (absolute path /app/data/migrations/...)
+// and with relative paths (./migrations/)
+func getDir(basePath, migrationsPath string) (dirsWithFiles map[os.DirEntry][]os.DirEntry, err error) {
+	// nolint: gocritic // must use absolute path
+	dirs, err := os.ReadDir(filepath.Join(migrationsPath, basePath))
+	if err != nil {
+		return nil, fmt.Errorf("error reading filesystem: %v", err)
+	}
+
+	dirsWithFiles = make(map[os.DirEntry][]os.DirEntry)
+
+	for i := range dirs {
+		if dirs[i].IsDir() {
+			// map the directory name to it's contents
+			dirsWithFiles[dirs[i]], err = os.ReadDir(
+				filepath.Join(migrationsPath, basePath, dirs[i].Name()))
+			if err != nil {
+				return nil, fmt.Errorf("error reading filesystem: %v", err)
+			}
+		}
+	}
+	return dirsWithFiles, nil
 }

@@ -95,8 +95,8 @@ func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, er
 	return tvshow, nil
 }
 
-func (f *Film) GetPosterPath(ID uuid.UUID) string {
-	return "/media/" + ID.String() + "/poster.jpg"
+func (f *Film) GetPosterPath(id uuid.UUID) string {
+	return "/media/" + id.String() + "/poster.jpg"
 }
 
 func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
@@ -209,8 +209,9 @@ func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Ca
 		if err != nil {
 			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
 		}
+		var actor Person
 		for i := range actorIDs {
-			actor, err := ms.Ps.GetPerson(ctx, actorIDs[i])
+			actor, err = ms.Ps.GetPerson(ctx, actorIDs[i])
 			if err != nil {
 				return Cast{}, fmt.Errorf("error getting actor with id %d: %w", actorIDs[i], err)
 			}

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { filterXSS } from 'xss';
 	import Search from '$components/utility/Search.svelte';
 	import MemberPage from '$components/member/MemberPage.svelte';
-	import { memberStore } from '$stores/members/getInfo';
 
 	let windowWidth = 0;
 	let params: { slug?: string; page?: string } = {};
-	let nickname = params?.slug ?? '';
+	console.debug('params', params.toString());
+	$: nickname = params?.slug ?? '';
 
 	if (typeof window !== 'undefined') {
 		window.scrollTo(0, 0);
@@ -14,6 +15,10 @@
 
 		// Fetch user profile data when the component mounts
 		onMount(() => {
+			// Extract the nickname from the URL
+			const urlParts = window.location.pathname.split('/');
+			nickname = filterXSS(urlParts[urlParts.length - 1]);
+
 			const handleResize = () => {
 				windowWidth = window.innerWidth;
 			};

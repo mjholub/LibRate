@@ -1,126 +1,110 @@
 package db
 
 import (
-	"flag"
 	"fmt"
-	"os"
-	"sync"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	"codeberg.org/mjh/LibRate/cfg"
 )
 
 type testCase struct {
-	name   string
-	inputs interface{}
+	name    string
+	inputs  interface{}
+	wantErr bool
 }
 
-// TestRunMigrations tests the runMigrations function
-func TestRunMigrations(t *testing.T) {
-	path := flag.String("path", "migrations", "Path to migrations")
-	flag.Parse()
-	testCases := []testCase{
+func TestMigrate(t *testing.T) {
+	conf := &cfg.TestConfig
+	tcs := []testCase{
 		{
-			name: "HappyPath", // DB initialized, all migrations run
-			inputs: func(t *testing.T) {
-				config := cfg.TestConfig
-
-				defer func(config *cfg.Config) {
-					if os.Getenv("CLEANUP_TEST_DB") == "0" || os.Getenv("CLEANUP_HAPPY_PATH") == "0" {
-						return
-					}
-					fmt.Println("Cleaning up")
-					err := DBTearDown(config)
-					require.NoError(t, err)
-				}(&config)
-				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
-				err := InitDB(&config, true, &log)
-				require.NoError(t, err)
-				err = Migrate(&config, *path)
-				require.NoError(t, err)
-				cwd, err := os.Getwd()
-				require.NoErrorf(t, err, "Error getting current path: %v", err)
-				require.NoErrorf(t, err, "Error running migrations: %v. Current path is: %s", err, cwd)
-			},
+			name:    "all migrations",
+			inputs:  nil,
+			wantErr: false,
 		},
 		{
-			name: "MigrationsOnEmpty", // Test if migrations will run even if the db is empty
-			inputs: func(t *testing.T) {
-				config := cfg.TestConfig
-				// only clean the test db after all tests have run
-				err := Migrate(&config, *path)
-				require.Errorf(t, err, "Error running migrations: %v", err)
-			},
+			name:    "single migration",
+			inputs:  "000001-fix-missing-timestamps",
+			wantErr: false,
 		},
 		{
-			name: "FailOnMissingFile", // must return an error if auto-migrate flag is not set
-			inputs: func(t *testing.T) {
-				config := cfg.TestConfig
-				config.AutoMigrate = false
-				err := Migrate(&config, "aaaaa.sql")
-				require.Error(t, err)
-			},
+			name:    "multiple paths",
+			inputs:  []string{"000001-fix-missing-timestamps", "000002-reduce-uuid-usage"},
+			wantErr: false,
 		},
 		{
-			name: "ApplySingleMigration",
-			inputs: func(t *testing.T) {
-				config := cfg.TestConfig
-				// only clean the test db after all tests have run
-				var mu sync.Mutex
-				defer func(config *cfg.Config) {
-					if os.Getenv("CLEANUP_TEST_DB") == "0" || os.Getenv("CLEANUP_SINGLE") == "0" {
-						return
-					}
-					fmt.Println("Cleaning up")
-					err := DBTearDown(config)
-					require.NoError(t, err)
-				}(&config)
-				log := zerolog.New(os.Stdout).With().Timestamp().Logger()
-				mu.Lock()
-				err := InitDB(&config, true, &log)
-				require.NoError(t, err)
-				mu.Unlock()
-				err = flag.Set("path", "migrations/000001-fix-missing-timestamps/reviews.sql")
-				defer flag.Set("path", "migrations")
-				require.NoError(t, err)
+			name:    "non-existent migration",
+			inputs:  "obsaiwrbiweqb93928",
+			wantErr: true,
+		},
+	}
+	var err error
+	log := zerolog.Nop()
+	for _, tc := range tcs {
+		switch tc.inputs {
+		case nil:
+			err = Migrate(&log, conf)
+		default:
+			if _, ok := tc.inputs.(string); ok {
+				err = Migrate(&log, conf, tc.inputs.(string))
+			} else if _, ok := tc.inputs.([]string); ok {
+				err = Migrate(&log, conf, tc.inputs.([]string)...)
+			}
+		}
+		if tc.wantErr {
+			assert.NotNil(t, err)
+		} else {
+			assert.Nil(t, err)
+		}
+	}
+}
 
-				cwd, err := os.Getwd()
-				require.NoErrorf(t, err, "Error getting current path: %v", err)
-				err = Migrate(&config, *path)
-				require.NoErrorf(t, err, "Error running migrations: %v. Current path is: %s", err, cwd)
-				conn, err := Connect(&config)
-				require.NoErrorf(t, err, "Error connecting to database: %v", err)
-				defer conn.Close()
-
-				// FIXME: circular dependency. Move test to models/member
-				/*
-					// create a test member so that fkey constraints are satisfied
-					ms := member.NewSQLStorage(conn, &log, &config)
-					member := member.Member{
-						UUID:         uuid.Must(uuid.NewV4()),
-						MemberName:   "test",
-						Email:        "test@test.com",
-						PassHash:     "test",
-						RegTimestamp: time.Now(),
-					}
-					err = ms.Save(context.Background(), &member)
-					require.NoErrorf(t, err, "Error saving test member: %v", err)
-					id, err := ms.GetID(context.Background(), member.Email)
-					require.NoErrorf(t, err, "Error getting test member ID: %v", err)
-					result, err := conn.Exec("INSERT INTO reviews.ratings (stars, id, user_id, created_at) VALUES (1, 1, $1, NOW())", id)
-					require.NoErrorf(t, err, "Error inserting test rating: %v", err)
-					require.NotNil(t, result)
-				*/
-			},
+func TestGetDir(t *testing.T) {
+	tcs := []testCase{
+		{
+			name:    "empty base path",
+			inputs:  "",
+			wantErr: false,
+		},
+		{
+			name:    "non-existent base path",
+			inputs:  "bajasehyfsayy2347",
+			wantErr: true,
+		},
+		{
+			name:    "an existing migration base path",
+			inputs:  "000001-fix-missing-timestamps",
+			wantErr: false,
 		},
 	}
 
-	for i := range testCases {
-		t.Run(testCases[i].name, func(t *testing.T) {
-			testCases[i].inputs.(func(t *testing.T))(t)
-		})
+	dirInfo, err := getDir("", "./migrations")
+	assert.Nil(t, err)
+	fmt.Printf("%+v\n", dirInfo)
+
+	// test parsing of directory used in Migrate()
+	for dir, files := range dirInfo {
+		dirPath := dir.Name()
+		for i := range files {
+			filePath := files[i].Name()
+			joined := filepath.Join("./migrations/", dirPath, filePath)
+			assert.Equal(t, len(strings.Split(joined, "/")), 3)
+		}
+	}
+
+	for _, tc := range tcs {
+		if tc.wantErr {
+			dirInfo, err := getDir(tc.inputs.(string), "./migrations")
+			assert.NotNil(t, err)
+			assert.Empty(t, dirInfo)
+		} else {
+			dirInfo, err := getDir(tc.inputs.(string), "./migrations")
+			assert.Nil(t, err)
+			assert.NotZero(t, dirInfo)
+		}
 	}
 }
