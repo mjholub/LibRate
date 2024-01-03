@@ -53,14 +53,15 @@ func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 					upMigrations = append(upMigrations, files[i].Name())
 				}
 				for i := range upMigrations {
-				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dirPath, upMigrations[i]))
-				if err != nil {
-					return fmt.Errorf("error reading migration file: %v", err)
-				}
-				_, err = conn.Exec(ctx, string(f))
-				log.Info().Msgf("running query: %s", string(f))
-				if err != nil {
-					return fmt.Errorf("error running migration: %v", err)
+					f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dirPath, upMigrations[i]))
+					if err != nil {
+						return fmt.Errorf("error reading migration file: %v", err)
+					}
+					_, err = conn.Exec(ctx, string(f))
+					log.Info().Msgf("running query: %s", string(f))
+					if err != nil {
+						return fmt.Errorf("error running migration: %v", err)
+					}
 				}
 			}
 		}

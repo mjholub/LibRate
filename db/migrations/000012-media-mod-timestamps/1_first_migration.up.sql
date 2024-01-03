@@ -13,8 +13,8 @@ DROP TABLE media.film_cast;
 -- This was quite a bad idea. Many works have more than one author 
 -- and generally speaking, it panders to things like giving a director
 -- most credit for creating a movie, which many artists consider a major example of stolen valor.
--- tl;dr/TODO: gradually move away from assiging a 'creator' to a media object and rely
--- on the media_auhtors junction table instead. This is a bit more tricky to load, but
+-- tl;dr/TODO: gradually move away from assigning a 'creator' to a media object and rely
+-- on the media_authors junction table instead. This is a bit more tricky to load, but
 -- way more accurate and flexible.
 ALTER TABLE media.media ALTER COLUMN creator DROP NOT NULL;
 
