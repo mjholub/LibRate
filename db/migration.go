@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -41,8 +42,18 @@ func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 		// iterate through the files in the directory
 		for dir, files := range dirsWithFiles {
 			log.Info().Msgf("running migration %s", dir.Name())
+			dirPath := dir.Name()
+			var downMigrations, upMigrations []string
+			// TODO: find corresponding "down" migration and assign it to it's up-migration
 			for i := range files {
-				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dir.Name(), files[i].Name()))
+				if strings.Contains(files[i].Name(), "down") {
+					downMigrations = append(downMigrations, files[i].Name())
+				}
+				if strings.Contains(files[i].Name(), "up") {
+					upMigrations = append(upMigrations, files[i].Name())
+				}
+				for i := range upMigrations {
+				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dirPath, upMigrations[i]))
 				if err != nil {
 					return fmt.Errorf("error reading migration file: %v", err)
 				}

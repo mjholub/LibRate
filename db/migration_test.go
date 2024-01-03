@@ -2,6 +2,8 @@ package db
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -83,6 +85,16 @@ func TestGetDir(t *testing.T) {
 	dirInfo, err := getDir("", "./migrations")
 	assert.Nil(t, err)
 	fmt.Printf("%+v\n", dirInfo)
+
+	// test parsing of directory used in Migrate()
+	for dir, files := range dirInfo {
+		dirPath := dir.Name()
+		for i := range files {
+			filePath := files[i].Name()
+			joined := filepath.Join("./migrations/", dirPath, filePath)
+			assert.Equal(t, len(strings.Split(joined, "/")), 3)
+		}
+	}
 
 	for _, tc := range tcs {
 		if tc.wantErr {
