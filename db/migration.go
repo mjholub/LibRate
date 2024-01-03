@@ -1,13 +1,13 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 
@@ -22,81 +22,82 @@ import (
 // "000001-fix-missing-timestamps"
 func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Close(ctx)
+
 	if paths == nil {
 		// list all directories in migrations folder
 		// then loop through them and run the migrations
-		dir, err := getDir("")
+		dirsWithFiles, err := getDir("", conf.MigrationsPath)
 		if err != nil {
 			return err
 		}
-		for i := range dir {
-			m, err := migrate.New(
-				"file:///app/data/migrations"+"/"+dir[i].Name(),
-				dsn,
-			)
-			if err != nil {
-				return fmt.Errorf("error preparing migrations: %v", err)
-			}
-			err = m.Up()
-			if err != nil {
-				return fmt.Errorf("error running migrations: %v", err)
 		log.Info().Msgf("found %d migrations", len(dirsWithFiles))
+		// iterate through the files in the directory
+		for dir, files := range dirsWithFiles {
 			log.Info().Msgf("running migration %s", dir.Name())
+			for i := range files {
+				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dir.Name(), files[i].Name()))
+				if err != nil {
+					return fmt.Errorf("error reading migration file: %v", err)
+				}
+				_, err = conn.Exec(ctx, string(f))
 				log.Info().Msgf("running query: %s", string(f))
+				if err != nil {
+					return fmt.Errorf("error running migration: %v", err)
+				}
 			}
 		}
 		return nil
 	} else {
 		for i := range paths {
-			count, err := countFiles(paths[i])
 			log.Info().Msgf("running migration %s", paths[i])
+			files, err := os.ReadDir(filepath.Join(conf.MigrationsPath, paths[i]))
 			if err != nil {
-				return err
+				return fmt.Errorf("error reading filesystem: %v", err)
 			}
-			m, err := migrate.New(
-				fmt.Sprintf("file:///app/data/migrations/%s", paths[i]),
-				dsn,
-			)
-			if err != nil {
-				return fmt.Errorf("error preparing migration for directory: %s: %v", paths[i], err)
-			}
-			if err := m.Steps(int(count)); err != nil {
-				return fmt.Errorf("error running migration for directory: %s: %v", paths[i], err)
+			for i := range files {
+				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, paths[i], files[i].Name()))
+				if err != nil {
+					return fmt.Errorf("error reading migration file: %v", err)
+				}
+				_, err = conn.Exec(ctx, string(f))
 				log.Info().Msgf("running query: %s", string(f))
+				if err != nil {
+					return fmt.Errorf("error running migration: %v", err)
+				}
 			}
 		}
 		return nil
 	}
 }
 
-func countFiles(path string) (count uint8, err error) {
-	dir, err := getDir(path)
-	if err != nil {
-		return 0, err
-	}
-	// we know each subdir of migrations contains files only
-	// but check just in case
-	for i := range dir {
-		if dir[i].IsDir() {
-			return 0, fmt.Errorf("expected no further subdirectories, found %s",
-				dir[i].Name())
-		}
-	}
-	count = uint8(len(dir))
-	return count, nil
-}
-
 // getDir is an easy way to stat a path that should
 // work in both container (absolute path /app/data/migrations/...)
 // and with relative paths (./migrations/)
-func getDir(basePath string) ([]os.DirEntry, error) {
+func getDir(basePath, migrationsPath string) (dirsWithFiles map[os.DirEntry][]os.DirEntry, err error) {
 	// nolint: gocritic // must use absolute path
-	dir, err := os.ReadDir(filepath.Join("/app", "data", "migrations", basePath))
+	dirs, err := os.ReadDir(filepath.Join(migrationsPath, basePath))
 	if err != nil {
-		if dir, e := os.ReadDir(filepath.Join(".", "migrations", basePath)); e == nil {
-			return dir, nil
-		}
 		return nil, fmt.Errorf("error reading filesystem: %v", err)
 	}
-	return dir, nil
+
+	dirsWithFiles = make(map[os.DirEntry][]os.DirEntry)
+
+	for i := range dirs {
+		if dirs[i].IsDir() {
+			// map the directory name to it's contents
+			dirsWithFiles[dirs[i]], err = os.ReadDir(
+				filepath.Join(migrationsPath, basePath, dirs[i].Name()))
+			if err != nil {
+				return nil, fmt.Errorf("error reading filesystem: %v", err)
+			}
+		}
+	}
+	return dirsWithFiles, nil
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -60,13 +61,6 @@ func TestMigrate(t *testing.T) {
 	}
 }
 
-func TestCountFiles(t *testing.T) {
-	testDir := "000011-film-images"
-	count, err := countFiles(testDir)
-	assert.Equal(t, uint8(6), count)
-	assert.NoError(t, err)
-}
-
 func TestGetDir(t *testing.T) {
 	tcs := []testCase{
 		{
@@ -85,15 +79,20 @@ func TestGetDir(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	dirInfo, err := getDir("", "./migrations")
+	assert.Nil(t, err)
+	fmt.Printf("%+v\n", dirInfo)
+
 	for _, tc := range tcs {
 		if tc.wantErr {
-			dirInfo, err := getDir(tc.inputs.(string))
+			dirInfo, err := getDir(tc.inputs.(string), "./migrations")
 			assert.NotNil(t, err)
 			assert.Empty(t, dirInfo)
 		} else {
-			dirInfo, err := getDir(tc.inputs.(string))
+			dirInfo, err := getDir(tc.inputs.(string), "./migrations")
 			assert.Nil(t, err)
-			assert.NotEmpty(t, dirInfo)
+			assert.NotZero(t, dirInfo)
 		}
 	}
 }
