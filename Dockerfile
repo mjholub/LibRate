@@ -47,5 +47,5 @@ USER librate
 ENV USE_SOPS=false
 
 EXPOSE 3000
-CMD [ "/app/bin/librate", "-c", "env", "-e" ]
+CMD [ "/app/bin/librate", "-c", "env" ]
 # [ "/usr/bin/bash" ]

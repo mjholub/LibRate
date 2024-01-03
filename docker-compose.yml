@@ -17,8 +17,8 @@ services:
       - db
       - redis
     ports:
-      - "3000:3000"
-      - "3030:3030"
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3030:3030"
     networks:
       - librate-net
     healthcheck:

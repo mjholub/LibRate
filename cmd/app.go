@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	//"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -19,7 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/earlydata"
+	//"github.com/gofiber/fiber/v2/middleware/earlydata"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -33,16 +33,18 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 	if err != nil {
 		tag = "unknown"
 	}
+	_ = tag
 
 	app := fiber.New(fiber.Config{
-		AppName:                 fmt.Sprintf("LibRate %s", tag),
-		EnableTrustedProxyCheck: true,
-		TrustedProxies:          []string{"127.0.0.1", "::1", "localhost", conf.Fiber.Host},
-		Prefork:                 conf.Fiber.Prefork,
-		ReduceMemoryUsage:       conf.Fiber.ReduceMemUsage,
-		Views:                   renderEngine,
-		JSONEncoder:             json.Marshal,
-		JSONDecoder:             json.Unmarshal,
+		AppName: "LibRate v0.8.12",
+		// FIXME: earlydata not working with containers
+		// EnableTrustedProxyCheck: true,
+		// TrustedProxies:          []string{"127.0.0.1", "::1", "localhost", conf.Fiber.Host, conf.Fiber.Domain},
+		Prefork:           conf.Fiber.Prefork,
+		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
+		Views:             renderEngine,
+		JSONEncoder:       json.Marshal,
+		JSONDecoder:       json.Unmarshal,
 	},
 	)
 
@@ -62,7 +64,7 @@ func SetupMiddlewares(conf *cfg.Config,
 		security.SetupCSRF(conf, logger),
 		security.SetupCORS(conf),
 		recover.New(),
-		earlydata.New(),
+		// earlydata.New(),
 		etag.New(),
 		cache.New(cache.Config{
 			Expiration: 15 * time.Minute,
