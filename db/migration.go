@@ -43,26 +43,9 @@ func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 		for dir, files := range dirsWithFiles {
 			log.Info().Msgf("running migration %s", dir.Name())
 			dirPath := dir.Name()
-			var downMigrations, upMigrations []string
-			// TODO: find corresponding "down" migration and assign it to it's up-migration
-			for i := range files {
-				if strings.Contains(files[i].Name(), "down") {
-					downMigrations = append(downMigrations, files[i].Name())
-				}
-				if strings.Contains(files[i].Name(), "up") {
-					upMigrations = append(upMigrations, files[i].Name())
-				}
-				for i := range upMigrations {
-					f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, dirPath, upMigrations[i]))
-					if err != nil {
-						return fmt.Errorf("error reading migration file: %v", err)
-					}
-					_, err = conn.Exec(ctx, string(f))
-					log.Info().Msgf("running query: %s", string(f))
-					if err != nil {
-						return fmt.Errorf("error running migration: %v", err)
-					}
-				}
+			migrationNames := getMigrationNames(files)
+			if err := migrateUp(ctx, log, conn, conf.MigrationsPath, dirPath, migrationNames); err != nil {
+				return err
 			}
 		}
 		return nil
@@ -73,16 +56,9 @@ func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 			if err != nil {
 				return fmt.Errorf("error reading filesystem: %v", err)
 			}
-			for i := range files {
-				f, err := os.ReadFile(filepath.Join(conf.MigrationsPath, paths[i], files[i].Name()))
-				if err != nil {
-					return fmt.Errorf("error reading migration file: %v", err)
-				}
-				_, err = conn.Exec(ctx, string(f))
-				log.Info().Msgf("running query: %s", string(f))
-				if err != nil {
-					return fmt.Errorf("error running migration: %v", err)
-				}
+			f := getMigrationNames(files)
+			if err := migrateUp(ctx, log, conn, conf.MigrationsPath, paths[i], f); err != nil {
+				return err
 			}
 		}
 		return nil
@@ -112,4 +88,52 @@ func getDir(basePath, migrationsPath string) (dirsWithFiles map[os.DirEntry][]os
 		}
 	}
 	return dirsWithFiles, nil
+}
+
+func getMigrationNames(files []os.DirEntry) (migrationNames []string) {
+	for i := range files {
+		if files[i].IsDir() {
+			continue
+		}
+		migrationChunks := strings.Split(files[i].Name(), ".")
+		migrationNames = append(migrationNames, migrationChunks[0])
+	}
+
+	return migrationNames
+}
+
+func migrateUp(
+	ctx context.Context, log *zerolog.Logger, conn *pgx.Conn,
+	migrationsPath, dirPath string, migrationNames []string,
+) error {
+	for i := range migrationNames {
+		f, err := os.ReadFile(filepath.Join(migrationsPath, dirPath, migrationNames[i]+".up.sql"))
+		if err != nil {
+			return fmt.Errorf("error reading migration file %s/%s: %v", dirPath, migrationNames[i]+".up.sql", err)
+		}
+		_, err = conn.Exec(ctx, string(f))
+		log.Info().Msgf("running query: %s", string(f))
+		if err != nil {
+			log.Warn().Msgf("%s: rolling back migration %s: %v", dirPath, migrationNames[i], err)
+			if e := migrateDown(ctx, conn, migrationsPath, dirPath, migrationNames[i]); e != nil {
+				return e
+			}
+			return fmt.Errorf("error running migration %s: %v", migrationNames[i], err)
+		}
+	}
+	return nil
+}
+
+func migrateDown(ctx context.Context, conn *pgx.Conn,
+	migrationsPath, dirPath, migrationName string,
+) error {
+	downFile, err := os.ReadFile(filepath.Join(migrationsPath, dirPath, migrationName+".down.sql"))
+	if err != nil {
+		return fmt.Errorf("error reading migration file %s/%s: %v", dirPath, migrationName+".down.sql", err)
+	}
+	_, err = conn.Exec(ctx, string(downFile))
+	if err != nil {
+		return fmt.Errorf("error rolling back migration %s: %v", migrationName, err)
+	}
+	return nil
 }
