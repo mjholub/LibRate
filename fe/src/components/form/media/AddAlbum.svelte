@@ -16,6 +16,8 @@
 	let errorMessages: CustomHttpError[] = [];
 	let genreLinks: string[] = [];
 	let isUploading: boolean = false;
+	let imageBase64 = '';
+
 	onMount(async () => {
 		maxFileSize = await getMaxFileSize();
 		addEventListener('load', () => {
@@ -32,7 +34,7 @@
 					e.preventDefault();
 					dropArea.classList.remove('highlight');
 					try {
-						await addImage(e);
+						await updateImage(e);
 					} catch (error) {
 						errorMessages.push({
 							message: "Couldn't upload image",
@@ -106,10 +108,49 @@
 	};
 
 	const addMore = () => {};
-	// TODO: reactively update the displayed image
-	// but then, only submit once the form has been filled out
-	// This is because we cannot add an image without a media_id
-	const addImage = async (e: Event) => {
+
+	// updateImage reactively changes the displayed image when the user uploads a new one
+	const updateImage = async (e: Event) => {
+		const files = (e.target as HTMLInputElement).files;
+		if (files) {
+			const f = Array.from(files);
+			f.forEach(async (file: File | Blob) => {
+				if (file.size > maxFileSize) {
+					errorMessages.push({
+						message: `File size must be less than ${maxFileSizeString}`,
+						status: 413
+					});
+					errorMessages = [...errorMessages];
+				} else {
+					imagePaths.push(URL.createObjectURL(file));
+					imagePaths = [...imagePaths];
+					await updateImageBase64(file);
+				}
+			});
+		}
+	};
+
+	const updateImageBase64 = async (file: File | Blob): Promise<void> => {
+		return new Promise((resolve, reject) => {
+			const fileReader: FileReader = new FileReader();
+			fileReader.onload = async () => {
+				try {
+					const imageBase64WithPrefix: string = fileReader.result as string;
+					imageBase64 = imageBase64WithPrefix.split(',')[1]; // remove prefix
+					isUploading = false;
+					resolve();
+				} catch (err) {
+					reject(err);
+				}
+			};
+			fileReader.onerror = (e) => reject(e);
+			isUploading = true;
+			fileReader.readAsDataURL(file);
+		});
+	};
+
+	// submitImage sends the image to the server once the form has been filled out
+	const submitImage = async (e: Event) => {
 		return new Promise((resolve, reject) => {
 			isUploading = true;
 			console.debug('addImage');
@@ -199,16 +240,17 @@
 <!-- svelte-ignore  a11y-no-noninteractive-element-interactions -->
 <div
 	class="drop-area"
-	on:drop={addImage}
-	on:click={() => openFilePicker(addImage, 'image/*')}
-	on:keydown={(e) => (e.key === 'Space' ? openFilePicker(addImage, 'image/*') : null)}
+	on:drop={updateImage}
+	on:click={() => openFilePicker(updateImage, 'image/*')}
+	on:keydown={(e) => (e.key === 'Space' ? openFilePicker(updateImage, 'image/*') : null)}
 	on:dragover={(e) => e.preventDefault()}
 	aria-dropeffect="copy"
 	role="region"
 	aria-labelledby="drop-area-label"
 >
 	<p id="drop-area-label">
-		<a on:click={() => openFilePicker(addImage, 'image/*')}>Drop or click to add album cover here</a
+		<a on:click={() => openFilePicker(updateImage, 'image/*')}
+			>Drop or click to add album cover here</a
 		>
 	</p>
 
