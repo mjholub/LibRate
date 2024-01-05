@@ -28,5 +28,5 @@ if [ -z $(pgrep postgres) ]; then
 fi
 psql -U postgres -d librate -c "CREATE EXTENSION IF NOT EXISTS age"
 psql -U postgres -d librate -c "LOAD 'age'"
-psql -U postgres -d librate -c "SET search_path = ag_catalog, "postgres", public;"
+psql -U postgres -d librate -c "SET search_path = ag_catalog, "$user", public;"
 tail -f /dev/null
