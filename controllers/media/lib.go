@@ -84,7 +84,7 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 
 	kind, err := mc.storage.GetKind(ctx, mediaID)
 	if err != nil {
-		return handleInternalError(mc.storage.Log, c, "Failed to get kind")
+		return handleInternalError(mc.storage.Log, c, "Failed to get kind", err)
 	}
 	mc.storage.Log.Debug().Msgf("Got kind %s for media with ID %s", kind, c.Params("media_id"))
 
@@ -92,7 +92,7 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	if err == sql.ErrNoRows {
 		return handlePlaceholderImage(mc.storage.Log, c, kind)
 	} else if err != nil {
-		return handleInternalError(mc.storage.Log, c, "Failed to get image paths")
+		return handleInternalError(mc.storage.Log, c, "Failed to get image paths", err)
 	}
 
 	return handleImageResponse(mc.storage.Log, c, path)
@@ -102,21 +102,36 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	genreKind := c.Params("kind")
 	possible := []string{"film", "tv", "music", "book", "game"}
 	if !lo.Contains(possible, genreKind) {
-		handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
+		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
 	}
 
 	if c.QueryBool("names_only", true) {
 		genreNames, err := mc.storage.GetGenreNames(c.Context(), genreKind)
 		if err != nil {
-			handleInternalError(mc.storage.Log, c, "Failed to get genre names")
+			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
 		return h.ResData(c, fiber.StatusOK, "success", genreNames)
 	}
 	genres, err := mc.storage.GetGenres(c.Context(), genreKind)
 	if err != nil {
-		handleInternalError(mc.storage.Log, c, "Failed to get genres")
+		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}
 	return h.ResData(c, fiber.StatusOK, "success", genres)
+}
+
+func (mc *Controller) GetGenre(c *fiber.Ctx) error {
+	genreKind := c.Params("kind")
+	possible := []string{"film", "tv", "music", "book", "game"}
+	if !lo.Contains(possible, genreKind) {
+		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
+	}
+
+	genreName := c.Params("genre")
+	genre, err := mc.storage.GetGenre(c.Context(), genreKind, genreName)
+	if err != nil {
+		return handleInternalError(mc.storage.Log, c, "Failed to get genre", err)
+	}
+	return h.ResData(c, fiber.StatusOK, "success", genre)
 }
 
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
@@ -124,8 +139,8 @@ func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
 	return h.Res(c, fiber.StatusBadRequest, message)
 }
 
-func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msg(message)
+func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string, err error) error {
+	log.Error().Err(err).Msg(message)
 	return h.Res(c, fiber.StatusInternalServerError, message)
 }
 

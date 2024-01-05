@@ -181,7 +181,6 @@ func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
 	})
 }
 
-// TODO: create corresponding database modifications so that we can tie a device to a member
 func (a *Service) identifyDevice() (uuid.UUID, error) {
 	deviceID, err := uuid.NewV7()
 	if err != nil {

@@ -170,6 +170,56 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 	}
 }
 
+// FIXME: sqlx won't work with AGE, we need to use
+// github.com/apache/age/drivers/golang/age
+func (ms *MediaStorage) GetGenre(ctx context.Context, kind, name string) (genre *Genre, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		switch kind {
+		case "music":
+			_, err := ms.db.ExecContext(ctx, `
+			SET search_path = ag_catalog, "$user", public;
+			`)
+			if err != nil {
+				return nil, fmt.Errorf("error setting search path: %w", err)
+			}
+			stmt, err := ms.db.PreparexContext(ctx, `
+				SELECT * FROM cypher('music_genres', $$
+					MATCH (g:Genre {name: $1}) RETURN g')	
+				$$) as (g agtype)
+				`)
+			if err != nil {
+				return nil, fmt.Errorf("error preparing statement: %w", err)
+			}
+			defer stmt.Close()
+
+			var genre Genre
+			err = stmt.SelectContext(ctx, &genre, name)
+			if err != nil {
+				return nil, fmt.Errorf("error executing statement: %w", err)
+			}
+			return &genre, nil
+		default:
+			stmt, err := ms.db.PreparexContext(ctx, `
+				SELECT * FROM media.genres
+				WHERE kind = $1 AND name = $2
+				`)
+			if err != nil {
+				return nil, fmt.Errorf("error preparing statement: %w", err)
+			}
+			err = stmt.GetContext(ctx, &genre, kind, name)
+
+			if err != nil {
+				return nil, fmt.Errorf("error selecting rows for kind %s and name %s: %v", kind, name, err)
+			}
+
+			return genre, nil
+		}
+	}
+}
+
 // GetGenreNames returns all genre names for specified media type, without any additional information.
 func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]string, error) {
 	select {

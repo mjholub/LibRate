@@ -11,7 +11,7 @@ if [ ! -d "/var/lib/postgresql/data" ]; then
 fi
 
 # Write the pg_hba.conf and postgresql.conf files
-if [ $(wc -l /var/lib/postgresql/data/pg_hba.conf) -lt 5 ]; then
+if [ "$(wc -l /var/lib/postgresql/data/pg_hba.conf)" -lt 5 ]; then
 	echo "host    all             all             127.0.0.1/32            trust" >/var/lib/postgresql/data/pg_hba.conf
 	echo "host    all             all             172.20.0.0/16           trust" >>/var/lib/postgresql/data/pg_hba.conf
 	echo "host    all             all             librate-app             trust" >>/var/lib/postgresql/data/pg_hba.conf
@@ -26,4 +26,7 @@ fi
 if [ -z $(pgrep postgres) ]; then
 	pg_ctl -D /var/lib/postgresql/data -o "-c listen_addresses='*'" -l /var/lib/postgresql/logfile start
 fi
+psql -U postgres -d librate -c "CREATE EXTENSION IF NOT EXISTS age"
+psql -U postgres -d librate -c "LOAD 'age'"
+psql -U postgres -d librate -c "SET search_path = ag_catalog, "$user", public;"
 tail -f /dev/null

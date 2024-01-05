@@ -12,10 +12,6 @@
 	export let album: Album;
 	if (album.duration && album.duration.Valid) {
 		const durationDate = new Date(album.duration.Time);
-		// FIXME: ditch static adapter, because without
-		// the ability to use dynamic rendering, this will always
-		// be the host machine's locale, while we want it to be the user's
-		// browser locale
 		durationStr = durationDate.toLocaleTimeString(undefined, {
 			hour: 'numeric',
 			minute: 'numeric',
