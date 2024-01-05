@@ -249,8 +249,12 @@
 	aria-labelledby="drop-area-label"
 >
 	<p id="drop-area-label">
-		<a on:click={() => openFilePicker(updateImage, 'image/*')}
-			>Drop or click to add album cover here</a
+		<!-- svelte-ignore a11y-missing-attribute -->
+		<a
+			on:click={() => openFilePicker(updateImage, 'image/*')}
+			on:keydown={(e) => (e.key === 'Enter' ? openFilePicker(updateImage, 'image/*') : null)}
+			tabindex="0"
+			role="button">Drop or click to add album cover here</a
 		>
 	</p>
 
