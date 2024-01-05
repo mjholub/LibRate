@@ -18,8 +18,50 @@
 	let isUploading: boolean = false;
 	let imageBase64 = '';
 
+	let album: Album = {
+		UUID: '',
+		kind: 'album',
+		image_paths: [],
+		media_id: '',
+		name: '',
+		title: '',
+		created: new Date(),
+		creator: null,
+		creators: [],
+		added: new Date(),
+		album_artists: {
+			person_artist: [],
+			group_artist: []
+		},
+		release_date: '',
+		genres: [],
+		duration: {
+			Valid: false,
+			Time: '00:00:00'
+		},
+		tracks: []
+	};
+
+	const shouldResetAlbum = () => {
+		const albumWithLifeTime = localStorage.getItem('album');
+		if (albumWithLifeTime) {
+			const albumWithLifeTimeObject = JSON.parse(albumWithLifeTime);
+			const albumLifeTime = albumWithLifeTimeObject.timeStamp;
+			const currentTime = new Date().getTime();
+			const timeDifference = currentTime - albumLifeTime;
+			const timeDifferenceInHours = timeDifference / (1000 * 3600);
+			if (timeDifferenceInHours > 1) {
+				return true;
+			}
+		}
+		return false;
+	};
+
 	onMount(async () => {
 		maxFileSize = await getMaxFileSize();
+		if (shouldResetAlbum()) {
+			localStorage.removeItem('album');
+		}
 		addEventListener('load', () => {
 			const dropArea = document.querySelector('.drop-area');
 			if (dropArea) {
@@ -44,6 +86,14 @@
 					}
 				});
 			}
+		});
+		// save album, clear after 1 hour
+		addEventListener('beforeunload', () => {
+			let albumWithLifeTime: Object = {
+				timeStamp: new Date().getTime(),
+				data: album
+			};
+			localStorage.setItem('album', JSON.stringify(albumWithLifeTime));
 		});
 	});
 
@@ -82,30 +132,6 @@
 		genreLinks = [];
 		isUploading = imagePaths.length !== 0;
 	}
-
-	let album: Album = {
-		UUID: '',
-		kind: 'album',
-		image_paths: [],
-		media_id: '',
-		name: '',
-		title: '',
-		created: new Date(),
-		creator: null,
-		creators: [],
-		added: new Date(),
-		album_artists: {
-			person_artist: [],
-			group_artist: []
-		},
-		release_date: '',
-		genres: [],
-		duration: {
-			Valid: false,
-			Time: '00:00:00'
-		},
-		tracks: []
-	};
 
 	const addMore = () => {};
 
