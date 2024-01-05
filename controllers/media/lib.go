@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
@@ -95,6 +96,27 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	}
 
 	return handleImageResponse(mc.storage.Log, c, path)
+}
+
+func (mc *Controller) GetGenres(c *fiber.Ctx) error {
+	genreKind := c.Params("kind")
+	possible := []string{"film", "tv", "music", "book", "game"}
+	if !lo.Contains(possible, genreKind) {
+		handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
+	}
+
+	if c.QueryBool("names_only", true) {
+		genreNames, err := mc.storage.GetGenreNames(c.Context(), genreKind)
+		if err != nil {
+			handleInternalError(mc.storage.Log, c, "Failed to get genre names")
+		}
+		return h.ResData(c, fiber.StatusOK, "success", genreNames)
+	}
+	genres, err := mc.storage.GetGenres(c.Context(), genreKind)
+	if err != nil {
+		handleInternalError(mc.storage.Log, c, "Failed to get genres")
+	}
+	return h.ResData(c, fiber.StatusOK, "success", genres)
 }
 
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {

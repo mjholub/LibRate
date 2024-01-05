@@ -46,9 +46,10 @@ type (
 		Book | Album | Track | TVShow | Season | Episode
 	}
 
-	// Genre does not hage a UUID due to parent-child relationshiPs
+	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
 		ID          int16    `json:"id" db:"id,pk,autoinc"`
+		Kind        string   `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
 		Name        string   `json:"name" db:"name"`
 		DescShort   string   `json:"desc_short" db:"desc_short"`
 		DescLong    string   `json:"desc_long" db:"desc_long"`
@@ -137,6 +138,61 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 			return "", fmt.Errorf("error scanning row: %w", err)
 		}
 		return kind, nil
+	}
+}
+
+// GetGenres returns all genres for specified media type.
+// Generally to avoid overfetching, it's advisable to use GetGenreNames instead
+// (accessed with optional query parameter ?names_only=true) (if this parameter is not provided,
+// it uses true as a default value).
+func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		stmt, err := ms.db.PreparexContext(ctx, `
+		SELECT * FROM media.genres
+		WHERE kind = $1
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		var genres []Genre
+		err = stmt.SelectContext(ctx, &genres, kind)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error selecting rows")
+			return nil, fmt.Errorf("error selecting rows: %w", err)
+		}
+		return genres, nil
+	}
+}
+
+// GetGenreNames returns all genre names for specified media type, without any additional information.
+func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]string, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		stmt, err := ms.db.PreparexContext(ctx, `
+		SELECT name FROM media.genres
+		WHERE kind = $1
+		`)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error preparing statement")
+			return nil, fmt.Errorf("error preparing statement: %w", err)
+		}
+		defer stmt.Close()
+
+		var names []string
+		err = stmt.SelectContext(ctx, &names, kind)
+		if err != nil {
+			ms.Log.Error().Err(err).Msg("error selecting rows")
+			return nil, fmt.Errorf("error selecting rows: %w", err)
+		}
+		return names, nil
 	}
 }
 
