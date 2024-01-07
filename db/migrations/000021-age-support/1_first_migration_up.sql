@@ -20,10 +20,8 @@ Characteristics include 12-bar blues progressions, varied accompaniment styles, 
 $$) as (result agtype);
 
 SELECT * FROM cypher('music_genres', $$
-  SELECT * FROM cypher('music_genres', $$
 MATCH (parent:Genre), (child: Genre)
 WHERE parent.name = 'Blues' AND child.name = 'Acoustic Blues'
 CREATE (parent)-[e:HAS_SUBGENRE]->(child)
 RETURN e
 $$) as (e agtype);
-
