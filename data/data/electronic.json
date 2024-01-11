@@ -1,0 +1,1676 @@
+[
+  {
+    "name": "Algorave",
+    "description": "Generative dancefloor-oriented music produced live via algorithms.",
+    "children": []
+  },
+  {
+    "name": "Binaural Beats",
+    "description": "Auditory illusions created when two different frequencies are played simultaneously in separate ears.",
+    "children": []
+  },
+  {
+    "name": "Bit Music",
+    "description": "Created by sound chips, cards, and sequencers found in video game consoles, personal computers, and arcade machines, as well as synthesizers emulating these sounds.",
+    "children": [
+      {
+        "name": "Chiptune",
+        "description": "Used primarily in the 1980s within the context of 8-bit Video Game Music, combining simple synthesized waveforms and noise in a compositionally limited but overtly melodic style."
+      },
+      {
+        "name": "FM Synthesis",
+        "description": "Sound synthesis that combines the simple waveforms of Chiptune with modulating oscillators to create a bouncier synthesizer sound that would be used in arcade cabinets and home video game consoles like the Sega Mega Drive/Genesis in the late 1980s."
+      },
+      {
+        "name": "MIDI Music",
+        "description": "Intended for real-time sequenced playback via MIDI protocol on MIDI devices and used primarily in 1990s PC Video Game Music, arranger keyboards and karaoke."
+      },
+      {
+        "name": "Black MIDI",
+        "description": "Consists of extremely dense MIDI piano compositions, impossible to play on physical instruments."
+      },
+      {
+        "name": "Sequencer & Tracker",
+        "description": "Composed for early home computer and game consoles from the late 1980s to the late 1990s, primarily for video game soundtracks."
+      },
+      {
+        "name": "16-bit",
+        "description": "Created using video game consoles with audio hardware using 16-bit audio samples, most notably the Super Nintendo Entertainment System."
+      },
+      {
+        "name": "Tracker Music",
+        "description": "Vertical text-based step-sequencer software sampler music in the first and second gen module formats like .MOD, .MED, .S3M, .XM and .IT."
+      },
+      {
+        "name": "Doskpop",
+        "description": "Сombines Spacesynth composition with tracker techniques and the traditional demoscene sound."
+      }
+    ]
+  },
+  {
+    "name": "Bitpop",
+    "description": "Fuses Bit Music with additional synths, beats, guitars and modern production values, emphasizing highly catchy melodies and relatively fast tempos.",
+    "children": []
+  },
+  {
+    "name": "Celtic Electronica",
+    "description": "Fusion of Celtic Folk Music with various types of Electronic Dance Music.",
+    "children": []
+  },
+  {
+    "name": "Chillout",
+    "description": "Broad category of many relaxed styles of Electronic music which predominantly draw influence from Electronic Dance Music subgenres and Ambient.",
+    "children": [
+      {
+        "name": "Ambient Dub",
+        "description": "Takes cues from Ambient and Dub reggae, featuring the atmosphere of the former and the Jamaican-style basslines, percussion, and psychedelic production techniques of the latter."
+      },
+      {
+        "name": "Ambient House",
+        "description": "Primarily British genre developed in the 1990s with beats, synthesizers, and vocals in styles similar to House, treated with effects that are often described as \"dream-like\" or \"chilled out\"."
+      },
+      {
+        "name": "Ambient Trance",
+        "description": "Emerged in the mid-1990s mainly in the form of Chillout remixes of Trance tracks; incorporates its arpeggiated synthesizer sound into Downtempo and Ambient contexts."
+      },
+      {
+        "name": "Balearic Beat",
+        "description": "Variety of relaxed, laid-back music that originates from the Balearic Islands off the coast of Spain, and particularly the club scene in Ibiza."
+      },
+      {
+        "name": "Barber Beats",
+        "description": "Borrows elements from Downtempo, Trip Hop, and Instrumental Hip Hop; emulates 1990s and 2000s Chillout music."
+      },
+      {
+        "name": "Downtempo",
+        "description": "Atmospheric and groove-based with relaxed tempos and mellow beats."
+      },
+      {
+        "name": "Trip Hop",
+        "description": "Evokes a surreal, trippy, dreamy, and sometimes dark atmosphere with offbeat turntable scratches, light vocal melodies, and Hip Hop-influenced beats."
+      },
+      {
+        "name": "Psybient",
+        "description": "Heavy influence from Psytrance and Goa Trance incorporated in an atmospheric Ambient context."
+      }
+    ]
+  },
+  {
+    "name": "Digital Fusion",
+    "description": "Incorporates the hardware-limited sounds of Chiptune and other Bit Music into compositions drawing on Jazz, Cinematic Classical, progressive music, and other Electronic styles, sometimes augmented with live instrumentation.",
+    "children": []
+  },
+  {
+    "name": "Drift Phonk",
+    "description": "Busy, noisy production inspired by lo-fi Memphis Rap; frequently features 808 cowbell melodies and chopped, compressed samples.",
+    "children": [
+      {
+        "name": "Phonk House",
+        "description": "Merges Drift Phonk's nocturnal atmospheres, cowbell melodies, vocal samples, and energetic production, with House rhythms and tempos, characterized by a banging and upbeat sound."
+      }
+    ]
+  },
+  {
+    "name": "Dungeon Synth",
+    "description": "Focuses on evoking epic and atmospheric soundscapes commonly associated with fantasy and medieval settings through the usage of synthesizers, keyboards, and drum machines.",
+    "children": [
+      {
+        "name": "Comfy Synth",
+        "description": "Calm, peaceful and soothing sounds, as well as nostalgic, sentimental, or childish atmospheres and aesthetics; often incorporates wholesome themes while utilizing lo-fi or hazy recordings and influences from New Age."
+      },
+      {
+        "name": "Winter Synth",
+        "description": "Cold, minimalistic, and repetitive soundscapes, commonly invoking imagery of winter."
+      }
+    ]
+  },
+  {
+    "name": "Electroacoustic",
+    "description": "Manipulation and processing of sound sources to create atmospheric pieces.",
+    "children": [
+      {
+        "name": "Acousmatic Music",
+        "description": "Fixed-media Electroacoustic music designed to be reproduced by multiple loudspeakers without the presence of instrumentalists and visual cues."
+      },
+      {
+        "name": "EAI",
+        "description": "Slow paced, physical, textured aesthetic - often created using unconventional instruments processed through a computer."
+      },
+      {
+        "name": "Musique concrète",
+        "description": "Manipulation of recorded sounds, mostly Field Recordings, natural sounds, and real-world noises, as a process of abstracting \"concrete\" sounds, or \"sound objects\", from their acoustic origins."
+      }
+    ]
+  },
+  {
+    "name": "Electro-Industrial",
+    "description": "Formed in the late 1980s and early 1990s; grew out of a combination of EBM and Industrial.",
+    "children": [
+      {
+        "name": "Dark Electro",
+        "description": "Emerged in the early 1990s in Europe, combining EBM beats with the abrasiveness of old school Industrial but with a greater focus on a horror-inspired atmosphere and harsh, distorted vocals."
+      },
+      {
+        "name": "Aggrotech",
+        "description": "Based on the dark atmosphere of Dark Electro, typically characterized by more aggressive Hardcore [EDM]-influenced beats and harsh/distorted vocals."
+      }
+    ]
+  },
+  {
+    "name": "Electronic Dance Music",
+    "description": "Broad category for subgenres mainly derived from Disco, featuring Electronic sounds, synthesizers, drum machines and varying BPM ranges.",
+    "children": [
+      {
+        "name": "Artcore",
+        "description": "Combines an eclectic mix of Electronic Dance Music genres with the instrumentation and melodic stylings of genres like Cinematic Classical for a maximalist and emotional sound."
+      },
+      {
+        "name": "Balani Show",
+        "description": "Emerged in the late 1990s in Mali; peaks at around 170BPM and prominently features looping, cut-up balafon samples."
+      },
+      {
+        "name": "Balearic Beat",
+        "description": "Variety of relaxed, laid-back music that originates from the Balearic Islands off the coast of Spain, and particularly the club scene in Ibiza."
+      },
+      {
+        "name": "Bérite Club",
+        "description": "Originated in the underground club scene of Paris in the mid-to-late 2010s, drawing on a variety of international club styles for its combination of prominent and erratic drum programming with freezing and looping chopped-up samples."
+      },
+      {
+        "name": "Breakbeat",
+        "description": "An umbrella of affiliated Electronic Dance Music styles broadly characterized by prominent syncopated drum patterns (called breakbeats) that emerged from Breakbeat Hardcore's initial influence, not including styles directly related to Drum and Bass and Jungle."
+      },
+      {
+        "name": "Acid Breaks",
+        "description": "Incorporates prominent \"squelching\", resonant low pass filter sounds typical to Acid House, and often other \"trippy\" effects into intense, syncopated, broken rhythms in the tempos of 110-150 BPM."
+      },
+      {
+        "name": "Baltimore Club",
+        "description": "Drew on the \"booty bass\" syncopation of Miami Bass, combined with Breakbeat rhythms around 130 BPM and chopped up vocal samples as found in Ghetto House."
+      },
+      {
+        "name": "Big Beat",
+        "description": "Popular in Britain during the late 1990s, driven by edited breakbeats and prominent basslines."
+      },
+      {
+        "name": "Breakbeat Hardcore",
+        "description": "Originated from the combination of sampled breakbeats and energetic rhythms with the \"rave\" influences set by early-1990s Techno and Acid House, including upbeat \"stab\" riffing and sample-based production."
+      },
+      {
+        "name": "Darkside",
+        "description": "Dark atmosphere and fast rhythms; served as a forerunner of Drum and Bass."
+      },
+      {
+        "name": "Hardcore Breaks",
+        "description": "Revival of Breakbeat Hardcore which emerged in the 2000s, bringing in modern influences and production techniques."
+      },
+      {
+        "name": "Breakbeat Kota",
+        "description": "Indonesian style that slows down the syncopated rhythms of Funkot to moderate tempos around 130 BPM."
+      },
+      {
+        "name": "Jungle Dutch",
+        "description": "A style of Breakbeat Kota with the high-pitched synth leads of Dutch House and the frantic \"tribal\" rhythms of Jungle Terror."
+      },
+      {
+        "name": "Florida Breaks",
+        "description": "Developed during the mid-1990s, combining major influences of Hip Hop derivatives such as Miami Bass and Electro along with elements of 1990s Electronic Dance Music genres like House or Techno."
+      },
+      {
+        "name": "Nu Skool Breaks",
+        "description": "Developed in the late 1990s and early 2000s; combines elements from Drum and Bass, UK Garage, and Techno with breakbeat."
+      },
+      {
+        "name": "Progressive Breaks",
+        "description": "Derivative of Progressive House that incorporates its lush, melodic synth leads and atmospheres into Breakbeat's syncopated and broken rhythms."
+      },
+      {
+        "name": "Psybreaks",
+        "description": "Uses Psytrance-derived sound design, such as squelchy sounds and psychedelic effects."
+      },
+      {
+        "name": "West Coast Breaks",
+        "description": "Combines the earlier breakbeats of Hip Hop and early Breakbeat or even Miami Bass, with various 1990s Electronic Dance Music genres like Trance and Techno."
+      },
+      {
+        "name": "Broken Beat",
+        "description": "Syncopated rhythm patterns arrived at through Drum and Bass programming techniques; originally developed by artists hailing from Techno, House, drum and bass, and Hip Hop backgrounds."
+      },
+      {
+        "name": "Bubblegum Bass",
+        "description": "Originated in the early 2010s, exaggerating the cutest and most feminine parts of 2000s Pop and combining them with bouncy, plastic synths over rhythms and sounds derived from a variety of contemporary club styles."
+      },
+      {
+        "name": "Bubbling",
+        "description": "Originating in the Netherlands in the late 1980s, fusing sped-up Dancehall with Dutch Antillean music and contemporary Dutch rave."
+      },
+      {
+        "name": "Budots",
+        "description": "Originated from the southern Philippines; notable for its distinct high-pitched synth hooks."
+      },
+      {
+        "name": "Coupé-décalé",
+        "description": "Bass-heavy and minimal style of Ivorian popular dance music, drawing heavily from Zouglou and Congolese rhythms."
+      },
+      {
+        "name": "Cruise",
+        "description": "Fast-paced Nigerian dance style, utilising humorous samples."
+      },
+      {
+        "name": "Dariacore",
+        "description": "Focused on prominent vocal samples, chaotic and distorted production, hard and noisy basslines reminiscent of Future Bass, elements of Mashup, Nightcore and Jersey Club, and humorous meme clips."
+      },
+      {
+        "name": "Deconstructed Club",
+        "description": "Emerged in the 2010s as the hybridization of diverse Electronic Dance Music genres with an abrasive Post-Industrial sound."
+      },
+      {
+        "name": "Digital Cumbia",
+        "description": "Mixes an Electronic sound into traditional Cumbia through influences from House, Dancehall, Hyphy, and Dubstep."
+      },
+      {
+        "name": "Drum and Bass",
+        "description": "Typified by fast, syncopated breakbeat patterns (often sampled or programmed) with prominent basslines, commonly within the 160-180 BPM range."
+      },
+      {
+        "name": "Atmospheric Drum and Bass",
+        "description": "Prominent in the mid-1990s, distinguished by its use of faster, de-emphasized breakbeats and a greater focus on more melodic elements like slow, warm basslines and atmospheric melodies inspired by Ambient and Ambient House."
+      },
+      {
+        "name": "Dancefloor Drum and Bass",
+        "description": "Emerged in the late 2000s and early 2010s as a form of simpler, lighter and more melodic Drum and Bass in comparison to many of the drum and bass genres which preceded it."
+      },
+      {
+        "name": "Darkstep",
+        "description": "Hard, uptempo and uses heavy breakbeats, Post-Industrial-influenced sound design, and horror movie samples to create a sinister, claustrophobic atmosphere."
+      },
+      {
+        "name": "Crossbreed",
+        "description": "Harsh and dense mixture of Darkstep with Hardcore [EDM] developed in the late 2000s."
+      },
+      {
+        "name": "Skullstep",
+        "description": "Repetitious, aggressive, off-beat rhythms often programmed using distorted, harsh, and noisy percussion that usually resembles clangy \"pots and pans\", machine gun-like snares."
+      },
+      {
+        "name": "Drumfunk",
+        "description": "Focuses on complex drum beats made to emulate live recordings."
+      },
+      {
+        "name": "Drumstep",
+        "description": "Dancefloor-friendly, loud, and heavy combination of the drum programming of Jump-Up with the half-time tempo and midrange LFO wobble of Brostep."
+      },
+      {
+        "name": "Dubwise Drum and Bass",
+        "description": "Implementing Reggae and Dub influences, usually vocal dubs, delay effects, and reggae instrumentation, with the clean production and rhythms of post-2000s styles."
+      },
+      {
+        "name": "Footwork Jungle",
+        "description": "Combining Footwork's archetypal percussion, skittering drum fills, handclaps, and syncopated rhythms, with Drum and Bass drum programming and breakbeats, merging the two into unconventional, frantic drumming and dense, off-kilter rhythms."
+      },
+      {
+        "name": "Halftime",
+        "description": "Offshoot of Drum and Bass (mainly Neurofunk) characterized by off-kilter rhythms playing at around 80-85 BPM (half of normal DnB pace), influenced by Dubstep, Wonky, Trap [EDM], and Hip Hop."
+      },
+      {
+        "name": "Hardstep",
+        "description": "Very compressed and sparse drumming, extensive use of kick drums and gritty, minimalistic production style with emphasis on simple, deep, modulated bass patterns."
+      },
+      {
+        "name": "Jazzstep",
+        "description": "Combines the rhythm and speed of Drum and Bass with the melodies, composition, and instrumentation of Jazz."
+      },
+      {
+        "name": "Jump-Up",
+        "description": "Emerged in the mid-1990s, characterized by loud \"wobbling\" basslines, simpler drum loops, and a light-hearted and warm sound."
+      },
+      {
+        "name": "Jungle",
+        "description": "Developed in the early 1990s from Breakbeat Hardcore, featuring rapid, chaotic-sounding breakbeats and strong basslines; known as the forerunner of most Drum and Bass styles."
+      },
+      {
+        "name": "Ragga Jungle",
+        "description": "Developed in the early 1990s in London, combining Jungle breakbeats with heavy influence from Ragga."
+      },
+      {
+        "name": "Liquid Drum and Bass",
+        "description": "Lush and warm variant of Drum and Bass developed in the early 2000s, using polished, smooth production, Funk and Soul samples and occasionally incorporating live instrumentation."
+      },
+      {
+        "name": "Sambass",
+        "description": "Combines Drum and Bass tempos and drum patterns, in addition to its Funk and Soul influences, with various styles of Brazilian Music."
+      },
+      {
+        "name": "Minimal Drum and Bass",
+        "description": "Drum and Bass which strips down the sound as far as it can go without wholly ceasing to be drum and bass."
+      },
+      {
+        "name": "Neurofunk",
+        "description": "Focuses on technical songwriting with warped, complex bass sounds, distorted and modulated synths (often with repeated stabs over the basslines), and dark but clean production."
+      },
+      {
+        "name": "Techstep",
+        "description": "Futuristic, dark, and gritty sound; quantized and compressed drum breaks, distorted bass lines, and a focus on a sci-fi atmosphere and sampling sources."
+      },
+      {
+        "name": "Trancestep",
+        "description": "Combination of Trance melodies and structure with the breakbeats, fast tempos, and rolling basslines of Drum and Bass."
+      },
+      {
+        "name": "Dubstep",
+        "description": "Characterized by half-time syncopated and sparse beats set around 140 BPM with heavy sub-basses; emerged in South London in the early 2000s."
+      },
+      {
+        "name": "Brostep",
+        "description": "Offshoot of Dubstep which replaces its sub-bass-oriented sound with an emphasis on catchy or aggressive mid-range melodies."
+      },
+      {
+        "name": "Briddim",
+        "description": "Combining the kick-clap rhythms and syncopation of Riddim with Brostep sound design."
+      },
+      {
+        "name": "Colour Bass",
+        "description": "Combines aggressive wobbling basses with the euphoric drops of Melodic Dubstep and Future Bass."
+      },
+      {
+        "name": "Deathstep",
+        "description": "Darker, heavier form of Brostep that uses \"machine gun\" basses, atonal synths, and elements from genres like Death Metal and Metalcore."
+      },
+      {
+        "name": "Drumstep",
+        "description": "Dancefloor-friendly, loud, and heavy combination of the drum programming of Jump-Up with the half-time tempo and midrange LFO wobble of Brostep."
+      },
+      {
+        "name": "Tearout [Brostep]",
+        "description": "Heavy and distorted, closely affiliated with Deathstep and other styles of Brostep."
+      },
+      {
+        "name": "Chillstep",
+        "description": "Relaxed Dubstep influenced by Downtempo and Ambient."
+      },
+      {
+        "name": "Dungeon Sound",
+        "description": "Commonly features dark textures, spatial production, and midrange basses."
+      },
+      {
+        "name": "Melodic Dubstep",
+        "description": "Melodious, tuneful drops, rich, lush synth leads, powerful stretched chords, and light and harmonious sound design."
+      },
+      {
+        "name": "Purple Sound",
+        "description": "Emerged in the late 2000s out of the Dubstep scene of the time, incorporating synth leads and basslines inspired by 1980s Synth Funk and 1990s G-Funk, and Video Game Music, into a rhythmic palette mostly derived from dubstep and Grime."
+      },
+      {
+        "name": "Riddim",
+        "description": "Heavy use of repetition and wet, metallic sound design."
+      },
+      {
+        "name": "Future Riddim",
+        "description": "Melodic and futuristic style inspired by Future Bass, and to a lesser extent Colour Bass and Melodic Dubstep."
+      },
+      {
+        "name": "Tearout",
+        "description": "Emerged in the late 2000s, characterized by a gritty, aggressive sound and closely affiliated with early, deep Dubstep."
+      },
+      {
+        "name": "East Coast Club",
+        "description": "Group of club styles from the US East Coast that combines Miami Bass rhythms with influence from Breakbeat and Ghetto House."
+      },
+      {
+        "name": "Baltimore Club",
+        "description": "Drew on the \"booty bass\" syncopation of Miami Bass, combined with Breakbeat rhythms around 130 BPM and chopped up vocal samples as found in Ghetto House."
+      },
+      {
+        "name": "Jersey Club",
+        "description": "Emerged in Newark in the late 2000s; features fast tempos, hard kicks, and less prominent breakbeats."
+      },
+      {
+        "name": "Philly Club",
+        "description": "Builds on Baltimore Club with a faster tempo and sometimes influences from more modern genres like Trap [EDM]."
+      },
+      {
+        "name": "EBM",
+        "description": "Melodic and beat-driven Electronic Dance Music take on Post-Industrial that developed in the 1980s."
+      },
+      {
+        "name": "Dark Electro",
+        "description": "Emerged in the early 1990s in Europe, combining EBM beats with the abrasiveness of old school Industrial but with a greater focus on a horror-inspired atmosphere and harsh, distorted vocals."
+      },
+      {
+        "name": "Aggrotech",
+        "description": "Based on the dark atmosphere of Dark Electro, typically characterized by more aggressive Hardcore [EDM]-influenced beats and harsh/distorted vocals."
+      },
+      {
+        "name": "Futurepop",
+        "description": "Derivative of EBM, retaining its apocalyptic worldview but incorporating heavy influence from the melodic style of Synthpop."
+      },
+      {
+        "name": "New Beat",
+        "description": "Underground dance music which originated in Belgium around 1987, tending to resemble slower, harder EBM."
+      },
+      {
+        "name": "Electro",
+        "description": "Syncopated rhythms programmed on the Roland TR-808 drum machine, often resembling Funk breaks, along with simple funky basslines."
+      },
+      {
+        "name": "Skweee",
+        "description": "Originated among Nordic artists in the mid-2000s, inspired by elements of Synth Funk, Hip Hop, and IDM."
+      },
+      {
+        "name": "Electroclash",
+        "description": "Draws from 1980s styles such as Electro, New Wave, and Electro-Disco combined with Techno, resulting in minimal, throbbing beats and basslines, buzzing synthesizer parts, vocoders and often monotone, half-spoken, half-sung vocals."
+      },
+      {
+        "name": "Electro-Disco",
+        "description": "Disco instrumentation is largely - if not entirely - replaced by synthesizers and augmented with futuristic elements such as the vocoder."
+      },
+      {
+        "name": "Hi-NRG",
+        "description": "Emerged in the late 1970s and quickly became the most popular form of Electronic Dance Music in the LGBT club scenes of San Francisco and New York, characterized by its uptempo, high-energy sound."
+      },
+      {
+        "name": "Italo-Disco",
+        "description": "Produced primarily in Italy and is characterized by the use of synthesizers, drum machines, and sometimes vocoders to create a mechanical, Electronic version of Disco with futuristic atmosphere."
+      },
+      {
+        "name": "Spacesynth",
+        "description": "Highly melodic, often instrumental futuristic strain, formed under the heavy influence of Space Disco, Progressive Electronic and, later, early Eurobeat."
+      },
+      {
+        "name": "Doskpop",
+        "description": "Сombines Spacesynth composition with tracker techniques and the traditional demoscene sound."
+      },
+      {
+        "name": "Space Disco",
+        "description": "Emerged in Europe in the mid-to-late 1970s, characterized by layers of oscillating synth, space-oriented sound effects, and a futuristic sound inspired by contemporary sci-fi media."
+      },
+      {
+        "name": "Electro latino",
+        "description": "Mixes elements of Merengue and Reggaetón with polished production from mainstream House subgenres; often shares traits with Latin Pop, having anthemic melodies and verse-chorus structures."
+      },
+      {
+        "name": "Electro Swing",
+        "description": "Upbeat, energetic style that splices Swing with Electronic Dance Music, looking to recapture the atmosphere of late 1920s to mid-1940s Jazz within a more updated club-friendly medium."
+      },
+      {
+        "name": "Eurobeat",
+        "description": "Fast-paced with roots in Hi-NRG and Italo-Disco; became mainly popular in Japan in the 1990s."
+      },
+      {
+        "name": "Eurodance",
+        "description": "Takes elements of Euro-Disco, House, Techno, and Hi-NRG while featuring on-beat kick, hi-hat and snare sounds at around 110 to 150 bpm."
+      },
+      {
+        "name": "Bubblegum Dance",
+        "description": "Playful, childlike style with a Bubblegum-like atmosphere that often incorporates high-pitched, light-hearted, and usually female-fronted vocals."
+      },
+      {
+        "name": "Italo Dance",
+        "description": "Appeared in the 1990s after the decline of Italo-Disco, featuring rhythmic influence from that genre."
+      },
+      {
+        "name": "Flex Dance Music",
+        "description": "Largely instrumental; infused with Electronic Dance Music elements."
+      },
+      {
+        "name": "Footwork",
+        "description": "Extensive use of drum fills, tom drums, handclaps, and snares within fast-paced, highly syncopated beats not bound to a 4/4 kick rhythm."
+      },
+      {
+        "name": "Footwork Jungle",
+        "description": "Combining Footwork's archetypal percussion, skittering drum fills, handclaps, and syncopated rhythms, with Drum and Bass drum programming and breakbeats, merging the two into unconventional, frantic drumming and dense, off-kilter rhythms."
+      },
+      {
+        "name": "Freestyle",
+        "description": "Electro-influenced; developed in Latino communities in New York and Miami in the 1980s, especially dominated by Latin Freestyle and its Latin influences."
+      },
+      {
+        "name": "Latin Freestyle",
+        "description": "Displays a heavy influence of Hispanic American Music alongside the Disco, Hip Hop, and Electro influences of Freestyle."
+      },
+      {
+        "name": "Funkot",
+        "description": "Fast-paced Indonesian form of Electronic Dance Music that combines Eurodance and Trance synths with the syncopated rhythm from Dangdut koplo."
+      },
+      {
+        "name": "Breakbeat Kota",
+        "description": "Indonesian style that slows down the syncopated rhythms of Funkot to moderate tempos around 130 BPM."
+      },
+      {
+        "name": "Jungle Dutch",
+        "description": "A style of Breakbeat Kota with the high-pitched synth leads of Dutch House and the frantic \"tribal\" rhythms of Jungle Terror."
+      },
+      {
+        "name": "Future Bass",
+        "description": "Woozy, detuned synthesizers, 7th chords, harsh basslines, syncopated percussion with fast-paced hi-hats and a melodic, carefree atmosphere."
+      },
+      {
+        "name": "Kawaii Future Bass",
+        "description": "\"Cute\" style of Future Bass rooted in anime and video game culture; emerged in Japan in the mid-2010s."
+      },
+      {
+        "name": "Future Rave",
+        "description": "Emerged in the late 2010s by combining the mainstage EDM approach with influences from then-popular forms of Techno and old-school Trance/rave-inspired grooves and atmospheres."
+      },
+      {
+        "name": "Ghettotech",
+        "description": "Fuses the syncopation and synthesized sounds of Electro and Detroit Techno with the cut-up samples of Ghetto House and fast rhythms of Miami Bass."
+      },
+      {
+        "name": "Glitch Hop [EDM]",
+        "description": "Tempos around 100-110 BPM, swung, bouncy drum patterns, and a focus on upbeat, danceable drops and buildups."
+      },
+      {
+        "name": "Ghetto Funk",
+        "description": "Rich sampling, drawing from classic Hip Hop as well as from Funk and Soul, and strong midtempo break grooves."
+      },
+      {
+        "name": "Neurohop",
+        "description": "Features the complex bass of Neurofunk and a frantic and mechanical sound design."
+      },
+      {
+        "name": "Grime",
+        "description": "UK Garage-derived production style characterized by dark, fast-paced, often aggressive beats that commonly features fast-paced MCing."
+      },
+      {
+        "name": "Neo-Grime",
+        "description": "Mixes Wave with Grime and other forms of UK Electronic music."
+      },
+      {
+        "name": "Weightless",
+        "description": "Typically instrumental, leftfield Grime style characterized by sparse, \"weightless\" percussion and spectral, atmospheric production."
+      },
+      {
+        "name": "Hardcore [EDM]",
+        "description": "Umbrella term for a wide variety of extremely fast-paced, energetic Electronic Dance Music styles that have been developed since the early 1990s."
+      },
+      {
+        "name": "Acidcore",
+        "description": "Developed out of the 1990s Acid Techno scene utilizing its prominence of \"acid\" TB-303 bassline sequences into more intense rhythms derived from earlier Hardcore [EDM], Gabber and Trance music."
+      },
+      {
+        "name": "Belgian Techno",
+        "description": "Early form of Hardcore [EDM], resulting from the further evolution of New Beat due to the strong influence of Techno and EBM."
+      },
+      {
+        "name": "Breakbeat Hardcore",
+        "description": "Originated from the combination of sampled breakbeats and energetic rhythms with the \"rave\" influences set by early-1990s Techno and Acid House, including upbeat \"stab\" riffing and sample-based production."
+      },
+      {
+        "name": "Darkside",
+        "description": "Dark atmosphere and fast rhythms; served as a forerunner of Drum and Bass."
+      },
+      {
+        "name": "Hardcore Breaks",
+        "description": "Revival of Breakbeat Hardcore which emerged in the 2000s, bringing in modern influences and production techniques."
+      },
+      {
+        "name": "Breakcore",
+        "description": "Mixes Hardcore [EDM] with cut-up, complex, and frequently noisy breakbeats at very high tempos inspired by Jungle and Drum and Bass, often with heavy use of sampling."
+      },
+      {
+        "name": "Lolicore",
+        "description": "Heavily distorted or high-pitched anime vocal samples and complex cut-up breakbeats with extreme tempos."
+      },
+      {
+        "name": "Mashcore",
+        "description": "Sampling, particularly from Pop and Electronic Dance Music, as well as playful melodies, hard kicks, and the typical breakcore breakbeats."
+      },
+      {
+        "name": "Raggacore",
+        "description": "Combines Breakcore with elements from Ragga and Dancehall."
+      },
+      {
+        "name": "Crossbreed",
+        "description": "Harsh and dense mixture of Darkstep with Hardcore [EDM] developed in the late 2000s."
+      },
+      {
+        "name": "Deathchant Hardcore",
+        "description": "Took shape in the UK in the late 1990s and early 2000s, characterized by rapid rhythms with Gabber-influenced kicks, frequent use of breakbeats and Hip Hop-inspired sampling."
+      },
+      {
+        "name": "Digital Hardcore",
+        "description": "High-tempo fusion of Hardcore Punk and Electronic, combining harsh vocals and electric guitars of the former with electronic instruments."
+      },
+      {
+        "name": "Doomcore",
+        "description": "Often somber and contemplative in mood, a feature achieved by the common use of long-stretched ambient pads, and sometimes even samples of screaming and other \"spooky\" sounds."
+      },
+      {
+        "name": "Freeform Hardcore",
+        "description": "Emerged in the mid-1990s, combining fast and hard-hitting rhythms with heavy influence from the synthesizers of Trance."
+      },
+      {
+        "name": "Frenchcore",
+        "description": "Off-beat, bouncy rhythmic patterns and tempos around the 200 BPM range."
+      },
+      {
+        "name": "Gabber",
+        "description": "Fast-paced and energetic, often in the 160-220 BPM range, with a hallmark of a distinctive distorted kick sound."
+      },
+      {
+        "name": "Nu Style Gabber",
+        "description": "Emerged near the end of the 1990s; deeper, more harmonic bassdrums with constant use of supersaw melodies, breakdown sections and slower tempos closer to the 150-180 BPM range."
+      },
+      {
+        "name": "Happy Hardcore",
+        "description": "Emerged in the 1990s from the UK Breakbeat Hardcore scene; characterized by saccharine vocals, uplifting piano riffs and spacey effects, gradually developing to emphasize extremely fast-paced four-on-the-floor beats."
+      },
+      {
+        "name": "Bouncy Techno",
+        "description": "Average tempo of 160 to 180 BPM, four-on-the-floor beats, melodic and repetitive synth melodies, drums with hard kicks, short breaks, progressive stomping rhythms, and offbeat notes."
+      },
+      {
+        "name": "UK Hardcore",
+        "description": "Four-on-the-floor beat around 175 BPM, thick, prominent basslines, and uplifting synth leads, with a cleaner and more accessible sound than other forms of Hardcore [EDM]."
+      },
+      {
+        "name": "Powerstomp",
+        "description": "Prominent, \"stomping\", and slightly distorted kick, relentless, repetitive reverse basses on the offbeats (borrowed from Hardstyle) that drive the tracks, giving the genre its distinct energetic sound, and cacophonous, noisy riffs and synth leads."
+      },
+      {
+        "name": "Hardtek",
+        "description": "Modern hard dance-influenced version of the \"tribecore\" sound featuring deep alternating basses and festival EDM-influenced drops."
+      },
+      {
+        "name": "Raggatek",
+        "description": "Influenced by Reggae, Ragga and Dancehall, combining half-time instrumental sections with Hardtek's fast four-on-the-floor rhythms, as well as vocal samples, clean basslines and skank rhythms."
+      },
+      {
+        "name": "Industrial Hardcore",
+        "description": "Fuses the sonic palettes and aesthetics of Industrial & Noise with the intense rhythms of Gabber, Speedcore, Doomcore and other subsequent styles."
+      },
+      {
+        "name": "J-core",
+        "description": "More energetic and eclectic form of Japanese Hardcore [EDM]."
+      },
+      {
+        "name": "Speedcore",
+        "description": "Exceedingly fast tempos, frequently above 300 BPM, and often aggressive themes and samples."
+      },
+      {
+        "name": "Extratone",
+        "description": "Often sounds like a buzz or hum due to being set to at least 1000 BPM."
+      },
+      {
+        "name": "Splittercore",
+        "description": "Faster version of Speedcore with BPM ranging from around 600 through 1000."
+      },
+      {
+        "name": "Terrorcore",
+        "description": "Utilizes rhythms from earlier Gabber with a faster BPM (usually no more than 300) and darker approach."
+      },
+      {
+        "name": "Uptempo Hardcore",
+        "description": "Utilizes lo-fi production, harsh kicks, and elements borrowed from Rawstyle and other gritty Hardcore [EDM] styles while usually sitting at around 185-220 BPM."
+      },
+      {
+        "name": "Hard Dance",
+        "description": "Umbrella term for EDM mainly developed out of Hard Trance and UK Hard House; usually characterized by fast tempos, hard kick drums and a \"bouncy\" syncopated groove."
+      },
+      {
+        "name": "Hardstyle",
+        "description": "Hard, four-on-the-floor kick drums, fast tempo around 150 BPM, reverse bass and harsh, distorted synths."
+      },
+      {
+        "name": "Dubstyle",
+        "description": "Characterized by the incorporation of the half-time rhythms and wobbly basslines of Dubstep."
+      },
+      {
+        "name": "Euphoric Hardstyle",
+        "description": "Melodic, more lighthearted, and accessible Hardstyle."
+      },
+      {
+        "name": "Psystyle",
+        "description": "Prominent Psytrance influences, especially the basslines and energy of mainstream psytrance."
+      },
+      {
+        "name": "Rawstyle",
+        "description": "Incorporates earlier Hardstyle and Hardcore [EDM] influences into the sound of 2010s hardstyle, creating a distinctly harsh, simplistic, raw, and dark sound, with fast BPM."
+      },
+      {
+        "name": "Rawphoric",
+        "description": "Combines raw harsh kicks with the uplifting melodies of Euphoric Hardstyle."
+      },
+      {
+        "name": "Hardtek",
+        "description": "Modern hard dance-influenced version of the \"tribecore\" sound featuring deep alternating basses and festival EDM-influenced drops."
+      },
+      {
+        "name": "Raggatek",
+        "description": "Influenced by Reggae, Ragga and Dancehall, combining half-time instrumental sections with Hardtek's fast four-on-the-floor rhythms, as well as vocal samples, clean basslines and skank rhythms."
+      },
+      {
+        "name": "Hard Trance",
+        "description": "Rave-oriented form of Trance infusing its atmospheres with faster, thumping rhythms and strong melodic / bassline sections, initially spawning out of the first wave in early-1990s Western Europe."
+      },
+      {
+        "name": "Jumpstyle",
+        "description": "Heavy, distorted 909 beat popular in European countries like Belgium and the Netherlands in the 2000s."
+      },
+      {
+        "name": "Lento violento",
+        "description": "Features a \"slow and violent\" sound between 70-120 BPM with hard kicks inspired by Hardcore [EDM] and Hardstyle."
+      },
+      {
+        "name": "NRG",
+        "description": "Derived from UK Hard House; featuring darker, more anthemic Trance beats and a tempo of 155-165 BPM."
+      },
+      {
+        "name": "UK Hardcore",
+        "description": "Four-on-the-floor beat around 175 BPM, thick, prominent basslines, and uplifting synth leads, with a cleaner and more accessible sound than other forms of Hardcore [EDM]."
+      },
+      {
+        "name": "Powerstomp",
+        "description": "Prominent, \"stomping\", and slightly distorted kick, relentless, repetitive reverse basses on the offbeats (borrowed from Hardstyle) that drive the tracks, giving the genre its distinct energetic sound, and cacophonous, noisy riffs and synth leads."
+      },
+      {
+        "name": "UK Hard House",
+        "description": "Defined by offbeat bass patterns, compressed 909-style drums, buildup-drop structures, hoover sounds, and tempos between 120 and 155 BPM."
+      },
+      {
+        "name": "Scouse House",
+        "description": "Features an upbeat and energetic sound often described as being \"bouncy\", influenced somewhat by Happy Hardcore."
+      },
+      {
+        "name": "Hardbass",
+        "description": "Bouncy hard bass beats, fast tempo, usually 150-175 BPM, and occasional lyrics or rapping."
+      },
+      {
+        "name": "Speed House",
+        "description": "Mixes busy, dirty sound design and intense drums derived from Bass House with fast tempos from 140-160 BPM, pumping basslines, and other UK Hard House influences."
+      },
+      {
+        "name": "Hard Drum",
+        "description": "Highly percussive, syncopated rhythms, influences from global contemporary genres, and lack of melodic elements, with a tempo lingering between 130 BPM."
+      },
+      {
+        "name": "Hardvapour",
+        "description": "Influenced by Hardcore [EDM] and Techno and made in response to the Vaporwave movement."
+      },
+      {
+        "name": "Hardwave",
+        "description": "Harder, festival-oriented offshoot of Wave, combining its \"reese\" basses and icy synths with Trap [EDM] drum patterns, build-up-drop structures, and fuller sound influenced by Trance and Hardstyle."
+      },
+      {
+        "name": "House",
+        "description": "Large, hugely popular group of related Electronic Dance Music styles, initially developing from Disco in the early 1980s."
+      },
+      {
+        "name": "Acid House",
+        "description": "Emerged in the mid-1980s, characterised by repetitive basslines created with the distinctive modulated \"squelching\" sound of the Roland TB-303 synthesiser."
+      },
+      {
+        "name": "Afro House",
+        "description": "Emerged by fusing Deep House with Southern African Music, characterized by hypnotizing drum patterns of shakers and congas, often sampled African vocals or soulful original features, and spiritual, organic, melodic atmosphere."
+      },
+      {
+        "name": "Amapiano",
+        "description": "House from South Africa deriving from previous popular genres including Gqom, Kwaito, and Deep House."
+      },
+      {
+        "name": "Afropiano",
+        "description": "Blends the easy-going, poppy, and melodic Afrobeats sound and rhythms with major Amapiano elements, like lush, jazzy, and laid-back atmospheres often featuring light piano chords."
+      },
+      {
+        "name": "Ambient House",
+        "description": "Primarily British genre developed in the 1990s with beats, synthesizers, and vocals in styles similar to House, treated with effects that are often described as \"dream-like\" or \"chilled out\"."
+      },
+      {
+        "name": "Ballroom",
+        "description": "Emerging from the predominantly Black and LGBT Harlem ballroom culture, it is characterized by hard-hitting rhythms, generally improvised vocals and staccato scatting by MCs known as commentators, and a distinctive crash sample."
+      },
+      {
+        "name": "Baltimore Club",
+        "description": "Drew on the \"booty bass\" syncopation of Miami Bass, combined with Breakbeat rhythms around 130 BPM and chopped up vocal samples as found in Ghetto House."
+      },
+      {
+        "name": "Bass House",
+        "description": "Busy, punchy percussion, prominent basslines and dirty, distorted synths resembling other bass music genres, with influences including Brostep, Fidget House, Bassline, Speed Garage, and Tech House."
+      },
+      {
+        "name": "Speed House",
+        "description": "Mixes busy, dirty sound design and intense drums derived from Bass House with fast tempos from 140-160 BPM, pumping basslines, and other UK Hard House influences."
+      },
+      {
+        "name": "Bassline",
+        "description": "Strong emphasis on intricate basslines as well as four-on-the-floor beat patterns."
+      },
+      {
+        "name": "Big Room House",
+        "description": "Very energetic, festival-focused EDM genre characterized by heavily reverberated sound, trance-inspired anthemic breakdowns, intense build-ups, four-on-the-floor beat focused on a strong kick and simple, minimalistic, drop melodies."
+      },
+      {
+        "name": "Brazilian Bass",
+        "description": "Originated in the 2010s in Brazil, taking influences from Deep House and Tech House, characterized by deep, punchy basslines making use of detuning and filtering effects."
+      },
+      {
+        "name": "Mega funk",
+        "description": "Blends funk vocal performances with production derived from mainstage 2010s house genres like Brazilian Bass and Slap House."
+      },
+      {
+        "name": "Slap House",
+        "description": "Taking influences from Brazilian Bass and Future House, characterized by prominent, \"bouncy\" bassline and simple, upbeat melodies."
+      },
+      {
+        "name": "Bubbling House",
+        "description": "Developed in the Netherlands in the 2000s, combining the older style of Bubbling with more modern House, especially Dutch House."
+      },
+      {
+        "name": "Changa tuki",
+        "description": "Emerged in Caracas; highly influenced by 1990s Techno and Tribal House, featuring fast tempos, strident synthesizers, hard-thumping percussion lines, and plenty of breakbeats."
+      },
+      {
+        "name": "Chicago Hard House",
+        "description": "Originated from Chicago around the mid-1990s as a development of Ghetto House, emphasizing hard-hitting, off-beat drum patterns, fast tempos, and lack of melodies."
+      },
+      {
+        "name": "LA Hard House",
+        "description": "Distorted, minimalistic TR-909 derived rhythms, basic climaxing structures and heavy reliance on high-pitched synthesizer / hoover sounds."
+      },
+      {
+        "name": "Chicago House",
+        "description": "Umbrella term for a broad variety of House that originated from Chicago in the (mostly mid-to-late) 1980s and early 90s."
+      },
+      {
+        "name": "Deep House",
+        "description": "Emerged in the United States during the mid-1980s, featuring a relaxed tempo and influences from Jazz, Funk, and Soul."
+      },
+      {
+        "name": "Lo-Fi House",
+        "description": "Primarily distinguished from earlier styles of outsider house by its stricter reliance on deep house elements, cranky, nocturnal, and nostalgic atmospheres, and a distinct dreamy, lo-fi aesthetic."
+      },
+      {
+        "name": "Diva House",
+        "description": "Dominant, anthemic female vocals, common use of piano stabs, and energetic, driving four-on-the-floor rhythms."
+      },
+      {
+        "name": "Hardbag",
+        "description": "Development of handbag / Diva House characterized by heavier, hard hitting percussion, more pronounced rave and early Hard Dance elements, and fewer vocals."
+      },
+      {
+        "name": "Electro House",
+        "description": "Warm analog basslines, punchy percussion, crisp high-pitched synthesizer leads, and clipped vocal samples."
+      },
+      {
+        "name": "Complextro",
+        "description": "Features densely-layered sound design, fast-paced cut-up sections, aggressive stabs, and common crossover with Brostep and Fidget House."
+      },
+      {
+        "name": "Dutch House",
+        "description": "High-pitched wonky synth melodies and heavy influence from Fidget House which developed in the Netherlands around 2007-08."
+      },
+      {
+        "name": "Fidget House",
+        "description": "Makes heavy use of Breakbeat Hardcore-esque synth stabs, pitch bending of basslines, and cut-up vocal samples, as well as glitchy, or \"choppy\", 4/4 rhythms."
+      },
+      {
+        "name": "French Electro",
+        "description": "Mixes Electro House with major elements of genres such as Electroclash, Nu-Disco, Synth Funk, and even Electro-Industrial, resulting in a harsh, punchy, and funky midtempo sound."
+      },
+      {
+        "name": "Melbourne Bounce",
+        "description": "Offbeat basslines giving it a \"bouncy\" groove, and minimalistic, side-chained melodies often making use of Dutch House-influenced synths, horns or vocal chops, resulting in a flippant, party-oriented atmosphere."
+      },
+      {
+        "name": "Euro House",
+        "description": "Vocal-focused style emerging in the late 1980s in Europe, developing in parallel with Eurodance."
+      },
+      {
+        "name": "Hardbag",
+        "description": "Development of handbag / Diva House characterized by heavier, hard hitting percussion, more pronounced rave and early Hard Dance elements, and fewer vocals."
+      },
+      {
+        "name": "Festival Progressive House",
+        "description": "Uplifting, melodic, energetic but clean drops, featuring modern supersaws and pianos, taking influences from Progressive House, Uplifting Trance, but applying them to a form structurally closer to Big Room House and Electro House."
+      },
+      {
+        "name": "French House",
+        "description": "Originated in France in the mid-1990s, characterized by the use of filtered (low-pass, phaser, etc.) samples of Funk and Disco."
+      },
+      {
+        "name": "Funky House",
+        "description": "Funky, warm, catchy basslines on top of looped Funk or Disco samples, resulting in an upbeat, bouncy, and pacy groove."
+      },
+      {
+        "name": "Future Funk",
+        "description": "Sample-based form of House which formed out of Vaporwave in the early 2010s."
+      },
+      {
+        "name": "Future House",
+        "description": "Features distinctive metallic-sounding drops and frequency-modulated basslines at around 120-130 BPM."
+      },
+      {
+        "name": "Future Bounce",
+        "description": "Fusion of Melbourne Bounce and Future House that combines the former's basslines and bouncy, upbeat drops with the latter's metallic, pronounced synth leads."
+      },
+      {
+        "name": "Slap House",
+        "description": "Taking influences from Brazilian Bass and Future House, characterized by prominent, \"bouncy\" bassline and simple, upbeat melodies."
+      },
+      {
+        "name": "Garage House",
+        "description": "Disco-influenced style of House that developed in the 1980s, incorporating elements of Gospel, Soul, and Dub, before evolving into a more upbeat style that prominently features crisp syncopated hi-hats and synth stabs."
+      },
+      {
+        "name": "Gospel House",
+        "description": "Incorporates heavy Gospel elements and singing borrowed from classic and contemporary gospel, usually in the form of choir vocals and call-and-response chants."
+      },
+      {
+        "name": "Jersey Sound",
+        "description": "Soulful, melodic, Gospel-infused House music developed in Newark, NJ in the late 1980s and early 1990s with an emphasis on songcraft."
+      },
+      {
+        "name": "Ghetto House",
+        "description": "Rough sound based around minimal drum machine-driven tracks and heavy usage of vocal samples."
+      },
+      {
+        "name": "Juke",
+        "description": "Faster than Ghetto House, playing at 160bpm, and makes striking use of unconventional drum patterns which differ wildly from other house styles."
+      },
+      {
+        "name": "G-House",
+        "description": "Deep, dark form of House music that primarily incorporates rap samples or original rapping on top of minimal, bassy beats."
+      },
+      {
+        "name": "Gqom",
+        "description": "Evolved from South African House, specifically Kwaito; often described as a more minimal and raw version."
+      },
+      {
+        "name": "Hip House",
+        "description": "Incorporates production elements of early Hip Hop and usually rapping into 1980s House."
+      },
+      {
+        "name": "Italo House",
+        "description": "Originated in Italy during the late 1980s, making use of anthemic pianos, diva vocals, and Dance-Pop song structures."
+      },
+      {
+        "name": "Jackin' House",
+        "description": "Punchy, 'shuffly' percussion, strong grooves, funky basslines, and chopped-up samples."
+      },
+      {
+        "name": "Kwaito",
+        "description": "Emerged from South Africa in the early 1990s, taking influence from Disco and Hip Hop."
+      },
+      {
+        "name": "Latin House",
+        "description": "Emerged in the second half of the 1980s, blending four-on-the-floor beats with Hispanic American Music influences from Puerto Rico, Mexico, Cuba, Dominica, and Colombia."
+      },
+      {
+        "name": "Microhouse",
+        "description": "Stripped-down, minimal form of House, originating in the late 90s, which takes influence from Minimal Techno, Glitch and IDM."
+      },
+      {
+        "name": "Organic House",
+        "description": "Subtle drums and grooves, slow tempos, and acoustic, traditional instrumentation, resulting in an organic, warm sound and spiritual atmosphere."
+      },
+      {
+        "name": "Outsider House",
+        "description": "Mostly derived from Deep House; intentional use of rough, lo-fi production, often utilizing a mix of analog/analog-like and digital instrumentation."
+      },
+      {
+        "name": "Lo-Fi House",
+        "description": "Primarily distinguished from earlier styles of outsider house by its stricter reliance on deep house elements, cranky, nocturnal, and nostalgic atmospheres, and a distinct dreamy, lo-fi aesthetic."
+      },
+      {
+        "name": "Phonk House",
+        "description": "Merges Drift Phonk's nocturnal atmospheres, cowbell melodies, vocal samples, and energetic production, with House rhythms and tempos, characterized by a banging and upbeat sound."
+      },
+      {
+        "name": "Progressive House",
+        "description": "Trance-influenced strain of House that grew to prominence in the early 1990s, using polished production and gradual progressions."
+      },
+      {
+        "name": "Romanian Popcorn",
+        "description": "Emerged in the second half of the 2000s in Romania, often featuring brass melodies and \"staccato\" pluck grooves."
+      },
+      {
+        "name": "Speed Garage",
+        "description": "Primarily British style that paved the way for UK Garage, combining cut-up vocal samples and sped up four-on-the-floor Garage House rhythms with Jungle-esque basslines."
+      },
+      {
+        "name": "Tech House",
+        "description": "Emerged in the mid-1990s taking influences from Techno, broadly characterized by minimalistic and repetitive melodies, focus on the bassline, and constant groove recognizable by prominent off-beat hi-hats."
+      },
+      {
+        "name": "Deep Tech",
+        "description": "Incorporates UK Garage rhythms and synths stabs, influences from British rave music, UK Bass and UK Deep House, resulting in an urban, subdued, but danceable sound with deep, muted basslines."
+      },
+      {
+        "name": "Rominimal",
+        "description": "Hypnotic, minimal, and \"dubby\" loops, featuring subtle and intricate synth pads, cranky, clicky percussion, and bouncy, pulsing basslines."
+      },
+      {
+        "name": "Tribal House",
+        "description": "Prominent, syncopated rhythms of tribal drums such as toms and bongos on top of a House beat, usually resulting in a percussive, energetic sound, while ranging in mood."
+      },
+      {
+        "name": "Guaracha [EDM]",
+        "description": "Originated in Colombia, featuring \"fluttering\" trumpets, accordion, and tambora drums."
+      },
+      {
+        "name": "Tropical House",
+        "description": "Offshoot of Deep House featuring slow tempos around 100-115 BPM, light percussion and acoustic instrumentation, setting out to create a relaxed, summery, beach-like atmosphere."
+      },
+      {
+        "name": "UK Hard House",
+        "description": "Defined by offbeat bass patterns, compressed 909-style drums, buildup-drop structures, hoover sounds, and tempos between 120 and 155 BPM."
+      },
+      {
+        "name": "Scouse House",
+        "description": "Features an upbeat and energetic sound often described as being \"bouncy\", influenced somewhat by Happy Hardcore."
+      },
+      {
+        "name": "Hardbass",
+        "description": "Bouncy hard bass beats, fast tempo, usually 150-175 BPM, and occasional lyrics or rapping."
+      },
+      {
+        "name": "Speed House",
+        "description": "Mixes busy, dirty sound design and intense drums derived from Bass House with fast tempos from 140-160 BPM, pumping basslines, and other UK Hard House influences."
+      },
+      {
+        "name": "UK Jackin'",
+        "description": "Successor to British Bassline, characterized by strong basslines, dark atmospheres, and dominant grooves."
+      },
+      {
+        "name": "Vinahouse",
+        "description": "Fast-paced House popular in Vietnam, remixing Vietnamese melodies."
+      },
+      {
+        "name": "Hyper Techno",
+        "description": "Exaggerated fast form of Belgian Techno for the Japanese market, focusing mainly on synth sounds and samples typical of 1990s dance music."
+      },
+      {
+        "name": "Jungle Terror",
+        "description": "Emerging mostly from Dutch House and Big Room House, incorporates Tribal House-influenced percussion, hard kicks, and animal sounds resulting in a wild, jungle-resembling atmosphere in a festival EDM-oriented context."
+      },
+      {
+        "name": "Kuduro",
+        "description": "Angolan music combining traditional Kilapanga and Semba with Techno and House."
+      },
+      {
+        "name": "Batida",
+        "description": "Initially developed in the late '80s in Luanda, Angola, as a mixture of Soca- and Zouk-based percussion samples."
+      },
+      {
+        "name": "Makina",
+        "description": "Spanish Techno developed in the early 1990s; strongly influenced by New Beat and EBM, but aiming for a lighter sound."
+      },
+      {
+        "name": "Manyao",
+        "description": "Asian Electronic Dance Music that mixes vocals and melodies from Mandopop with fairly hard, melodic EDM."
+      },
+      {
+        "name": "Midtempo Bass",
+        "description": "Harsh synth leads and a usual tempo of around 90-110 BPM."
+      },
+      {
+        "name": "Moombahcore",
+        "description": "Characterized by high-pitched synth leads, gritty percussion, a kick-snare pattern, aggressive bass drops, and around 110 BPM while often paralleling Complextro or Brostep."
+      },
+      {
+        "name": "Moombahton",
+        "description": "Offshoot of Dutch House characterized by tempos in the 100-110 BPM range, Reggaetón-influenced rhythms, bass-heavy kicks and high-pitched synths."
+      },
+      {
+        "name": "Nerdcore Techno",
+        "description": "Stylistically diverse form of underground Japanese Electronic Dance Music utilizing energetic beats built around samples from pop and/or nerd culture."
+      },
+      {
+        "name": "Nu-Disco",
+        "description": "21st-century trend mixing modern, polished Electronic production with the aesthetics, structures, and lively, organic beats of 1970s and 1980s Disco."
+      },
+      {
+        "name": "Ori deck",
+        "description": "Incorporates elements of Moombahton and Dubstep to create a style characterized by sluggish, kick-heavy dembow rhythms."
+      },
+      {
+        "name": "Shangaan Electro",
+        "description": "South African genre with very fast BPM (around 180) featuring MIDI keyboard sounds and marimba."
+      },
+      {
+        "name": "Singeli",
+        "description": "Developed in Tanzania in the mid-2000s; fuses incredibly rapid beats, usually between 180-300BPM, with MCing and musical influences from older Tanzanian genres."
+      },
+      {
+        "name": "Techno",
+        "description": "Highly beat-driven, repetitive, and mechanical, typically featuring minimal chord variation and melodies, focuses on rhythms and timbral variety; generally produced for club environments."
+      },
+      {
+        "name": "Acid Techno",
+        "description": "Incorporates \"squelching\" synths from Acid House into a mechanical and usually more energetic Techno context."
+      },
+      {
+        "name": "Ambient Techno",
+        "description": "Blends the mechanical, repetitive beats of Techno with atmospheres and textures inspired by Ambient music, resulting in slower tempos and more understated rhythms."
+      },
+      {
+        "name": "Belgian Techno",
+        "description": "Early form of Hardcore [EDM], resulting from the further evolution of New Beat due to the strong influence of Techno and EBM."
+      },
+      {
+        "name": "Bleep Techno",
+        "description": "Established in the late 1980s in the breakdancing and early rave scene of Yorkshire in the North of England, notable for its \"bleepy\" synth lines and heavy sub-bass."
+      },
+      {
+        "name": "Detroit Techno",
+        "description": "Features a signature mechanical, detached sound that echoed the atmosphere of Detroit's nightlife and incorporated influences from Electro, Chicago House, as well as Synthpop and Electro-Disco."
+      },
+      {
+        "name": "Freetekno",
+        "description": "Originated in the early 1990s, commonly played at free parties in Europe, and features a repetitive pounding kick drum at tempos of 170 BPM or above."
+      },
+      {
+        "name": "Hardgroove Techno",
+        "description": "Popular in the early 2000s; features layered shuffling percussion."
+      },
+      {
+        "name": "Hard Techno",
+        "description": "Typically rave-oriented form characterized by hard, prominent kick drums, pounding rhythms, fast tempos around 140-160 BPM, and aggressive, often distorted sounds."
+      },
+      {
+        "name": "Schranz",
+        "description": "Characterised by fast tempos, aggressive \"whooshing\" beat patterns, heavy compression and straightforward song structures."
+      },
+      {
+        "name": "Industrial Techno",
+        "description": "Harder, darker style of Techno which draws parallels with factories and the rhythm of machinery."
+      },
+      {
+        "name": "Birmingham Sound",
+        "description": "Cold, mechanical, and hypnotic tracks, typically lacking the harsher and noisier elements of later Industrial Techno."
+      },
+      {
+        "name": "Melodic Techno",
+        "description": "Trance-influenced subgenre that was established in the mid-to-late 2010s, characterized by gradually progressing structure, and hypnotizing, atmospheric sound with arpeggiated, minor melodies, playing at around 120-125 BPM."
+      },
+      {
+        "name": "Minimal Techno",
+        "description": "Stripped-down and sparse, often featuring a dark sound and a slow, steady development through the track."
+      },
+      {
+        "name": "Dub Techno",
+        "description": "Fuses elements of Minimal Techno with characteristics of Dub."
+      },
+      {
+        "name": "Peak Time Techno",
+        "description": "Hard, dynamic, energetic and accessible subgenre featuring strong kicks, massive dirty synths, tempos around 130 BPM, more suspenseful structures with breaks and build-ups, and big, modern, festival-oriented sound; rose to high popularity in the late 2010s."
+      },
+      {
+        "name": "Wonky Techno",
+        "description": "Strays from the standard beat of Techno, opting for a more fractured sound."
+      },
+      {
+        "name": "Techno Bass",
+        "description": "Minimal, stripped-down with an emphasis on low-frequency bass partitions."
+      },
+      {
+        "name": "Tecnorumba",
+        "description": "Blend of the themes and singing style of Rumba flamenca with the most commercial forms of House, Techno, and Makina."
+      },
+      {
+        "name": "Trance",
+        "description": "Evolving, tension-building structures with rapid, minor arpeggios on top of a hypnotic, four-on-the-floor drum patterns at fast tempo around 130-150 BPM."
+      },
+      {
+        "name": "Acid Trance",
+        "description": "Incorporates \"squelching\" acid basslines into Trance's evolving structure."
+      },
+      {
+        "name": "Big Room Trance",
+        "description": "Incorporates production features associated with Big Room House and dirty, distorted leads influenced by Electro House, Dutch House and Hardstyle."
+      },
+      {
+        "name": "Dream Trance",
+        "description": "Slow tempo (about 130 BPM) with strong roots in Progressive House, using beats typical of Eurodance and Dance-Pop; emphasizes a laid-back, carefree, and dreamlike sound."
+      },
+      {
+        "name": "Euro-Trance",
+        "description": "More accessible, usually vocal-driven subgenre that emerged as a fusion with Eurodance, featuring its catchy, upbeat melodies and offbeat basslines while keeping the fast tempos."
+      },
+      {
+        "name": "Hands Up",
+        "description": "Prominent, melodic supersaw leads, Dance-Pop derived hooks, and a strong reliance on sidechained basslines and hard, powerful drums."
+      },
+      {
+        "name": "Hard Trance",
+        "description": "Rave-oriented form of Trance infusing its atmospheres with faster, thumping rhythms and strong melodic / bassline sections, initially spawning out of the first wave in early-1990s Western Europe."
+      },
+      {
+        "name": "Ibiza Trance",
+        "description": "Builds on the relaxing island atmosphere of Balearic Beat, though with a slightly faster tempo of around 130 BPM."
+      },
+      {
+        "name": "NRG",
+        "description": "Derived from UK Hard House; featuring darker, more anthemic Trance beats and a tempo of 155-165 BPM."
+      },
+      {
+        "name": "Progressive Trance",
+        "description": "Combination of Trance and Progressive House which emerged in Western Europe in the early to mid-1990s."
+      },
+      {
+        "name": "Psytrance",
+        "description": "Trance with a psychedelic feel and energetic sound, based around influences from Goa Trance and Acid Trance."
+      },
+      {
+        "name": "Dark Psytrance",
+        "description": "Dark, fast and Industrial-influenced."
+      },
+      {
+        "name": "Hi-Tech Psytrance",
+        "description": "Glitchy sound design, morphing synth lines, strange sounds typically evoking futuristic or alien-like atmospheres, and faster tempos than most other forms of Psytrance."
+      },
+      {
+        "name": "Psycore",
+        "description": "Pushes the dark atmospheres of Dark Psytrance to the extreme through the usage of exceptionally high tempos and experimental soundscapes influenced by Dark Ambient and Glitch."
+      },
+      {
+        "name": "Forest Psytrance",
+        "description": "Mimicks the ambience of a forest by using swarming and teeming effects as well as natural samples; features straightforward song structures."
+      },
+      {
+        "name": "Full-On Psytrance",
+        "description": "Faster, more intense form of Psytrance usually around 145-150 BPM using harder basslines, regular vocal samples, and \"spacey\" effects."
+      },
+      {
+        "name": "Goa Trance",
+        "description": "Forerunner of Psytrance styles that emerged in the early 1990s, distinguished by old-school, organic sound with rapid, oriental-inspired melodies."
+      },
+      {
+        "name": "Nitzhonot",
+        "description": "Fast-paced and melodic, uses pulsating basses and hard and often high-pitched kicks."
+      },
+      {
+        "name": "Progressive Psytrance",
+        "description": "Emerged in the early 2000s, featuring a slow tempo range and clean production."
+      },
+      {
+        "name": "Zenonesque",
+        "description": "Experimental and leftfield approach to Progressive Psytrance, mixing the atmospheric and clean Psytrance production typical of it with funky and jazzy elements."
+      },
+      {
+        "name": "Suomisaundi",
+        "description": "Finnish-based deviation of Psytrance with an emphasis on free-form experimentation and humor."
+      },
+      {
+        "name": "Tech Trance",
+        "description": "Late 1990s-emerging subgenre characterized by energetic percussion with loud kicks, filtered hi-hats and tribal drums; side-chained, detuned and repetitive leads, as well as other raw, distorted, and complex sounds influenced by Techno, Hard Trance and Electro House."
+      },
+      {
+        "name": "Uplifting Trance",
+        "description": "Euphoric melodies, buildup-breakdown-anthem structures, common usage of supersaws, and a BPM range of usually around 135-142."
+      },
+      {
+        "name": "Vocal Trance",
+        "description": "Melodic, polished, Pop-like, and vocal-focused with around 120-145 BPM and frequent overlap with Progressive Trance, Uplifting Trance, and Euro-Trance."
+      },
+      {
+        "name": "Trap [EDM]",
+        "description": "Trap-influenced syncopated percussion with 808 samples and fast-paced hi-hats."
+      },
+      {
+        "name": "Festival Trap",
+        "description": "Massive, sub-bass-heavy drops with simple melodies, synth leads and production influenced by Big Room House; highly popular from 2013 to 2015."
+      },
+      {
+        "name": "Hard Trap",
+        "description": "Often abrasive subgenre of Trap [EDM] with heavy influence from Hardstyle."
+      },
+      {
+        "name": "Heaven Trap",
+        "description": "Blends Trap [EDM]’s signature percussion and sub-basses with euphoric, uplifting, melodious drops prominently derived from Festival Progressive House, contrary to the gritty, \"dirty\" nature of other EDM trap styles."
+      },
+      {
+        "name": "Hybrid Trap",
+        "description": "Blending Trap [EDM]'s typical percussion and sub-basses with major influences from heavy bass music genres, and in particular, metallic, gritty, and off-kilter sound design, originally derived from Brostep."
+      },
+      {
+        "name": "Twerk",
+        "description": "Fast-paced; draws influence from Bounce and Miami Bass."
+      },
+      {
+        "name": "Tribal Guarachero",
+        "description": "Features percussion from Cumbia and Mexican Folk Music with upbeat Electro House-derived production and fast, triplet-oriented rhythmic patterns."
+      },
+      {
+        "name": "UK Bass",
+        "description": "Broad form of Electronic Dance Music characterized by prominent bass/sub-basses, a deep, dark, airy, and mechanical sound derived from Dubstep, and eclectic production influenced by UK Funky, Juke/Footwork, Techno, and Breakbeat."
+      },
+      {
+        "name": "UK Funky",
+        "description": "Influenced by UK Garage-related styles and the regional styles of British immigrants, including Soca and West African-inspired Tribal House."
+      },
+      {
+        "name": "UK Garage",
+        "description": "Shuffling rhythms and influences from sources including Contemporary R&B and Hip Hop, as well as many forms of Electronic."
+      },
+      {
+        "name": "2-Step",
+        "description": "Originating in London and popular in the late 1990s; jittery, shuffling rhythms rarely following a four-on-the-floor pattern."
+      },
+      {
+        "name": "Bassline",
+        "description": "Strong emphasis on intricate basslines as well as four-on-the-floor beat patterns."
+      },
+      {
+        "name": "Breakstep",
+        "description": "Differentiated from other UK Garage subgenres by its use of hard-hitting Breakbeat rhythms, as well as its focus on heavy, rolling basslines."
+      },
+      {
+        "name": "Future Garage",
+        "description": "Derivative of UK Garage combining influences from the rhythms of late 1990s and early 2000s 2-Step with novel moods and production approaches, commonly featuring jittery, broken rhythms, vocal chops, and warm synth pads and plucks."
+      },
+      {
+        "name": "Speed Garage",
+        "description": "Primarily British style that paved the way for UK Garage, combining cut-up vocal samples and sped up four-on-the-floor Garage House rhythms with Jungle-esque basslines."
+      },
+      {
+        "name": "Wonky",
+        "description": "Off-kilter fusion of Dubstep and Hip Hop which first developed in the mid-to-late 2000s."
+      },
+      {
+        "name": "Aquacrunk",
+        "description": "Syncopated, half-time rhythms inspired by Dubstep and Grime, funky, sludgy, \"aquatic\"-sounding synths and sound design."
+      }
+    ]
+  },
+  {
+    "name": "Electropop",
+    "description": "Dense, layered, and compressed production, usually coupled with a distinct fuzzy and \"warm\" low-frequency synthesizer style.",
+    "children": []
+  },
+  {
+    "name": "Epic Collage",
+    "description": "Defined by its Deconstructed Club sonic palette and its cinematic proportions.",
+    "children": []
+  },
+  {
+    "name": "Flashcore",
+    "description": "Intense wandering soundscapes, scattered rapid short-duration sounds, complex avant-garde structures, and, usually, layered acousmatic decomposition and influences from Speedcore, IDM, and Breakcore.",
+    "children": []
+  },
+  {
+    "name": "Folktronica",
+    "description": "Combines sound design techniques from IDM and Glitch with acoustic instrumentation inspired by Contemporary Folk.",
+    "children": []
+  },
+  {
+    "name": "Funktronica",
+    "description": "Originated in eastern North America around the turn of the 21st century, combining trends of Synth Funk and Italo-Disco.",
+    "children": []
+  },
+  {
+    "name": "Glitch",
+    "description": "Uses the sounds created by malfunctioning digital technology - crashes, hardware noise, CD skipping, and digital distortion - for composition.",
+    "children": []
+  },
+  {
+    "name": "Glitch Hop",
+    "description": "Incorporation of IDM-derived production into drum patterns inspired by Hip Hop beats.",
+    "children": []
+  },
+  {
+    "name": "HexD",
+    "description": "Heavily bit-crushed vocals, sometimes sped-up and pitched-up, and highly compressed and distorted production, typically made from existing material of other genres.",
+    "children": []
+  },
+  {
+    "name": "Horror Synth",
+    "description": "Combines eerie and haunting synth pads and sharp, abrasive sounds to create atmospheres that accentuated the dark, unnerving, violent, or ghostly themes of horror films.",
+    "children": []
+  },
+  {
+    "name": "Hyperpop",
+    "description": "Developed and took inspiration from Bubblegum Bass and popular 2000s-2010s Electropop, characterized by eclectic, unconventional, mechanical-sounding and dense production; and by manipulated, usually auto-tuned vocals.",
+    "children": []
+  },
+  {
+    "name": "IDM",
+    "description": "Emerged through the development of Electronic Dance Music idioms into a less club-oriented and more experimental direction, often incorporating unconventional sound design and complex rhythms.",
+    "children": [
+      {
+        "name": "Drill and Bass",
+        "description": "Frenzied, intricate beat programming inspired by Drum and Bass."
+      }
+    ]
+  },
+  {
+    "name": "Illbient",
+    "description": "Combines Ambient soundscapes with Hip Hop drum patterns, breaks, and samples through the busy effect layering of Dub.",
+    "children": []
+  },
+  {
+    "name": "Indietronica",
+    "description": "Leftfield or DIY approach characterised by simpler Pop-informed melodies, often incorporating vocals or live instrumentation alongside Electronic production.",
+    "children": [
+      {
+        "name": "Chillwave",
+        "description": "Emulates vintage aesthetics and popular musical styles of the 1980s/1990s altered by modern recording technology to create a hazy dreamlike atmosphere."
+      },
+      {
+        "name": "Chillsynth",
+        "description": "Mixes Synthwave with major Chillwave elements, characterized by a dreamy and relaxed sound."
+      },
+      {
+        "name": "Glitch Pop",
+        "description": "Incorporates elements of more experimental Electronic styles like IDM and Glitch."
+      },
+      {
+        "name": "Picopop",
+        "description": "Originated in the early 2000s as an offshoot of the Japanese Shibuya-kei movement when artists introduced more prominent \"bleepy\" electronic elements and faster tempos."
+      }
+    ]
+  },
+  {
+    "name": "Latin Electronic",
+    "description": "Combines Electronic with Latin American influences; started at the end of the 1990s.",
+    "children": [
+      {
+        "name": "Changa tuki",
+        "description": "Emerged in Caracas; highly influenced by 1990s Techno and Tribal House, featuring fast tempos, strident synthesizers, hard-thumping percussion lines, and plenty of breakbeats."
+      },
+      {
+        "name": "Digital Cumbia",
+        "description": "Mixes an Electronic sound into traditional Cumbia through influences from House, Dancehall, Hyphy, and Dubstep."
+      },
+      {
+        "name": "Electro latino",
+        "description": "Mixes elements of Merengue and Reggaetón with polished production from mainstream House subgenres; often shares traits with Latin Pop, having anthemic melodies and verse-chorus structures."
+      },
+      {
+        "name": "Electrotango",
+        "description": "Combines Tango rhythms and melodies with Electronic music."
+      },
+      {
+        "name": "Nortec",
+        "description": "Samples and synthesizes Mexican styles like Banda sinaloense and Norteño into a sound related to IDM and House."
+      },
+      {
+        "name": "Tribal Guarachero",
+        "description": "Features percussion from Cumbia and Mexican Folk Music with upbeat Electro House-derived production and fast, triplet-oriented rhythmic patterns."
+      }
+    ]
+  },
+  {
+    "name": "Livetronica",
+    "description": "Incorporates Electronic instrumentation into live Rock jamming, drawing on a wide variety of Electronic Dance Music and Downtempo styles.",
+    "children": []
+  },
+  {
+    "name": "Microsound",
+    "description": "Usage of sounds on an incredibly small scale.",
+    "children": []
+  },
+  {
+    "name": "Minatory",
+    "description": "Extreme, experimental style forked from Deathstep, with a harsh sound and sudden BPM changes.",
+    "children": []
+  },
+  {
+    "name": "Minimal Wave",
+    "description": "Retrospective term for more Electronic and minimal forms of New Wave, Post-Punk, Synthpop, and related styles, tending towards a more sparse and lo-fi sound.",
+    "children": [
+      {
+        "name": "Minimal Synth",
+        "description": "Minimal and distinctly DIY take on Synthpop with a bleak and naive aesthetic."
+      }
+    ]
+  },
+  {
+    "name": "Moogsploitation",
+    "description": "Moog-led Electronic music often associated with a wave of Novelty records in the 1960s and 1970s.",
+    "children": []
+  },
+  {
+    "name": "Nightcore",
+    "description": "Based around the technique of speeding and pitching up already existing songs.",
+    "children": []
+  },
+  {
+    "name": "Nu Jazz",
+    "description": "Electronic styles which feature aesthetics and occasionally instrumentation inspired by Jazz.",
+    "children": []
+  },
+  {
+    "name": "Power Electronics",
+    "description": "Waves of feedback, screeching analog synthesizers, and harsh, screamed vocals.",
+    "children": [
+      {
+        "name": "Death Industrial",
+        "description": "Combines the abrasive textures of Noise and Industrial music with dark, brooding drones and atmospheres."
+      }
+    ]
+  },
+  {
+    "name": "Power Noise",
+    "description": "Combines looped samples of Noise with Electronic rhythms.",
+    "children": []
+  },
+  {
+    "name": "Progressive Electronic",
+    "description": "Synthesizer-driven genre focusing on developing, often longform compositions and drawing inspiration from various sources such as Progressive Rock, Western Classical Music, and Ambient.",
+    "children": [
+      {
+        "name": "Berlin School",
+        "description": "Atmospheric, multi-layered synthesizer textures; pioneered in Berlin in the 1970s as an offshoot to the Krautrock movement."
+      }
+    ]
+  },
+  {
+    "name": "Space Ambient",
+    "description": "Flowing and relaxing synthesizer-based music derived from Progressive Electronic, often oriented around imagery of outer space.",
+    "children": []
+  },
+  {
+    "name": "Synthpop",
+    "description": "Led by a prominent, melodic synthesizer sound, often with reverberated drum machine patterns that create a distinct atmospheric feel commonly associated with the 1980s.",
+    "children": [
+      {
+        "name": "Futurepop",
+        "description": "Derivative of EBM, retaining its apocalyptic worldview but incorporating heavy influence from the melodic style of Synthpop."
+      },
+      {
+        "name": "Pon-chak disco",
+        "description": "Heavily influenced by Electro-Disco, featuring cheap \"electronic organ\" synth leads and minimalistic, repetitive rhythms."
+      },
+      {
+        "name": "Techno kayō",
+        "description": "Offshoot of 1980s Kayōkyoku and Idol kayō incorporating characteristics from Synthpop."
+      }
+    ]
+  },
+  {
+    "name": "Synth Punk",
+    "description": "Appropriates the harsh elements of Punk Rock but replaces the predominance of guitars with synthesizers and drum machines.",
+    "children": []
+  },
+  {
+    "name": "Synthwave",
+    "description": "Rooted in 1980s synth music, characterized by large, throbbing \"retro\" synths and visual elements, often features upbeat percussion and/or epic, cinematic atmospheres.",
+    "children": [
+      {
+        "name": "Chillsynth",
+        "description": "Mixes Synthwave with major Chillwave elements, characterized by a dreamy and relaxed sound."
+      },
+      {
+        "name": "Darksynth",
+        "description": "Incorporates atmospheric Horror Synth and faster tempos into a much heavier and darker sound."
+      }
+    ]
+  },
+  {
+    "name": "Tecnobrega",
+    "description": "Fast and electronic-based style that evolved from Brega calypso, particularly associated with peripheral areas of the city of Belém.",
+    "children": [
+      {
+        "name": "Tecnofunk",
+        "description": "Raw and vulgar Tecnobrega and Funk brasileiro fusion developed in the late 2010s by DJs in Belém do Pará."
+      }
+    ]
+  },
+  {
+    "name": "Vapor",
+    "description": "Meta-genre beginning with the rise of Vaporwave and the aesthetics that it spawned.",
+    "children": [
+      {
+        "name": "Barber Beats",
+        "description": "Borrows elements from Downtempo, Trip Hop, and Instrumental Hip Hop; emulates 1990s and 2000s Chillout music."
+      },
+      {
+        "name": "Dreampunk",
+        "description": "Accentuates ambiance and a dreamy atmosphere within Vapor."
+      },
+      {
+        "name": "Future Funk",
+        "description": "Sample-based form of House which formed out of Vaporwave in the early 2010s."
+      },
+      {
+        "name": "Hardvapour",
+        "description": "Influenced by Hardcore [EDM] and Techno and made in response to the Vaporwave movement."
+      },
+      {
+        "name": "Utopian Virtual",
+        "description": "Born out of Hypnagogic Pop that emulates late 20th century futuristic and corporate aesthetics, often using \"tacky\"-sounding MIDI-esque instruments, in contrast to the looping, sample-based approach generally found in Vaporwave."
+      },
+      {
+        "name": "Vaportrap",
+        "description": "Incorporates a blend of Trap percussion set to the re-utilization of old samples, such as 1990s pop culture or old computer library sounds."
+      },
+      {
+        "name": "Vaporwave",
+        "description": "Sample-based, involves heavily synthesized and processed manipulation of corporate mood and background (elevator) music; though source material can also include genres such as Pop, Contemporary R&B, and Synth Funk."
+      },
+      {
+        "name": "Broken Transmission",
+        "description": "Uses samples taken from TV broadcasts, advertising, film, radio, and other sources - often slowing down and manipulating the sound heavily."
+      },
+      {
+        "name": "Mallsoft",
+        "description": "Blends the main characteristics of Vaporwave with what can be described as background/elevator music."
+      },
+      {
+        "name": "Slushwave",
+        "description": "Specializes in a distinct form of sample manipulation rooted in Vaporwave, heavily utilizing multi-layered effects to create a specific \"slushy\", hypnagogic sound usually sequenced in soft, repetitive Ambient-based soundscapes."
+      }
+    ]
+  },
+  {
+    "name": "Wave",
+    "description": "Heavily influenced by 2010s Hip Hop production, characterized by dark, icy, nocturnal, and melancholic beats.",
+    "children": [
+      {
+        "name": "Hardwave",
+        "description": "Harder, festival-oriented offshoot of Wave, combining its \"reese\" basses and icy synths with Trap [EDM] drum patterns, build-up-drop structures, and fuller sound influenced by Trance and Hardstyle."
+      },
+      {
+        "name": "Neo-Grime",
+        "description": "Mixes Wave with Grime and other forms of UK Electronic music."
+      }
+    ]
+  },
+  {
+    "name": "Witch House",
+    "description": "Nocturnal, occult-themed/horror-inspired, and murky beats with altered, slowed down and heavily processed samples laid on top of slow Hip Hop-derived drum rhythms and droning, dense synthesizers.",
+    "children": []
+  }
+]

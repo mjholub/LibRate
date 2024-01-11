@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Industrial",
+    "description": "Emerged out of Punk and avant-garde art movements in the mid-1970s, often characterized by a bleak, mechanical atmosphere, the use of metallic percussion as well as other unconventional instruments, and extensive use of sampling influenced by Musique concrète.",
+    "children": [
+      {
+        "name": "Power Electronics",
+        "description": "Waves of feedback, screeching analog synthesizers, and harsh, screamed vocals."
+      },
+      {
+        "name": "Death Industrial",
+        "description": "Combines the abrasive textures of Noise and Industrial music with dark, brooding drones and atmospheres."
+      }
+    ]
+  },
+  {
+    "name": "Noise",
+    "description": "Strays away from conventional structure, tonality, and composition and consists predominantly of noise.",
+    "children": [
+      {
+        "name": "Ambient Noise Wall",
+        "description": "Combines the static approach of Harsh Noise Wall with textures leaning towards Ambient music."
+      },
+      {
+        "name": "Black Noise",
+        "description": "Incorporates unconventional sounds with overpowering or constant Noise and Black Metal elements, often being heavily texture-oriented, abrasive, dissonant, atonal, or repetitive."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Harsh Noise",
+        "description": "Highly aggressive walls of sound that assault the listener."
+      },
+      {
+        "name": "Harsh Noise Wall",
+        "description": "Harsh, distorted walls of sound that feature few dynamic variations and often take the form of long compositions with little to no change or progression over time."
+      },
+      {
+        "name": "Power Electronics",
+        "description": "Waves of feedback, screeching analog synthesizers, and harsh, screamed vocals."
+      },
+      {
+        "name": "Death Industrial",
+        "description": "Combines the abrasive textures of Noise and Industrial music with dark, brooding drones and atmospheres."
+      },
+      {
+        "name": "Power Noise",
+        "description": "Combines looped samples of Noise with Electronic rhythms."
+      }
+    ]
+  },
+  {
+    "name": "Post-Industrial",
+    "description": "Umbrella group of genres that combine the dark, mechanical aesthetic of early Industrial music with more accessible genres, such as Rock and Electronic Dance Music.",
+    "children": [
+      {
+        "name": "Dark Ambient",
+        "description": "Emphasizes an ominous, gloomy, and dissonant atmosphere."
+      },
+      {
+        "name": "Black Ambient",
+        "description": "Incorporates elements such as guitars, synthesizers, harsh or whispered vocals, raw production, or other elements associated with Black Metal and Dungeon Synth."
+      },
+      {
+        "name": "Ritual Ambient",
+        "description": "Dark, deep, disturbing, ritualistic, and occult atmosphere."
+      },
+      {
+        "name": "Deconstructed Club",
+        "description": "Emerged in the 2010s as the hybridization of diverse Electronic Dance Music genres with an abrasive Post-Industrial sound."
+      },
+      {
+        "name": "EBM",
+        "description": "Melodic and beat-driven Electronic Dance Music take on Post-Industrial that developed in the 1980s."
+      },
+      {
+        "name": "Dark Electro",
+        "description": "Emerged in the early 1990s in Europe, combining EBM beats with the abrasiveness of old school Industrial but with a greater focus on a horror-inspired atmosphere and harsh, distorted vocals."
+      },
+      {
+        "name": "Aggrotech",
+        "description": "Based on the dark atmosphere of Dark Electro, typically characterized by more aggressive Hardcore [EDM]-influenced beats and harsh/distorted vocals."
+      },
+      {
+        "name": "Futurepop",
+        "description": "Derivative of EBM, retaining its apocalyptic worldview but incorporating heavy influence from the melodic style of Synthpop."
+      },
+      {
+        "name": "New Beat",
+        "description": "Underground dance music which originated in Belgium around 1987, tending to resemble slower, harder EBM."
+      },
+      {
+        "name": "Electro-Industrial",
+        "description": "Formed in the late 1980s and early 1990s; grew out of a combination of EBM and Industrial."
+      },
+      {
+        "name": "Dark Electro",
+        "description": "Emerged in the early 1990s in Europe, combining EBM beats with the abrasiveness of old school Industrial but with a greater focus on a horror-inspired atmosphere and harsh, distorted vocals."
+      },
+      {
+        "name": "Aggrotech",
+        "description": "Based on the dark atmosphere of Dark Electro, typically characterized by more aggressive Hardcore [EDM]-influenced beats and harsh/distorted vocals."
+      },
+      {
+        "name": "Epic Collage",
+        "description": "Defined by its Deconstructed Club sonic palette and its cinematic proportions."
+      },
+      {
+        "name": "Industrial Hardcore",
+        "description": "Fuses the sonic palettes and aesthetics of Industrial & Noise with the intense rhythms of Gabber, Speedcore, Doomcore and other subsequent styles."
+      },
+      {
+        "name": "Industrial Hip Hop",
+        "description": "Incorporates harsh elements inspired by Industrial music such as blaring, noisy synths, distorted and metallic percussion, as well as more aggressive and off-kilter rapping styles."
+      },
+      {
+        "name": "Industrial Metal",
+        "description": "Incorporates the abrasive and heavy sound from Industrial into a Metal context by using elements from Post-Industrial like synthesizers and drum machines."
+      },
+      {
+        "name": "Cyber Metal",
+        "description": "Originated around 1999, influenced by EBM and Aggrotech with more melodic and less repetitive riffs as well as harsh vocals."
+      },
+      {
+        "name": "Neue Deutsche Härte",
+        "description": "Alternative Metal and Industrial Metal that incorporates various aspects of electronic music, specifically Electronic Dance Music."
+      },
+      {
+        "name": "Industrial Rock",
+        "description": "Incorporates abrasive guitars and synthesizers inspired by Industrial and various Post-Industrial styles."
+      },
+      {
+        "name": "Industrial Techno",
+        "description": "Harder, darker style of Techno which draws parallels with factories and the rhythm of machinery."
+      },
+      {
+        "name": "Birmingham Sound",
+        "description": "Cold, mechanical, and hypnotic tracks, typically lacking the harsher and noisier elements of later Industrial Techno."
+      },
+      {
+        "name": "Martial Industrial",
+        "description": "Incorporates elements of traditional European military marches with Neoclassical Darkwave, Dark Ambient, Industrial, and Neofolk."
+      },
+      {
+        "name": "Power Noise",
+        "description": "Combines looped samples of Noise with Electronic rhythms."
+      }
+    ]
+  }
+]

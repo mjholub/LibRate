@@ -1,0 +1,88 @@
+[
+  {
+    "name": "Neo-Psychedelia",
+    "description": "Developments in Psychedelia since the early 1980s, building on the drug-inspired styles developed in the 1960s.",
+    "children": [
+      {
+        "name": "Hypnagogic Pop",
+        "description": "Originating among 2000s underground artists referencing the sounds of 1970/1980s pop culture through hazy, low-fidelity production."
+      },
+      {
+        "name": "Paisley Underground",
+        "description": "Emerged in Los Angeles in the early 1980s, featuring the energy of Power Pop and New Wave adorned with retro Psychedelia."
+      },
+      {
+        "name": "Psichedelia occulta italiana",
+        "description": "Extracts elements of texture-based Rock and other texture-based music into a brooding, mysterious, subtly malignant atmosphere reminiscent of the collective memory and popular media of Italy."
+      },
+      {
+        "name": "Space Rock Revival",
+        "description": "Type of Neo-Psychedelia that draws from the aesthetics and expansive sonic palette of Space Rock combined with the more minimal, back-to-basics approach of the Post-Punk era."
+      }
+    ]
+  },
+  {
+    "name": "Psychedelic Folk",
+    "description": "Acoustic forms that capture an atmosphere that is at turns dream-like, 'spaced-out', whimsical, haunting, mystical, and melancholic.",
+    "children": [
+      {
+        "name": "Freak Folk",
+        "description": "Offshoot of the New Weird America movement characterised by acoustic and eclectic instruments, peculiar vocal styles, romantic lyrics, and a childlike atmosphere."
+      },
+      {
+        "name": "Free Folk",
+        "description": "Incorporates improvisation, repetition and extended song lengths."
+      }
+    ]
+  },
+  {
+    "name": "Psychedelic Pop",
+    "description": "Combines unconventional instrumentation with studio effects to create a psychedelic atmosphere within melodic Pop music.",
+    "children": []
+  },
+  {
+    "name": "Psychedelic Rock",
+    "description": "Rock which emerged in the mid-1960s that often attempts to emulate or enhance the effects of psychedelic drugs.",
+    "children": [
+      {
+        "name": "Acid Rock",
+        "description": "Heavier with an emphasis on instrumental jamming and \"wah\" guitar effects."
+      },
+      {
+        "name": "Heavy Psych",
+        "description": "Developed in the late 1960s with influence from Blues Rock, such as heavy dependence on riffs and willingness to improvise, adding crushing levels of heaviness with thick fuzzy guitars to create a doomy and morose atmosphere."
+      },
+      {
+        "name": "Raga Rock",
+        "description": "Influenced by South Asian Music, featuring a droning compositional quality and commonly incorporating instruments like sitar, tambura, and tablas."
+      },
+      {
+        "name": "Space Rock",
+        "description": "Heavy use of synthesizers and guitar effects to create dense atmospheric soundscapes intended to evoke images of outer space and science fiction scenarios."
+      },
+      {
+        "name": "Space Rock Revival",
+        "description": "Type of Neo-Psychedelia that draws from the aesthetics and expansive sonic palette of Space Rock combined with the more minimal, back-to-basics approach of the Post-Punk era."
+      },
+      {
+        "name": "Zamrock",
+        "description": "Zambian 1970s Psychedelic Rock found mainly throughout the Copperbelt region."
+      }
+    ]
+  },
+  {
+    "name": "Psychedelic Soul",
+    "description": "Soul which incorporates the effects and instrumentation of Psychedelic Rock.",
+    "children": []
+  },
+  {
+    "name": "Stoner Rock",
+    "description": "Psychedelic timbres, raw production, and stylistic influence from Doom Metal and Heavy Psych.",
+    "children": []
+  },
+  {
+    "name": "Tropicália",
+    "description": "Brazilian counterculture art movement started in 1967 blending Psychedelic Rock, Psychedelic Pop, and Experimental production with contemporary Brazilian pop, with the lyrics being left wing-tinted abstract poetry.",
+    "children": []
+  }
+]

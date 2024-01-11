@@ -4,12 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type (
@@ -48,28 +53,41 @@ type (
 
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
-		ID          int16    `json:"id" db:"id,pk,autoinc"`
-		Kind        string   `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
-		Name        string   `json:"name" db:"name"`
-		DescShort   string   `json:"desc_short" db:"desc_short"`
-		DescLong    string   `json:"desc_long" db:"desc_long"`
-		Keywords    []string `json:"keywords" db:"keywords"`
-		ParentGenre *Genre   `json:"parent_genre omitempty" db:"parent"`
-		Children    []Genre  `json:"children omitempty" db:"children"`
+		ID          int64              `json:"id" db:"id,pk,autoinc"`
+		Kinds       pq.StringArray     `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
+		Name        string             `json:"name" db:"name"`
+		Description []GenreDescription `json:"description,omitempty" db:"-"`
+		//	DescLong    string   `json:"desc_long" db:"desc_long"`
+		Characteristics []string `json:"keywords" db:"-"`
+		ParentGenreID   *int64   `json:"parent_genre omitempty" db:"parent,omitempty"`
+		Children        []int64  `json:"children,omitempty" db:"children,omitempty"`
+	}
+
+	GenreCharacteristics struct {
+		ID         int64          `json:"id" db:"id,pk,autoinc"`
+		Name       string         `json:"name" db:"name"`
+		Descripion sql.NullString `json:"description,omitempty" db:"description"`
+	}
+
+	GenreDescription struct {
+		GenreID     int64  `json:"genre_id" db:"genre_id"`
+		Language    string `json:"language" db:"language"`
+		Description string `json:"description" db:"description"`
 	}
 
 	MediaStorage struct {
-		db  *sqlx.DB
-		Log *zerolog.Logger
-		ks  *KeywordStorage
-		Ps  *PeopleStorage
+		newDB *pgxpool.Pool
+		db    *sqlx.DB // legacy
+		Log   *zerolog.Logger
+		ks    *KeywordStorage
+		Ps    *PeopleStorage
 	}
 )
 
-func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
+func NewMediaStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
 	Ps := NewPeopleStorage(db, l)
-	return &MediaStorage{db: db, Log: l, ks: ks, Ps: Ps}
+	return &MediaStorage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
@@ -83,7 +101,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return Media{}, fmt.Errorf("error preparing statement: %w", err)
+			return Media{}, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -92,7 +110,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 			&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
-			return Media{}, fmt.Errorf("error scanning row: %w", err)
+			return Media{}, fmt.Errorf("error scanning row: %v", err)
 		}
 		return media, nil
 	}
@@ -126,7 +144,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return "", fmt.Errorf("error preparing statement: %w", err)
+			return "", fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -135,7 +153,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 		err = row.Scan(&kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
-			return "", fmt.Errorf("error scanning row: %w", err)
+			return "", fmt.Errorf("error scanning row: %v", err)
 		}
 		return kind, nil
 	}
@@ -156,7 +174,7 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -164,59 +182,73 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 		err = stmt.SelectContext(ctx, &genres, kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error selecting rows")
-			return nil, fmt.Errorf("error selecting rows: %w", err)
+			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
 		return genres, nil
 	}
 }
 
-// FIXME: sqlx won't work with AGE, we need to use
-// github.com/apache/age/drivers/golang/age
-func (ms *MediaStorage) GetGenre(ctx context.Context, kind, name string) (genre *Genre, err error) {
+// TODO: add multilingual description support
+func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (genre *Genre, err error) {
+	title := cases.Title(language.AmericanEnglish)
+	name = title.String(strings.ReplaceAll(name, "_", " "))
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		switch kind {
-		case "music":
-			_, err := ms.db.ExecContext(ctx, `
-			SET search_path = ag_catalog, "$user", public;
-			`)
-			if err != nil {
-				return nil, fmt.Errorf("error setting search path: %w", err)
-			}
-			stmt, err := ms.db.PreparexContext(ctx, `
-				SELECT * FROM cypher('music_genres', $$
-					MATCH (g:Genre {name: $1}) RETURN g')	
-				$$) as (g agtype)
-				`)
-			if err != nil {
-				return nil, fmt.Errorf("error preparing statement: %w", err)
-			}
-			defer stmt.Close()
 
-			var genre Genre
-			err = stmt.SelectContext(ctx, &genre, name)
-			if err != nil {
-				return nil, fmt.Errorf("error executing statement: %w", err)
-			}
-			return &genre, nil
-		default:
-			stmt, err := ms.db.PreparexContext(ctx, `
-				SELECT * FROM media.genres
-				WHERE kind = $1 AND name = $2
-				`)
-			if err != nil {
-				return nil, fmt.Errorf("error preparing statement: %w", err)
-			}
-			err = stmt.GetContext(ctx, &genre, kind, name)
-
-			if err != nil {
-				return nil, fmt.Errorf("error selecting rows for kind %s and name %s: %v", kind, name, err)
-			}
-
-			return genre, nil
+		tx, err := ms.newDB.Begin(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error beginning transaction: %v", err)
 		}
+		defer tx.Rollback(ctx)
+
+		genre := Genre{
+			Kinds: pq.StringArray{kind},
+		}
+		rows, err := ms.newDB.Query(ctx, `
+			SELECT name, parent, children FROM media.genres WHERE $1 = ANY(kinds) AND name = $2`,
+			kind, name)
+		ms.Log.Debug().Msgf("query: %v", rows)
+		if err != nil {
+			return nil, fmt.Errorf("error querying genre rows: %v", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			if err = pgxscan.ScanRow(&genre, rows); err != nil {
+				return nil, fmt.Errorf("error scanning row: %v", err)
+			}
+		}
+		dc, err := ms.newDB.Acquire(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error acquiring connection: %v", err)
+		}
+		defer dc.Release()
+
+		var description string
+		err = dc.QueryRow(ctx, `
+			SELECT description FROM media.genre_descriptions	
+			WHERE genre_id = (SELECT id FROM media.genres WHERE $1 = ANY(kinds) AND name = $2) 
+			AND language = $3
+					`, kind, name, lang).Scan(&description)
+		if err != nil {
+			return nil, fmt.Errorf("error querying rows for description: %v", err)
+		}
+
+		genre.Description = []GenreDescription{
+			{
+				Language:    lang,
+				Description: description,
+			},
+		}
+
+		ms.Log.Debug().Msgf("genre: %v", genre)
+
+		if err := rows.Err(); err != nil {
+			return nil, fmt.Errorf("error iterating rows: %v", err)
+		}
+		return &genre, nil
 	}
 }
 
@@ -232,7 +264,7 @@ func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]strin
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -240,7 +272,7 @@ func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]strin
 		err = stmt.SelectContext(ctx, &names, kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error selecting rows")
-			return nil, fmt.Errorf("error selecting rows: %w", err)
+			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
 		return names, nil
 	}
@@ -290,7 +322,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 			LIMIT $2`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -298,7 +330,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 		rows, err := stmt.QueryxContext(ctx, pq.Array(blacklistKinds), count)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error querying rows")
-			return nil, fmt.Errorf("error querying rows: %w", err)
+			return nil, fmt.Errorf("error querying rows: %v", err)
 		}
 		defer rows.Close()
 
@@ -311,7 +343,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 		for rows.Next() {
 			if err := rows.Scan(&id, &kind); err != nil {
 				ms.Log.Error().Err(err).Msg("error scanning row")
-				return nil, fmt.Errorf("error scanning row: %w", err)
+				return nil, fmt.Errorf("error scanning row: %v", err)
 			}
 			mwks[id] = kind
 		}
@@ -340,22 +372,22 @@ func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UU
 		RETURNING id
 		`)
 		if err != nil {
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		err = stmt.GetContext(ctx, mediaID, props.Title, props.Kind, props.Created)
 		if err != nil {
-			return nil, fmt.Errorf("error executing statement: %w", err)
+			return nil, fmt.Errorf("error executing statement: %v", err)
 		}
 		err = ms.AddCreators(ctx, *mediaID, props.Creators)
 		// handle the case in which the said person is not in the database
 		if err == sql.ErrNoRows {
 			ms.Log.Warn().Msg("no rows were affected")
-			return nil, fmt.Errorf("no rows were affected: %w", err)
+			return nil, fmt.Errorf("no rows were affected: %v", err)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("error adding creators: %w", err)
+			return nil, fmt.Errorf("error adding creators: %v", err)
 		}
 		return mediaID, nil
 	}
@@ -379,7 +411,7 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -387,7 +419,7 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 			_, err = stmt.ExecContext(ctx, uuid, creators[i].ID)
 			if err != nil {
 				ms.Log.Error().Err(err).Msg("error executing statement")
-				return fmt.Errorf("error executing statement: %w", err)
+				return fmt.Errorf("error executing statement: %v", err)
 			}
 		}
 		return nil
@@ -415,14 +447,14 @@ func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, key, value, mediaID)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %w", err)
+			return fmt.Errorf("error executing statement: %v", err)
 		}
 		return nil
 	}
@@ -442,35 +474,15 @@ func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, mediaID)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %w", err)
+			return fmt.Errorf("error executing statement: %v", err)
 		}
 		return nil
 	}
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (b Book) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (a Album) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (t Track) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (g Genre) IsMedia() bool {
-	return false
 }

@@ -1,0 +1,96 @@
+[
+  {
+    "name": "Acoustic Blues",
+    "description": "Developed out of Work Songs and Spirituals to become the most prominent early form of Blues.",
+    "children": [
+      {
+        "name": "Acoustic Chicago Blues",
+        "description": "Unplugged Blues made in the Chicago region, primarily during the 1930s and 1940s."
+      },
+      {
+        "name": "Acoustic Texas Blues",
+        "description": "Laid-back swing rhythms and guitar ornamentation, including solos."
+      },
+      {
+        "name": "Jug Band",
+        "description": "Usually features a jug as the bass instrument as well as other homemade (or easily affordable) instruments, such as kazoos and washboards."
+      },
+      {
+        "name": "Piedmont Blues",
+        "description": "Developed in the early 20th century in the southern Appalachian foothills and characterized by a syncopated but melodic Ragtime-based finger-picking acoustic guitar style."
+      }
+    ]
+  },
+  {
+    "name": "Boogie Woogie",
+    "description": "Early, uptempo Blues featuring the piano as the main instrument, with soloing and improvisation played over the top of a repetitive eight note bassline."
+  },
+  {
+    "name": "Country Blues",
+    "description": "Various styles of Blues originating in the rural US South, typically relying on expressive vocal delivery and featuring simple, usually acoustic instrumentation.",
+    "children": [
+      {
+        "name": "Acoustic Texas Blues",
+        "description": "Laid-back swing rhythms and guitar ornamentation, including solos."
+      },
+      {
+        "name": "Delta Blues",
+        "description": "One of the earliest forms of Blues, named for the Mississippi Delta region of the United States where it developed, with a highly rhythmic style and a typical 12-bar structure."
+      },
+      {
+        "name": "Hill Country Blues",
+        "description": "Emphasizes a steady hypnotic groove, sparse percussive and highly energetic guitar riffs, and often features meandering structures with unconventional and usually fewer chord changes compared to Delta Blues."
+      },
+      {
+        "name": "Piedmont Blues",
+        "description": "Developed in the early 20th century in the southern Appalachian foothills and characterized by a syncopated but melodic Ragtime-based finger-picking acoustic guitar style."
+      }
+    ]
+  },
+  {
+    "name": "Electric Blues",
+    "description": "Major development in sound and reach of Blues when it became possible to amplify the instruments of small combos.",
+    "children": [
+      {
+        "name": "British Blues",
+        "description": "Heavily influenced by the burgeoning United States Blues scene, particularly Chicago Blues."
+      },
+      {
+        "name": "Chicago Blues",
+        "description": "Emerging in the 1940s, the prototypical and most influential form of Electric Blues on contemporary Blues, Blues Rock and Rock in general."
+      },
+      {
+        "name": "Electric Texas Blues",
+        "description": "Originating in (but not limited to) Texas; includes Jazz influences like Swing rhythms and sometimes the addition of a horn section."
+      },
+      {
+        "name": "Swamp Blues",
+        "description": "Originated in Baton Rouge, Louisiana in the 1950s, with a laid-back and relaxed sound that takes influence from Zydeco and Cajun Music."
+      }
+    ]
+  },
+  {
+    "name": "Fife and Drum Blues",
+    "description": "Rooted in martial Fife and Drum Corps music, originated among Afro-American communities in Mississippi."
+  },
+  {
+    "name": "Jump Blues",
+    "description": "Emerged in the late 1930s with influence from jazz styles such as Swing and Big Band, featuring fast tempos and raucous performances."
+  },
+  {
+    "name": "New Orleans Blues",
+    "description": "Diverse scene in New Orleans since the beginning of the 20th century, commonly associated with a sound led by rollicking pianos with syncopated beats and backed by horns."
+  },
+  {
+    "name": "Piano Blues",
+    "description": "Played either solo or with the piano as the lead instrument of a small combo performing slow or mid-tempo blues ballads, as opposed to the commonly fast-paced Boogie Woogie."
+  },
+  {
+    "name": "Soul Blues",
+    "description": "Shares similarities with Soul and incorporates the eponymous soulful inflections of Gospel, Jump Blues and soul into the vocals."
+  },
+  {
+    "name": "Vaudeville Blues",
+    "description": "Vaudeville incorporating heavy Blues elements."
+  }
+]

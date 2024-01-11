@@ -12,6 +12,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/caarlos0/env/v10 v10.0.0
+	github.com/georgysavva/scany/v2 v2.1.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
 	github.com/go-playground/validator/v10 v10.16.0
@@ -40,12 +41,14 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.8
-	github.com/z0ne-dev/mgx/v2 v2.0.1
 	go.uber.org/mock v0.3.0
 	golang.org/x/crypto v0.17.0
 	golang.org/x/image v0.14.0
+	golang.org/x/text v0.14.0
 	google.golang.org/grpc v1.60.1
 )
+
+replace github.com/georgysavva/scany/v2 v2.1.0 => /home/user/Projects/forks/scany
 
 require (
 	cloud.google.com/go/compute v1.23.3 // indirect
@@ -171,7 +174,6 @@ require (
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.154.0 // indirect

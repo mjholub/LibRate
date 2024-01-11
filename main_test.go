@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"codeberg.org/mjh/LibRate/cfg"
 )
 
 func TestDBRunning(t *testing.T) {
 	assert := assert.New(t)
-	assert.True(DBRunning(false, 5432))
-	assert.False(DBRunning(true, 5433))
-	assert.True(DBRunning(true, 5433))
+	conf := &cfg.TestConfig.DBConfig
+	assert.True(DBRunning(conf.Port))
+	assert.False(DBRunning(conf.Port + 100))
 }
 
 // test if flags are properly parsed and assigned their default values

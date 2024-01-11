@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Country Gospel",
+    "description": "Traditional Country that heavily incorporates Gospel.",
+    "children": [
+      {
+        "name": "Bluegrass Gospel",
+        "description": "Incorporates the religious topics and harmony vocals found in Country Gospel."
+      }
+    ]
+  },
+  {
+    "name": "Jubilee",
+    "description": "Rooted in African-American culture, characterized by complex rhythms and call-and-response vocals.",
+    "children": []
+  },
+  {
+    "name": "Sacred Steel",
+    "description": "Focused on instrumentals and played on the steel guitar.",
+    "children": []
+  },
+  {
+    "name": "Southern Gospel",
+    "description": "Initially sung A cappella by a Vocal Group quartet, sometimes with a pianist or guitar as accompaniment, with lyrics and messages primarily revolving around the teachings found within Christianity.",
+    "children": []
+  },
+  {
+    "name": "Traditional Black Gospel",
+    "description": "Born out of Spirituals in the early 20th century with influence from Southern Gospel and Blues, often featuring passionate or energetic vocal performances, motifs of salvation, and testaments of hardship.",
+    "children": []
+  }
+]

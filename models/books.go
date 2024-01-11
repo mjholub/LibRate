@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 )
@@ -38,20 +39,23 @@ var BookKeys = []string{
 	"genres", "edition", "languages",
 }
 
-func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (Book, error) {
-	stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM books WHERE media_id = $1")
+func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (*Book, error) {
+	rows, err := ms.newDB.Query(ctx, "SELECT * FROM books WHERE media_id = $1", id)
 	if err != nil {
-		return Book{}, fmt.Errorf("error preparing statement: %w", err)
+		return nil, fmt.Errorf("error getting book with ID %s: %v", id.String(), err)
 	}
-	defer stmt.Close()
-
-	row := stmt.QueryRowContext(ctx, id)
+	defer rows.Close()
 	var book Book
-	if err := row.Scan(&book); err != nil {
-		return Book{}, fmt.Errorf("error scanning row: %w", err)
+	for rows.Next() {
+		if err := pgxscan.ScanRow(&book, rows); err != nil {
+			return nil, fmt.Errorf("error scanning book with ID %s: %v", id.String(), err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows for book with ID %s: %v", id.String(), err)
 	}
 
-	return book, nil
+	return &book, nil
 }
 
 func (ms *MediaStorage) AddBook(

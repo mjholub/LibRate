@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
@@ -35,6 +36,7 @@ func Setup(
 	fzlog fiber.Handler,
 	conf *cfg.Config,
 	dbConn *sqlx.DB,
+	newDBConn *pgxpool.Pool,
 	app *fiber.App,
 	sess *session.Store,
 ) error {
@@ -51,7 +53,7 @@ func Setup(
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	mediaStor = models.NewMediaStorage(dbConn, logger)
+	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
 
 	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)

@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -125,9 +126,13 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 	if !lo.Contains(possible, genreKind) {
 		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
 	}
+	lang := c.Query("lang", "en")
 
 	genreName := c.Params("genre")
-	genre, err := mc.storage.GetGenre(c.Context(), genreKind, genreName)
+	genre, err := mc.storage.GetGenre(c.Context(), genreKind, lang, genreName)
+	if strings.Contains(err.Error(), "no rows in result set") {
+		return h.Res(c, fiber.StatusNotFound, "Genre not found")
+	}
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genre", err)
 	}

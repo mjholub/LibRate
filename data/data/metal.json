@@ -1,0 +1,329 @@
+[
+  {
+    "name": "Alternative Metal",
+    "description": "Mid-tempo style emphasizing melodicism and rhythmic heaviness; branches outside of the stylistic conventions of Metal.",
+    "children": [
+      {
+        "name": "Funk Metal",
+        "description": "Melds Funk Rock grooves with slap basslines and metallic guitarwork."
+      },
+      {
+        "name": "Neue Deutsche Härte",
+        "description": "Alternative Metal and Industrial Metal that incorporates various aspects of electronic music, specifically Electronic Dance Music."
+      },
+      {
+        "name": "Nu Metal",
+        "description": "Emphasizes rhythm, using elements of Funk Metal and Hip Hop to create a cleaner, more groove-oriented sound."
+      },
+      {
+        "name": "Rap Metal",
+        "description": "Features rapped vocals, typically formed around heavy, mid-tempo, and groove-oriented playing in addition to elements of Hip Hop beats such as record scratching."
+      }
+    ]
+  },
+  {
+    "name": "Avant-Garde Metal",
+    "description": "Often breaking the bounds of the genre through experimental structures and instrumentation, or by incorporating outside influences.",
+    "children": []
+  },
+  {
+    "name": "Black Metal",
+    "description": "Typified by highly distorted, trebly, tremolo-picked guitars, blast beats, double kick drumming, shrieked vocals, and raw, underproduced sound that often favors atmosphere over technical skills and melody.",
+    "children": [
+      {
+        "name": "Atmospheric Black Metal",
+        "description": "Focuses on the atmospheric element using slowly developing riffs, repetitive melodies, usually slow to medium tempos, and commonly synthesized ambient textures."
+      },
+      {
+        "name": "Blackgaze",
+        "description": "Melds tremolo-picked riffing, high-gain guitars, and harsh, often wailing, vocals with mellow, dreamy textures and melodic song structures."
+      },
+      {
+        "name": "Black 'n' Roll",
+        "description": "Incorporates elements of Hard Rock, Glam Rock, and Heavy Metal."
+      },
+      {
+        "name": "Black Noise",
+        "description": "Incorporates unconventional sounds with overpowering or constant Noise and Black Metal elements, often being heavily texture-oriented, abrasive, dissonant, atonal, or repetitive."
+      },
+      {
+        "name": "Depressive Black Metal",
+        "description": "Characterized by lethargic atmospheres; usually repetitive song structures and slow-mid tempos; high-pitched wailing and gruff vocals; and usage of non-distorted instruments like keyboards and acoustic guitars."
+      },
+      {
+        "name": "Melodic Black Metal",
+        "description": "Cleaner production, more diverse arrangements, and a stronger emphasis on melody than is typical for Black Metal."
+      },
+      {
+        "name": "Pagan Black Metal",
+        "description": "Incorporates acoustic guitar and traditional instrument passages, cleanly sung vocals, folk songs' melodies, and paganistic themes."
+      },
+      {
+        "name": "Symphonic Black Metal",
+        "description": "Symphonic soundscapes, typically but not always synthesized."
+      },
+      {
+        "name": "War Metal",
+        "description": "Aggressive, chaotic, and heavily Death Metal-influenced."
+      }
+    ]
+  },
+  {
+    "name": "Death Metal",
+    "description": "Features distorted, commonly down-tuned guitars; palm-muted and tremolo-picked riffs; aggressive, double-kicked percussion that utilizes various blast beats techniques; abrupt changes in tempo and time signatures; and guttural vocal styles.",
+    "children": [
+      {
+        "name": "Brutal Death Metal",
+        "description": "Emphasizes abrasiveness, chunky rhythmic atonal riffs, and low guttural vocals."
+      },
+      {
+        "name": "Slam Death Metal",
+        "description": "Focuses on slow or midtempo (as well as breakdown-style) sections built on chromatic, palm-muted riffs - so-called \"slams\"."
+      },
+      {
+        "name": "Death 'n' Roll",
+        "description": "Incorporates elements of Hard Rock, Heavy Metal, and Blues Rock while retaining the typical heavily distorted rhythm guitars and gruff vocals."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Melodic Death Metal",
+        "description": "Utilizes the guitar harmonies and melodic sound of Heavy Metal, while keeping the main characteristics of Death Metal."
+      },
+      {
+        "name": "Technical Death Metal",
+        "description": "Focuses on challenging, demanding songwriting and instrumental skill."
+      },
+      {
+        "name": "Dissonant Death Metal",
+        "description": "Emphasizes discordant, dense songwriting and utilizes pinch harmonics, scratchy guitar leads, and atonality."
+      }
+    ]
+  },
+  {
+    "name": "Doom Metal",
+    "description": "Plodding tempos, repeated chords, and thick, distorted, down-tuned guitars in a style focused on foreboding, atmosphere, and tension.",
+    "children": [
+      {
+        "name": "Death Doom Metal",
+        "description": "Fuses down-tuned guitars, growled vocals, and aggressive, often double-kick drumming with a mournful, somber atmosphere and plodding tempos."
+      },
+      {
+        "name": "Funeral Doom Metal",
+        "description": "Features exceptionally slow, funeral dirge-like tempos, heavily distorted, sluggish guitars, mournful atmosphere, and distant, hushed growls and grunts."
+      },
+      {
+        "name": "Traditional Doom Metal",
+        "description": "Monotonous and heavy playing style; repetitive, rough, and sometimes atonal guitar riffs; a \"rocking to sleep\" bass; and influences from both Blues Rock and Psychedelic Rock."
+      },
+      {
+        "name": "Epic Doom Metal",
+        "description": "Emphasizes Heavy Metal influence and theatrical vocals."
+      }
+    ]
+  },
+  {
+    "name": "Drone Metal",
+    "description": "Composed with heavy repetitive drones, minimalist structure, and slow tempos.",
+    "children": []
+  },
+  {
+    "name": "Folk Metal",
+    "description": "Features influences from various types of Traditional Folk Music expressed through melodies and/or traditional instrumentation, notably having a large scene in Europe.",
+    "children": [
+      {
+        "name": "Celtic Metal",
+        "description": "Features Celtic Folk Music elements."
+      },
+      {
+        "name": "Mittelalter-Metal",
+        "description": "Emerged as a metallic style in the mid-to-late 1990s from the German Neo-Medieval movement."
+      }
+    ]
+  },
+  {
+    "name": "Gothic Metal",
+    "description": "Features heavy, low-mid tempo riffs, somber, gloomy atmosphere accentuated by ethereal keyboards and synthesizer layers, and vocal styles ranging from raspy growls to female operatic singing.",
+    "children": []
+  },
+  {
+    "name": "Grindcore",
+    "description": "Features shortened song structures and a diverse palette of intense techniques such as blast and skank beats, tremolo and down-picking, and various harsh vocal styles.",
+    "children": [
+      {
+        "name": "Cybergrind",
+        "description": "Standard conventions of Grindcore taken to an even more discordant and rapid-fire extreme, with added Electronic dimensions of computer-generated noises and drum machines."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Goregrind",
+        "description": "Death Metal-influenced riffs with rhythms ranging from very fast to slower mid-tempos correlated with pitch-shifted vocals, sloppy playing and production, and gore-themed aesthetics."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Pornogrind",
+        "description": "Groovy, mid-tempo style known for its exaggerated bouncy rhythm and common pornographic themes."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      }
+    ]
+  },
+  {
+    "name": "Groove Metal",
+    "description": "Midtempo riffs influenced by Thrash Metal but with a greater focus on rhythmic syncopation and heaviness over speed.",
+    "children": []
+  },
+  {
+    "name": "Heavy Metal",
+    "description": "Heavier outgrowth of Hard Rock featuring greater distortion and intensity along with lesser Blues influences.",
+    "children": [
+      {
+        "name": "NWOBHM",
+        "description": "Acronym for new wave of British Heavy Metal, which occurred in the late 1970s, taking some influence from Punk Rock."
+      },
+      {
+        "name": "Speed Metal",
+        "description": "Originating from the NWOBHM and influenced by the work of early heavy metal bands, being faster and somewhat more aggressive than heavy metal."
+      },
+      {
+        "name": "US Power Metal",
+        "description": "American style influenced by NWOBHM that features heavily distorted guitars paired with more aggressive riffs, mid-tempo Heavy Metal rhythms, and over-the-top theatrical vocals with fantasy or conceptual themes."
+      }
+    ]
+  },
+  {
+    "name": "Industrial Metal",
+    "description": "Incorporates the abrasive and heavy sound from Industrial into a Metal context by using elements from Post-Industrial like synthesizers and drum machines.",
+    "children": [
+      {
+        "name": "Cyber Metal",
+        "description": "Originated around 1999, influenced by EBM and Aggrotech with more melodic and less repetitive riffs as well as harsh vocals."
+      },
+      {
+        "name": "Neue Deutsche Härte",
+        "description": "Alternative Metal and Industrial Metal that incorporates various aspects of electronic music, specifically Electronic Dance Music."
+      }
+    ]
+  },
+  {
+    "name": "Kawaii Metal",
+    "description": "Combines a heavy and metallic style with an upbeat, J-Pop-indebted tone and vocal style; associated with a \"kawaii\" aesthetic.",
+    "children": []
+  },
+  {
+    "name": "Metalcore",
+    "description": "Drop-tuned guitar riffs, constant double kick drumming with varying tempos and techniques, breakdown sections, and screaming or shouting vocals.",
+    "children": [
+      {
+        "name": "Deathcore",
+        "description": "Fusion genre integrating elements from Death Metal, using harsh guttural vocals, blast beats, and palm-muted or tremolo-picked riffs in conjunction with breakdowns."
+      },
+      {
+        "name": "Mathcore",
+        "description": "Rhythmically complex, features unconventional time signatures, syncopated and dissonant riffs and erratic metric shifts."
+      },
+      {
+        "name": "Melodic Metalcore",
+        "description": "Originated in the late 1990s when some metalcore bands infused elements of Melodic Death Metal into their sound to create a more metallic and melodic style."
+      }
+    ]
+  },
+  {
+    "name": "Neoclassical Metal",
+    "description": "Greatly influenced by Western Classical Music in its style of playing and composing.",
+    "children": []
+  },
+  {
+    "name": "Post-Metal",
+    "description": "Heavily utilizes timbre and texture to have enormous song build-ups and huge atmosphere.",
+    "children": [
+      {
+        "name": "Atmospheric Sludge Metal",
+        "description": "Combines slow, churning guitar riffs and thunderous percussion with dark, extensive otherworldly sonic landscapes."
+      },
+      {
+        "name": "Doomgaze",
+        "description": "Gloomy and somber atmosphere, amplified by the slow tempo and gloominess of Doom Metal, combined with the effects, washes of sound, and vocals found within Shoegaze."
+      }
+    ]
+  },
+  {
+    "name": "Power Metal",
+    "description": "Developed from Heavy Metal and Speed Metal; characterized by its emphasis on speed, vocal melody and harmonized lead guitars.",
+    "children": []
+  },
+  {
+    "name": "Progressive Metal",
+    "description": "Fuses amplified, guitar-driven sound with technical proficiency, virtuosity, complex compositions, innovative arrangements, eclecticism, and additional instrumentation.",
+    "children": [
+      {
+        "name": "Djent",
+        "description": "Syncopated rhythmic structures, angular melodies, and dissonant chords."
+      }
+    ]
+  },
+  {
+    "name": "Sludge Metal",
+    "description": "Combines the slow, dark instrumentals and atmosphere of Doom Metal with the aggressive, harsh screams and shouts credited to Hardcore Punk.",
+    "children": [
+      {
+        "name": "Atmospheric Sludge Metal",
+        "description": "Combines slow, churning guitar riffs and thunderous percussion with dark, extensive otherworldly sonic landscapes."
+      }
+    ]
+  },
+  {
+    "name": "Southern Metal",
+    "description": "Blues-influenced style that primarily incorporates Sludge Metal and Stoner Metal with metallic Southern Rock riffs.",
+    "children": []
+  },
+  {
+    "name": "Stenchcore",
+    "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal.",
+    "children": []
+  },
+  {
+    "name": "Stoner Metal",
+    "description": "Combines elements of Doom Metal with elements of Psychedelic Rock and Blues Rock to create a melodic yet heavy sound.",
+    "children": []
+  },
+  {
+    "name": "Symphonic Metal",
+    "description": "Elements of symphonic and orchestral music.",
+    "children": []
+  },
+  {
+    "name": "Thrash Metal",
+    "description": "Features fast tempos; rhythmically focused, frequently palm-muted riffs; shredding solos; aggressive, often double-kicked drumming; skank beats; and vocal styles ranging from shouts to melodic singing.",
+    "children": [
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Technical Thrash Metal",
+        "description": "Places great emphasis on complex songwriting and demanding instrumental parts."
+      }
+    ]
+  },
+  {
+    "name": "Trance Metal",
+    "description": "Tempo between 130 and 160 BPM, played with keyboards and metal instrumentation, sung with harsh and aggressive vocals including many clean melodic styles; regularly uses elements of Melodic Death Metal, Symphonic Metal, and Electronic Dance Music.",
+    "children": []
+  },
+  {
+    "name": "Viking Metal",
+    "description": "Developed out of Black Metal and embodies an epic, Viking-like aesthetic.",
+    "children": []
+  }
+]

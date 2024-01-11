@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Nature Recordings",
+    "description": "Recordings of natural phenomena such as waterfalls, ocean waves, and storms, as well as Animal Sounds.",
+    "children": [
+      {
+        "name": "Animal Sounds",
+        "description": "Recordings which are done in order to capture sounds produced by animals."
+      },
+      {
+        "name": "Birdsong",
+        "description": "Recordings of bird vocalizations often distinguished into the shorter bird call and longer, more complex birdsong."
+      },
+      {
+        "name": "Insect Sounds",
+        "description": "Recordings that capture the sounds produced by insects."
+      },
+      {
+        "name": "Whale Song",
+        "description": "Among the most complex animal vocalizations on Earth, the songs of baleen whales are usually limited to the mating and migratory seasons of these animals."
+      }
+    ]
+  },
+  {
+    "name": "Radio Broadcast Recordings",
+    "description": "Recordings of transmissions sent by radio waves, used for sending communications to a wide audience.",
+    "children": []
+  }
+]
