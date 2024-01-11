@@ -30,9 +30,6 @@ import (
 type FlagArgs struct {
 	// init is a flag to initialize the database
 	Init bool
-	// ExternalDBHealthCheck is a flag to skip the built-in healthcheck, especially for database
-	// Should be used in containers with external databases, where pg_isready is used instead
-	ExternalDBHealthCheck bool
 	// configFile is a flag to specify the path to the config file
 	ConfigFile string
 	// path is a flag to specify the path to the migrations that should be applied.
@@ -88,7 +85,6 @@ func main() {
 	go cmd.RunGrpcServer(s)
 
 	// database first-run initialization
-	if !flags.ExternalDBHealthCheck {
 		dbConn, err = connectDB(conf)
 		if err != nil {
 			log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
@@ -167,11 +163,11 @@ func setupPOW(conf *cfg.Config, app *fiber.App) {
 	}))
 }
 
-func initDB(dbConf *cfg.DBConfig, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
-	dbRunning := DBRunning(externalHC, dbConf.Port)
+	dbRunning := DBRunning(dbConf.Port)
 	if dbRunning {
 		logger.Warn().Msgf("Database already running on port %d. Not initializing.", dbConf.Port)
 		return nil
@@ -192,10 +188,7 @@ func initDB(dbConf *cfg.DBConfig, do, externalHC, exitAfter bool, logger *zerolo
 	return nil
 }
 
-func DBRunning(skipCheck bool, port uint16) bool {
-	if skipCheck {
-		return true
-	}
+func DBRunning(port uint16) bool {
 	conn, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		return true // port in use => db running
@@ -206,29 +199,25 @@ func DBRunning(skipCheck bool, port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, ExternalDBHealthCheck, exit bool
-		configFile, path, skipErrors      string
+		init, exit                   bool
+		configFile, path, skipErrors string
 	)
 
 	const (
-		initVal         = false
-		initUse         = "Initialize database"
-		externalDBHCVal = false
-		exDBHCUse       = `Skip calling the built-in database health check.`
-		confVal         = "config.yml"
-		confUse         = "Path to config file"
-		skipErrVal      = ""
-		skipErrUse      = "Comma-separated list of error codes to skip and not panic on"
-		pathVal         = "db/migrations"
-		pathUse         = "Path to migrations to apply"
-		exitVal         = false
-		exitUse         = "Exit after running migrations"
-		short           = " (shorthand)"
+		initVal    = false
+		initUse    = "Initialize database"
+		confVal    = "config.yml"
+		confUse    = "Path to config file"
+		skipErrVal = ""
+		skipErrUse = "Comma-separated list of error codes to skip and not panic on"
+		pathVal    = "db/migrations"
+		pathUse    = "Path to migrations to apply"
+		exitVal    = false
+		exitUse    = "Exit after running migrations"
+		short      = " (shorthand)"
 	)
 	flag.BoolVar(&init, "init", initVal, initUse)
 	flag.BoolVar(&init, "i", initVal, initUse+short)
-	flag.BoolVar(&ExternalDBHealthCheck, "external-db-health-check", externalDBHCVal, exDBHCUse)
-	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+short)
 	flag.StringVar(&configFile, "config", confVal, confUse)
 	flag.StringVar(&configFile, "c", confVal, confUse+short)
 	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
@@ -241,12 +230,11 @@ func parseFlags() FlagArgs {
 	flag.Parse()
 
 	return FlagArgs{
-		Init:                  init,
-		ExternalDBHealthCheck: ExternalDBHealthCheck,
-		ConfigFile:            configFile,
-		Path:                  path,
-		Exit:                  exit,
-		SkipErrors:            skipErrors,
+		Init:       init,
+		ConfigFile: configFile,
+		Path:       path,
+		Exit:       exit,
+		SkipErrors: skipErrors,
 	}
 }
 
@@ -278,7 +266,8 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
 	dsn := db.CreateDsn(&conf.DBConfig)
 
 	switch conf.Engine {
-	case "postgres", "mariadb", "sqlite":
+	// case "postgres", "mariadb", "sqlite":
+	case "postgres":
 		dbConn, err = db.Connect(conf.Engine, dsn, conf.RetryAttempts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
