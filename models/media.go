@@ -59,17 +59,18 @@ type (
 	}
 
 	MediaStorage struct {
-		db  *sqlx.DB
-		Log *zerolog.Logger
-		ks  *KeywordStorage
-		Ps  *PeopleStorage
+		newDB *pgxpool.Pool
+		db    *sqlx.DB // legacy
+		Log   *zerolog.Logger
+		ks    *KeywordStorage
+		Ps    *PeopleStorage
 	}
 )
 
-func NewMediaStorage(db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
+func NewMediaStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
 	Ps := NewPeopleStorage(db, l)
-	return &MediaStorage{db: db, Log: l, ks: ks, Ps: Ps}
+	return &MediaStorage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
@@ -83,7 +84,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return Media{}, fmt.Errorf("error preparing statement: %w", err)
+			return Media{}, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -92,7 +93,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 			&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
-			return Media{}, fmt.Errorf("error scanning row: %w", err)
+			return Media{}, fmt.Errorf("error scanning row: %v", err)
 		}
 		return media, nil
 	}
@@ -126,7 +127,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media.media WHERE id = $1")
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return "", fmt.Errorf("error preparing statement: %w", err)
+			return "", fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -135,7 +136,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 		err = row.Scan(&kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error scanning row")
-			return "", fmt.Errorf("error scanning row: %w", err)
+			return "", fmt.Errorf("error scanning row: %v", err)
 		}
 		return kind, nil
 	}
@@ -156,7 +157,7 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -164,14 +165,13 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 		err = stmt.SelectContext(ctx, &genres, kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error selecting rows")
-			return nil, fmt.Errorf("error selecting rows: %w", err)
+			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
 		return genres, nil
 	}
 }
 
-// FIXME: sqlx won't work with AGE, we need to use
-// github.com/apache/age/drivers/golang/age
+// TODO: add multilingual description support
 func (ms *MediaStorage) GetGenre(ctx context.Context, kind, name string) (genre *Genre, err error) {
 	select {
 	case <-ctx.Done():
@@ -232,7 +232,7 @@ func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]strin
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -240,7 +240,7 @@ func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]strin
 		err = stmt.SelectContext(ctx, &names, kind)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error selecting rows")
-			return nil, fmt.Errorf("error selecting rows: %w", err)
+			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
 		return names, nil
 	}
@@ -290,7 +290,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 			LIMIT $2`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -298,7 +298,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 		rows, err := stmt.QueryxContext(ctx, pq.Array(blacklistKinds), count)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error querying rows")
-			return nil, fmt.Errorf("error querying rows: %w", err)
+			return nil, fmt.Errorf("error querying rows: %v", err)
 		}
 		defer rows.Close()
 
@@ -311,7 +311,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 		for rows.Next() {
 			if err := rows.Scan(&id, &kind); err != nil {
 				ms.Log.Error().Err(err).Msg("error scanning row")
-				return nil, fmt.Errorf("error scanning row: %w", err)
+				return nil, fmt.Errorf("error scanning row: %v", err)
 			}
 			mwks[id] = kind
 		}
@@ -340,22 +340,22 @@ func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UU
 		RETURNING id
 		`)
 		if err != nil {
-			return nil, fmt.Errorf("error preparing statement: %w", err)
+			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		err = stmt.GetContext(ctx, mediaID, props.Title, props.Kind, props.Created)
 		if err != nil {
-			return nil, fmt.Errorf("error executing statement: %w", err)
+			return nil, fmt.Errorf("error executing statement: %v", err)
 		}
 		err = ms.AddCreators(ctx, *mediaID, props.Creators)
 		// handle the case in which the said person is not in the database
 		if err == sql.ErrNoRows {
 			ms.Log.Warn().Msg("no rows were affected")
-			return nil, fmt.Errorf("no rows were affected: %w", err)
+			return nil, fmt.Errorf("no rows were affected: %v", err)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("error adding creators: %w", err)
+			return nil, fmt.Errorf("error adding creators: %v", err)
 		}
 		return mediaID, nil
 	}
@@ -379,7 +379,7 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
@@ -387,7 +387,7 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 			_, err = stmt.ExecContext(ctx, uuid, creators[i].ID)
 			if err != nil {
 				ms.Log.Error().Err(err).Msg("error executing statement")
-				return fmt.Errorf("error executing statement: %w", err)
+				return fmt.Errorf("error executing statement: %v", err)
 			}
 		}
 		return nil
@@ -415,14 +415,14 @@ func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, key, value, mediaID)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %w", err)
+			return fmt.Errorf("error executing statement: %v", err)
 		}
 		return nil
 	}
@@ -442,35 +442,15 @@ func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
 		`)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %w", err)
+			return fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, mediaID)
 		if err != nil {
 			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %w", err)
+			return fmt.Errorf("error executing statement: %v", err)
 		}
 		return nil
 	}
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (b Book) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (a Album) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (t Track) IsMedia() bool {
-	return true
-}
-
-//nolint:gocritic // we can't use pointer receivers to implement interfaces
-func (g Genre) IsMedia() bool {
-	return false
 }
