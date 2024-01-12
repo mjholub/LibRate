@@ -27,3 +27,5 @@ LibRate-*
 LibRate
 static/img
 static
+librate-bin
+./profile*
