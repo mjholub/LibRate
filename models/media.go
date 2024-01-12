@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -160,20 +161,36 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 }
 
 // GetGenres returns all genres for specified media type.
-// Generally to avoid overfetching, it's advisable to use GetGenreNames instead
-// (accessed with optional query parameter ?names_only=true) (if this parameter is not provided,
-// it uses true as a default value).
-func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, error) {
+// parameter all specifies whether to return all genres or only top-level ones.
+// variadic argument columns specifies which columns to return.
+// In HTTP layer, columns are specified either in the JSON request body (as an array of strings)
+// The name column can also be accessed with `names_only` boolean query parameter.
+// Fetching of all genres is specified by the `all` query parameter (which does not require a value).
+func (ms *MediaStorage) GetGenres(ctx context.Context, kind string, all bool, columns ...string) ([]Genre, error) {
+	if len(columns) > 0 {
+		validColumns := []string{"id", "kinds", "name", "parent", "children"}
+		for i := range columns {
+			if !lo.Contains(validColumns, columns[i]) {
+				return nil, fmt.Errorf("invalid column name: %v", columns[i])
+			}
+		}
+	}
+	const baseGenres = "WHERE $1 = ANY(kinds) AND children IS NULL"
+	const allGenres = "WHERE $1 = ANY(kinds)"
+
+	queryTemplate := "SELECT %v FROM media.genres %v"
+	whereClause := baseGenres
+
+	if all {
+		whereClause = allGenres
+	}
+
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		stmt, err := ms.db.PreparexContext(ctx, `
-		SELECT * FROM media.genres
-		WHERE kind = $1
-		`)
+		stmt, err := ms.db.PreparexContext(ctx, fmt.Sprintf(queryTemplate, strings.Join(columns, ", "), whereClause))
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
 			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
 		defer stmt.Close()
@@ -181,14 +198,12 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 		var genres []Genre
 		err = stmt.SelectContext(ctx, &genres, kind)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error selecting rows")
 			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
 		return genres, nil
 	}
 }
 
-// TODO: add multilingual description support
 func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (genre *Genre, err error) {
 	title := cases.Title(language.AmericanEnglish)
 	name = title.String(strings.ReplaceAll(name, "_", " "))
@@ -249,32 +264,6 @@ func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (
 			return nil, fmt.Errorf("error iterating rows: %v", err)
 		}
 		return &genre, nil
-	}
-}
-
-// GetGenreNames returns all genre names for specified media type, without any additional information.
-func (ms *MediaStorage) GetGenreNames(ctx context.Context, kind string) ([]string, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		stmt, err := ms.db.PreparexContext(ctx, `
-		SELECT name FROM media.genres
-		WHERE kind = $1
-		`)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %v", err)
-		}
-		defer stmt.Close()
-
-		var names []string
-		err = stmt.SelectContext(ctx, &names, kind)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error selecting rows")
-			return nil, fmt.Errorf("error selecting rows: %v", err)
-		}
-		return names, nil
 	}
 }
 
@@ -393,7 +382,7 @@ func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UU
 	}
 }
 
-func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creators []Person) error {
+func (ms *MediaStorage) AddCreators(ctx context.Context, id uuid.UUID, creators []Person) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -416,7 +405,7 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, uuid uuid.UUID, creator
 		defer stmt.Close()
 
 		for i := range creators {
-			_, err = stmt.ExecContext(ctx, uuid, creators[i].ID)
+			_, err = stmt.ExecContext(ctx, id, creators[i].ID)
 			if err != nil {
 				ms.Log.Error().Err(err).Msg("error executing statement")
 				return fmt.Errorf("error executing statement: %v", err)
@@ -445,18 +434,13 @@ func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{
 		SET $1 = $2
 		WHERE id = $3
 		`)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %v", err)
+		if err = handlePrepareError(ms.Log, err); err != nil {
+			return err
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, key, value, mediaID)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %v", err)
-		}
-		return nil
+		return handleExecError(ms.Log, err)
 	}
 }
 
@@ -472,17 +456,28 @@ func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
 		DELETE FROM media.media
 		WHERE id = $1
 		`)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %v", err)
+		if err = handlePrepareError(ms.Log, err); err != nil {
+			return err
 		}
 		defer stmt.Close()
 
 		_, err = stmt.ExecContext(ctx, mediaID)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error executing statement")
-			return fmt.Errorf("error executing statement: %v", err)
-		}
-		return nil
+		return handleExecError(ms.Log, err)
 	}
+}
+
+func handlePrepareError(log *zerolog.Logger, err error) error {
+	if err != nil {
+		log.Error().Err(err).Msg("error preparing statement")
+		return fmt.Errorf("error preparing statement: %v", err)
+	}
+	return nil
+}
+
+func handleExecError(log *zerolog.Logger, err error) error {
+	if err != nil {
+		log.Error().Err(err).Msg("error executing statement")
+		return fmt.Errorf("error executing statement: %v", err)
+	}
+	return nil
 }
