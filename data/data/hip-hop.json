@@ -1,0 +1,431 @@
+[
+  {
+    "name": "Abstract Hip Hop",
+    "description": "Uses much more abstract lyricism than what is considered conventional within the genre, typically through use of metaphors, symbolism, and cryptic meanings.",
+    "children": []
+  },
+  {
+    "name": "Afroswing",
+    "description": "Emerged in the United Kingdom during the mid-2010s, incorporating influences from Dancehall, Afrobeats, Contemporary R&B, and a variety of West African Music.",
+    "children": []
+  },
+  {
+    "name": "Afro Trap",
+    "description": "Centered mostly in France, features production influenced by modern styles developed in West and Central Africa with Trap-styled vocal flows.",
+    "children": []
+  },
+  {
+    "name": "Arabesque Rap",
+    "description": "Emerged from Turkey in the late 2000s, based almost exclusively around Arabesk samples and featuring aggressive rap vocals.",
+    "children": []
+  },
+  {
+    "name": "Bongo Flava",
+    "description": "Tanzanian genre originating in the mid-1990s in the Dar es Salaam area, combining the influence of Rhythm & Blues, Afrobeat, and Dancehall with native Tanzanian styles like Taarab and Muziki wa dansi.",
+    "children": []
+  },
+  {
+    "name": "Boom Bap",
+    "description": "Production style identified by an acoustic-sounding drum pattern of a kick drum on the downbeat followed by a cracking snare on the upbeat.",
+    "children": []
+  },
+  {
+    "name": "Bounce",
+    "description": "Developed in New Orleans in the early 1990s, initially defined by a slow to midtempo beat with a double-time hi-hat on top.",
+    "children": []
+  },
+  {
+    "name": "Chipmunk Soul",
+    "description": "Sped-up vocal samples and slick soulful production.",
+    "children": []
+  },
+  {
+    "name": "Chopped and Screwed",
+    "description": "Remixing technique pioneered by the late Houston producer DJ Screw in the 1990s, where tracks are slowed down and remixed with a skipping effect.",
+    "children": []
+  },
+  {
+    "name": "Christian Hip Hop",
+    "description": "Employs lyrics with a pro-Christianity message to profess the performer's faith, and often to attract new attention from potential converts.",
+    "children": []
+  },
+  {
+    "name": "Cloud Rap",
+    "description": "Emerged in the early 2010s, known for its relaxed, dream-like, and reverb-heavy production style, taking influence from Chillwave, and producers' obscure sample choices.",
+    "children": []
+  },
+  {
+    "name": "Comedy Rap",
+    "description": "Hip Hop with the intent to be humorous, through the use of comedic lyrics, production, delivery, or another musical aspect.",
+    "children": [
+      {
+        "name": "Chap Hop",
+        "description": "Satirises British cultural stereotypes with posh rapping and a distinctive retro aesthetic drawn from the \"chap\" and steampunk subcultures, often with elements of Music Hall."
+      }
+    ]
+  },
+  {
+    "name": "Conscious Hip Hop",
+    "description": "Artists whose lyrics deal with social issues.",
+    "children": []
+  },
+  {
+    "name": "Country Rap",
+    "description": "Combines the flow, production-emphasis, and demeanor of Hip Hop with the lyrical content and general approach of Country.",
+    "children": []
+  },
+  {
+    "name": "Crunk",
+    "description": "Originating from the southern United States and reliant on drum machines and synthesizer stabs to create an energetic, often dance-oriented sound.",
+    "children": [
+      {
+        "name": "Crunkcore",
+        "description": "Combines rapping, screaming and autotune with synthesizers and Hip Hop beats often influenced by Crunk."
+      }
+    ]
+  },
+  {
+    "name": "Digicore",
+    "description": "Developed in the late 2010s and characterized by frantic, bombastic, and glamourous production, usually derived from Trap, that serves to accompany highly melodious, auto-tuned, and hi-pitched vocal performances, often done with breathy voice singing and sing-rapping.",
+    "children": []
+  },
+  {
+    "name": "Dirty South",
+    "description": "Originated in the Southern US during the mid-1990s, defined by a bouncy rhythm, fast-tempo snares, 808s, heavy bass, and often rapped in a rhythmic delivery consisting of explicit lyrics.",
+    "children": []
+  },
+  {
+    "name": "Disco Rap",
+    "description": "Most prevalent from 1979 to 1982, featuring MCs rapping over popular Disco breaks.",
+    "children": []
+  },
+  {
+    "name": "Drumless",
+    "description": "Stripped-down production style pioneered in the early 2010s and identified by a lack of drums or minimal, subtle percussion left untouched from the original sample or filtered out.",
+    "children": []
+  },
+  {
+    "name": "East Coast Hip Hop",
+    "description": "Highly influential style of Hip Hop that developed in New York City, particularly in the South Bronx, during the 1970s.",
+    "children": []
+  },
+  {
+    "name": "Emo Rap",
+    "description": "Moody, melancholic production combining atmospheric Cloud Rap, and Trap's typical drum programming, with sampling from Alternative Rock, Midwest Emo, Emo-Pop, and Pop Punk.",
+    "children": []
+  },
+  {
+    "name": "Experimental Hip Hop",
+    "description": "Incorporates experimental and eccentric elements considered unconventional or unorthodox compared to more traditional hip hop.",
+    "children": [
+      {
+        "name": "Industrial Hip Hop",
+        "description": "Incorporates harsh elements inspired by Industrial music such as blaring, noisy synths, distorted and metallic percussion, as well as more aggressive and off-kilter rapping styles."
+      }
+    ]
+  },
+  {
+    "name": "French Hip Hop",
+    "description": "Hip Hop originating from France, typically performed in the French language.",
+    "children": []
+  },
+  {
+    "name": "Genge",
+    "description": "Combines elements of Dancehall with various traditions of Kenya.",
+    "children": [
+      {
+        "name": "Gengetone",
+        "description": "Takes strong influence from Reggaetón and modern Dancehall, featuring more explicit lyrics and harder beats."
+      }
+    ]
+  },
+  {
+    "name": "G-Funk",
+    "description": "Relaxed and organic sound featuring live instrumentation, use of P-Funk samples, and high-pitched synth lines.",
+    "children": []
+  },
+  {
+    "name": "Hardcore Hip Hop",
+    "description": "Characterized by confrontation and aggression, whether in the lyricism, vocal delivery, hard beats, heavy production, or any combination thereof.",
+    "children": [
+      {
+        "name": "Britcore",
+        "description": "British Hardcore Hip Hop from the late 1980s and early 1990s featuring a fast style of beats and rapping."
+      },
+      {
+        "name": "Gangsta Rap",
+        "description": "Lyrics from a gangster's perspective, typically within the Hardcore Hip Hop sound."
+      },
+      {
+        "name": "Chicano Rap",
+        "description": "Latin Rap with a Mexican twist."
+      },
+      {
+        "name": "Horrorcore",
+        "description": "Lyrical content and imagery focus on the macabre and morbid, including such topics as Satanism and suicide, with production generally of a darker nature than is typically found in other Hip Hop."
+      },
+      {
+        "name": "Memphis Rap",
+        "description": "Characterized by minimalistic half-time drum machine programming with droning bass, often paired with aggressive rapping and a double time flow."
+      },
+      {
+        "name": "Dungeon Rap",
+        "description": "Combines the dark production of Memphis Rap with the fantasy aesthetics and sound design of Dungeon Synth."
+      },
+      {
+        "name": "Mid-School Hip Hop",
+        "description": "Based around heavy drum machine production sound."
+      },
+      {
+        "name": "Trap Metal",
+        "description": "Features loud, distorted 808s and basslines, as well as aggressive vocals that are usually yelled or screamed."
+      }
+    ]
+  },
+  {
+    "name": "Hipco",
+    "description": "Developed in Liberia, often featuring conscious and political lyrics and influences from local dance styles.",
+    "children": []
+  },
+  {
+    "name": "Hiplife",
+    "description": "Fusion of Ghanaian Highlife with Hip Hop.",
+    "children": []
+  },
+  {
+    "name": "Hyphy",
+    "description": "Hip hop mainly produced in the San Francisco Bay Area with a guttural vocal style; common themes include women and partying.",
+    "children": [
+      {
+        "name": "Jerk Rap",
+        "description": "Sparse beats at a tempo geared towards the \"jerkin'\" dance, typically involving rapping about skinny jeans and other elements of the movement's fashion style, jerkin'/being a jerk, or sexually explicit topics."
+      }
+    ]
+  },
+  {
+    "name": "Instrumental Hip Hop",
+    "description": "Can take the form of instrumental versions of songs that normally feature rapping, or hip hop originally released and always intended to be instrumental.",
+    "children": [
+      {
+        "name": "Rare Phonk",
+        "description": "Primarily features eclectic sampling and lush, jazzy beats, usually set to Trap rhythms with prominent influences of Memphis Rap."
+      }
+    ]
+  },
+  {
+    "name": "Japanese Hip Hop",
+    "description": "Typically performed in the Japanese language; many of the lyrics deal with aspects of Japanese lifestyles.",
+    "children": []
+  },
+  {
+    "name": "Jazz Rap",
+    "description": "Incorporates elements of Jazz through the use of samples or live instrumentation.",
+    "children": []
+  },
+  {
+    "name": "Jigg",
+    "description": "Club-oriented genre characterized by heavy 808-driven beats, imposing synthesized brasses and an uptempo rhythm.",
+    "children": []
+  },
+  {
+    "name": "Jook",
+    "description": "Fast-paced; draws influence from Bounce, Miami Bass, Jersey Club and Dancehall.",
+    "children": []
+  },
+  {
+    "name": "Latin Rap",
+    "description": "Primarily done in Spanish; incorporates Hispanic American Music elements into its sound.",
+    "children": [
+      {
+        "name": "Chicano Rap",
+        "description": "Latin Rap with a Mexican twist."
+      }
+    ]
+  },
+  {
+    "name": "Lo-Fi Hip Hop",
+    "description": "Relaxed, laid-back form of Hip Hop, typically instrumental and influenced by Jazz Rap and Downtempo.",
+    "children": []
+  },
+  {
+    "name": "Lowend",
+    "description": "Rhythms driven by steady eighth-note digital handclaps, rattling bass, fast tempos, upbeat sound, and laid-back flows.",
+    "children": []
+  },
+  {
+    "name": "Miami Bass",
+    "description": "Sustained Roland TR-808 kick drums and faster tempos, along with a distinct Electro influence.",
+    "children": [
+      {
+        "name": "Atlanta Bass",
+        "description": "Originated in Atlanta, slower tempos and a more melodic approach than Miami Bass."
+      },
+      {
+        "name": "Tamborzão",
+        "description": "Adds Afro-Brazilian elements such as the atabaque sound into the Miami Bass kick drums."
+      },
+      {
+        "name": "Techno Bass",
+        "description": "Minimal, stripped-down with an emphasis on low-frequency bass partitions."
+      }
+    ]
+  },
+  {
+    "name": "Mobb Music",
+    "description": "San Francisco Bay Area production style building on slowed down Funk (often utilizing live elements).",
+    "children": []
+  },
+  {
+    "name": "Nerdcore Hip Hop",
+    "description": "Themes touch on such nerd mainstays as science, computers, and science fiction.",
+    "children": []
+  },
+  {
+    "name": "Nervous Music",
+    "description": "Dark, sinister and menacing sound, heavy sub-basses, simple melodies and slow, sparse and slamming drums.",
+    "children": []
+  },
+  {
+    "name": "Political Hip Hop",
+    "description": "Developed in the 1980s; features explicitly political lyrics and themes.",
+    "children": []
+  },
+  {
+    "name": "Pop Rap",
+    "description": "Fuses Hip Hop's rapping and production traits with Pop elements such as melodious vocals and light, catchy tunes.",
+    "children": [
+      {
+        "name": "Bop",
+        "description": "Grew out of the Chicago Drill scene in the early 2010s, characterized by autotuned vocals and upbeat synth melodies."
+      },
+      {
+        "name": "Futuristic Swag",
+        "description": "Playful, Snap-influenced and party-oriented."
+      }
+    ]
+  },
+  {
+    "name": "Ratchet Music",
+    "description": "Club-oriented Hip Hop pioneered by Mustard defined by a repeated synth melody and a sparse drum pattern often accompanied by a \"hey\" chant.",
+    "children": []
+  },
+  {
+    "name": "Snap",
+    "description": "Prominent 808 bass and finger snaps, with lyrics primarily focused on nightclub topics (such as sex, drugs, and alcohol).",
+    "children": []
+  },
+  {
+    "name": "Southern Hip Hop",
+    "description": "Hip Hop from artists based in the Southern region of the United States.",
+    "children": []
+  },
+  {
+    "name": "Trap",
+    "description": "Originated in Atlanta in the early 2000s; distinctive fast hi-hat sound and heavy bass at moderate tempos.",
+    "children": [
+      {
+        "name": "Detroit Trap",
+        "description": "Emerging in Michigan during the 2010s and incorporating upbeat 808 percussion derived from Trap music and dynamic, off-beat flows from rappers."
+      },
+      {
+        "name": "Drill",
+        "description": "Originated in Chicago in the early 2010s, broadly characterized by complex, energetic rhythms, coupled with street-conscious and often violent rapping."
+      },
+      {
+        "name": "Chicago Drill",
+        "description": "Bass-heavy, dense, and typically syncopated percussion, featuring ticking hi-hats and gunshot-like snare rolls, usually accompanied by menacing synth melodies and violent, gangsta lyricism."
+      },
+      {
+        "name": "Bop",
+        "description": "Grew out of the Chicago Drill scene in the early 2010s, characterized by autotuned vocals and upbeat synth melodies."
+      },
+      {
+        "name": "Jersey Drill",
+        "description": "Mixes Drill and Jersey Club production, characterized by an energetic sound and distinct syncopated rhythms."
+      },
+      {
+        "name": "Sample Drill",
+        "description": "UK Drill rhythms applied to more traditional Trap and Plugg percussion, using melodic and recognizable samples as the main compositional focus."
+      },
+      {
+        "name": "UK Drill",
+        "description": "Deep bass and complex rhythm which denotes a Grime influence in the production."
+      },
+      {
+        "name": "Futuristic Swag",
+        "description": "Playful, Snap-influenced and party-oriented."
+      },
+      {
+        "name": "No Melody",
+        "description": "Usage of minimalistic, repetitive midtempo drum patterns, and simple, prominent 808s."
+      },
+      {
+        "name": "Plugg",
+        "description": "Use of sparse and minimalistic drum and hi-hat patterns, subby 808s and heavy low end, piano samples, airy pads, and icy synths."
+      },
+      {
+        "name": "Dark Plugg",
+        "description": "Ominous, sinister synth pads and lead melodies, skittering hi-hats, and fast percussion and snare rolls."
+      },
+      {
+        "name": "PluggnB",
+        "description": "Emphasizes more melodic and layered synth leads, denser and faster drum programming, and a lesser reliance on the laid-back, minimalistic atmosphere of earlier Plugg styles."
+      },
+      {
+        "name": "Asian Rock",
+        "description": "Dense PluggnB percussion in combination with airy bells, synth plucks, and soaring synthetic guitar leads."
+      },
+      {
+        "name": "Rage",
+        "description": "Dense, buzzing synth work with repetitive chord progressions and melodic synth leads."
+      },
+      {
+        "name": "Rare Phonk",
+        "description": "Primarily features eclectic sampling and lush, jazzy beats, usually set to Trap rhythms with prominent influences of Memphis Rap."
+      },
+      {
+        "name": "Regalia",
+        "description": "Lush, sweeping string arrangements, dreamy piano passages, and other orchestral instrumentation set to cinematic Trap percussion."
+      },
+      {
+        "name": "Sigilkore",
+        "description": "Dark and hyperactive production, featuring rapping laced with layers of effects."
+      },
+      {
+        "name": "Trap latino",
+        "description": "Distinguished by its Reggaetón and Latin Rap roots, with smooth and moody production inspired by Alternative R&B and Contemporary R&B."
+      },
+      {
+        "name": "Trap Metal",
+        "description": "Features loud, distorted 808s and basslines, as well as aggressive vocals that are usually yelled or screamed."
+      },
+      {
+        "name": "Trap shaabi",
+        "description": "Combining Trap percussion and rhythms with major influences of Egyptian Shaabi, especially Mahraganat."
+      },
+      {
+        "name": "Trap Soul",
+        "description": "Mixes passionate vocals derived from Contemporary R&B with laid-back, nocturnal and atmospheric Trap production."
+      },
+      {
+        "name": "Tread",
+        "description": "High-tempo production, usually set around 160 to 190 BPM, icy synths, busy drum programming with distinctive 808 patterns, often implementing off-beat hi-hats in addition to trap's triplets and a fast style of lethargic rapping."
+      }
+    ]
+  },
+  {
+    "name": "Turntablism",
+    "description": "Manipulating and re-appropriating vinyl records using a turntable and DJ mixer in a hip hop context, developing from production techniques in the studio and on the stage.",
+    "children": []
+  },
+  {
+    "name": "UK Hip Hop",
+    "description": "Scene of the United Kingdom, influenced by American rap.",
+    "children": []
+  },
+  {
+    "name": "West Coast Hip Hop",
+    "description": "Artists who originate from the West Coast region of the United States.",
+    "children": []
+  }
+]

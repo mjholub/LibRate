@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Battle Record",
+    "description": "Compilations of sounds, samples, and beats pressed on vinyl records for use in DJ performances.",
+    "children": []
+  },
+  {
+    "name": "Binaural Beats",
+    "description": "Auditory illusions created when two different frequencies are played simultaneously in separate ears.",
+    "children": []
+  },
+  {
+    "name": "Broadband Noise",
+    "description": "Audio signals with energy distributed across a wide range of frequencies; usually split into \"colours\" of noise and often marketed for relaxation or as a sleep aid.",
+    "children": []
+  }
+]
+

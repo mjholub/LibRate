@@ -1,0 +1,139 @@
+[
+  {
+    "name": "Alt-Country",
+    "description": "Arose in the 1980s and 1990s, performed by artists with roots in Alternative Rock and Indie Rock who were disconnected from the mainstream Country industry.",
+    "children": [
+      {
+        "name": "Gothic Country",
+        "description": "Evokes the Southern Gothic literary genre through morbid lyrical themes and melancholic sounds that emphasize its American Folk Music and Post-Punk influences."
+      }
+    ]
+  },
+  {
+    "name": "Bluegrass",
+    "description": "Born in the Appalachian region of the United States during the late 1930s, characterized by fingerpicked banjo along with other traditional instruments.",
+    "children": [
+      {
+        "name": "Bluegrass Gospel",
+        "description": "Incorporates the religious topics and harmony vocals found in Country Gospel."
+      },
+      {
+        "name": "Progressive Bluegrass",
+        "description": "Mixing the sound and aesthetics of pure Bluegrass with a variety of influences outside of its Appalachian origins, including Jazz, Folk, Rock, and other forms of Country."
+      },
+      {
+        "name": "Jamgrass",
+        "description": "Emphasizes instrumental jamming and extended performances with many outside influences."
+      }
+    ]
+  },
+  {
+    "name": "Contemporary Country",
+    "description": "Incorporates both heavily Pop-influenced styles, and the more pop-averse movement of Neo-Traditionalist Country.",
+    "children": [
+      {
+        "name": "Neo-Traditionalist Country",
+        "description": "Emerged in the late 1980s as a reaction to the increased dominance of Country Pop, moving instead towards a Honky Tonk-rooted sound that centered the Singer-Songwriter."
+      }
+    ]
+  },
+  {
+    "name": "Country & Irish",
+    "description": "Developed in Ireland; combines North American Country with Irish Folk Music influences, often in the form of traditional Irish songs that have been adapted into country numbers.",
+    "children": []
+  },
+  {
+    "name": "Country Boogie",
+    "description": "Uptempo style built around the Boogie Woogie rhythm, with strong beats and prominent electric guitar leads, made popular in the 1940s.",
+    "children": []
+  },
+  {
+    "name": "Country Pop",
+    "description": "Combination of Country with Pop to appeal to a larger audience.",
+    "children": [
+      {
+        "name": "Bro-Country",
+        "description": "Originated in the 21st century and takes its cues from Hip Hop, Pop and Contemporary Country."
+      },
+      {
+        "name": "Countrypolitan",
+        "description": "Emphasizes Pop-oriented orchestration and songwriting while reducing the role of Country instrumentation and rhythms; often featuring lush string arrangements and group backing vocals."
+      },
+      {
+        "name": "Urban Cowboy",
+        "description": "Melds country and Pop (best described as 70s L.A. soft pop), and sometimes leans towards Disco."
+      }
+    ]
+  },
+  {
+    "name": "Honky Tonk",
+    "description": "Upbeat style that retains much of the common instrumentation of Traditional Country, as well as featuring prominent guitars (especially the steel guitar), strong backbeats and lyrics commonly about the working-class life.",
+    "children": [
+      {
+        "name": "Bakersfield Sound",
+        "description": "Country based heavily on electric instrumentation and a defined backbeat."
+      },
+      {
+        "name": "Truck Driving Country",
+        "description": "Derived from Honky Tonk, Country Rock and Bakersfield Sound; aimed at the truck driving community."
+      }
+    ]
+  },
+  {
+    "name": "Nashville Sound",
+    "description": "Production style characterized by smooth vocals over a relaxed ensemble of guitars and rhythm section, and variously incorporating elements from other styles of Country and Pop.",
+    "children": [
+      {
+        "name": "Countrypolitan",
+        "description": "Emphasizes Pop-oriented orchestration and songwriting while reducing the role of Country instrumentation and rhythms; often featuring lush string arrangements and group backing vocals."
+      }
+    ]
+  },
+  {
+    "name": "Progressive Country",
+    "description": "Blend of traditionalist Country styles with elements of Rock, Contemporary Folk, and other countercultural genres; characterized by realistic, self-reflective lyrics and non-traditional songwriting and production elements.",
+    "children": [
+      {
+        "name": "Outlaw Country",
+        "description": "Rock-influenced reaction to mainstream Country Pop trends, featuring rebellious personas, darker lyrics, and Western-inspired outlaw imagery."
+      }
+    ]
+  },
+  {
+    "name": "Red Dirt",
+    "description": "Oklahoman and Texan acts descended from the Stillwater, Oklahoma independent Country scene of the 1980s.",
+    "children": []
+  },
+  {
+    "name": "Traditional Country",
+    "description": "Closely aligned with American Folk Music and Blues roots, from country's inception in Appalachia and the American South until the popularity of Honky Tonk and Country Pop in the 1950s.",
+    "children": [
+      {
+        "name": "Close Harmony",
+        "description": "Traditional two-part harmony singing performed mostly by brothers."
+      },
+      {
+        "name": "Country Gospel",
+        "description": "Traditional Country that heavily incorporates Gospel."
+      },
+      {
+        "name": "Bluegrass Gospel",
+        "description": "Incorporates the religious topics and harmony vocals found in Country Gospel."
+      },
+      {
+        "name": "Country Yodeling",
+        "description": "Vocal technique of Yodeling, brought to the United States by German settlers, sung over the instrumentation of Traditional Country."
+      }
+    ]
+  },
+  {
+    "name": "Western",
+    "description": "Reflects and portrays the lifestyles of cowboys and other settlers of the Western United States through both Traditional Folk Music and popular song.",
+    "children": []
+  },
+  {
+    "name": "Western Swing",
+    "description": "Blend of Traditional Country string instrumentation with the driving rhythms of Jazz and regional dance traditions, often prominently featuring fiddle and steel guitar.",
+    "children": []
+  }
+]

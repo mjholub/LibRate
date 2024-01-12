@@ -26,7 +26,4 @@ fi
 if [ -z $(pgrep postgres) ]; then
 	pg_ctl -D /var/lib/postgresql/data -o "-c listen_addresses='*'" -l /var/lib/postgresql/logfile start
 fi
-psql -U postgres -d librate -c "CREATE EXTENSION IF NOT EXISTS age"
-psql -U postgres -d librate -c "LOAD 'age'"
-psql -U postgres -d librate -c "SET search_path = ag_catalog, "$user", public;"
 tail -f /dev/null

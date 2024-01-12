@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
+	"runtime/trace"
 	"strconv"
 	"time"
 
@@ -23,6 +25,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
+
+	_ "net/http/pprof"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -66,6 +70,25 @@ func main() {
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", flags.ConfigFile, err)
 		}
+	}
+
+	if conf.LibrateEnv == "development" {
+		go func() {
+			log.Info().Msg("Starting pprof server")
+			err = http.ListenAndServe("localhost:6060", nil)
+			if err != nil {
+				log.Panic().Err(err).Msg("Failed to start pprof server")
+			}
+			f, err := os.Create("trace.out")
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+			if err := trace.Start(f); err != nil {
+				log.Panic().Err(err).Msg("Failed to start trace")
+			}
+			defer trace.Stop()
+		}()
 	}
 
 	log = initLogging(&conf.Logging)

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Cocktail Nation",
+    "description": "Decidedly ironic take on Lounge that emerged in the early 1990s.",
+    "children": []
+  },
+  {
+    "name": "Exotica",
+    "description": "Emerged in the early 1950s as the United States developed a fascination with Polynesia and the South Pacific, incorporating traditional and rhythms from these cultures into a Western Pop context.",
+    "children": []
+  },
+  {
+    "name": "Light Music",
+    "description": "Mainly British instrumentals designed to appeal to a wider audience.",
+    "children": []
+  },
+  {
+    "name": "Lounge",
+    "description": "Emerged in the United States during the 1950s, emphasizing a chilled-out atmosphere with light instrumentation and sometimes vocals indebted to Vocal Jazz.",
+    "children": []
+  },
+  {
+    "name": "Pops Orchestra",
+    "description": "Orchestra that plays covers of popular songs as well as famous classical compositions.",
+    "children": []
+  },
+  {
+    "name": "Space Age Pop",
+    "description": "Inspired by the excitement and optimism of the Space Age during the 1950s and 1960s, frequently experimenting with futuristic sounds made possible by contemporary technology.",
+    "children": []
+  }
+]

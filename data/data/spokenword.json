@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Fairy Tales",
+    "description": "Recorded for children with or without background music.",
+    "children": []
+  },
+  {
+    "name": "Folktales",
+    "description": "Traditional stories passed down throughout many generations.",
+    "children": []
+  },
+  {
+    "name": "Guided Meditation",
+    "description": "Practice wherein an instructor guides the listener through the process of meditation throughout a session.",
+    "children": []
+  },
+  {
+    "name": "Interview",
+    "description": "Recording of a specific person/s during a formal conversation arranged for historical archiving or media broadcast, often in a question and answer format in which the interviewee shares their views and personal anecdotes with the audience.",
+    "children": []
+  },
+  {
+    "name": "Lectures",
+    "description": "Oral presentation with the intention to educate the audience on a specific topic.",
+    "children": []
+  },
+  {
+    "name": "Poetry",
+    "description": "Encompasses many forms of literature that use style and rhythm to evoke ideas and emotions further than the prosaic meaning of the literature itself.",
+    "children": [
+      {
+        "name": "Beat Poetry",
+        "description": "Stream-of-consciousness Poetry originating with the Beats in the 1950s."
+      },
+      {
+        "name": "Cowboy Poetry",
+        "description": "Descended from the oral traditions of cowboys and ranchers, written with traditional use of rhyme and meter, using humor and slang, and primarily concerning the cowboy profession, lifestyle, and legacy."
+      },
+      {
+        "name": "Dub Poetry",
+        "description": "Performance of Poetry over Reggae and Dub rhythms, which originated in Jamaica in the 1970s."
+      },
+      {
+        "name": "Jazz Poetry",
+        "description": "Emerged in the 1920s, incorporating the style and rhythms of Jazz as both art forms spread throughout African-American communities in the United States."
+      },
+      {
+        "name": "Slam Poetry",
+        "description": "Developed in the US during the late 1980s and early 1990s with the growing popularity of poetry slams, a form of poetry competition in which competing performers recite poems in front of a crowd."
+      },
+      {
+        "name": "Sound Poetry",
+        "description": "Emphasis is placed upon phonetics and the sounds of syllables rather than the meaning of the words themselves."
+      }
+    ]
+  },
+  {
+    "name": "Radio Drama",
+    "description": "Narrative storytelling performed by voice actors and produced for radio broadcasting or published on audio media such as tapes or CDs.",
+    "children": []
+  },
+  {
+    "name": "Speeches",
+    "description": "Rhetorical acts performed publicly wherein a speaker typically monologues around a particular topic.",
+    "children": []
+  },
+  {
+    "name": "Stand-Up Comedy",
+    "description": "Comedy where the performer speaks directly to their intended audience, with origins beginning in the late 19th century.",
+    "children": []
+  }
+]

@@ -1,0 +1,440 @@
+[
+  {
+    "name": "Art Punk",
+    "description": "Combines the stripped-down aggression of rudimentary Punk Rock with frequent experimentation ranging from instrumental interplay, noise, dissonance, and/or influences from other genres such as Jazz or Funk.",
+    "children": [
+      {
+        "name": "Egg Punk",
+        "description": "Originated in the early 2010s; features lo-fi production, eccentric lyrics, quick tempos, nasally vocals, and cheap keyboard sounds."
+      }
+    ]
+  },
+  {
+    "name": "Cowpunk",
+    "description": "Mixes together Country Rock, Rockabilly, and Contemporary Folk with the familiar punk sound.",
+    "children": []
+  },
+  {
+    "name": "Digital Hardcore",
+    "description": "High-tempo fusion of Hardcore Punk and Electronic, combining harsh vocals and electric guitars of the former with electronic instruments.",
+    "children": []
+  },
+  {
+    "name": "Emo",
+    "description": "Focuses on emotional lyrics, expressive vocals, melodic songwriting, and dynamic song structures.",
+    "children": [
+      {
+        "name": "Emocore",
+        "description": "Emerged primarily in Washington D.C. in 1985 as a reaction to the stagnant Hardcore Punk scene, with a less aggressive style that was more melodic and often featured emotional, introspective lyrics."
+      },
+      {
+        "name": "Emo-Pop",
+        "description": "Mainstream derivative of Emo, puts more emphasis on the poppy sensibilities of Alternative Rock and Pop Punk."
+      },
+      {
+        "name": "Midwest Emo",
+        "description": "Features the emotional and melodic style of Emo that usually alternates between loud and soft dynamics; off-key, strained vocals with little screaming; and arpeggiated guitar parts."
+      },
+      {
+        "name": "Screamo",
+        "description": "Began in the early 1990s, merging the emotional lyrics and melodicism of Emo with the intensity, aggression and speed of Hardcore Punk."
+      },
+      {
+        "name": "Emoviolence",
+        "description": "Volatile, aggressive sound of Screamo with slight Powerviolence undertones."
+      }
+    ]
+  },
+  {
+    "name": "Folk Punk",
+    "description": "Influenced by various forms of Folk, including Traditional Folk Music as well as Contemporary Folk and Folk Rock.",
+    "children": [
+      {
+        "name": "Celtic Punk",
+        "description": "Infuses the sounds of Celtic Folk Music into Punk Rock."
+      },
+      {
+        "name": "Gypsy Punk",
+        "description": "Strong Eastern European influences, especially various kinds of Romani Folk Music and Balkan Folk Music as well as Klezmer."
+      }
+    ]
+  },
+  {
+    "name": "Hardcore [Punk]",
+    "description": "Broad genre which originated in the late 1970s; early work featured simple songs that took the punk formula and produced its most extreme result.",
+    "children": [
+      {
+        "name": "Beatdown Hardcore",
+        "description": "Heavy, urban inspired and breakdown oriented with strong relations to Metalcore."
+      },
+      {
+        "name": "Easycore",
+        "description": "Combines the pop choruses, high-pitched vocals, and playful nature of Pop Punk with heavy, metallic breakdowns and occasional unclean vocals akin to Metalcore and Post-Hardcore."
+      },
+      {
+        "name": "Electronicore",
+        "description": "Infuses melodic aspects of Metalcore and Post-Hardcore with various styles of Electronic Dance Music."
+      },
+      {
+        "name": "Grindcore",
+        "description": "Features shortened song structures and a diverse palette of intense techniques such as blast and skank beats, tremolo and down-picking, and various harsh vocal styles."
+      },
+      {
+        "name": "Cybergrind",
+        "description": "Standard conventions of Grindcore taken to an even more discordant and rapid-fire extreme, with added Electronic dimensions of computer-generated noises and drum machines."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Goregrind",
+        "description": "Death Metal-influenced riffs with rhythms ranging from very fast to slower mid-tempos correlated with pitch-shifted vocals, sloppy playing and production, and gore-themed aesthetics."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Pornogrind",
+        "description": "Groovy, mid-tempo style known for its exaggerated bouncy rhythm and common pornographic themes."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "Hardcore Punk",
+        "description": "Emerged in the late 1970s, often featuring extensive use of yelling or screaming, a stripped-down production style, and very short songs."
+      },
+      {
+        "name": "Burning Spirits",
+        "description": "Emphasis on delivering a very energetic and triumphant sound with flashy and soaring Metal solos, \"melodramatic\" or \"uplifting\" chord progressions, and singalong, over the top, harsh vocals."
+      },
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Crust Punk",
+        "description": "Metallic form of Hardcore Punk that grew out of the Anarcho-Punk movement in the mid-1980s."
+      },
+      {
+        "name": "Blackened Crust",
+        "description": "Borrows heavily from Black Metal production, blast beats, tremolo guitar, and vocals, while retaining the core Crust Punk sound, lyrical themes, and aesthetic."
+      },
+      {
+        "name": "Neocrust",
+        "description": "Melodic, dark, and atmospheric style that often incorporates influences from Sludge Metal, Post-Metal, Black Metal, and Screamo."
+      },
+      {
+        "name": "Stenchcore",
+        "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal."
+      },
+      {
+        "name": "D-Beat",
+        "description": "Early 1980s Hardcore Punk featuring Metal influences and a distinct drum style also known as the D-beat."
+      },
+      {
+        "name": "Japanese Hardcore",
+        "description": "Bands from Japan, performing styles such as Burning Spirits, Crust Punk, and Thrashcore."
+      },
+      {
+        "name": "Melodic Hardcore",
+        "description": "Emerged in the USA in the early to mid-1980s, placing emphasis on melodic vocals and technical guitar riffs rather than raw aggression."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "New York Hardcore",
+        "description": "Hardcore Punk bands from New York City from the 1980s and onwards."
+      },
+      {
+        "name": "Powerviolence",
+        "description": "Originated in the late 1980s/early 1990s; takes the blueprints of Thrashcore and Grindcore, with the addition of wildly fluctuating tempos within a single song."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Street Punk",
+        "description": "Driven by Oi! style group vocals, catchy melodies, and aggressive songwriting akin to Punk Rock of the 1970s fused with Hardcore Punk of the 1980s."
+      },
+      {
+        "name": "Thrashcore",
+        "description": "Fast tempos, brief song structures, and the occasional use of blast beats."
+      },
+      {
+        "name": "UK82",
+        "description": "UK scene that occurred during the early 1980s, consisting of developing hardcore styles such as early Street Punk and D-Beat bands."
+      },
+      {
+        "name": "Metalcore",
+        "description": "Drop-tuned guitar riffs, constant double kick drumming with varying tempos and techniques, breakdown sections, and screaming or shouting vocals."
+      },
+      {
+        "name": "Deathcore",
+        "description": "Fusion genre integrating elements from Death Metal, using harsh guttural vocals, blast beats, and palm-muted or tremolo-picked riffs in conjunction with breakdowns."
+      },
+      {
+        "name": "Mathcore",
+        "description": "Rhythmically complex, features unconventional time signatures, syncopated and dissonant riffs and erratic metric shifts."
+      },
+      {
+        "name": "Melodic Metalcore",
+        "description": "Originated in the late 1990s when some metalcore bands infused elements of Melodic Death Metal into their sound to create a more metallic and melodic style."
+      },
+      {
+        "name": "Nintendocore",
+        "description": "Fuses Post-Hardcore and Metalcore influences with Chiptune instrumentation."
+      },
+      {
+        "name": "Noisecore",
+        "description": "Short blasts of riff-less, Noise-driven music accompanied with chaotic drums and screamed vocals."
+      },
+      {
+        "name": "Post-Hardcore",
+        "description": "Emerged in the mid-1980s from Hardcore Punk that expanded on its aggression and dynamics through longer and more complex arrangements."
+      },
+      {
+        "name": "Emocore",
+        "description": "Emerged primarily in Washington D.C. in 1985 as a reaction to the stagnant Hardcore Punk scene, with a less aggressive style that was more melodic and often featured emotional, introspective lyrics."
+      },
+      {
+        "name": "Screamo",
+        "description": "Began in the early 1990s, merging the emotional lyrics and melodicism of Emo with the intensity, aggression and speed of Hardcore Punk."
+      },
+      {
+        "name": "Emoviolence",
+        "description": "Volatile, aggressive sound of Screamo with slight Powerviolence undertones."
+      },
+      {
+        "name": "Swancore",
+        "description": "High-register clean vocals and technical instrumentation drawn from Math Rock and Progressive Rock."
+      },
+      {
+        "name": "Sasscore",
+        "description": "Emerged in the early 2000s; characterized by sassy vocal styles and chaotic, erratic instrumentals."
+      }
+    ]
+  },
+  {
+    "name": "Mod Revival",
+    "description": "Late 1970s and early 1980s revival of Mod fashion and music, featuring influence from the nascent Punk Rock scene.",
+    "children": []
+  },
+  {
+    "name": "Post-Punk",
+    "description": "Emerged alongside the initial Punk Rock explosion in the mid-to-late 1970s, putting a greater emphasis on frequent experimentation, atmosphere, generally stripped-back instrumentation and, at times, angular-sounding guitars, throbbing bass lines, and interlocked drumming.",
+    "children": [
+      {
+        "name": "Coldwave",
+        "description": "Originated in Europe in the late 1970s and early 1980s and is known for its generally dark, gloomy atmosphere and heavy reliance on synthesizers."
+      },
+      {
+        "name": "Dance-Punk",
+        "description": "Mixes the energy of Punk Rock with the danceable rhythms of Funk and Disco."
+      },
+      {
+        "name": "Gothic Rock",
+        "description": "Dark atmosphere and gothic imagery, featuring synthesizers and moderate use of chorus and echo effects."
+      },
+      {
+        "name": "Deathrock",
+        "description": "More Punk-oriented offshoot of Gothic Rock that emphasizes energy and an effect-laden sound over pure atmosphere."
+      },
+      {
+        "name": "No Wave",
+        "description": "Emerged in New York City during the late 1970s; took the ethos of Punk Rock but discarded melody and catchiness, including instead extreme noise, distortion, feedback, angular rhythms, stream-of-consciousness lyrics, and more."
+      },
+      {
+        "name": "Post-Punk Revival",
+        "description": "Incorporating the sounds and aesthetics of Post-Punk into Indie Rock, with jagged guitarwork, a dominant and danceable rhythm section, clean production, and poppy song structures."
+      }
+    ]
+  },
+  {
+    "name": "Proto-Punk",
+    "description": "Used to describe what influenced or in some way resembled Punk Rock before that genre's commercial breakthrough in 1976.",
+    "children": []
+  },
+  {
+    "name": "Punk Blues",
+    "description": "Fusion of the instrumentation and scales of Blues Rock with Punk.",
+    "children": []
+  },
+  {
+    "name": "Punk Rock",
+    "description": "Fast tempos, loud and distorted riffs, simple songs, frequent use of power chords, and shouted vocals, originating in the mid-1970s in response to commercial, sentimental, and complex Rock.",
+    "children": [
+      {
+        "name": "Anarcho-Punk",
+        "description": "In part a reaction to the commercial breakthrough of Punk Rock in the late 1970s, with some artists adopting an intentionally rougher and sloppier sound combined with lyrical themes of anarchism and related issues that gave the genre its name."
+      },
+      {
+        "name": "Celtic Punk",
+        "description": "Infuses the sounds of Celtic Folk Music into Punk Rock."
+      },
+      {
+        "name": "Deathrock",
+        "description": "More Punk-oriented offshoot of Gothic Rock that emphasizes energy and an effect-laden sound over pure atmosphere."
+      },
+      {
+        "name": "Deutschpunk",
+        "description": "Partly a reaction to the commercialization of the German movement Neue Deutsche Welle; characterized by extreme speed, consciously basic songwriting, crude musicianship, and radical leftism."
+      },
+      {
+        "name": "Garage Punk",
+        "description": "Combination of the raw fuzztones of the original Garage Rock bands of the 1960s with the tempo and attitude of Punk Rock."
+      },
+      {
+        "name": "Glam Punk",
+        "description": "Contrasts a snotty, nihilistic, and combative attitude of punk with theatrics and flamboyance."
+      },
+      {
+        "name": "Hardcore Punk",
+        "description": "Emerged in the late 1970s, often featuring extensive use of yelling or screaming, a stripped-down production style, and very short songs."
+      },
+      {
+        "name": "Burning Spirits",
+        "description": "Emphasis on delivering a very energetic and triumphant sound with flashy and soaring Metal solos, \"melodramatic\" or \"uplifting\" chord progressions, and singalong, over the top, harsh vocals."
+      },
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Crust Punk",
+        "description": "Metallic form of Hardcore Punk that grew out of the Anarcho-Punk movement in the mid-1980s."
+      },
+      {
+        "name": "Blackened Crust",
+        "description": "Borrows heavily from Black Metal production, blast beats, tremolo guitar, and vocals, while retaining the core Crust Punk sound, lyrical themes, and aesthetic."
+      },
+      {
+        "name": "Neocrust",
+        "description": "Melodic, dark, and atmospheric style that often incorporates influences from Sludge Metal, Post-Metal, Black Metal, and Screamo."
+      },
+      {
+        "name": "Stenchcore",
+        "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal."
+      },
+      {
+        "name": "D-Beat",
+        "description": "Early 1980s Hardcore Punk featuring Metal influences and a distinct drum style also known as the D-beat."
+      },
+      {
+        "name": "Japanese Hardcore",
+        "description": "Bands from Japan, performing styles such as Burning Spirits, Crust Punk, and Thrashcore."
+      },
+      {
+        "name": "Melodic Hardcore",
+        "description": "Emerged in the USA in the early to mid-1980s, placing emphasis on melodic vocals and technical guitar riffs rather than raw aggression."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "New York Hardcore",
+        "description": "Hardcore Punk bands from New York City from the 1980s and onwards."
+      },
+      {
+        "name": "Powerviolence",
+        "description": "Originated in the late 1980s/early 1990s; takes the blueprints of Thrashcore and Grindcore, with the addition of wildly fluctuating tempos within a single song."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Street Punk",
+        "description": "Driven by Oi! style group vocals, catchy melodies, and aggressive songwriting akin to Punk Rock of the 1970s fused with Hardcore Punk of the 1980s."
+      },
+      {
+        "name": "Thrashcore",
+        "description": "Fast tempos, brief song structures, and the occasional use of blast beats."
+      },
+      {
+        "name": "UK82",
+        "description": "UK scene that occurred during the early 1980s, consisting of developing hardcore styles such as early Street Punk and D-Beat bands."
+      },
+      {
+        "name": "Horror Punk",
+        "description": "Horror movie-themed genre of Punk Rock."
+      },
+      {
+        "name": "Könsrock",
+        "description": "Inspired by Post-Punk but with a more bizarre atmosphere with unusual or comic vocal techniques and a lyrical focus on the offensive and scatological."
+      },
+      {
+        "name": "Oi!",
+        "description": "Rejection to burgeoning Art Punk; a much simpler and more melodic style."
+      },
+      {
+        "name": "Pop Punk",
+        "description": "Blends the loud, fast-paced, and sometimes sloppy sound of Punk Rock with the catchy sound and songwriting of Pop."
+      },
+      {
+        "name": "Easycore",
+        "description": "Combines the pop choruses, high-pitched vocals, and playful nature of Pop Punk with heavy, metallic breakdowns and occasional unclean vocals akin to Metalcore and Post-Hardcore."
+      },
+      {
+        "name": "Seishun Punk",
+        "description": "Short-lived Japanese style popular in the early 2000s, characterized by a raw and abrasive style, Folk-inspired songwriting, and youth-oriented straightforward lyrics."
+      },
+      {
+        "name": "Psychobilly",
+        "description": "Cross-pollination of Punk Rock and Rockabilly."
+      },
+      {
+        "name": "Queercore",
+        "description": "Movement mainly distinguished by its lyrical content expressing the viewpoints of the LGBTQ+ community, as well as promoting queer pride and unity."
+      },
+      {
+        "name": "Riot Grrrl",
+        "description": "Underground feminist Punk Rock movement and related scene(s) which emerged in the United States in the early 1990s."
+      },
+      {
+        "name": "Ska Punk",
+        "description": "Characterized by up-tempo skank rhythms, catchy horn sections, and spirited guitar work; delivered with a fun and rebellious energy."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Skate Punk",
+        "description": "Combines the speed of Melodic Hardcore with the catchiness of Pop Punk, finding a middle ground between the two."
+      },
+      {
+        "name": "Surf Punk",
+        "description": "Punk Rock that incorporates elements of Surf Rock."
+      },
+      {
+        "name": "Vikingarock",
+        "description": "Incorporates influences from Nordic Folk Music and the imagery of Viking romanticism and Norse mythology."
+      }
+    ]
+  },
+  {
+    "name": "Synth Punk",
+    "description": "Appropriates the harsh elements of Punk Rock but replaces the predominance of guitars with synthesizers and drum machines.",
+    "children": []
+  }
+]

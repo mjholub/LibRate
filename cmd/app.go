@@ -57,7 +57,7 @@ func SetupMiddlewares(conf *cfg.Config,
 	return []fiber.Handler{
 		idempotency.New(idempotency.Config{
 			Next: func(c *fiber.Ctx) bool {
-				return lo.Contains([]string{"/api/authenticate", "/api/media/random"}, c.Path())
+				return lo.Contains([]string{"/api/authenticate", "/api/media/random", "/api/media/genres"}, c.Path())
 			},
 		}),
 		security.SetupHelmet(conf),

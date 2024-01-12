@@ -4,12 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type (
@@ -48,14 +53,26 @@ type (
 
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
-		ID          int16    `json:"id" db:"id,pk,autoinc"`
-		Kind        string   `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
-		Name        string   `json:"name" db:"name"`
-		DescShort   string   `json:"desc_short" db:"desc_short"`
-		DescLong    string   `json:"desc_long" db:"desc_long"`
-		Keywords    []string `json:"keywords" db:"keywords"`
-		ParentGenre *Genre   `json:"parent_genre omitempty" db:"parent"`
-		Children    []Genre  `json:"children omitempty" db:"children"`
+		ID          int64              `json:"id" db:"id,pk,autoinc"`
+		Kinds       pq.StringArray     `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
+		Name        string             `json:"name" db:"name"`
+		Description []GenreDescription `json:"description,omitempty" db:"-"`
+		//	DescLong    string   `json:"desc_long" db:"desc_long"`
+		Characteristics []string `json:"keywords" db:"-"`
+		ParentGenreID   *int64   `json:"parent_genre omitempty" db:"parent,omitempty"`
+		Children        []int64  `json:"children,omitempty" db:"children,omitempty"`
+	}
+
+	GenreCharacteristics struct {
+		ID         int64          `json:"id" db:"id,pk,autoinc"`
+		Name       string         `json:"name" db:"name"`
+		Descripion sql.NullString `json:"description,omitempty" db:"description"`
+	}
+
+	GenreDescription struct {
+		GenreID     int64  `json:"genre_id" db:"genre_id"`
+		Language    string `json:"language" db:"language"`
+		Description string `json:"description" db:"description"`
 	}
 
 	MediaStorage struct {
@@ -172,51 +189,66 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string) ([]Genre, er
 }
 
 // TODO: add multilingual description support
-func (ms *MediaStorage) GetGenre(ctx context.Context, kind, name string) (genre *Genre, err error) {
+func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (genre *Genre, err error) {
+	title := cases.Title(language.AmericanEnglish)
+	name = title.String(strings.ReplaceAll(name, "_", " "))
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		switch kind {
-		case "music":
-			_, err := ms.db.ExecContext(ctx, `
-			SET search_path = ag_catalog, "$user", public;
-			`)
-			if err != nil {
-				return nil, fmt.Errorf("error setting search path: %w", err)
-			}
-			stmt, err := ms.db.PreparexContext(ctx, `
-				SELECT * FROM cypher('music_genres', $$
-					MATCH (g:Genre {name: $1}) RETURN g')	
-				$$) as (g agtype)
-				`)
-			if err != nil {
-				return nil, fmt.Errorf("error preparing statement: %w", err)
-			}
-			defer stmt.Close()
 
-			var genre Genre
-			err = stmt.SelectContext(ctx, &genre, name)
-			if err != nil {
-				return nil, fmt.Errorf("error executing statement: %w", err)
-			}
-			return &genre, nil
-		default:
-			stmt, err := ms.db.PreparexContext(ctx, `
-				SELECT * FROM media.genres
-				WHERE kind = $1 AND name = $2
-				`)
-			if err != nil {
-				return nil, fmt.Errorf("error preparing statement: %w", err)
-			}
-			err = stmt.GetContext(ctx, &genre, kind, name)
-
-			if err != nil {
-				return nil, fmt.Errorf("error selecting rows for kind %s and name %s: %v", kind, name, err)
-			}
-
-			return genre, nil
+		tx, err := ms.newDB.Begin(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error beginning transaction: %v", err)
 		}
+		defer tx.Rollback(ctx)
+
+		genre := Genre{
+			Kinds: pq.StringArray{kind},
+		}
+		rows, err := ms.newDB.Query(ctx, `
+			SELECT name, parent, children FROM media.genres WHERE $1 = ANY(kinds) AND name = $2`,
+			kind, name)
+		ms.Log.Debug().Msgf("query: %v", rows)
+		if err != nil {
+			return nil, fmt.Errorf("error querying genre rows: %v", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			if err = pgxscan.ScanRow(&genre, rows); err != nil {
+				return nil, fmt.Errorf("error scanning row: %v", err)
+			}
+		}
+		dc, err := ms.newDB.Acquire(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error acquiring connection: %v", err)
+		}
+		defer dc.Release()
+
+		var description string
+		err = dc.QueryRow(ctx, `
+			SELECT description FROM media.genre_descriptions	
+			WHERE genre_id = (SELECT id FROM media.genres WHERE $1 = ANY(kinds) AND name = $2) 
+			AND language = $3
+					`, kind, name, lang).Scan(&description)
+		if err != nil {
+			return nil, fmt.Errorf("error querying rows for description: %v", err)
+		}
+
+		genre.Description = []GenreDescription{
+			{
+				Language:    lang,
+				Description: description,
+			},
+		}
+
+		ms.Log.Debug().Msgf("genre: %v", genre)
+
+		if err := rows.Err(); err != nil {
+			return nil, fmt.Errorf("error iterating rows: %v", err)
+		}
+		return &genre, nil
 	}
 }
 
