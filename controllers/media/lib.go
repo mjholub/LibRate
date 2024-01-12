@@ -101,19 +101,27 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 
 func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	genreKind := c.Params("kind")
+	namesOnly := c.QueryBool("names_only", true)
 	possible := []string{"film", "tv", "music", "book", "game"}
 	if !lo.Contains(possible, genreKind) {
 		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
 	}
+	type requestBody struct {
+		Columns []string `json:"columns"`
+	}
+	var rb requestBody
+	if err := c.BodyParser(&rb); err != nil {
+		return handleInternalError(mc.storage.Log, c, "error parsing request body", err)
+	}
 
-	if c.QueryBool("names_only", true) {
-		genreNames, err := mc.storage.GetGenreNames(c.Context(), genreKind)
+	if namesOnly {
+		genreNames, err := mc.storage.GetGenres(c.Context(), genreKind, c.QueryBool("all", false), "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
 		return h.ResData(c, fiber.StatusOK, "success", genreNames)
 	}
-	genres, err := mc.storage.GetGenres(c.Context(), genreKind)
+	genres, err := mc.storage.GetGenres(c.Context(), genreKind, c.QueryBool("all", false), rb.Columns...)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}
