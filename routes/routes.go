@@ -147,7 +147,8 @@ func setupMedia(
 	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
 	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
 	media.Get("/genres/:kind", timeout.NewWithContext(mediaCon.GetGenres, 30*time.Second))
-	media.Get("/genres/:kind/:genre", timeout.NewWithContext(mediaCon.GetGenre, 30*time.Second))
+	// NOTE: singular to get a single genre, plural for more
+	media.Get("/genre/:kind/:genre", timeout.NewWithContext(mediaCon.GetGenre, 30*time.Second))
 }
 
 func setupStatic(app *fiber.App) error {

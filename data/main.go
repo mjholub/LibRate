@@ -26,13 +26,13 @@ func main() {
 	for _, file := range jsonFiles {
 		file = strings.Split(file, ".")[0]
 		base := strings.Split(file, "/")[1]
-		title := strings.Title(base)
+		title := strings.ReplaceAll(strings.Title(base), "'", "''")
 
 		// Main genre query
 		mainGenreQuery := fmt.Sprintf(`
 			INSERT INTO media.genres (name, kinds)
 			VALUES ('%s', ARRAY['music'])
-			ON CONFLICT DO NOTHING;`, title)
+			ON CONFLICT DO NOTHING;`, strings.ReplaceAll(title, "'", "''"))
 
 		queries = append(queries, mainGenreQuery)
 
@@ -49,6 +49,8 @@ func main() {
 
 		// Process genres and subgenres
 		for _, g := range genres {
+			g.Name = strings.ReplaceAll(g.Name, "'", "''")
+			g.Description = strings.ReplaceAll(g.Description, "'", "''")
 			// Secondary genre query
 			secondaryGenreQuery := fmt.Sprintf(`
 				INSERT INTO media.genres (name, kinds, parent)
@@ -66,6 +68,8 @@ func main() {
 
 			// Subgenres
 			for _, subgenre := range g.Subgenres {
+				subgenre.Name = strings.ReplaceAll(subgenre.Name, "'", "''")
+				subgenre.Description = strings.ReplaceAll(subgenre.Description, "'", "''")
 				subgenreQuery := fmt.Sprintf(`
 					INSERT INTO media.genres (name, kinds, parent)
 					VALUES ('%s', ARRAY['music'], (SELECT id FROM media.genres WHERE name = '%s'))
