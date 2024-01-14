@@ -2,11 +2,13 @@
 	import axios from 'axios';
 	import { PlusIcon, XIcon } from 'svelte-feather-icons';
 	import type { Album } from '$lib/types/music';
-	import { lookupGenre } from '$lib/types/media';
 	import { getMaxFileSize } from '$stores/form/upload';
+	import { genreStore } from '$stores/media/genre';
 	import { onMount, onDestroy } from 'svelte';
 	import { openFilePicker } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
+	// @ts-ignore
+	import Tags from 'svelte-tags-input';
 	import AddTrack from './AddTrack.svelte';
 
 	export let nickname: string;
@@ -14,7 +16,7 @@
 	let maxFileSizeString: string;
 	let imagePaths: string[] = [];
 	let errorMessages: CustomHttpError[] = [];
-	let genreLinks: string[] = [];
+	let genreNames: string[] = [];
 	let isUploading: boolean = false;
 	let imageBase64 = '';
 
@@ -58,6 +60,30 @@
 	};
 
 	onMount(async () => {
+		try {
+			if (localStorage.getItem('genreNames')) {
+				console.debug('getting genre names from local storage');
+				genreNames = JSON.parse(localStorage.getItem('genreNames') || '') || [];
+				genreNames = [...genreNames];
+				if (genreNames.length === 0) {
+					console.debug('genre names array is empty, getting genre names from API endpoint');
+					genreNames = await genreStore.getGenreNames('music', false);
+					genreNames = [...genreNames];
+					localStorage.setItem('genreNames', JSON.stringify(genreNames));
+				}
+			} else {
+				console.debug('getting genre names from API endpoint');
+				genreNames = await genreStore.getGenreNames('music', false);
+				genreNames = [...genreNames];
+				localStorage.setItem('genreNames', JSON.stringify(genreNames));
+			}
+		} catch (error) {
+			console.error(error);
+			errorMessages.push({
+				message: 'Error getting genre links',
+				status: 500
+			});
+		}
 		maxFileSize = await getMaxFileSize();
 		if (shouldResetAlbum()) {
 			localStorage.removeItem('album');
@@ -102,34 +128,11 @@
 		isUploading = false;
 	});
 
-	// call lookupGenre to check if genre exists in db
-	// then split the genres into an array of links to each genre's page
-	// If a genre is found, album's genres are updated with the genre's info
-	const listGenres = async (genreNames: string[]) => {
-		let genreLinks: string[] = [];
-		genreNames.forEach(async (genreName) => {
-			const genre = await lookupGenre(genreName);
-			if (genre) {
-				album.genres?.push(genre);
-				album.genres = [...(album.genres || [])];
-				genreLinks.push(`<a href="/genre/${genre.id}">${genre.name}</a>`);
-				genreLinks = [...genreLinks];
-			} else {
-				errorMessages.push({
-					message: `Genre ${genreName} not found`,
-					status: 404
-				});
-				errorMessages = [...errorMessages];
-			}
-		});
-		return genreLinks;
-	};
-
 	$: {
 		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
 		imagePaths = album.image_paths || [];
 		album.genres = album.genres || [];
-		genreLinks = [];
+		genreNames = [];
 		isUploading = imagePaths.length !== 0;
 	}
 
@@ -242,25 +245,50 @@
 		});
 	};
 
-	const removeGenre = (index: number) => {
-		if (album.genres) {
-			album.genres.splice(index, 1);
-		}
-	};
-
-	const handleGenreAdd = async (e: Event) => {
-		e.preventDefault();
-		if (genres) {
-			const genreNames = genres.split(',');
-			await listGenres(genreNames);
-		}
-	};
-
 	const handleSubmit = async (e: Event) => {
 		e.preventDefault();
 	};
 
-	let genres: string = '';
+	const genreLinkFromName = (genreName: string): string => {
+		const genreURI = genreName.toLowerCase().replace(' ', '-');
+		const genreLink = window.location.origin + '/genres/music/' + genreURI;
+		return genreLink;
+	};
+
+	const openGenreLink = (genreName: string) => window.open(genreLinkFromName(genreName), '_blank');
+	const areGenresLoaded = async () => {
+		const timeoutPromise = new Promise((_, reject) => {
+			setTimeout(() => {
+				reject(new Error('Timeout: Genres not loaded within 30 seconds'));
+			}, 30000); // 30 seconds
+		});
+
+		try {
+			await Promise.race([
+				timeoutPromise,
+				new Promise((resolve) => {
+					const checkGenresLoaded = () => {
+						if (genreNames.length > 0) {
+							console.debug('genres loaded');
+							resolve(void 0);
+						} else {
+							console.debug('genres still not loaded');
+							setTimeout(checkGenresLoaded, 1000);
+						}
+					};
+
+					checkGenresLoaded();
+				})
+			]);
+		} catch (error) {
+			errorMessages.push({
+				message: 'Error loading genres',
+				status: 500
+			});
+			errorMessages = [...errorMessages];
+			console.error(error);
+		}
+	};
 </script>
 
 <!-- svelte-ignore  a11y-no-noninteractive-element-interactions -->
@@ -309,27 +337,17 @@
 <input id="release-date" bind:value={album.release_date} type="date" />
 
 <label for="genres">Genres (comma separated):</label>
-<div>
-	{#if genreLinks}
-		{#each genreLinks as genre, index}
-			<div class="genre-box">
-				{genre}
-				<span
-					class="remove-genre"
-					on:click={() => removeGenre(index)}
-					on:keyup={(e) => e.key === 'Enter' && removeGenre(index)}
-					aria-label="Remove genre"
-					role="button"
-					tabindex="0"
-				>
-					<XIcon size="12" />
-				</span>
-			</div>
-		{/each}
-	{/if}
+<div class="genre-box">
+	<Tags
+		bind:tags={album.genres}
+		onlyUnique={true}
+		autoComplete={localStorage.getItem('genreNames')
+			? JSON.parse(localStorage.getItem('genreNames') || '')
+			: []}
+		onTagClick={openGenreLink}
+		onlyAutocomplete={true}
+	/>
 </div>
-<!-- pass to listGenres -->
-<input id="genres" bind:value={genres} on:blur={handleGenreAdd} />
 
 <label for="duration">Duration:</label>
 <input id="duration" bind:value={album.duration} type="time" />
@@ -360,15 +378,6 @@
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		position: relative;
-	}
-
-	.remove-genre {
-		cursor: pointer;
-		position: absolute;
-		top: 50%;
-		right: 8px;
-		transform: translateY(-50%);
-		color: #888;
 	}
 
 	.spinner {
