@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -107,11 +108,17 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
 	}
 
+	asLinks := c.QueryBool("as_links", false)
+
 	if namesOnly {
 		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
 		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, c.QueryBool("all", false), "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
+		}
+		if asLinks {
+			genreLinks := h.LinksFromArray(fmt.Sprintf("%s/genres/%s", c.Path(), genreKind), genreNames)
+			return c.JSON(genreLinks)
 		}
 		return c.JSON(genreNames)
 	}
