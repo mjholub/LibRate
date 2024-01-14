@@ -25,7 +25,6 @@ librate
 lrctl
 LibRate-*
 LibRate
-static/img
-static
+./static/img/profile/*
 librate-bin
 ./profile*
