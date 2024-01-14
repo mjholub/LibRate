@@ -106,22 +106,20 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	if !lo.Contains(possible, genreKind) {
 		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
 	}
-	type requestBody struct {
-		Columns []string `json:"columns"`
-	}
-	var rb requestBody
-	if err := c.BodyParser(&rb); err != nil {
-		return handleInternalError(mc.storage.Log, c, "error parsing request body", err)
-	}
 
 	if namesOnly {
-		genreNames, err := mc.storage.GetGenres(c.Context(), genreKind, c.QueryBool("all", false), "name")
+		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
+		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, c.QueryBool("all", false), "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
-		return h.ResData(c, fiber.StatusOK, "success", genreNames)
+		return c.JSON(genreNames)
 	}
-	genres, err := mc.storage.GetGenres(c.Context(), genreKind, c.QueryBool("all", false), rb.Columns...)
+
+	columns := c.Query("columns", "name")
+
+	mc.storage.Log.Debug().Msgf("Getting following columns for %s: %s", genreKind, columns)
+	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, c.QueryBool("all", false), columns)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}

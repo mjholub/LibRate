@@ -52,6 +52,10 @@ type (
 		Book | Album | Track | TVShow | Season | Episode
 	}
 
+	GenresOrGenreNames interface {
+		[]Genre | []string
+	}
+
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
 		ID          int64              `json:"id" db:"id,pk,autoinc"`
@@ -166,7 +170,14 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 // In HTTP layer, columns are specified either in the JSON request body (as an array of strings)
 // The name column can also be accessed with `names_only` boolean query parameter.
 // Fetching of all genres is specified by the `all` query parameter (which does not require a value).
-func (ms *MediaStorage) GetGenres(ctx context.Context, kind string, all bool, columns ...string) ([]Genre, error) {
+func GetGenres[G GenresOrGenreNames](
+	ms *MediaStorage,
+	// nolint:revive // hacky generic dependency injection so would-be receiver should be the 1st arg
+	ctx context.Context,
+	kind string,
+	all bool,
+	columns ...string,
+) (G, error) {
 	if len(columns) > 0 {
 		validColumns := []string{"id", "kinds", "name", "parent", "children"}
 		for i := range columns {
@@ -174,6 +185,7 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string, all bool, co
 				return nil, fmt.Errorf("invalid column name: %v", columns[i])
 			}
 		}
+		ms.Log.Debug().Msg("validated columns")
 	}
 	const baseGenres = "WHERE $1 = ANY(kinds) AND children IS NULL"
 	const allGenres = "WHERE $1 = ANY(kinds)"
@@ -182,6 +194,7 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string, all bool, co
 	whereClause := baseGenres
 
 	if all {
+		ms.Log.Debug().Msg("fetching all genres")
 		whereClause = allGenres
 	}
 
@@ -195,12 +208,12 @@ func (ms *MediaStorage) GetGenres(ctx context.Context, kind string, all bool, co
 		}
 		defer stmt.Close()
 
-		var genres []Genre
-		err = stmt.SelectContext(ctx, &genres, kind)
+		var genreList G
+		err = stmt.SelectContext(ctx, &genreList, kind)
 		if err != nil {
 			return nil, fmt.Errorf("error selecting rows: %v", err)
 		}
-		return genres, nil
+		return genreList, nil
 	}
 }
 
