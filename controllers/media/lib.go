@@ -152,6 +152,12 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", genre)
 }
 
+// GetArtistsByName is a POST endpoint that takes the list of artists aa a multipart form data
+// and returns the artists with their IDs as a response
+func (mc *Controller) GetArtistsByName(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
 	log.Error().Msgf("Failed to parse media ID %s", c.Params("media_id"))
 	return h.Res(c, fiber.StatusBadRequest, message)

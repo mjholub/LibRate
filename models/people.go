@@ -129,6 +129,23 @@ func (p *PeopleStorage) GetGroup(ctx context.Context, id int32) (Group, error) {
 	}
 }
 
+func (p *PeopleStorage) GetArtistsByName(ctx context.Context, name string) (person []Person, group []Group, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, nil, ctx.Err()
+	default:
+		err := p.dbConn.Get(&person, "SELECT * FROM people.person WHERE name LIKE $1", name)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, nil, err
+		}
+		err = p.dbConn.Get(&group, "SELECT * FROM people.group WHERE name LIKE $1", name)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, nil, err
+		}
+		return person, group, nil
+	}
+}
+
 func (p *PeopleStorage) GetStudio(ctx context.Context, id int32) (*Studio, error) {
 	var studio Studio
 	select {
