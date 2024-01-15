@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
@@ -30,6 +31,7 @@ type (
 	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
 	Controller struct {
 		storage models.MediaStorage
+		conf    *cfg.Config
 	}
 
 	mediaError struct {
@@ -38,8 +40,8 @@ type (
 	}
 )
 
-func NewController(storage models.MediaStorage) *Controller {
-	return &Controller{storage: storage}
+func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
+	return &Controller{storage: storage, conf: conf}
 }
 
 // GetMedia retrieves media information based on the media ID

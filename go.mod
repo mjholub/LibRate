@@ -41,6 +41,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.8
+	github.com/zmb3/spotify/v2 v2.4.0
 	go.uber.org/mock v0.3.0
 	golang.org/x/crypto v0.17.0
 	golang.org/x/image v0.14.0
