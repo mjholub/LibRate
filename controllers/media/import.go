@@ -29,7 +29,7 @@ type ImportSource struct {
 // ImportWeb handles the import of media from 3rd party sources
 func (mc *Controller) ImportWeb(c *fiber.Ctx) error {
 	var source ImportSource
-	if err := c.BodyParser(&source); err != nil || !lo.Contains(mc.conf.ImportSources, source.Name) {
+	if err := c.BodyParser(&source); err != nil || !lo.Contains(mc.conf.External.ImportSources, source.Name) {
 		return handleBadRequest(mc.storage.Log, c, "Invalid request body")
 	}
 	switch source.Name {
@@ -55,7 +55,7 @@ func (mc *Controller) ImportWeb(c *fiber.Ctx) error {
 }
 
 func (mc *Controller) importSpotify(c *fiber.Ctx, source ImportSource) error {
-	spotifyAlbumID := db.Sanitize(strings.Split(c.Params("import_url"), "/")[4])
+	spotifyAlbumID := db.Sanitize([]string{strings.Split(c.Params("import_url"), "/")[4]})[0]
 	if len(spotifyAlbumID) != 22 {
 		return handleBadRequest(mc.storage.Log, c, "Invalid Spotify album ID "+spotifyAlbumID)
 	}
@@ -149,4 +149,32 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, source ImportSource) error {
 			"artists": artists,
 		})
 	}
+}
+
+func (mc *Controller) importDiscogs(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importLastFM(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importListenBrainz(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importBandcamp(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importMW(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importRYM(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (mc *Controller) importPF(c *fiber.Ctx, source ImportSource) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
 }

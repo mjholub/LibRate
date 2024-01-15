@@ -37,8 +37,10 @@ type DBConfig struct {
 }
 
 type ThirdParty struct {
-	SpotifyClientID     string `yaml:"spotify_client_id,omitempty" env:"SPOTIFY_CLIENT_ID"`
-	SpotifyClientSecret string `yaml:"spotify_client_secret,omitempty" env:"SPOTIFY_CLIENT_SECRET"`
+	// currently supported: json, id3, spotify (requires client ID and secret)
+	ImportSources       []string `yaml:"importSources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`
+	SpotifyClientID     string   `yaml:"spotify_client_id,omitempty" env:"SPOTIFY_CLIENT_ID"`
+	SpotifyClientSecret string   `yaml:"spotify_client_secret,omitempty" env:"SPOTIFY_CLIENT_SECRET"`
 }
 
 type RedisConfig struct {
