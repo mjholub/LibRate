@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
 	"dario.cat/mergo"
 	"github.com/caarlos0/env/v10"
 	"github.com/getsops/sops/v3/decrypt"
+	"github.com/goccy/go-yaml"
 	"github.com/joho/godotenv"
-	"github.com/mitchellh/mapstructure"
 	"github.com/samber/mo"
 )
 
@@ -85,7 +84,7 @@ func LoadConfig() mo.Result[*Config] {
 
 // parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
-	conf = &Config{}
+	var c Config
 	var file []byte
 	// decrypt the config file or read from plain text
 	if os.Getenv("USE_SOPS") == "true" {
@@ -100,16 +99,9 @@ func parseRaw(configLocation string) (conf *Config, err error) {
 		}
 	}
 
-	configRaw, err := parser.Parse(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
+	if err = yaml.Unmarshal(file, &c); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	err = mapstructure.Decode(configRaw, &conf)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode config: %w", err)
-	}
-	log.Debug().Msgf("conf: %+v", conf)
-
-	return conf, nil
+	return &c, nil
 }
