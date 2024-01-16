@@ -19,7 +19,7 @@ type Config struct {
 	Keys       KeysConfig     `json:"keys,omitempty" yaml:"keys" mapstructure:"keys"`
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
-	External   ThirdParty     `json:"external,omitempty" yaml:"external" mapstructure:"external"`
+	External   External       `json:"external,omitempty" yaml:"external" mapstructure:"external"`
 }
 
 // nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
@@ -36,9 +36,9 @@ type DBConfig struct {
 	MigrationsPath     string `yaml:"migrationsPath,omitempty" default:"/app/data/migrations" env:"LIBRATE_MIGRATIONS"`
 }
 
-type ThirdParty struct {
+type External struct {
 	// currently supported: json, id3, spotify (requires client ID and secret)
-	ImportSources       []string `yaml:"importSources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`
+	ImportSources       []string `yaml:"import_sources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`
 	SpotifyClientID     string   `yaml:"spotify_client_id,omitempty" env:"SPOTIFY_CLIENT_ID"`
 	SpotifyClientSecret string   `yaml:"spotify_client_secret,omitempty" env:"SPOTIFY_CLIENT_SECRET"`
 }
