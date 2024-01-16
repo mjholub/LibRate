@@ -50,3 +50,10 @@ grpc:
 # development or production
 librateEnv: "production"
 jwtSecret: "librate-jwt-secret"
+external:
+  import_sources:
+    - "spotify"
+    - "id3"
+    - "json"
+  spotify_client_id: "spotify-client-id"
+  spotify_client_secret: "spotify-client-secret"

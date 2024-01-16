@@ -71,7 +71,7 @@ func Setup(
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
-	setupMedia(api, mediaStor)
+	setupMedia(api, mediaStor, conf)
 
 	formAPI := api.Group("/form")
 	// TODO: make the timeouts configurable
@@ -137,11 +137,13 @@ func setupAuth(
 func setupMedia(
 	api fiber.Router,
 	mediaStor *models.MediaStorage,
+	conf *cfg.Config,
 ) {
-	mediaCon := media.NewController(*mediaStor)
+	mediaCon := media.NewController(*mediaStor, conf)
 
 	media := api.Group("/media")
 	media.Get("/random", mediaCon.GetRandom)
+	media.Get("/import-sources", mediaCon.GetImportSources)
 	media.Get("/:media_id/images", mediaCon.GetImagePaths)
 	media.Get("/:id", mediaCon.GetMedia)
 	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
