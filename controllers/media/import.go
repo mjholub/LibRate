@@ -17,7 +17,6 @@ import (
 )
 
 type ImportSource struct {
-	// Could be 'web' for a web source or 'fs' for a local filesystem source
 	Name string `json:"name" validate:"required"`
 	URI  string `json:"uri" validate:"required"`
 }

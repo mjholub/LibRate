@@ -61,7 +61,6 @@
     "password-meter": "^3.10.2",
     "sass": "^1.69.5",
     "scss": "^0.2.4",
-    "svelte-dragdroplist": "^1.1.1",
     "svelte-feather-icons": "^4.1.0",
     "svelte-tags-input": "^5.0.0",
     "xss": "^1.0.14"
