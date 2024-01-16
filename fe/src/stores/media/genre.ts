@@ -1,7 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { Genre } from '$lib/types/media.ts';
-import type { Tag } from 'language-tags';
 import axios from 'axios';
 
 interface GenreStoreState {
@@ -14,7 +13,8 @@ type kind = 'music' | 'film' | 'tv' | 'book' | 'game' | null
 interface GenreStore extends Writable<GenreStoreState> {
   getGenres: (all: boolean, columns: column[], kind: kind) => Promise<void>;
   getGenreNames: (kind: kind, asLinks: boolean) => Promise<string[]>;
-  getGenre: (kind: kind, lang: Tag, genre: string) => Promise<Genre | null>;
+  // prefferably IANA code, but might be just the base part, like 'en' or 'de'
+  getGenre: (kind: kind, lang: string, genre: string) => Promise<Genre | null>;
 };
 
 function createGenreStore(): GenreStore {
@@ -45,7 +45,7 @@ function createGenreStore(): GenreStore {
         });
       });
     },
-    getGenre: async (kind: kind, lang: Tag, genre: string) => {
+    getGenre: async (kind: kind, lang: string, genre: string) => {
       return new Promise(async (resolve, reject) => {
         await axios.get(`/api/media/genres/${kind}/${genre}?lang=${lang.toString()}`, {
           params: {

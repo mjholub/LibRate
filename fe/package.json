@@ -54,7 +54,6 @@
   "type": "module",
   "dependencies": {
     "@types/http-errors": "^2.0.4",
-    "@types/language-tags": "^1.0.4",
     "axios": "^1.5.0",
     "feather-icons": "^4.29.1",
     "http-errors": "^2.0.0",

@@ -153,6 +153,7 @@ func setupMedia(
 	media.Get("/genre/:kind/:genre", timeout.NewWithContext(mediaCon.GetGenre, 30*time.Second))
 	// route to get artists by their names, using multipart form data
 	media.Post("/artists/by-name", timeout.NewWithContext(mediaCon.GetArtistsByName, 30*time.Second))
+	media.Post("/import", timeout.NewWithContext(mediaCon.ImportWeb, 60*time.Second))
 }
 
 func setupStatic(app *fiber.App) error {
