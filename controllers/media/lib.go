@@ -161,7 +161,7 @@ func (mc *Controller) GetArtistsByName(c *fiber.Ctx) error {
 }
 
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msgf("Failed to parse media ID %s", c.Params("media_id"))
+	log.Error().Msgf("Failed to %s", message)
 	return h.Res(c, fiber.StatusBadRequest, message)
 }
 

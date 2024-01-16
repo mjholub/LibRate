@@ -129,12 +129,15 @@ func (p *PeopleStorage) GetGroup(ctx context.Context, id int32) (Group, error) {
 	}
 }
 
+// FIXME: "scannable dest type slice with >1 columns (12) in result"
 func (p *PeopleStorage) GetArtistsByName(ctx context.Context, name string) (person []Person, group []Group, err error) {
 	select {
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
 	default:
-		err := p.dbConn.Get(&person, "SELECT * FROM people.person WHERE name LIKE $1", name)
+		err := p.dbConn.Get(&person, `SELECT *
+FROM people.person
+WHERE (first_name LIKE $1 OR last_name LIKE $1) OR $1 LIKE ANY(nick_names)`, name)
 		if err != nil && err != sql.ErrNoRows {
 			return nil, nil, err
 		}

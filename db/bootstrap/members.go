@@ -16,7 +16,6 @@ func Members(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role enum: %w", err)
 		}
-		// FIXME: this should check whether the table exists and then instead of skipping, attempt an update
 		_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS public.members (
 	id serial4 NOT NULL,
