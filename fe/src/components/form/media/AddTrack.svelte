@@ -1,11 +1,15 @@
 <script lang="ts">
-  // Implement the logic for AddTrack.svelte
+	import type { Track } from '$lib/types/music';
+
+	let tracks: Track[] = [];
+
+	import DragDropList from '$components/shared/DragDropList.svelte';
 </script>
 
-<style>
-  /* Add styles for AddTrack.svelte */
-</style>
-
 <div>
-  <!-- Add HTML structure for AddTrack.svelte -->
+	<DragDropList bind:data={tracks} removesItems={true} />
 </div>
+
+<style>
+	/* Add styles for AddTrack.svelte */
+</style>
