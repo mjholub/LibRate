@@ -1,12 +1,18 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { PlusIcon, XIcon } from 'svelte-feather-icons';
-	import type { Album } from '$lib/types/music';
+	import { Label, Input, FormGroup } from '@sveltestrap/sveltestrap';
+	// @ts-ignore
+	import { getItem, setItem } from 'timedstorage';
+	// @ts-ignore
+	import * as time from 'timedstorage/time';
+	import { PlusIcon } from 'svelte-feather-icons';
+	import type { Album, Track } from '$lib/types/music';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { genreStore } from '$stores/media/genre';
 	import { onMount, onDestroy } from 'svelte';
 	import { openFilePicker } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
+	import type { NullableDuration } from '$lib/types/utils';
 	// @ts-ignore
 	import Tags from 'svelte-tags-input';
 	import AddTrack from './AddTrack.svelte';
@@ -17,8 +23,12 @@
 	let imagePaths: string[] = [];
 	let errorMessages: CustomHttpError[] = [];
 	let genreNames: string[] = [];
+	let availableImportSources: string[] = [];
 	let isUploading: boolean = false;
 	let imageBase64 = '';
+	let importSource = '';
+	let importURL = '';
+	let isArtistsListAmbiguous = false;
 
 	let album: Album = {
 		UUID: '',
@@ -61,21 +71,21 @@
 
 	onMount(async () => {
 		try {
-			if (localStorage.getItem('genreNames')) {
+			if (getItem('genreNames')) {
 				console.debug('getting genre names from local storage');
-				genreNames = JSON.parse(localStorage.getItem('genreNames') || '') || [];
+				genreNames = JSON.parse(getItem('genreNames') || '') || [];
 				genreNames = [...genreNames];
 				if (genreNames.length === 0) {
 					console.debug('genre names array is empty, getting genre names from API endpoint');
 					genreNames = await genreStore.getGenreNames('music', false);
 					genreNames = [...genreNames];
-					localStorage.setItem('genreNames', JSON.stringify(genreNames));
+					setItem('genreNames', JSON.stringify(genreNames), time.DAY);
 				}
 			} else {
 				console.debug('getting genre names from API endpoint');
 				genreNames = await genreStore.getGenreNames('music', false);
 				genreNames = [...genreNames];
-				localStorage.setItem('genreNames', JSON.stringify(genreNames));
+				setItem('genreNames', JSON.stringify(genreNames), time.DAY);
 			}
 		} catch (error) {
 			console.error(error);
@@ -84,6 +94,9 @@
 				status: 500
 			});
 		}
+		const importSources = await fetch('/api/media/import-sources').then((res) => res.json());
+		availableImportSources = importSources;
+		availableImportSources = [...availableImportSources];
 		maxFileSize = await getMaxFileSize();
 		if (shouldResetAlbum()) {
 			localStorage.removeItem('album');
@@ -126,6 +139,7 @@
 	onDestroy(() => {
 		maxFileSize = 0;
 		isUploading = false;
+		availableImportSources = [];
 	});
 
 	$: {
@@ -256,40 +270,179 @@
 	};
 
 	const openGenreLink = (genreName: string) => window.open(genreLinkFromName(genreName), '_blank');
-	const areGenresLoaded = async () => {
-		const timeoutPromise = new Promise((_, reject) => {
-			setTimeout(() => {
-				reject(new Error('Timeout: Genres not loaded within 30 seconds'));
-			}, 30000); // 30 seconds
+
+	const importFromWebSource = async (importURL: string, importSource: string) => {
+		const res = await fetch('/api/media/import/', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				importURL,
+				importSource
+			})
 		});
 
-		try {
-			await Promise.race([
-				timeoutPromise,
-				new Promise((resolve) => {
-					const checkGenresLoaded = () => {
-						if (genreNames.length > 0) {
-							console.debug('genres loaded');
-							resolve(void 0);
-						} else {
-							console.debug('genres still not loaded');
-							setTimeout(checkGenresLoaded, 1000);
-						}
-					};
-
-					checkGenresLoaded();
-				})
-			]);
-		} catch (error) {
+		if (res.status !== 200) {
 			errorMessages.push({
-				message: 'Error loading genres',
-				status: 500
+				message: 'Error importing album',
+				status: res.status
 			});
+			console.error(errorMessages);
 			errorMessages = [...errorMessages];
-			console.error(error);
+		}
+
+		const albumData = await res.json();
+		if (albumData.includes('album')) {
+			album = albumData.album;
+			isArtistsListAmbiguous = true;
+		} else {
+			album = albumData;
+		}
+	};
+
+	const importFromFile = async (e: Event) => {
+		const files = (e.target as HTMLInputElement).files;
+		if (files) {
+			const f = Array.from(files);
+			f.forEach(async (file: File | Blob) => {
+				if (file.size > maxFileSize) {
+					errorMessages.push({
+						message: `File size must be less than ${maxFileSizeString}`,
+						status: 413
+					});
+					errorMessages = [...errorMessages];
+				} else {
+					const fileReader: FileReader = new FileReader();
+					fileReader.onload = async () => {
+						// branch on mime type (application/json or audio/mpeg)
+						switch (file.type) {
+							case 'application/json':
+								const json = fileReader.result as string;
+								const albumJSON = JSON.parse(json);
+								album.name = albumJSON.name;
+								album.release_date = new Date(albumJSON.release_date);
+								album.kind = 'album';
+								// TODO: genre validation
+								album.genres = albumJSON.genres;
+								album.tracks = albumJSON.tracks;
+								album.album_artists = albumJSON.album_artists;
+								album.duration = sumAlbumDuration(albumJSON.tracks);
+								break;
+							case 'audio/mpeg':
+							default:
+								errorMessages.push({
+									message: 'Invalid file type',
+									status: 415
+								});
+								errorMessages = [...errorMessages];
+								break;
+						}
+						fileReader.onerror = (e: ProgressEvent<FileReader>) => {
+							errorMessages.push({
+								message: 'Error reading file',
+								status: 500
+							});
+							errorMessages = [...errorMessages];
+							e.preventDefault();
+						};
+						fileReader.readAsText(file);
+					};
+				}
+			});
+		}
+	};
+
+	const sumAlbumDuration = (tracks: Track[]): NullableDuration => {
+		let sum = 0;
+		tracks.forEach((track) => {
+			sum += track.duration as number;
+		});
+		return {
+			Valid: true,
+			// I hate this
+			Time: sum as unknown as string
+		};
+	};
+
+	const bufferSpotifyAlbumImage = async (imageUrl: string) => {
+		const res = await fetch(imageUrl);
+		const blob = await res.blob();
+		const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
+
+		imagePaths.push(URL.createObjectURL(file));
+		imagePaths = [...imagePaths];
+		await updateImageBase64(file);
+	};
+
+	const enterImport = (e: KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			importFromWebSource(importSource, importURL);
+		} else {
+			null;
 		}
 	};
 </script>
+
+<svelte:head>
+	<link
+		rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+	/>
+</svelte:head>
+
+<div class="import-selector">
+	<FormGroup>
+		<Label id="import-label">Import from:</Label>
+		<Input type="select" id="import-source" bind:value={importSource}>
+			<option value="">Select a source</option>
+			{#each availableImportSources as source}
+				{#if source == 'rym'}
+					<option value={source}>RateYourMusic</option>
+				{:else if source == 'mediawiki'}
+					<option value={source}>Wiki</option>
+				{:else if source == 'id3'}
+					<option value={source}>Music file (ID3 Tags)</option>
+				{:else if source == 'json'}
+					<option value={source}>JSON</option>
+				{:else}
+					<option value={source}>{source.charAt(0).toUpperCase() + source.slice(1)}</option>
+				{/if}
+			{/each}
+		</Input>
+		{#if importSource != '' && importSource != 'id3' && importSource != 'json'}
+			{#if importSource == 'spotify'}
+				<p aria-labelledby="spotify-info">Spotify album URL:</p>
+			{:else if importSource == 'rym'}
+				<p aria-labelledby="rym-info">RateYourMusic album URL:</p>
+			{:else if importSource == 'discogs'}
+				<p aria-labelledby="discogs-info">Discogs album URL:</p>
+			{:else if importSource == 'lastfm'}
+				<p aria-labelledby="lastfm-info">Last.fm album URL:</p>
+			{:else if importSource == 'listenbrainz'}
+				<p aria-labelledby="listenbrainz-info">ListenBrainz album URL:</p>
+			{:else if importSource == 'bandcamp'}
+				<p aria-labelledby="bandcamp-info">Bandcamp album URL:</p>
+			{:else if importSource == 'mediawiki'}
+				<p aria-labelledby="mediawiki-info">Wiki album URL:</p>
+			{:else if importSource == 'pitchfork'}
+				<p aria-labelledby="pitchfork-info">Pitchfork album URL:</p>
+			{/if}
+			<Input type="text" id="import-url" bind:value={importURL} on:keydown={enterImport} />
+		{:else}
+			{#if importSource == 'json'}
+				<p aria-labelledby="json-info">
+					JSON (see <a href="https://codeberg.org/mjh/LibRate/wiki/Album-JSON-fields"
+						>specification</a
+					>):
+				</p>
+			{:else if importSource == 'id3'}
+				<p aria-labelledby="id3-info">Music file (ID3 Tags, only MP3 supported):</p>
+			{/if}
+			<Input type="file" id="import-file" on:change={importFromFile} />
+		{/if}
+	</FormGroup>
+</div>
 
 <!-- svelte-ignore  a11y-no-noninteractive-element-interactions -->
 <div
