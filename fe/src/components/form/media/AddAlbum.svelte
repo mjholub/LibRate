@@ -1,12 +1,12 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { Label, Input, FormGroup } from '@sveltestrap/sveltestrap';
+	import { Card, Label, Input, FormGroup } from '@sveltestrap/sveltestrap';
 	// @ts-ignore
 	import { getItem, setItem } from 'timedstorage';
 	// @ts-ignore
 	import * as time from 'timedstorage/time';
 	import { PlusIcon } from 'svelte-feather-icons';
-	import type { Album, Track } from '$lib/types/music';
+	import type { Album, AlbumArtists, Track } from '$lib/types/music';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { genreStore } from '$stores/media/genre';
 	import { onMount, onDestroy } from 'svelte';
@@ -29,7 +29,10 @@
 	let importSource = '';
 	let importURL = '';
 	let isArtistsListAmbiguous = false;
-
+	let artistsToBeResolved: AlbumArtists = {
+		person_artist: [],
+		group_artist: []
+	};
 	let album: Album = {
 		UUID: '',
 		kind: 'album',
@@ -271,15 +274,20 @@
 
 	const openGenreLink = (genreName: string) => window.open(genreLinkFromName(genreName), '_blank');
 
-	const importFromWebSource = async (importURL: string, importSource: string) => {
-		const res = await fetch('/api/media/import/', {
+	const importFromWebSource = async (importSource: string, importURL: string) => {
+		const csrfToken = document.cookie
+			.split('; ')
+			.find((row) => row.startsWith('csrf_'))
+			?.split('=')[1];
+		const res = await fetch('/api/media/import', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
+				'X-CSRF-Token': csrfToken || ''
 			},
 			body: JSON.stringify({
-				importURL,
-				importSource
+				name: importSource,
+				uri: importURL
 			})
 		});
 
@@ -295,6 +303,7 @@
 		const albumData = await res.json();
 		if (albumData.includes('album')) {
 			album = albumData.album;
+			artistsToBeResolved = albumData.artists;
 			isArtistsListAmbiguous = true;
 		} else {
 			album = albumData;
@@ -377,6 +386,7 @@
 
 	const enterImport = (e: KeyboardEvent) => {
 		if (e.key === 'Enter') {
+			e.preventDefault();
 			importFromWebSource(importSource, importURL);
 		} else {
 			null;
@@ -428,17 +438,22 @@
 			{:else if importSource == 'pitchfork'}
 				<p aria-labelledby="pitchfork-info">Pitchfork album URL:</p>
 			{/if}
-			<Input type="text" id="import-url" bind:value={importURL} on:keydown={enterImport} />
-		{:else}
-			{#if importSource == 'json'}
-				<p aria-labelledby="json-info">
-					JSON (see <a href="https://codeberg.org/mjh/LibRate/wiki/Album-JSON-fields"
-						>specification</a
-					>):
-				</p>
-			{:else if importSource == 'id3'}
-				<p aria-labelledby="id3-info">Music file (ID3 Tags, only MP3 supported):</p>
-			{/if}
+			<Input
+				type="text"
+				id="import-url"
+				bind:value={importURL}
+				on:keydown={enterImport}
+				tabindex="0"
+				role="input"
+			/>
+		{:else if importSource == 'json'}
+			<p aria-labelledby="json-info">
+				JSON (see <a href="https://codeberg.org/mjh/LibRate/wiki/Album-JSON-fields">specification</a
+				>):
+			</p>
+			<Input type="file" id="import-file" on:change={importFromFile} />
+		{:else if importSource == 'id3'}
+			<p aria-labelledby="id3-info">Music file (ID3 Tags, only MP3 supported):</p>
 			<Input type="file" id="import-file" on:change={importFromFile} />
 		{/if}
 	</FormGroup>
@@ -477,6 +492,34 @@
 <input id="name" bind:value={album.name} />
 
 <label for="album-artists">Album Artists:</label>
+{#if isArtistsListAmbiguous}
+	<p>More than one artist was found for this album. Select one that matches.</p>
+	<div class="artist-selection-grid">
+		{#each artistsToBeResolved.person_artist as artist}
+			<Card class="artist-card">
+				bind:value={album.album_artists}
+				{#if artist.photos}
+					<img src={artist.photos[0]} alt={artist.name} />
+				{/if}
+				on:click={() => {
+					album.album_artists.person_artist = [artist];
+					artistsToBeResolved.person_artist = [];
+					isArtistsListAmbiguous = false;
+				}}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						album.album_artists.person_artist = [artist];
+						artistsToBeResolved.person_artist = [];
+						isArtistsListAmbiguous = false;
+					}
+				}}
+				tabindex="0" role="button"
+				<p><a href="/artists/${artist.id}" target="_blank">{artist.name}</a></p>
+			</Card>
+		{/each}
+	</div>
+{/if}
+
 <select id="album-artists" bind:value={album.album_artists}>
 	<option value="person_artist">Person</option>
 	<option value="group_artist">Group</option>
