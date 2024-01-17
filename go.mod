@@ -20,7 +20,8 @@ require (
 	github.com/goccy/go-yaml v1.11.2
 	github.com/gofiber/contrib/fiberzerolog v0.2.3
 	github.com/gofiber/contrib/jwt v1.0.8
-	github.com/gofiber/fiber/v2 v2.51.0
+	github.com/gofiber/contrib/websocket v1.3.0
+	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/gofiber/storage/postgres/v2 v2.0.3
 	github.com/gofiber/storage/redis/v3 v3.1.0
 	github.com/gofiber/template/html/v2 v2.0.5
@@ -42,7 +43,7 @@ require (
 	github.com/witer33/fiberpow v0.0.8
 	github.com/zmb3/spotify/v2 v2.4.0
 	go.uber.org/mock v0.3.0
-	golang.org/x/crypto v0.17.0
+	golang.org/x/crypto v0.18.0
 	golang.org/x/image v0.14.0
 	golang.org/x/oauth2 v0.15.0
 	golang.org/x/text v0.14.0
@@ -67,7 +68,7 @@ require (
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
-	github.com/andybalholm/brotli v1.0.6 // indirect
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.26.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.13 // indirect
@@ -94,6 +95,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/fasthttp/websocket v1.5.7 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -152,6 +154,7 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tinylib/msgp v1.1.9 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
@@ -166,10 +169,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
-	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.154.0 // indirect

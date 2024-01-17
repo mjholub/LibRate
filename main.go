@@ -17,6 +17,7 @@ import (
 	"codeberg.org/mjh/LibRate/routes"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
@@ -155,7 +156,8 @@ func main() {
 
 	setupPOW(conf, app)
 
-	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess)
+	wsConfig := cmd.SetupWS(app, "/search")
+	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -338,9 +340,10 @@ func setupRoutes(
 	dbConn *sqlx.DB,
 	app *fiber.App,
 	sess *fiberSession.Store,
+	wsConfig websocket.Config,
 ) (err error) {
 	// Setup routes
-	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess)
+	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, wsConfig)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %v", err)
 	}

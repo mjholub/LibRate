@@ -16,13 +16,13 @@ import (
 	"codeberg.org/mjh/LibRate/middleware/security"
 
 	"github.com/gofiber/contrib/fiberzerolog"
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
-	//"github.com/gofiber/fiber/v2/middleware/earlydata"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	rec "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
 )
 
@@ -36,10 +36,7 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 	_ = tag
 
 	app := fiber.New(fiber.Config{
-		AppName: "LibRate v0.8.12",
-		// FIXME: earlydata not working with containers
-		// EnableTrustedProxyCheck: true,
-		// TrustedProxies:          []string{"127.0.0.1", "::1", "localhost", conf.Fiber.Host, conf.Fiber.Domain},
+		AppName:           "LibRate v0.8.17", // TODO: add some shell script to generate this on go build
 		Prefork:           conf.Fiber.Prefork,
 		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
 		Views:             renderEngine,
@@ -49,6 +46,32 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 	)
 
 	return app
+}
+
+// SetupWS MUST be called before SetupRoutes
+// Otherwise the websocket handler will not be 'shadowed'
+// by the static file handler
+func SetupWS(app *fiber.App, routes ...string) websocket.Config {
+	for i := range routes {
+		app.Use("api"+routes[i]+"/ws", func(c *fiber.Ctx) error {
+			if websocket.IsWebSocketUpgrade(c) {
+				c.Locals("allowed", true)
+				return c.Next()
+			}
+			return fiber.ErrUpgradeRequired
+		})
+	}
+
+	cfg := websocket.Config{
+		RecoverHandler: func(conn *websocket.Conn) {
+			if err := recover(); err != nil {
+				conn.WriteJSON(fiber.Map{
+					"error": err,
+				})
+			}
+		},
+	}
+	return cfg
 }
 
 func SetupMiddlewares(conf *cfg.Config,
@@ -63,7 +86,11 @@ func SetupMiddlewares(conf *cfg.Config,
 		security.SetupHelmet(conf),
 		security.SetupCSRF(conf, logger),
 		security.SetupCORS(conf),
-		recover.New(),
+		rec.New(rec.Config{
+			Next: func(c *fiber.Ctx) bool {
+				return strings.Contains(c.Route().Path, "/ws")
+			},
+		}),
 		// earlydata.New(),
 		etag.New(),
 		cache.New(cache.Config{
@@ -76,7 +103,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
-				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status"
+				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws")
 			},
 		}),
 		compress.New(compress.Config{
