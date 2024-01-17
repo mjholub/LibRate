@@ -3,12 +3,16 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
+
+	"github.com/microcosm-cc/bluemonday"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"github.com/microcosm-cc/bluemonday"
 )
 
 type (
@@ -21,6 +25,8 @@ type (
 	// SearchController is the controller for search endpoints
 	// It provides a bridge between the HTTP layer and the database layer
 	SearchController struct {
+		wsAddr string
+		log    *zerolog.Logger
 		dbConn *sqlx.DB
 	}
 	// Search result holds the fields into which the results
@@ -30,10 +36,17 @@ type (
 		ID   string `json:"id" db:"id"`
 		Name string `json:"name" db:"name"`
 	}
+
+	wsClient struct {
+		isClosing bool
+		mu        sync.Mutex
+	}
 )
 
-func NewSearchController(dbConn *sqlx.DB) *SearchController {
+func NewSearchController(dbConn *sqlx.DB, log *zerolog.Logger, wsAddr string) *SearchController {
 	return &SearchController{
+		log:    log,
+		wsAddr: wsAddr,
 		dbConn: dbConn,
 	}
 }
@@ -56,6 +69,71 @@ func (sc *SearchController) Search(c *fiber.Ctx) error {
 
 	// Return the search results
 	return c.JSON(results)
+}
+
+// GetWSAddress returns the address of the websocket server, minus the protocol,
+// since that would initialize a new connection
+func (sc *SearchController) GetWSAddress(c *fiber.Ctx) error {
+	return c.JSON(sc.wsAddr)
+}
+
+func (sc *SearchController) WSHandler(c *websocket.Conn) {
+	clients := make(map[*websocket.Conn]*wsClient)
+	register := make(chan *websocket.Conn)
+	broadcast := make(chan string) // or []byte?
+	unregister := make(chan *websocket.Conn)
+	errChan := make(chan error)
+
+	go func() {
+		for {
+			select {
+			case conn := <-register:
+				clients[conn] = &wsClient{}
+				sc.log.Debug().Msg("websocket connection registered")
+			case message := <-broadcast:
+				sc.log.Debug().Msgf("broadcasting message: %s", message)
+				for conn, c := range clients {
+					go func(conn *websocket.Conn, c *wsClient) {
+						c.mu.Lock()
+						defer c.mu.Unlock()
+						if c.isClosing {
+							return
+						}
+
+						sc.log.Debug().Msgf("searching for: %s", message)
+						res, err := performSearch(context.Background(), sc.dbConn, message)
+						if err != nil {
+							errChan <- err
+							c.isClosing = true
+							return
+						}
+						sc.log.Debug().Msgf("search results: %v", res)
+
+						if err := conn.WriteJSON(res); err != nil {
+							c.isClosing = true
+							sc.log.Error().Err(err).Msg("failed to write to websocket")
+						}
+						if err := conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+							errChan <- fmt.Errorf("failed to write close message to websocket: %w", err)
+							c.isClosing = true
+						}
+						conn.Close()
+						unregister <- conn
+					}(conn, c)
+				}
+			case conn := <-unregister:
+				delete(clients, conn)
+
+				sc.log.Debug().Msg("websocket connection unregistered")
+
+			}
+		}
+	}()
+
+	err := <-errChan
+	if err != nil {
+		sc.log.Error().Err(err).Msg("websocket error")
+	}
 }
 
 // performSearch performs a full text search on the database

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -39,6 +40,7 @@ func Setup(
 	newDBConn *pgxpool.Pool,
 	app *fiber.App,
 	sess *session.Store,
+	wsConfig websocket.Config,
 ) error {
 	api := app.Group("/api", fzlog)
 
@@ -58,7 +60,7 @@ func Setup(
 	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	uploadSvc := static.NewController(conf, dbConn, logger)
-	sc := controllers.NewSearchController(dbConn)
+	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
 
 	app.Get("/api/version", version.Get)
 
@@ -74,7 +76,6 @@ func Setup(
 	setupMedia(api, mediaStor, conf)
 
 	formAPI := api.Group("/form")
-	// TODO: make the timeouts configurable
 	formAPI.Post("/add_media/:type", middleware.Protected(sess, logger, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
 	formAPI.Post("/update_media/:type", middleware.Protected(sess, logger, conf), formCon.UpdateMedia)
 
@@ -84,6 +85,8 @@ func Setup(
 	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
 
 	search := api.Group("/search")
+	search.Get("/ws-address", sc.GetWSAddress)
+	search.Post("/ws", websocket.New(sc.WSHandler, wsConfig))
 	search.Post("/", sc.Search)
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
