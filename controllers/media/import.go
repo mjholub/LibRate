@@ -2,6 +2,7 @@ package media
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -83,20 +84,55 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 	}
 
 	// NOTE: spotify doesn't differentiate groups and single artists, so we have to rely on our own data
-	var artists models.AlbumArtist
+	var artists []models.AlbumArtist
 	// ify there's is only one artist returned, we'll include that in the response. If not, we'll send an info to the client,
 	// that would result in spawning a selection dialog to choose the correct artist
 	var isUnambiguousResult bool
 	for i := range spotifyAlbumData.Artists {
+		// PERF: reduce the number of fields retrieved from the database to only the ones needed
 		individual, group, err := mc.storage.Ps.GetArtistsByName(c.Context(), spotifyAlbumData.Artists[i].Name)
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "failed to get artist from database", err)
 		}
-		artists.PersonArtists = append(artists.PersonArtists, individual...)
-		artists.GroupArtists = append(artists.GroupArtists, group...)
+		for j := range individual {
+			fullName := fmt.Sprintf("%s \"%+v\" %s", individual[i].FirstName, individual[i].NickNames, individual[i].LastName)
+			individualArtistEntry := models.AlbumArtist{
+				ID:         individual[j].ID,
+				Name:       fullName,
+				ArtistType: "individual",
+			}
+			artists = append(artists, individualArtistEntry)
+		}
+		for k := range group {
+			groupArtistEntry := models.AlbumArtist{
+				ID:         group[k].ID,
+				Name:       group[k].Name,
+				ArtistType: "group",
+			}
+			artists = append(artists, groupArtistEntry)
+		}
 	}
-	if len(artists.PersonArtists)+len(artists.GroupArtists) == 1 {
+	var remoteArtistNames []string
+
+	if len(artists) > 1 {
 		isUnambiguousResult = true
+	}
+
+	if len(artists) == 0 || len(spotifyAlbumData.Artists) > len(artists) {
+		switch len(artists) {
+		case 0:
+			for i := range spotifyAlbumData.Artists {
+				remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[i].Name)
+			}
+		default:
+			for j := range artists {
+				for k := range spotifyAlbumData.Artists {
+					if artists[j].Name != spotifyAlbumData.Artists[k].Name {
+						remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[k].Name)
+					}
+				}
+			}
+		}
 	}
 
 	genres := make([]models.Genre, len(spotifyAlbumData.Genres))
@@ -137,7 +173,15 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		Duration:    sql.NullTime{Time: time.Now().Add(albumDuration), Valid: true},
 		Tracks:      tracks,
 	}
-	if isUnambiguousResult {
+
+	if len(remoteArtistNames) > 0 {
+		return c.JSON(fiber.Map{
+			"remote_artists": remoteArtistNames,
+			"album":          album,
+		})
+	}
+
+	if !isUnambiguousResult {
 		album.AlbumArtists = artists
 		// TODO: add returning the image as a blob together with the album
 		return c.JSON(album)
