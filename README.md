@@ -90,6 +90,8 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 ## Deploying with Docker
 
+You can use compose or 
+
 1. Create a Docker network with
 
 ```sh
