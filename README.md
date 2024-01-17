@@ -61,8 +61,8 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 - [ ] Games support
 - [ ] Customizable, shareable media collections and logging
 - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
-- [ ] Automated imports from 3rd party sources
-- [ ] DRM-free audio hosting and streaming, federation with Funkwhale
+- [x] Automated imports from 3rd party sources
+- [ ] DRM-free audio hosting and streaming(?)
 - [ ] Artwork galleries for visual artists(?)
 
 ### **Reviews**
@@ -84,7 +84,6 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 
 - [x] Extended configurability
 - [ ] Internationalization
-- [ ] Admin panel
 - [ ] Events, federating with Mobilizon
 - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
 - [ ] Mobile app (although the frontend is and will be mobile friendly, but also never at the expense of desktop experience. We'll also try to make it work with Fedilab, though the number of distinctive features may make it difficult)
