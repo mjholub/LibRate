@@ -117,13 +117,11 @@ docker run -it --network=librate-net --hostname "librate-db" librate-db:latest
 
 4. Create an .env file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/.env.example). Alternatively you can configure the container to use the .yml config, but .env is somewhat more reliable.
 
-5. Build and run the app. You can either uncomment the parts of
-   Dockerfile needed to build the app manually or download a build artifact for linux and put it in the LibRate directory, which is faster.
-
-   ```sh
-    docker run -it --network=librate-net --hostname "librate-app" -p 3000:3000 -p 3030:3030 librate-app:latest
-
-   ```
+5. Build and run the app container. In the container run
+```sh
+lrctl -c [path to config file or 'env'] db init
+lrctl -c [...] db migrate # If the migrations fail you can copy them to the database container and apply them manually, although this shouldn't happen. Note that each migration has a corresponding rollback (down) migration.
+```
 
 6. Finally, set up some reverse proxy, like caddy or nginx, to resolve the app to a
    hostname (locally you can also use something like `lr.localhost`). Note that
