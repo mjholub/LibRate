@@ -1,11 +1,10 @@
-import type { Person, Group } from './people';
 import type { Genre, Media, Keyword } from './media';
 import type { UUID, NullableDuration } from './utils';
 
 export interface Album extends Media {
   media_id: UUID;
   name: string;
-  album_artists: AlbumArtists;
+  album_artists: AlbumArtist[];
   image_paths: string[] | null;
   release_date: Date | string | null;
   genres?: Genre[];
@@ -16,9 +15,10 @@ export interface Album extends Media {
   //languages?: string[];
 }
 
-export type AlbumArtists = {
-  person_artist: Person[];
-  group_artist: Group[];
+export type AlbumArtist = {
+  artist: UUID
+  name: string;
+  artist_type: 'individual' | 'group';
 }
 
 export interface Track extends Media {

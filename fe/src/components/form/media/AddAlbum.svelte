@@ -1,12 +1,19 @@
 <script lang="ts">
 	import axios from 'axios';
-	import { Card, Label, Input, FormGroup } from '@sveltestrap/sveltestrap';
+	import {
+		Card,
+		Label,
+		Input,
+		FormGroup,
+		ListGroup,
+		ListGroupItem
+	} from '@sveltestrap/sveltestrap';
 	// @ts-ignore
 	import { getItem, setItem } from 'timedstorage';
 	// @ts-ignore
 	import * as time from 'timedstorage/time';
 	import { PlusIcon } from 'svelte-feather-icons';
-	import type { Album, AlbumArtists, Track } from '$lib/types/music';
+	import type { Album, AlbumArtist, Track } from '$lib/types/music';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { genreStore } from '$stores/media/genre';
 	import { onMount, onDestroy } from 'svelte';
@@ -28,11 +35,11 @@
 	let imageBase64 = '';
 	let importSource = '';
 	let importURL = '';
+
+	let hasImportFinished = false;
+	let remoteArtistsNames: string[] = [];
 	let isArtistsListAmbiguous = false;
-	let artistsToBeResolved: AlbumArtists = {
-		person_artist: [],
-		group_artist: []
-	};
+	let artistsToBeResolved: AlbumArtist[] = [];
 	let album: Album = {
 		UUID: '',
 		kind: 'album',
@@ -44,10 +51,7 @@
 		creator: null,
 		creators: [],
 		added: new Date(),
-		album_artists: {
-			person_artist: [],
-			group_artist: []
-		},
+		album_artists: [],
 		release_date: '',
 		genres: [],
 		duration: {
@@ -301,13 +305,17 @@
 		}
 
 		const albumData = await res.json();
-		if (albumData.includes('album')) {
+		if ('album' in albumData && !('remote_artists' in albumData)) {
 			album = albumData.album;
 			artistsToBeResolved = albumData.artists;
 			isArtistsListAmbiguous = true;
+		} else if ('album' in albumData && 'remote_artists' in albumData) {
+			remoteArtistsNames = albumData.remote_artists;
+			album = albumData.album;
 		} else {
 			album = albumData;
 		}
+		hasImportFinished = true;
 	};
 
 	const importFromFile = async (e: Event) => {
@@ -492,38 +500,41 @@
 <input id="name" bind:value={album.name} />
 
 <label for="album-artists">Album Artists:</label>
+{#if remoteArtistsNames.length > 0 && hasImportFinished}
+	<p>The following artists were found in the import source, but not in the database:</p>
+	<ListGroup>
+		{#each remoteArtistsNames as artistName}
+			<ListGroupItem>{artistName} [<a href="form/artist/add" target="_blank">Add</a>]</ListGroupItem
+			>
+		{/each}
+	</ListGroup>
+{/if}
 {#if isArtistsListAmbiguous}
 	<p>More than one artist was found for this album. Select one that matches.</p>
 	<div class="artist-selection-grid">
-		{#each artistsToBeResolved.person_artist as artist}
+		{#each artistsToBeResolved as artist}
 			<Card class="artist-card">
 				bind:value={album.album_artists}
-				{#if artist.photos}
-					<img src={artist.photos[0]} alt={artist.name} />
-				{/if}
 				on:click={() => {
-					album.album_artists.person_artist = [artist];
-					artistsToBeResolved.person_artist = [];
+					album.album_artists = [artist];
+					artistsToBeResolved = [];
 					isArtistsListAmbiguous = false;
 				}}
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
-						album.album_artists.person_artist = [artist];
-						artistsToBeResolved.person_artist = [];
+						album.album_artists = [artist];
+						artistsToBeResolved = [];
 						isArtistsListAmbiguous = false;
 					}
 				}}
 				tabindex="0" role="button"
-				<p><a href="/artists/${artist.id}" target="_blank">{artist.name}</a></p>
+				<p><a href="/artists/${artist.artist}" target="_blank">{artist.name}</a></p>
 			</Card>
 		{/each}
 	</div>
 {/if}
 
-<select id="album-artists" bind:value={album.album_artists}>
-	<option value="person_artist">Person</option>
-	<option value="group_artist">Group</option>
-</select>
+<select id="album-artists" bind:value={album.album_artists} />
 
 <button id="add-more" on:click={addMore}>
 	<PlusIcon />

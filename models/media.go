@@ -91,7 +91,7 @@ type (
 
 func NewMediaStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
 	ks := NewKeywordStorage(db, l)
-	Ps := NewPeopleStorage(db, l)
+	Ps := NewPeopleStorage(newDB, db, l)
 	return &MediaStorage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
 }
 
