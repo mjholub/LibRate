@@ -152,12 +152,20 @@
 	$: {
 		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
 		imagePaths = album.image_paths || [];
-		album.genres = album.genres || [];
+		album = { ...album };
 		genreNames = [];
 		isUploading = imagePaths.length !== 0;
 	}
 
-	const addMore = () => {};
+	const addMore = () => {
+		// add another search field for album artists
+		document
+			.querySelector('#album-artists-search')
+			?.insertAdjacentHTML(
+				'afterend',
+				`<input id="album-artists-search" bind:value={album.album_artists} on:input={searchArtists} />`
+			);
+	};
 
 	// updateImage reactively changes the displayed image when the user uploads a new one
 	const updateImage = async (e: Event) => {
@@ -345,6 +353,8 @@
 								album.tracks = albumJSON.tracks;
 								album.album_artists = albumJSON.album_artists;
 								album.duration = sumAlbumDuration(albumJSON.tracks);
+								album = { ...album };
+								console.log(album);
 								break;
 							case 'audio/mpeg':
 							default:
@@ -361,6 +371,7 @@
 								status: 500
 							});
 							errorMessages = [...errorMessages];
+							errorMessages.forEach((error) => console.error(error));
 							e.preventDefault();
 						};
 						fileReader.readAsText(file);
@@ -399,6 +410,11 @@
 		} else {
 			null;
 		}
+	};
+
+	const searchArtists = async (e: Event) => {
+		// TODO: initialize a WebSocket connection using searchStore
+		// to performa a search with search-as-you-type functionality
 	};
 </script>
 
@@ -495,11 +511,15 @@
 		<img src={album.image_paths[0]} alt="Album Cover" />
 	{/if}
 </div>
+<div class="input-field-element">
+	<label for="name">Album Name:</label>
+	<input id="name" bind:value={album.name} />
+</div>
 
-<label for="name">Album Name:</label>
-<input id="name" bind:value={album.name} />
-
-<label for="album-artists">Album Artists:</label>
+<div class="input-field-element">
+	<label for="album-artists">Album Artists:</label>
+	<input id="album-artists-search" bind:value={album.album_artists} on:input={searchArtists} />
+</div>
 {#if remoteArtistsNames.length > 0 && hasImportFinished}
 	<p>The following artists were found in the import source, but not in the database:</p>
 	<ListGroup>
@@ -534,30 +554,36 @@
 	</div>
 {/if}
 
-<select id="album-artists" bind:value={album.album_artists} />
-
 <button id="add-more" on:click={addMore}>
 	<PlusIcon />
 </button>
 
-<label for="release-date">Release Date:</label>
-<input id="release-date" bind:value={album.release_date} type="date" />
-
-<label for="genres">Genres (comma separated):</label>
-<div class="genre-box">
-	<Tags
-		bind:tags={album.genres}
-		onlyUnique={true}
-		autoComplete={localStorage.getItem('genreNames')
-			? JSON.parse(localStorage.getItem('genreNames') || '')
-			: []}
-		onTagClick={openGenreLink}
-		onlyAutocomplete={true}
-	/>
+<div class="input-field-element">
+	<label for="release-date">Release Date:</label>
+	<input id="release-date" bind:value={album.release_date} type="date" />
 </div>
 
-<label for="duration">Duration:</label>
-<input id="duration" bind:value={album.duration} type="time" />
+<div class="input-field-element">
+	<label for="genres">Genres (comma separated):</label>
+	<div class="genre-box">
+		<Tags
+			bind:tags={album.genres}
+			onlyUnique={true}
+			autoComplete={localStorage.getItem('genreNames')
+				? JSON.parse(localStorage.getItem('genreNames') || '')
+				: []}
+			onTagClick={openGenreLink}
+			onlyAutocomplete={true}
+		/>
+	</div>
+</div>
+
+<div class="input-field-element">
+	<label for="duration"
+		>Duration (will be calculated automatically from total duration of tracks):</label
+	>
+	<input id="duration" bind:value={album.duration} type="time" />
+</div>
 
 <p>Tracks:</p>
 <AddTrack />
@@ -565,6 +591,25 @@
 <button on:click={handleSubmit}>Submit</button>
 
 <style>
+	.input-field-element {
+		margin-bottom: 1rem;
+		display: grid;
+	}
+
+	button#add-more {
+		display: inline-block;
+		position: relative;
+	}
+
+	input#album-artists-search {
+		max-width: 90%;
+		display: inline-block;
+	}
+
+	label {
+		display: block;
+	}
+
 	.drop-area {
 		border: 2px dashed #ccc;
 		padding: 20px;
