@@ -32,7 +32,7 @@ func main() {
 		mainGenreQuery := fmt.Sprintf(`
 			INSERT INTO media.genres (name, kinds)
 			VALUES ('%s', ARRAY['music'])
-			ON CONFLICT DO NOTHING;`, strings.ReplaceAll(title, "'", "''"))
+			ON CONFLICT DO NOTHING;`, title)
 
 		queries = append(queries, mainGenreQuery)
 
