@@ -64,7 +64,7 @@ type (
 		Description []GenreDescription `json:"description,omitempty" db:"-"`
 		//	DescLong    string   `json:"desc_long" db:"desc_long"`
 		Characteristics []string `json:"keywords" db:"-"`
-		ParentGenreID   *int64   `json:"parent_genre omitempty" db:"parent,omitempty"`
+		ParentGenreID   *int64   `json:"parent_genre,omitempty" db:"parent,omitempty"`
 		Children        []int64  `json:"children,omitempty" db:"children,omitempty"`
 	}
 
@@ -224,20 +224,12 @@ func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-
-		tx, err := ms.newDB.Begin(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error beginning transaction: %v", err)
-		}
-		defer tx.Rollback(ctx)
-
 		genre := Genre{
 			Kinds: pq.StringArray{kind},
 		}
 		rows, err := ms.newDB.Query(ctx, `
-			SELECT name, parent, children FROM media.genres WHERE $1 = ANY(kinds) AND name = $2`,
+			SELECT id, name, parent, children FROM media.genres WHERE $1 = ANY(kinds) AND name = $2`,
 			kind, name)
-		ms.Log.Debug().Msgf("query: %v", rows)
 		if err != nil {
 			return nil, fmt.Errorf("error querying genre rows: %v", err)
 		}
@@ -266,6 +258,7 @@ func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (
 
 		genre.Description = []GenreDescription{
 			{
+				GenreID:     genre.ID,
 				Language:    lang,
 				Description: description,
 			},

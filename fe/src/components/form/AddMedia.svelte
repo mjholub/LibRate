@@ -95,3 +95,9 @@
 		{/if}
 	</form>
 </div>
+
+<style>
+	.form-title {
+		padding-top: 1em;
+	}
+</style>
