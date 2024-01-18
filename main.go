@@ -121,6 +121,9 @@ func main() {
 		if dbConn != nil {
 			dbConn.Close()
 		}
+		if pgConn != nil {
+			pgConn.Close()
+		}
 	}()
 
 	if flags.Init {
