@@ -9,6 +9,7 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
+    minify: false,
   },
   resolve: {
     alias: {
