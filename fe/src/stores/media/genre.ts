@@ -13,7 +13,7 @@ type kind = 'music' | 'film' | 'tv' | 'book' | 'game' | null
 interface GenreStore extends Writable<GenreStoreState> {
   getGenres: (all: boolean, columns: column[], kind: kind) => Promise<void>;
   getGenreNames: (kind: kind, asLinks: boolean) => Promise<string[]>;
-  // prefferably IANA code, but might be just the base part, like 'en' or 'de'
+  // preferably IANA code, but might be just the base part, like 'en' or 'de'
   getGenre: (kind: kind, lang: string, genre: string) => Promise<Genre | null>;
 };
 
@@ -27,8 +27,7 @@ function createGenreStore(): GenreStore {
     getGenres: async (all: boolean, columns: column[], kind: kind) => {
       await axios.get(`/api/media/genres/${kind}?all=${all}&columns=${columns.join('&columns=')}`, {
       }).then(response =>
-        // NOTE: This is not a error. As ugly it might look, data is actually nested like this.
-        set({ genres: response.data.data })
+        set({ genres: response.data })
       ).catch(err => {
         console.log(err);
         return [];
@@ -36,9 +35,9 @@ function createGenreStore(): GenreStore {
     },
     getGenreNames: async (kind: kind, asLinks: boolean) => {
       return new Promise(async (resolve, reject) => {
-        await axios.get(`/api/media/genres/${kind}?names_only=true?as_links=${asLinks}`, {
+        await axios.get(`/api/media/genres/${kind}?names_only=true?as_links=${asLinks}?all=true`, {
         }).then(res => {
-          resolve(res.data.data);
+          resolve(res.data);
         }).catch(err => {
           console.log(err);
           reject(err);
@@ -47,10 +46,9 @@ function createGenreStore(): GenreStore {
     },
     getGenre: async (kind: kind, lang: string, genre: string) => {
       return new Promise(async (resolve, reject) => {
-        await axios.get(`/api/media/genres/${kind}/${genre}?lang=${lang.toString()}`, {
-          params: {
-            columns: 'all'
-          }
+        // format to snake_case, lowercase
+        genre = genre.toLowerCase().replace(/ /g, '_');
+        await axios.get(`/api/media/genre/${kind}/${genre}/?lang=${lang.toString()}`, {
         }).then(res => {
           set({ genres: res.data.data })
           resolve(res.data.data);

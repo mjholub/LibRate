@@ -111,10 +111,11 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	}
 
 	asLinks := c.QueryBool("as_links", false)
+	all := c.QueryBool("all", true)
 
 	if namesOnly {
 		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
-		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, c.QueryBool("all", false), "name")
+		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
@@ -128,7 +129,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	columns := c.Query("columns", "name")
 
 	mc.storage.Log.Debug().Msgf("Getting following columns for %s: %s", genreKind, columns)
-	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, c.QueryBool("all", false), columns)
+	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, all, columns)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}
@@ -145,7 +146,7 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 
 	genreName := c.Params("genre")
 	genre, err := mc.storage.GetGenre(c.Context(), genreKind, lang, genreName)
-	if strings.Contains(err.Error(), "no rows in result set") {
+	if err != nil && strings.Contains(err.Error(), "no rows in result set") {
 		return h.Res(c, fiber.StatusNotFound, "Genre not found")
 	}
 	if err != nil {
