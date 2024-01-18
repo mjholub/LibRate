@@ -11,7 +11,7 @@
 	// @ts-ignore
 	// @ts-ignore
 	import * as time from 'timedstorage/time';
-	import { PlusIcon } from 'svelte-feather-icons';
+	import { PlusIcon, XIcon } from 'svelte-feather-icons';
 	import type { Album, AlbumArtist, Track } from '$lib/types/music';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { genreStore } from '$stores/media/genre';
@@ -99,6 +99,26 @@
 			Time: '00:00:00'
 		},
 		tracks: []
+	};
+
+	// check if the user has provided more specific genre names (i.e. subgenres)
+	// by comparing album.genres against basicGenres
+	const checkGenreGranularity = () => {
+		if (!album.genres || album.genres.length === 0 || !album.genres[0].name) {
+			console.debug('no genres provided');
+			usingBasicGenresOnly = false;
+			return;
+		}
+		console.debug('album genres', album.genres);
+		for (let i = 0; i < album.genres.length; i++) {
+			if (!basicGenres.includes(album.genres[i].name)) {
+				console.debug(`genre ${album.genres[i].name} is not a basic genre`);
+				usingBasicGenresOnly = false;
+				return;
+			}
+		}
+		usingBasicGenresOnly = true;
+		console.debug('only basic genres provided');
 	};
 
 	const shouldResetAlbum = () => {
@@ -232,7 +252,6 @@
 		availableImportSources = [];
 	});
 
-
 	const addMore = () => {
 		// add another search field for album artists
 		document
@@ -280,6 +299,7 @@
 			fileReader.onerror = (e) => reject(e);
 			isUploading = true;
 			fileReader.readAsDataURL(file);
+
 			onDestroy(() => {
 				fileReader.onload = null;
 				fileReader.onerror = null;
@@ -451,15 +471,63 @@
 		// TODO: initialize a WebSocket connection using searchStore
 		// to performa a search with search-as-you-type functionality
 	};
+
+	// timeout of 60 seconds to load genres
+	const genresLoaded = async () => {
+		const timeout = 60000;
+		const start = new Date().getTime();
+
+		while (new Date().getTime() - start < timeout && genreNames.length === 0) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		}
+		if (genreNames.length === 0) {
+			errorMessages.push({
+				message: 'Timeout while loading genres',
+				status: 500
+			});
+		}
+		errorMessages = [...errorMessages];
+	};
+
+	const writeGenres = async () => {
+		console.debug('writing genres: ', currentGenres);
+		album.genres = [];
+		currentGenres.forEach(async (genreName) => {
+			const genre = await genreStore.getGenre('music', 'en', genreName);
+			if (genre && genre.name !== '') {
+				album.genres!.push(genre);
+				album.genres = [...album.genres!];
+			} else {
+				errorMessages.push({
+					message: `Genre ${genreName} not found`,
+					status: 404
+				});
+				errorMessages = [...errorMessages];
+			}
+		});
+	};
+
 	$: {
 		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
 
 		imagePaths = album.image_paths || [];
 		album = { ...album };
+
+		if (album.genres) {
+			checkGenreGranularity();
+		}
 		if (JSONfile && !jsonParsed) {
 			reader.onload = handleFileLoad;
 			reader.readAsText(JSONfile[0]);
 		}
+
+		if (currentGenres.length > 0) {
+			async () => {
+				await writeGenres();
+				checkGenreGranularity();
+			};
+		}
+
 		isUploading = imagePaths.length !== 0;
 		releaseDateString = releaseDate ? releaseDate.toISOString().split('T')[0] : '';
 	}
@@ -623,23 +691,54 @@
 
 <div class="input-field-element">
 	<label for="release-date">Release Date:</label>
-	<input id="release-date" bind:value={album.release_date} type="date" />
+	<input id="release-date" bind:value={releaseDateString} type="date" />
 </div>
 
 <div class="input-field-element">
 	<label for="genres">Genres (comma separated):</label>
-	<div class="genre-box">
-		<Tags
-			bind:tags={album.genres}
-			onlyUnique={true}
-			autoComplete={localStorage.getItem('genreNames')
-				? JSON.parse(localStorage.getItem('genreNames') || '')
-				: []}
-			onTagClick={openGenreLink}
-			onlyAutocomplete={true}
-		/>
-	</div>
+	{#await genresLoaded()}
+		<div class="spinner" />
+	{:then}
+		<div class="genre-box">
+			<Tags
+				bind:tags={currentGenres}
+				on:tagsChange={console.log(currentGenres)}
+				on:focus={console.log(currentGenres)}
+				onlyUnique={true}
+				autoComplete={localStorage.getItem('genreNames')
+					? JSON.parse(localStorage.getItem('genreNames') || '')
+					: []}
+				onTagClick={openGenreLink}
+				onlyAutocomplete={true}
+			/>
+		</div>
+		{#if currentGenres.length > 0}
+			{#await writeGenres()}
+				<div class="spinner" />
+			{:then}
+				<p class="success-box">Changes saved!</p>
+			{:catch error}
+				<p>{error.message}</p>
+			{/await}
+		{/if}
+	{:catch error}
+		<p>{error.message}</p>
+	{/await}
 </div>
+{#if usingBasicGenresOnly}
+	<div class="notice-box">
+		<!-- TODO: if the artist is known, suggest genres based on the genres of previous releases -->
+		<!-- FIXME: this is not showing when expected -->
+		<p>
+			Only basic genres were provided. To find out which subgenres of the provided, try clicking on
+			one of the provided genre names to open a new tab with the genre page. There you can find a
+			list of subgenres.
+		</p>
+		<button id="dismiss-notice" on:click={() => (usingBasicGenresOnly = false)}>
+			<XIcon />
+		</button>
+	</div>
+{/if}
 
 <div class="input-field-element">
 	<label for="duration"
@@ -653,6 +752,10 @@
 
 <button on:click={handleSubmit}>Submit</button>
 
+{#if errorMessages.length > 0}
+	<ErrorModal showErrorModal={true} {errorMessages} />
+{/if}
+
 <style>
 	.input-field-element {
 		margin-bottom: 1rem;
@@ -664,6 +767,14 @@
 		position: relative;
 	}
 
+	button#dismiss-notice {
+		top: -0.33em;
+		position: relative;
+		right: 0.25em;
+		padding: 0.2em 0.05em 0.05em;
+		border-radius: var(--button-border-radius);
+	}
+
 	input#album-artists-search {
 		max-width: 90%;
 		display: inline-block;
@@ -671,6 +782,19 @@
 
 	label {
 		display: block;
+	}
+
+	.notice-box {
+		background-color: #f9ffc4 !important;
+		color: #000 !important;
+		border: 1px solid #faf0ff;
+		border-radius: 4px;
+		font-weight: bold;
+		font-size: 1rem;
+		opacity: 0.85;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
 	.drop-area {
