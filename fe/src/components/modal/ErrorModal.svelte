@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import createError from 'http-errors';
 	import type { CustomHttpError } from '$lib/types/error';
 	export let showErrorModal = false;
 	export let errorMessages: CustomHttpError[] = [];
+	let currentIndex = 0;
 
 	let dialog: HTMLDialogElement;
 
-	// humanReadableCode converts a HTTP status code to a human readable string
-	// e.g. 404 -> "Not Found"
-	const humanReadableCode = (code: number): string => {
-		return createError(code).message;
+	const nextError = () => {
+		currentIndex = (currentIndex + 1) % errorMessages.length;
+	};
+
+	const prevError = () => {
+		currentIndex = (currentIndex - 1 + errorMessages.length) % errorMessages.length;
 	};
 
 	$: if (dialog) {
@@ -49,21 +51,43 @@
 		}
 	}}
 >
-	{#each errorMessages as errorMessage}
+	{#each errorMessages as errorMessage, index}
+		{#if errorMessages.length > 1}
+			<div class="error-navigator">
+				<button on:click={prevError} disabled={currentIndex === 0}>Previous</button>
+				<span>Error {currentIndex + 1}/{errorMessages.length}</span>
+				<button on:click={nextError} disabled={currentIndex === errorMessages.length - 1}
+					>Next</button
+				>
+			</div>
+		{/if}
 		<div on:click|stopPropagation role="dialog">
 			<p class="error-string">
-				{errorMessage.message}:
-				<a href="https://http.cat/{errorMessage.status}">{humanReadableCode(errorMessage.status)}</a
-				>
+				<a href={`https://http.cat/{errorMessage.status}`}>
+					<img
+						id="httpcat"
+						src={`https://http.cat/${errorMessage.status}`}
+						alt={`HTTP Status ${errorMessage.status}`}
+						crossorigin="anonymous"
+					/>
+				</a>
 			</p>
+			<p class="error-details">{errorMessage.message}</p>
 		</div>
 	{/each}
 	<button on:click={() => (showErrorModal = false)}>OK</button>
 </dialog>
 
 <style>
+	#httpcat {
+		margin: 10%;
+		display: block;
+		position: sticky;
+		max-width: 95%;
+	}
+
 	dialog {
-		max-width: 32em;
+		max-width: calc(32em + 10%);
 		border-radius: 0.2em;
 		border: none;
 		padding: 0;
@@ -85,5 +109,12 @@
 		justify-content: center;
 		padding-bottom: 0.5em;
 		font-size: 7mm;
+	}
+
+	.error-navigator {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.5em;
 	}
 </style>
