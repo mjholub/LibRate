@@ -9,7 +9,6 @@
 		ListGroupItem
 	} from '@sveltestrap/sveltestrap';
 	// @ts-ignore
-	import { getItem, setItem } from 'timedstorage';
 	// @ts-ignore
 	import * as time from 'timedstorage/time';
 	import { PlusIcon } from 'svelte-feather-icons';
@@ -22,19 +21,60 @@
 	import type { NullableDuration } from '$lib/types/utils';
 	// @ts-ignore
 	import Tags from 'svelte-tags-input';
+	import ErrorModal from '$components/modal/ErrorModal.svelte';
 	import AddTrack from './AddTrack.svelte';
 
+	const basicGenres = [
+		'Blues',
+		'Classical',
+		'Comedy',
+		'Country',
+		'Darkwave',
+		'Easylistening',
+		'Experimental',
+		'Fieldrecordings',
+		'Gospel',
+		'Ambient',
+		'Dance',
+		'Industrial_noise',
+		'Marching',
+		'Metal',
+		'Musical_theatre',
+		'Newage',
+		'Psychedelia',
+		'Punk',
+		'Regional',
+		'Rnb',
+		'Jazz',
+		'Electronic',
+		'Folk',
+		'Singer_songwriter',
+		'Rock',
+		'Shibuya-Kei',
+		'Ska',
+		'Sound_effects',
+		'Spokenword',
+		'Pop',
+		'Hip-Hop'
+	];
+	const reader = new FileReader();
 	export let nickname: string;
+	let genreNames: string[] = [];
+	let usingBasicGenresOnly: boolean = false;
+	let JSONfile: FileList;
+	let jsonParsed: boolean = false;
+	let releaseDate: Date;
+	let releaseDateString: string;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
 	let imagePaths: string[] = [];
 	let errorMessages: CustomHttpError[] = [];
-	let genreNames: string[] = [];
 	let availableImportSources: string[] = [];
 	let isUploading: boolean = false;
 	let imageBase64 = '';
 	let importSource = '';
 	let importURL = '';
+	let currentGenres: any[] = [];
 
 	let hasImportFinished = false;
 	let remoteArtistsNames: string[] = [];
@@ -77,33 +117,10 @@
 	};
 
 	onMount(async () => {
-		try {
-			if (getItem('genreNames')) {
-				console.debug('getting genre names from local storage');
-				genreNames = JSON.parse(getItem('genreNames') || '') || [];
-				genreNames = [...genreNames];
-				if (genreNames.length === 0) {
-					console.debug('genre names array is empty, getting genre names from API endpoint');
-					genreNames = await genreStore.getGenreNames('music', false);
-					genreNames = [...genreNames];
-					setItem('genreNames', JSON.stringify(genreNames), time.DAY);
-				}
-			} else {
-				console.debug('getting genre names from API endpoint');
-				genreNames = await genreStore.getGenreNames('music', false);
-				genreNames = [...genreNames];
-				setItem('genreNames', JSON.stringify(genreNames), time.DAY);
-			}
-		} catch (error) {
-			console.error(error);
-			errorMessages.push({
-				message: 'Error getting genre links',
-				status: 500
-			});
-		}
 		const importSources = await fetch('/api/media/import-sources').then((res) => res.json());
 		availableImportSources = importSources;
 		availableImportSources = [...availableImportSources];
+		await loadGenreNames();
 		maxFileSize = await getMaxFileSize();
 		if (shouldResetAlbum()) {
 			localStorage.removeItem('album');
@@ -143,19 +160,78 @@
 		});
 	});
 
+	const loadGenreNames = async () => {
+		// reassign to avoid 'genreNames is undefined'
+		genreNames = [];
+		try {
+			if (localStorage.getItem('genreNames')) {
+				const timestamp = localStorage.getItem(`genreNames_timestamp`);
+				const lastTS = parseInt(timestamp || '0', 10);
+				const now = new Date().getTime();
+
+				if (now - lastTS > time.DAY) {
+					await fetchGenreNames('older than 1 day');
+				} else {
+					console.debug('getting genre names from local storage');
+					genreNames = JSON.parse(localStorage.getItem('genreNames') || '');
+					genreNames = [...genreNames];
+					if (genreNames.length === 0) {
+						await fetchGenreNames('empty');
+					}
+				}
+			} else {
+				await fetchGenreNames('not in local storage');
+			}
+		} catch (error) {
+			console.error(error);
+			errorMessages.push({
+				message: 'Error getting genre links',
+				status: 500
+			});
+		}
+	};
+
+	const fetchGenreNames = async (message: string) => {
+		console.debug(`genre names are ${message}, getting genre names from API endpoint`);
+		const genresResponse = await genreStore.getGenreNames('music', false);
+		genreNames.push(...genresResponse);
+		genreNames = [...genreNames];
+		localStorage.setItem('genreNames', JSON.stringify(genreNames));
+		localStorage.setItem(`genreNames_timestamp`, new Date().getTime().toString());
+	};
+
+	const handleFileLoad = (e: ProgressEvent<FileReader>) => {
+		try {
+			const jsonData = JSON.parse(e.target?.result as string);
+			releaseDate = parseJSONDate(jsonData.release_date) || new Date();
+			Object.assign(album, jsonData);
+			album.duration = sumAlbumDuration(album.tracks);
+			// Trigger a reassignment to make Svelte detect the changes
+			album = { ...album };
+			album.release_date = releaseDate;
+			jsonParsed = true;
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
 	onDestroy(() => {
+		console.debug('calling destroy hooks for reader');
+		removeEventListener('load', () => {
+			const dropArea = document.querySelector('.drop-area');
+
+			dropArea?.removeEventListener('dragover', (e) => {
+				e.preventDefault();
+				dropArea.classList.add('highlight');
+			});
+		});
+		reader.onload = null;
+		reader.abort();
 		maxFileSize = 0;
 		isUploading = false;
 		availableImportSources = [];
 	});
 
-	$: {
-		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
-		imagePaths = album.image_paths || [];
-		album = { ...album };
-		genreNames = [];
-		isUploading = imagePaths.length !== 0;
-	}
 
 	const addMore = () => {
 		// add another search field for album artists
@@ -204,6 +280,11 @@
 			fileReader.onerror = (e) => reject(e);
 			isUploading = true;
 			fileReader.readAsDataURL(file);
+			onDestroy(() => {
+				fileReader.onload = null;
+				fileReader.onerror = null;
+				fileReader.abort();
+			});
 		});
 	};
 
@@ -326,59 +407,13 @@
 		hasImportFinished = true;
 	};
 
-	const importFromFile = async (e: Event) => {
-		const files = (e.target as HTMLInputElement).files;
-		if (files) {
-			const f = Array.from(files);
-			f.forEach(async (file: File | Blob) => {
-				if (file.size > maxFileSize) {
-					errorMessages.push({
-						message: `File size must be less than ${maxFileSizeString}`,
-						status: 413
-					});
-					errorMessages = [...errorMessages];
-				} else {
-					const fileReader: FileReader = new FileReader();
-					fileReader.onload = async () => {
-						// branch on mime type (application/json or audio/mpeg)
-						switch (file.type) {
-							case 'application/json':
-								const json = fileReader.result as string;
-								const albumJSON = JSON.parse(json);
-								album.name = albumJSON.name;
-								album.release_date = new Date(albumJSON.release_date);
-								album.kind = 'album';
-								// TODO: genre validation
-								album.genres = albumJSON.genres;
-								album.tracks = albumJSON.tracks;
-								album.album_artists = albumJSON.album_artists;
-								album.duration = sumAlbumDuration(albumJSON.tracks);
-								album = { ...album };
-								console.log(album);
-								break;
-							case 'audio/mpeg':
-							default:
-								errorMessages.push({
-									message: 'Invalid file type',
-									status: 415
-								});
-								errorMessages = [...errorMessages];
-								break;
-						}
-						fileReader.onerror = (e: ProgressEvent<FileReader>) => {
-							errorMessages.push({
-								message: 'Error reading file',
-								status: 500
-							});
-							errorMessages = [...errorMessages];
-							errorMessages.forEach((error) => console.error(error));
-							e.preventDefault();
-						};
-						fileReader.readAsText(file);
-					};
-				}
-			});
+	const parseJSONDate = (dateString: string): Date | null => {
+		const dateParts = dateString.split('-');
+		if (dateParts.length === 3) {
+			const [day, month, year] = dateParts.map(Number);
+			return new Date(year, month - 1, day);
 		}
+		return null;
 	};
 
 	const sumAlbumDuration = (tracks: Track[]): NullableDuration => {
@@ -416,6 +451,18 @@
 		// TODO: initialize a WebSocket connection using searchStore
 		// to performa a search with search-as-you-type functionality
 	};
+	$: {
+		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
+
+		imagePaths = album.image_paths || [];
+		album = { ...album };
+		if (JSONfile && !jsonParsed) {
+			reader.onload = handleFileLoad;
+			reader.readAsText(JSONfile[0]);
+		}
+		isUploading = imagePaths.length !== 0;
+		releaseDateString = releaseDate ? releaseDate.toISOString().split('T')[0] : '';
+	}
 </script>
 
 <svelte:head>
@@ -475,10 +522,16 @@
 				JSON (see <a href="https://codeberg.org/mjh/LibRate/wiki/Album-JSON-fields">specification</a
 				>):
 			</p>
-			<Input type="file" id="import-file" on:change={importFromFile} />
+			<input
+				accept="application/json"
+				bind:files={JSONfile}
+				id="avatar"
+				name="avatar"
+				type="file"
+			/>
 		{:else if importSource == 'id3'}
 			<p aria-labelledby="id3-info">Music file (ID3 Tags, only MP3 supported):</p>
-			<Input type="file" id="import-file" on:change={importFromFile} />
+			<Input type="file" id="import-file" accept="audio/mpeg" bind:value={JSONfile} />
 		{/if}
 	</FormGroup>
 </div>
@@ -518,7 +571,17 @@
 
 <div class="input-field-element">
 	<label for="album-artists">Album Artists:</label>
-	<input id="album-artists-search" bind:value={album.album_artists} on:input={searchArtists} />
+	{#if album.album_artists.length === 0}
+		<input id="album-artists-search" bind:value={album.album_artists} on:input={searchArtists} />
+	{:else}
+		{#each album.album_artists as artist, index}
+			<input
+				bind:value={album.album_artists[index].name}
+				id={`artistName${index}`}
+				name={`artistName${index}`}
+			/>
+		{/each}
+	{/if}
 </div>
 {#if remoteArtistsNames.length > 0 && hasImportFinished}
 	<p>The following artists were found in the import source, but not in the database:</p>
