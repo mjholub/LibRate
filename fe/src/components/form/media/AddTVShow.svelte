@@ -47,15 +47,16 @@
 		show.seasons = [...show.seasons, newSeason];
 	};
 
-  const handleKeydown = (event: any) => {
-    switch (event.key) {
-      case 'Enter':
-        addSeason(event);
-        break;
-      case 'Backspace':
-        removeSeason(event);
-        break;
-    }
+	const handleKeydown = (event: any) => {
+		switch (event.key) {
+			case 'Enter':
+				addSeason(event);
+				break;
+			case 'Backspace':
+				removeSeason(event);
+				break;
+		}
+	};
 </script>
 
 <svelte:head>
@@ -76,7 +77,6 @@
 	</Collapse>
 	<Label for="synopsis">Synopsis</Label>
 	<button id="addSeason">Add Season</button>
-	<!-- do someting like in tracks form -->
 	<input type="text" id="season" on:keydown={handleKeydown} />
 	{#each show.seasons as season}
 		{#each season.episodes as episode}
