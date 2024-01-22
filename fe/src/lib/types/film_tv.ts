@@ -2,20 +2,13 @@ import type { Person } from './people';
 import type { UUID, NullableDuration, NullableString, NullableDate } from './utils';
 import type { Media } from './media';
 
-// TODO: add genre, keywords, etc.
-// NOTE: these are (to be?) stored in junction tables in the database
-// like film_genres, film_keywords etc.
-export interface Film extends Media {
-  media_id: UUID;
-  kind: 'film';
+export interface Film {
   title: string;
   castID: number;
   synopsis?: NullableString;
   releaseDate?: NullableDate;
   duration?: NullableDuration | null;
   rating?: number;
-  created: Date;
-  creator: Person | null;
 }
 
 export interface TVShow extends Media {
