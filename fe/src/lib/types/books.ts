@@ -1,11 +1,10 @@
 import type { Person } from './people';
 import type { UUID } from './utils';
-import type { Media } from './media';
 
-export interface Book extends Media {
+export interface Book {
   media_id: UUID;
   title: string;
-  authors: Person[];
+  authors: Person[] | null;
   publisher: string;
   publication_date: Date;
   genres: string[];
