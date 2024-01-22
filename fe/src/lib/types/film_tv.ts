@@ -11,12 +11,26 @@ export interface Film {
   rating?: number;
 }
 
-export interface TVShow extends Media {
-  media_id: UUID;
-  kind: 'tvshow';
+// TODO: verify if (de)serialization works as expected
+export interface TVShow {
   title: string;
-  created: Date;
-  creator: Person;
+  seasons: Season[];
+}
+
+export interface Season {
+  number: number;
+  episodes: Episode[];
+}
+
+export interface Episode {
+  season: number;
+  number: number;
+  title: string;
+  plot?: NullableString;
+  duration: Date | null;
+  castID: number;
+  airDate: Date | null;
+  languages: string[];
 }
 
 export type ActorCast = {
