@@ -20,7 +20,7 @@ const createWebSocket = (url: string) => {
 
 const performSearch = (query: string, socket: WebSocket) => {
   if (socket.readyState === WebSocket.OPEN) {
-    socket.send(query);
+    socket.send(JSON.stringify({ query }));
   }
 }
 
