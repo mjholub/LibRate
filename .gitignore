@@ -17,12 +17,14 @@ tmp
 fe/public
 config_enc.yml
 config._enc.yml.old
-package.json
+# sometimes I'd accidentally run a package manager command in the root
+./package.json
 pnpm-lock.yaml
 # build artifacts
 librate
 lrctl
 LibRate-*
 LibRate
-static/img
-static
+./static/img/profile/*.{jpeg,jpg,png,webp}
+librate-bin
+./profile*

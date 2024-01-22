@@ -1,0 +1,176 @@
+[
+  {
+    "name": "Conducted Improvisation",
+    "description": "Collective improvisation directed by a conductor.",
+    "children": []
+  },
+  {
+    "name": "Data Sonification",
+    "description": "Usage of data to create sound, soundscapes and music mostly as a way to illustrate its information.",
+    "children": []
+  },
+  {
+    "name": "Drone",
+    "description": "Characterized by a focus on long, sustained tones and tone clusters, or repetition of single notes.",
+    "children": []
+  },
+  {
+    "name": "Electroacoustic",
+    "description": "Manipulation and processing of sound sources to create atmospheric pieces.",
+    "children": [
+      {
+        "name": "Acousmatic Music",
+        "description": "Fixed-media Electroacoustic music designed to be reproduced by multiple loudspeakers without the presence of instrumentalists and visual cues."
+      },
+      {
+        "name": "EAI",
+        "description": "Slow paced, physical, textured aesthetic - often created using unconventional instruments processed through a computer."
+      },
+      {
+        "name": "Musique concrète",
+        "description": "Manipulation of recorded sounds, mostly Field Recordings, natural sounds, and real-world noises, as a process of abstracting \"concrete\" sounds, or \"sound objects\", from their acoustic origins."
+      }
+    ]
+  },
+  {
+    "name": "Free Improvisation",
+    "description": "Improvised music which, in descending from Free Jazz and classical Indeterminacy, further abandons the prescriptions of harmonic or rhythmic structures which characterized those genres.",
+    "children": [
+      {
+        "name": "EAI",
+        "description": "Slow paced, physical, textured aesthetic - often created using unconventional instruments processed through a computer."
+      }
+    ]
+  },
+  {
+    "name": "Futurism",
+    "description": "Radical and militant attitude, rejection of Western Classical Music and traditional criteria of craft, non-conformity, and a fascination with machines.",
+    "children": []
+  },
+  {
+    "name": "Glitch",
+    "description": "Uses the sounds created by malfunctioning digital technology - crashes, hardware noise, CD skipping, and digital distortion - for composition.",
+    "children": []
+  },
+  {
+    "name": "Indeterminacy",
+    "description": "Leaves elements of composition, performance, or both up to chance.",
+    "children": []
+  },
+  {
+    "name": "Industrial",
+    "description": "Emerged out of Punk and avant-garde art movements in the mid-1970s, often characterized by a bleak, mechanical atmosphere, the use of metallic percussion as well as other unconventional instruments, and extensive use of sampling influenced by Musique concrète.",
+    "children": [
+      {
+        "name": "Power Electronics",
+        "description": "Waves of feedback, screeching analog synthesizers, and harsh, screamed vocals."
+      },
+      {
+        "name": "Death Industrial",
+        "description": "Combines the abrasive textures of Noise and Industrial music with dark, brooding drones and atmospheres."
+      }
+    ]
+  },
+  {
+    "name": "Microsound",
+    "description": "Usage of sounds on an incredibly small scale.",
+    "children": []
+  },
+  {
+    "name": "Modern Creative",
+    "description": "Style of semi-improvisation that derives heavily from both the composition of Modern Classical and the techniques of Avant-Garde Jazz.",
+    "children": []
+  },
+  {
+    "name": "Musique concrète instrumentale",
+    "description": "Acoustic, through-composed Classical Music that relies heavily on unconventional instrumental techniques.",
+    "children": []
+  },
+  {
+    "name": "Noise",
+    "description": "Strays away from conventional structure, tonality, and composition and consists predominantly of noise.",
+    "children": [
+      {
+        "name": "Ambient Noise Wall",
+        "description": "Combines the static approach of Harsh Noise Wall with textures leaning towards Ambient music."
+      },
+      {
+        "name": "Black Noise",
+        "description": "Incorporates unconventional sounds with overpowering or constant Noise and Black Metal elements, often being heavily texture-oriented, abrasive, dissonant, atonal, or repetitive."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Harsh Noise",
+        "description": "Highly aggressive walls of sound that assault the listener."
+      },
+      {
+        "name": "Harsh Noise Wall",
+        "description": "Harsh, distorted walls of sound that feature few dynamic variations and often take the form of long compositions with little to no change or progression over time."
+      },
+      {
+        "name": "Power Electronics",
+        "description": "Waves of feedback, screeching analog synthesizers, and harsh, screamed vocals."
+      },
+      {
+        "name": "Death Industrial",
+        "description": "Combines the abrasive textures of Noise and Industrial music with dark, brooding drones and atmospheres."
+      },
+      {
+        "name": "Power Noise",
+        "description": "Combines looped samples of Noise with Electronic rhythms."
+      }
+    ]
+  },
+  {
+    "name": "Plunderphonics",
+    "description": "Compositional technique of utilizing and manipulating one or more recognizable recordings to create a new composition.",
+    "children": []
+  },
+  {
+    "name": "Reductionism",
+    "description": "Experimental music that centers around quiet dynamics and use of silence.",
+    "children": [
+      {
+        "name": "Lowercase",
+        "description": "Uses very quiet sounds, often using silence to juxtapose these sounds so as to amplify their intensity."
+      },
+      {
+        "name": "Onkyo",
+        "description": "Exploration of the physical traits of sound rather than music as expression."
+      }
+    ]
+  },
+  {
+    "name": "Sound Art",
+    "description": "Incorporates elements from Experimental music and visual arts, with sound utilized as its primary medium and subject.",
+    "children": []
+  },
+  {
+    "name": "Sound Collage",
+    "description": "Sound pieces are layered and essentially \"glued\" together to create an auditory art piece.",
+    "children": [
+      {
+        "name": "Epic Collage",
+        "description": "Defined by its Deconstructed Club sonic palette and its cinematic proportions."
+      }
+    ]
+  },
+  {
+    "name": "Sound Poetry",
+    "description": "Emphasis is placed upon phonetics and the sounds of syllables rather than the meaning of the words themselves.",
+    "children": []
+  },
+  {
+    "name": "Tape Music",
+    "description": "Explores the nature of audio recorded to magnetic tape and the act of playing sound from it.",
+    "children": []
+  },
+  {
+    "name": "Turntable Music",
+    "description": "Has its roots in the early half of the twentieth century, with experimental artists using the turntable (as well as the vinyl records it plays) as a distinct instrument in the creation of compositions.",
+    "children": []
+  }
+]

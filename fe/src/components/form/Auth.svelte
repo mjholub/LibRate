@@ -349,15 +349,6 @@
 				value="rememberMe"
 				on:change={setRememberMe}
 			/>
-
-			<!-- FIXME: this is not getting updated properly -->
-			<!--
-			{#if  isAvailable}
-				<p>Nickname is available</p>
-			{:else}
-				<p>Nickname is not available</p>
-			{/if}
-      -->
 		{/if}
 
 		{#if isRegistration}

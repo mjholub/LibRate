@@ -3,6 +3,7 @@ import type { UUID } from './utils';
 import type { Album, Track } from './music';
 import type { Book } from './books';
 import type { Film, TVShow } from './film_tv';
+import type { Tag } from 'language-tags';
 
 export type AnyMedia = Album | Track | Book | Film | TVShow;
 
@@ -27,12 +28,17 @@ export type MediaImage = {
 export type Genre = {
   id: number;
   name: string;
-  desc_short: string;
-  desc_long: string;
+  description: GenreDescription[] | GenreDescription | null;
   keywords: string[]
-  parent_genre: Genre;
-  children: Genre[];
+  parent_genre: number | null;
+  children: number[] | null;
 };
+
+export type GenreDescription = {
+  genre_id: number;
+  language: Tag; // IANA tag
+  description: string;
+}
 
 export type Keyword = {
   id: number;

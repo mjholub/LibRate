@@ -10,7 +10,7 @@ export type Review = {
   attribution: string;
   userid: number;
   mediaid: string; // UUID, use import { v4 as uuid } from 'uuid' in code using this type
-  media: Media; // WARN: not fully equivalent to Media type in Go model
+  media: Media;
   created_at: Date;
   trackratings: TrackRating[];
   castrating: CastRating[];

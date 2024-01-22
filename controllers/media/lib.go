@@ -3,12 +3,16 @@ package media
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 
+	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
 )
@@ -27,6 +31,7 @@ type (
 	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
 	Controller struct {
 		storage models.MediaStorage
+		conf    *cfg.Config
 	}
 
 	mediaError struct {
@@ -35,8 +40,8 @@ type (
 	}
 )
 
-func NewController(storage models.MediaStorage) *Controller {
-	return &Controller{storage: storage}
+func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
+	return &Controller{storage: storage, conf: conf}
 }
 
 // GetMedia retrieves media information based on the media ID
@@ -83,7 +88,7 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 
 	kind, err := mc.storage.GetKind(ctx, mediaID)
 	if err != nil {
-		return handleInternalError(mc.storage.Log, c, "Failed to get kind")
+		return handleInternalError(mc.storage.Log, c, "Failed to get kind", err)
 	}
 	mc.storage.Log.Debug().Msgf("Got kind %s for media with ID %s", kind, c.Params("media_id"))
 
@@ -91,19 +96,78 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	if err == sql.ErrNoRows {
 		return handlePlaceholderImage(mc.storage.Log, c, kind)
 	} else if err != nil {
-		return handleInternalError(mc.storage.Log, c, "Failed to get image paths")
+		return handleInternalError(mc.storage.Log, c, "Failed to get image paths", err)
 	}
 
 	return handleImageResponse(mc.storage.Log, c, path)
 }
 
+func (mc *Controller) GetGenres(c *fiber.Ctx) error {
+	genreKind := c.Params("kind")
+	namesOnly := c.QueryBool("names_only", true)
+	possible := []string{"film", "tv", "music", "book", "game"}
+	if !lo.Contains(possible, genreKind) {
+		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
+	}
+
+	asLinks := c.QueryBool("as_links", false)
+	all := c.QueryBool("all", true)
+
+	if namesOnly {
+		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
+		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
+		if err != nil {
+			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
+		}
+		if asLinks {
+			genreLinks := h.LinksFromArray(fmt.Sprintf("%s/genres/%s", c.Path(), genreKind), genreNames)
+			return c.JSON(genreLinks)
+		}
+		return c.JSON(genreNames)
+	}
+
+	columns := c.Query("columns", "name")
+
+	mc.storage.Log.Debug().Msgf("Getting following columns for %s: %s", genreKind, columns)
+	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, all, columns)
+	if err != nil {
+		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
+	}
+	return h.ResData(c, fiber.StatusOK, "success", genres)
+}
+
+func (mc *Controller) GetGenre(c *fiber.Ctx) error {
+	genreKind := c.Params("kind")
+	possible := []string{"film", "tv", "music", "book", "game"}
+	if !lo.Contains(possible, genreKind) {
+		return handleBadRequest(mc.storage.Log, c, "Invalid genre kind")
+	}
+	lang := c.Query("lang", "en")
+
+	genreName := c.Params("genre")
+	genre, err := mc.storage.GetGenre(c.Context(), genreKind, lang, genreName)
+	if err != nil && strings.Contains(err.Error(), "no rows in result set") {
+		return h.Res(c, fiber.StatusNotFound, "Genre not found")
+	}
+	if err != nil {
+		return handleInternalError(mc.storage.Log, c, "Failed to get genre", err)
+	}
+	return h.ResData(c, fiber.StatusOK, "success", genre)
+}
+
+// GetArtistsByName is a POST endpoint that takes the list of artists aa a multipart form data
+// and returns the artists with their IDs as a response
+func (mc *Controller) GetArtistsByName(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func handleBadRequest(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msgf("Failed to parse media ID %s", c.Params("media_id"))
+	log.Error().Msgf("Failed to %s", message)
 	return h.Res(c, fiber.StatusBadRequest, message)
 }
 
-func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string) error {
-	log.Error().Msg(message)
+func handleInternalError(log *zerolog.Logger, c *fiber.Ctx, message string, err error) error {
+	log.Error().Err(err).Msg(message)
 	return h.Res(c, fiber.StatusInternalServerError, message)
 }
 

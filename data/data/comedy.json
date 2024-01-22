@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Break-In",
+    "description": "Comedy with narrator posing questions or commentary, answered with a song sample.",
+    "children": []
+  },
+  {
+    "name": "Dutch Cabaret",
+    "description": "Popular comedy form in the Netherlands which evolved out of traditional Cabaret in the 1890s.",
+    "children": []
+  },
+  {
+    "name": "Kabarett",
+    "description": "Theatrical entertainment consisting of mixed elements of music, sketches, monologues, dialogues, lyric poetry and/or ballads.",
+    "children": []
+  },
+  {
+    "name": "Musical Comedy",
+    "description": "Heavily utilizes music in its delivery of humor.",
+    "children": [
+      {
+        "name": "Comedy Rap",
+        "description": "Hip Hop with the intent to be humorous, through the use of comedic lyrics, production, delivery, or another musical aspect."
+      },
+      {
+        "name": "Chap Hop",
+        "description": "Satirises British cultural stereotypes with posh rapping and a distinctive retro aesthetic drawn from the \"chap\" and steampunk subcultures, often with elements of Music Hall."
+      },
+      {
+        "name": "Comedy Rock",
+        "description": "Roughly defined as a mix of Rock or any of its subgenres with elements of Comedy such as Satire and Musical Parody, as well as concepts of Novelty."
+      },
+      {
+        "name": "Scrumpy and Western",
+        "description": "Usually humorous music originating from England's West Country, heavily featuring traditional English folk instruments and often sung in the West Country accent."
+      }
+    ]
+  },
+  {
+    "name": "Prank Calls",
+    "description": "Practical jokes performed over the telephone, typically involving a comedian putting on a persona to make the individual on the other end of the line seem foolish.",
+    "children": []
+  },
+  {
+    "name": "Sketch Comedy",
+    "description": "Performers assume a dramatic setting (rather than addressing the audience directly), often as fictional characters.",
+    "children": []
+  },
+  {
+    "name": "Stand-Up Comedy",
+    "description": "Comedy where the performer speaks directly to their intended audience, with origins beginning in the late 19th century.",
+    "children": []
+  }
+]

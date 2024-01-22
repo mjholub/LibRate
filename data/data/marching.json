@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Drumline",
+    "description": "Solely percussion based Marching Band.",
+    "children": []
+  },
+  {
+    "name": "Fife and Drum Corps",
+    "description": "Derived from military field music, primarily uses fifes and drums.",
+    "children": []
+  },
+  {
+    "name": "Guggenmusik",
+    "description": "Alemannic type of Marching Band played at carnival events, featuring a cacophonous, seemingly \"out of tune\" sound.",
+    "children": []
+  },
+  {
+    "name": "Pep Band",
+    "description": "Performs at athletic events, and typically performs modified versions of Pop songs.",
+    "children": []
+  },
+  {
+    "name": "Pipe Band",
+    "description": "Tradition originating in the Scottish military; standard instruments consist of 6-25 sets of Great Highland bagpipes, 3-10 military snare drums, 1-6 Scottish tenor drums, and one bass drum.",
+    "children": []
+  }
+]
