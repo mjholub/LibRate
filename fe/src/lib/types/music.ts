@@ -21,7 +21,7 @@ export type AlbumArtist = {
   artist_type: 'individual' | 'group';
 }
 
-export interface Track extends Media {
+export interface Track {
   media_id: UUID;
   name: string;
   album_id: UUID;

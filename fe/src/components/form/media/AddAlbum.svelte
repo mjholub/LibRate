@@ -728,7 +728,6 @@
 {#if usingBasicGenresOnly}
 	<div class="notice-box">
 		<!-- TODO: if the artist is known, suggest genres based on the genres of previous releases -->
-		<!-- FIXME: this is not showing when expected -->
 		<p>
 			Only basic genres were provided. To find out which subgenres of the provided, try clicking on
 			one of the provided genre names to open a new tab with the genre page. There you can find a
@@ -744,11 +743,11 @@
 	<label for="duration"
 		>Duration (will be calculated automatically from total duration of tracks):</label
 	>
-	<input id="duration" bind:value={album.duration} type="time" />
+	<input id="duration" bind:value={album.duration.Time} type="time" />
 </div>
 
 <p>Tracks:</p>
-<AddTrack />
+<AddTrack receivedAlbumID={album.UUID} />
 
 <button on:click={handleSubmit}>Submit</button>
 

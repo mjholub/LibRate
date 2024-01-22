@@ -85,7 +85,7 @@ func SetupMiddlewares(conf *cfg.Config,
 		}),
 		security.SetupHelmet(conf),
 		security.SetupCSRF(conf, logger),
-		// security.SetupCORS(conf),
+		security.SetupCORS(conf),
 		rec.New(rec.Config{
 			Next: func(c *fiber.Ctx) bool {
 				return strings.Contains(c.Route().Path, "/ws")
