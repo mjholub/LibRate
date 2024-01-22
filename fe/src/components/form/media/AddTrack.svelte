@@ -29,7 +29,7 @@
 		}
 	};
 
-	const addElement = (event: Event) => {
+	const addElement = (event: any) => {
 		const newtrack: Track = {
 			track_number: tracks.length,
 			name: '',
@@ -38,7 +38,8 @@
 			duration: 0
 		};
 		tracks = [...tracks, newtrack];
-		newInput.value = '';
+		// @ts-ignore
+		newInput = newtrack;
 		setTimeout(() => {
 			newInput.focus();
 		}, 0);
@@ -58,14 +59,14 @@
 </script>
 
 <section use:dndzone={{ items, flipDurationMs }} on:consider={handleSort} on:finalize={handleSort}>
-	{#each items as item (item.id)}
+	{#each tracks as track (track.track_number)}
 		<div animate:flip={{ duration: flipDurationMs }}>
-			<span class="track-track_numberx">#{item.item.track_number + 1}</span>
+			<span class="item-idx">#{track.track_number + 1}</span>
 			<input
-				bind:value={item.item.name}
+				bind:value={track.name}
 				on:keydown={handleKeydown}
 				bind:this={newInput}
-				placeholder="Track {item.item.track_number + 1} title"
+				placeholder="Track {track.track_number + 1} title"
 			/>
 			<input
 				id="duration-input"
@@ -116,7 +117,7 @@
 	button#add-button {
 		margin-inline-start: 10%;
 	}
-	.track-track_numberx {
+	.item-idx {
 		display: inline-block;
 		margin-right: 2%;
 		font-weight: 500;
@@ -128,7 +129,7 @@
 		margin-right: 1.5%;
 	}
 	#duration-input {
-		width: 20%;
+		width: 100%;
 		max-width: 25%;
 		position: sticky;
 		display: inline-flex;
