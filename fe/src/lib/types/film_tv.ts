@@ -26,7 +26,7 @@ export interface Episode {
   season: number;
   number: number;
   title: string;
-  plot?: NullableString;
+  plot: NullableString;
   duration: Date | null;
   castID: number;
   airDate: Date | null;
