@@ -15,6 +15,7 @@
 	import type { Album, AlbumArtist, Track } from '$lib/types/music';
 	import { getMaxFileSize } from '$stores/form/upload';
 	import { genreStore } from '$stores/media/genre';
+	import searchQueryStore from '$stores/search/websocket';
 	import { onMount, onDestroy } from 'svelte';
 	import { openFilePicker } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
@@ -22,6 +23,7 @@
 	// @ts-ignore
 	import Tags from 'svelte-tags-input';
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
+	import Typeahead from 'svelte-typeahead';
 	import AddTrack from './AddTrack.svelte';
 
 	const basicGenres = [
@@ -59,6 +61,8 @@
 	];
 	const reader = new FileReader();
 	export let nickname: string;
+	let ws: WebSocket;
+	let searchResults: any[] = [];
 	let genreNames: string[] = [];
 	let usingBasicGenresOnly: boolean = false;
 	let JSONfile: FileList;
@@ -80,6 +84,7 @@
 	let remoteArtistsNames: string[] = [];
 	let isArtistsListAmbiguous = false;
 	let artistsToBeResolved: AlbumArtist[] = [];
+	let firstArtistName = '';
 	let album: Album = {
 		UUID: '',
 		kind: 'album',
@@ -178,6 +183,11 @@
 			};
 			localStorage.setItem('album', JSON.stringify(albumWithLifeTime));
 		});
+		ws = searchQueryStore.createWebSocket(window.location.host);
+		ws.onmessage = (e) => {
+			const data = JSON.parse(e.data);
+			searchResults = data.results;
+		};
 	});
 
 	const loadGenreNames = async () => {
@@ -468,8 +478,9 @@
 	};
 
 	const searchArtists = async (e: Event) => {
-		// TODO: initialize a WebSocket connection using searchStore
-		// to performa a search with search-as-you-type functionality
+		if (e.target) {
+			searchQueryStore.performSearch((e.target as HTMLInputElement).value, ws);
+		}
 	};
 
 	// timeout of 60 seconds to load genres
@@ -640,7 +651,14 @@
 <div class="input-field-element">
 	<label for="album-artists">Album Artists:</label>
 	{#if album.album_artists.length === 0}
-		<input id="album-artists-search" bind:value={album.album_artists} on:input={searchArtists} />
+		<Typeahead
+			placeholder="Search for artists"
+			on:input={searchArtists}
+			{searchResults}
+			bind:value={firstArtistName}
+			extract="{(artist) => artist.name})}"
+			on:clear={() => (album.album_artists = [])}
+		/>
 	{:else}
 		{#each album.album_artists as artist, index}
 			<input
