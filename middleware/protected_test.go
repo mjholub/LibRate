@@ -9,8 +9,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/middleware/session"
 )
 
 // MockConfig is a mock configuration for testing purposes
@@ -25,14 +27,15 @@ func (m *MockConfig) GetError() mo.Result[cfg.Config] {
 }
 
 func TestProtected(t *testing.T) {
+	store, err := session.Setup(&cfg.TestConfig)
+	require.NoError(t, err)
 	t.Run("When config is loaded successfully", func(t *testing.T) {
 		mockLogger := zerolog.New(os.Stdout)
-		// FIXME: config must have the correct type
-		handler := Protected(&mockLogger, nil)
+		handler := Protected(store, &mockLogger, nil)
 
 		// Create a mock Fiber context for testing
 		ctx := &fiber.Ctx{}
-		err := handler(ctx)
+		err = handler(ctx)
 
 		// Assert that the handler returned no error
 		assert.NoError(t, err)
@@ -40,7 +43,7 @@ func TestProtected(t *testing.T) {
 
 	t.Run("When config fails to load", func(t *testing.T) {
 		mockLogger := zerolog.New(os.Stdout)
-		handler := Protected(&mockLogger, nil)
+		handler := Protected(store, &mockLogger, nil)
 
 		// Create a mock Fiber context for testing
 		ctx := &fiber.Ctx{}

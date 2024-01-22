@@ -1,0 +1,1814 @@
+[
+  {
+    "name": "Contemporary Folk",
+    "description": "Generally acoustic and rooted in modernized Traditional Folk Music, originated with the 20th century American folk revival.",
+    "children": [
+      {
+        "name": "American Primitivism",
+        "description": "Blends avant-garde and neo-classical compositions with traditional Country Blues fingerpicking techniques."
+      },
+      {
+        "name": "Anti-Folk",
+        "description": "Rawer approach to folk, with an often self-mocking and sarcastic tone."
+      },
+      {
+        "name": "Avant-Folk",
+        "description": "Experimental-influenced and playing with instrumentation, rhythm, and other factors not commonly found in folk."
+      },
+      {
+        "name": "Free Folk",
+        "description": "Incorporates improvisation, repetition and extended song lengths."
+      },
+      {
+        "name": "Campus Folk",
+        "description": "Born in Taiwan in the mid-1970s, this movement originated with university students creating their own modern-style songs in the wake of international tensions like Taiwan's isolation from the United Nations and the United States' embrace of the PRC as a diplomatic partner."
+      },
+      {
+        "name": "Chamber Folk",
+        "description": "Gentle fingerpicked acoustic guitar or harp-led music that commonly includes a backing ensemble of harpischords, strings, horns, or other orchestral instruments."
+      },
+      {
+        "name": "Folk Baroque",
+        "description": "Contemporary Folk which originated in the early 1960s in England, featuring a distinctive guitar fingerpicking style of the same name and the DADGAD guitar tuning."
+      },
+      {
+        "name": "Folk Pop",
+        "description": "Blends Contemporary Folk with a Pop sensibility, most popular in the late 1960s and early 1970s and featuring influence from the contemporary Folk Rock style."
+      },
+      {
+        "name": "Stomp and Holler",
+        "description": "Highlights driving \"stomping\" rhythms and shouted group vocal harmonies, often drawing influences from Pop Rock, Indie Folk, and other genres, while maintaining a characteristically mellow and commercial sound."
+      },
+      {
+        "name": "Indie Folk",
+        "description": "Combines the melodic sensibilities and production style of Indie Rock and Indie Pop with acoustic instrumentation and influences from Folk, Singer-Songwriter, and sometimes Country."
+      },
+      {
+        "name": "Stomp and Holler",
+        "description": "Highlights driving \"stomping\" rhythms and shouted group vocal harmonies, often drawing influences from Pop Rock, Indie Folk, and other genres, while maintaining a characteristically mellow and commercial sound."
+      },
+      {
+        "name": "Neofolk",
+        "description": "Emerged in the mid-1980s from the Post-Industrial scene, with a dark, often martial atmosphere."
+      },
+      {
+        "name": "Dark Folk",
+        "description": "Minimalistic and melancholic sound with influence from Nordic Folk Music and even Ambient."
+      },
+      {
+        "name": "Neofolklore",
+        "description": "Short-lived movement that reincorporated traditional Chilean folklore into modern production and styling inspired by foreign musicians."
+      },
+      {
+        "name": "Progressive Folk",
+        "description": "Draws from a variety of sources to subvert traditional acoustic song forms, with diversity ranging from Jazz to Medieval music to various Regional Music traditions."
+      },
+      {
+        "name": "Psychedelic Folk",
+        "description": "Acoustic forms that capture an atmosphere that is at turns dream-like, 'spaced-out', whimsical, haunting, mystical, and melancholic."
+      },
+      {
+        "name": "Freak Folk",
+        "description": "Offshoot of the New Weird America movement characterised by acoustic and eclectic instruments, peculiar vocal styles, romantic lyrics, and a childlike atmosphere."
+      },
+      {
+        "name": "Free Folk",
+        "description": "Incorporates improvisation, repetition and extended song lengths."
+      },
+      {
+        "name": "Skiffle",
+        "description": "Grew out of British Dixieland trad jazz, drawing influence from 1920s Jug Bands and the strong rhythms of 1950s Honky Tonk and Rock & Roll."
+      },
+      {
+        "name": "Xinyao",
+        "description": "Singaporean Mandarin-language style, generally featuring harmonised group vocals and backed mainly by acoustic guitar."
+      }
+    ]
+  },
+  {
+    "name": "Traditional Folk Music",
+    "description": "Informed by a long history of tradition in a specific culture or region, mostly associated with the peasantry and non-aristocratic public.",
+    "children": [
+      {
+        "name": "African Folk Music",
+        "description": "Indigenous music of Africa that is passed down orally from generation to generation, the authors of the songs are usually unknown."
+      },
+      {
+        "name": "Ambasse bey",
+        "description": "African Folk Music developed by the Yabassi people of Cameroon."
+      },
+      {
+        "name": "Apala",
+        "description": "Yoruba Music developed by Muslims during the late 1930s and early 1940s in the Ijebu region of Yorubaland, the current Ogun state."
+      },
+      {
+        "name": "Batuque",
+        "description": "Tradition from Cape Verde, unusual among the islands' music due to its lack of polyphonic singing and its usage of polyrhythms."
+      },
+      {
+        "name": "Dagomba Music",
+        "description": "Music of the Dagomba people of northern Ghana."
+      },
+      {
+        "name": "Gnawa",
+        "description": "Mixture of Sub-Saharan African, Arabic, and Amazigh Music, created by the Gnawa, an ethnic minority group in North Africa, mainly Morocco."
+      },
+      {
+        "name": "Kabye Folk Music",
+        "description": "Traditional Folk Music of the Kabye people of northern Togo, including some of the most singular styles that can be found in West Africa."
+      },
+      {
+        "name": "Kilapanga",
+        "description": "Tradition of the Bakongo people from Angola and Congo that has influenced contemporary styles such as Kuduro."
+      },
+      {
+        "name": "Malagasy Folk Music",
+        "description": "Melodic, chordophone-dominated sound; based on the Austronesian Traditional Music of the first settlers that arrived on the island from Borneo."
+      },
+      {
+        "name": "Mbenga-Mbuti Music",
+        "description": "Music of the Mbenga and Mbuti people, Pygmy ethnic groups in Central Africa."
+      },
+      {
+        "name": "Moutya",
+        "description": "Tradition that originated in Seychelles among Creole slaves, similar to Séga, although rawer and played only on large flat drums made from goatskin."
+      },
+      {
+        "name": "Ngoma",
+        "description": "Played in Swahili-speaking African countries; primarily focused on rhythm."
+      },
+      {
+        "name": "Unyago",
+        "description": "Traditional music from Zanzibar, traditionally played at women's initiation rituals and weddings."
+      },
+      {
+        "name": "Semba",
+        "description": "Style from Angola featuring danceable percussion, lyrics often taking the form of a story, and sometimes accompaniment from a guitar."
+      },
+      {
+        "name": "Southern African Folk Music",
+        "description": "Traditional Folk Music of southern Africa."
+      },
+      {
+        "name": "Afrikaner Folk Music",
+        "description": "Musical traditions developed by the Afrikaner community in southern Africa."
+      },
+      {
+        "name": "Khoisan Folk Music",
+        "description": "Encompasses traditions of the Khoisan ethnic family groups."
+      },
+      {
+        "name": "Nguni Folk Music",
+        "description": "Traditions of the Nguni ethnic family groups, a southern Bantu ethnicity."
+      },
+      {
+        "name": "Shona Mbira Music",
+        "description": "Traditional style of the Shona people from Zimbabwe, based on a simple melodic pattern played on the mbira, from which long instrumental parts are improvised."
+      },
+      {
+        "name": "Sotho-Tswana Folk Music",
+        "description": "Traditional Folk Music of the Sotho-Tswana ethnic family groups from southern Africa."
+      },
+      {
+        "name": "Tchinkoumé",
+        "description": "Tradition from the central region of Benin around Savalou, played with water percussion."
+      },
+      {
+        "name": "Traditional Maloya",
+        "description": "Derived from Traditional Séga, this is the original dance music of La Réunion."
+      },
+      {
+        "name": "Traditional Séga",
+        "description": "Séga dance music born in the 18th century, before its later adoption of Western pop elements."
+      },
+      {
+        "name": "Zinli",
+        "description": "Traditional rhythmic chanting and percussion adapted to multiple West African contexts in the 20th century."
+      },
+      {
+        "name": "American Folk Music",
+        "description": "Traces back through the history of European and West African settlement and migration to North America, including parts of northern Mexico and Canada in addition to the United States."
+      },
+      {
+        "name": "Appalachian Folk Music",
+        "description": "Folk of the Appalachian Mountains in the Eastern United States."
+      },
+      {
+        "name": "Old-Time",
+        "description": "Pre-Bluegrass North American string band styles, particularly those rooted in Appalachian Folk Music."
+      },
+      {
+        "name": "Country Blues",
+        "description": "Various styles of Blues originating in the rural US South, typically relying on expressive vocal delivery and featuring simple, usually acoustic instrumentation."
+      },
+      {
+        "name": "Acoustic Texas Blues",
+        "description": "Laid-back swing rhythms and guitar ornamentation, including solos."
+      },
+      {
+        "name": "Delta Blues",
+        "description": "One of the earliest forms of Blues, named for the Mississippi Delta region of the United States where it developed, with a highly rhythmic style and a typical 12-bar structure."
+      },
+      {
+        "name": "Hill Country Blues",
+        "description": "Emphasizes a steady hypnotic groove, sparse percussive and highly energetic guitar riffs, and often features meandering structures with unconventional and usually fewer chord changes compared to Delta Blues."
+      },
+      {
+        "name": "Piedmont Blues",
+        "description": "Developed in the early 20th century in the southern Appalachian foothills and characterized by a syncopated but melodic Ragtime-based finger-picking acoustic guitar style."
+      },
+      {
+        "name": "Field Hollers",
+        "description": "Work song created by African-American slaves working on cotton plantations, which features an expressive vocal style to no strict rhythm."
+      },
+      {
+        "name": "Fife and Drum Blues",
+        "description": "Rooted in martial Fife and Drum Corps music, originated among Afro-American communities in Mississippi."
+      },
+      {
+        "name": "Jug Band",
+        "description": "Usually features a jug as the bass instrument as well as other homemade (or easily affordable) instruments, such as kazoos and washboards."
+      },
+      {
+        "name": "Ring Shout",
+        "description": "Ritual practiced by African-Americans in the US South, characterized by shouting, chanting and people dancing in a circle while praying and clapping."
+      },
+      {
+        "name": "Sacred Harp Music",
+        "description": "Predominantly 19th-century English hymns with tunes derived from old folk melodies."
+      },
+      {
+        "name": "Spirituals",
+        "description": "Predecessor to Gospel that began as unaccompanied singing by American slaves; shares some of the characteristics of Work Songs."
+      },
+      {
+        "name": "Talking Blues",
+        "description": "American Folk Music with spoken or nearly spoken vocals."
+      },
+      {
+        "name": "Traditional Black Gospel",
+        "description": "Born out of Spirituals in the early 20th century with influence from Southern Gospel and Blues, often featuring passionate or energetic vocal performances, motifs of salvation, and testaments of hardship."
+      },
+      {
+        "name": "Traditional Cajun Music",
+        "description": "Earliest and most \"pure\" form of Cajun Music, employing basic rhythms and frequent fiddle double stops."
+      },
+      {
+        "name": "Traditional Country",
+        "description": "Closely aligned with American Folk Music and Blues roots, from country's inception in Appalachia and the American South until the popularity of Honky Tonk and Country Pop in the 1950s."
+      },
+      {
+        "name": "Close Harmony",
+        "description": "Traditional two-part harmony singing performed mostly by brothers."
+      },
+      {
+        "name": "Country Gospel",
+        "description": "Traditional Country that heavily incorporates Gospel."
+      },
+      {
+        "name": "Bluegrass Gospel",
+        "description": "Incorporates the religious topics and harmony vocals found in Country Gospel."
+      },
+      {
+        "name": "Country Yodeling",
+        "description": "Vocal technique of Yodeling, brought to the United States by German settlers, sung over the instrumentation of Traditional Country."
+      },
+      {
+        "name": "Arabic Folk Music",
+        "description": "Traditional Folk Music of the Arabic people."
+      },
+      {
+        "name": "Aita",
+        "description": "Arabic Folk Music from rural Morocco with piercing singing, scratchy viola, and rollicking hand drums."
+      },
+      {
+        "name": "Arabic Bellydance Music",
+        "description": "Accompaniment to traditional belly dances."
+      },
+      {
+        "name": "Fijiri",
+        "description": "Deeply rooted in the Persian Gulf pearl diving culture, and sung during weekly gatherings combining solo and choral sections with minimal percussion."
+      },
+      {
+        "name": "Australian Folk Music",
+        "description": "Folk traditions of the European colonists and convicts in Australia."
+      },
+      {
+        "name": "Austronesian Traditional Music",
+        "description": "Traditional styles of music developed by Austronesian nations prior to arrival of foreign influence."
+      },
+      {
+        "name": "Gondang",
+        "description": "Traditional ensemble in Bataknese traditional music of North Sumatra, taking its name from its leading instrument - a unique set of toned drums."
+      },
+      {
+        "name": "Indigenous Taiwanese Music",
+        "description": "Traditional Folk Music of the various Austronesian people groups that make up the indigenous population of the island of Taiwan."
+      },
+      {
+        "name": "Pakacaping Music",
+        "description": "Traditional genres of music found among the ethnicities of Indonesian archipelago, particularly on South Sulawesi, Borneo and North Sumatra."
+      },
+      {
+        "name": "Brazilian Folk Music",
+        "description": "Comprises the various traditions of folk music found in Brazil, often resulting from the interplay of Indigenous, African and European music."
+      },
+      {
+        "name": "Aboio",
+        "description": "Cattle-herding songs originating in rural Northeastern Brazil."
+      },
+      {
+        "name": "Aboio cantado",
+        "description": "Aboio that features rhyming verses."
+      },
+      {
+        "name": "Banda de pífano",
+        "description": "Lively music played by bands consisting of two fifes and percussion."
+      },
+      {
+        "name": "Candomblé Music",
+        "description": "Music of the Afro-Brazilian Candomblé religion that influenced the secular Afoxé."
+      },
+      {
+        "name": "Cantoria",
+        "description": "Sung poetry of itinerant cantadores from Northeastern Brazil."
+      },
+      {
+        "name": "Repente",
+        "description": "Contest of fully improvised poetry sung in different stanza formats."
+      },
+      {
+        "name": "Capoeira Music",
+        "description": "Afro-Brazilian style that accompanies and sets the rhythm and energy of the capoeira martial art, originating in the 19th century with the relocation of African slaves to the states of Bahia and Rio de Janeiro."
+      },
+      {
+        "name": "Fandango caiçara",
+        "description": "Style of fandango born in coastal Southern Brazil amidst the Caiçara people."
+      },
+      {
+        "name": "Jongo",
+        "description": "Afro-Brazilian cultural manifestation involving music and dance; composed of percussion instruments and chants."
+      },
+      {
+        "name": "Ponto de umbanda",
+        "description": "Afro-Brazilian religious ritualistic praise sung by priests to evoke entities; typically accompanied by claps and traditional drums known as atabaque."
+      },
+      {
+        "name": "Lundu",
+        "description": "Afro-Brazilian musical genre that emerged in the 18th century with influences from African drumming with European Fandango."
+      },
+      {
+        "name": "Maracatu",
+        "description": "Afro-Brazilian genre which accompanies the cultural manifestation of the same name, hailing from the northeastern state of Pernambuco."
+      },
+      {
+        "name": "Modinha",
+        "description": "Popular during the 18th and 19th centuries in Brazil; characterized by sentimental works with amorous themes, poetic lyrics, acoustic instrumentation and operatic vocals."
+      },
+      {
+        "name": "Rasqueado",
+        "description": "Regional dance and its accompanying music from the Brazilian midwest, predominantly the state of Mato Grosso."
+      },
+      {
+        "name": "Samba de roda",
+        "description": "Mixed Portuguese culture with African slave traditions, as well as sharing roots and similarities with Batuque and Jongo."
+      },
+      {
+        "name": "Sertanejo de raiz",
+        "description": "Earliest form of Sertanejo, emerging in pre-World War II rural Brazil during the late 1920s; quickly strummed acoustic guitars, most commonly the 10-string viola caipira and classical guitar, and a highly emotive vocal style."
+      },
+      {
+        "name": "Moda de viola",
+        "description": "Style of Sertanejo de raiz predominant in southeast, south, and west-central Brazil."
+      },
+      {
+        "name": "Toada de Boi",
+        "description": "Slow, heavy-percussed tunes celebrating the folkloric Ox, originally from Bumba-meu-boi June parties in Northeastern Brazil."
+      },
+      {
+        "name": "Buryat Folk Music",
+        "description": "Traditional music of the Buryat people, a Mongolic ethnic group inhabiting the Republic of Buryatia, a federal subject of the Russian Far East region."
+      },
+      {
+        "name": "Canadian Folk Music",
+        "description": "Traditional folk of the European settlers who arrived in Canada."
+      },
+      {
+        "name": "Canadian Maritime Folk",
+        "description": "Traditional folk of Canada's Maritimes (Nova Scotia, Prince Edward Island, and New Brunswick)."
+      },
+      {
+        "name": "Cape Breton Folk Music",
+        "description": "Celtic Folk Music that emerged in Cape Breton, an island at the eastern shore of Nova Scotia, through immigrants from Scotland and Ireland."
+      },
+      {
+        "name": "Cape Breton Fiddling",
+        "description": "Distinctive Celtic fiddling originating from the Scottish immigrants who settled in Canada on Cape Breton Island."
+      },
+      {
+        "name": "French-Canadian Folk Music",
+        "description": "Brought by French colonists to their Nouvelle-France settlements, primarily based around French Folk Music with influences from English Folk Music and Celtic Folk Music, typically played during gatherings and holidays."
+      },
+      {
+        "name": "Newfoundland Folk Music",
+        "description": "Traditional Folk Music of Newfoundland and Labrador, Canada's easternmost province."
+      },
+      {
+        "name": "Caribbean Folk Music",
+        "description": "Meta-genre that covers the different forms of Traditional Folk Music from the Caribbean."
+      },
+      {
+        "name": "Bele",
+        "description": "Drum-based folkdance with a strong Afro-influence, conducted by duos of dancers and accompanied by call-and-response singing, particularly popular in Martinique, Dominica and Trinidad and Tobago."
+      },
+      {
+        "name": "Benna",
+        "description": "Traditional music of Antigua & Barbuda, using call-and-response and bawdy lyrics."
+      },
+      {
+        "name": "Bomba",
+        "description": "Percussive style from Puerto Rico, generally considered to be derived from West Africa."
+      },
+      {
+        "name": "Fungi",
+        "description": "Traditional Folk Music native to the Virgin Islands, named after a local dish which features a \"mixed-up\" flavor that can be compared to the style that combines Western instruments with local ones."
+      },
+      {
+        "name": "Garifuna Folk Music",
+        "description": "Folk of Garifunas, Caribbean people born from escaped African slaves and local Caribbean natives."
+      },
+      {
+        "name": "Haitian Vodou Drumming",
+        "description": "Form of rhythmic performance by Haitian Vodou practitioners, played at associated ceremonies."
+      },
+      {
+        "name": "Jibaro",
+        "description": "Traditions of the mountain-dwelling jibaro people that live primarily in Puerto Rico."
+      },
+      {
+        "name": "Kitchen Dance Music",
+        "description": "Cayman Islands music played during kitchen dance parties, centered around fiddle and percussion (handmade or kitchen grater) playing."
+      },
+      {
+        "name": "Mento",
+        "description": "Jamaican folk originating in the late 19th century which brought together African and European elements, going on to influence the rhythm in Reggae."
+      },
+      {
+        "name": "Méringue",
+        "description": "Haitian genre that dates back to the early 19th century; the roots of Compas."
+      },
+      {
+        "name": "Plena",
+        "description": "Folk genre from Puerto Rico played with hand drums called panderetas."
+      },
+      {
+        "name": "Ripsaw",
+        "description": "Indigenous style of the Turks and Caicos Islands, featuring a handsaw as the primary instrument."
+      },
+      {
+        "name": "Trinidadian Cariso",
+        "description": "Trinidadian folk considered to be the precursor of Calypso, led by (mostly female) singers called chantwells, who sing derogatory lyrics to the sound of drums and guitars in a call-and-response manner in order to rebel against slaveowners."
+      },
+      {
+        "name": "Tumba",
+        "description": "African-style percussion alongside Latin influences and often explicit lyrics."
+      },
+      {
+        "name": "Virgin Islander Cariso",
+        "description": "Folk of the Virgin Islands, sung exclusively by women to the beat of one or two drums."
+      },
+      {
+        "name": "Caucasian Folk Music",
+        "description": "Folk of the Caucasus region, a mountainous area that connects Eastern Europe to Asia."
+      },
+      {
+        "name": "Abkhazian Folk Music",
+        "description": "Traditions of the Republic of Abkhazia, a disputed territory on the Black Sea in northwestern Georgia."
+      },
+      {
+        "name": "Chechen Folk Music",
+        "description": "Folk of the Chechens, a Northeast Caucasian ethnic group predominantly living in the Republic of Chechnya, a federal subject of Russia."
+      },
+      {
+        "name": "Circassian Folk Music",
+        "description": "Folk of the native Circassian peoples of Northern Caucasus, residing in the Republics of Adygea, Karachay-Cherkessia, and Kabardino-Balkaria respectively, which are federal subjects of the Russian Federation, as well as the territories of the former Ottoman Empire, with a significant diaspora population in modern Turkey."
+      },
+      {
+        "name": "Dagestani Folk Music",
+        "description": "Traditional Folk Music of the Dagestani people."
+      },
+      {
+        "name": "Avar Folk Music",
+        "description": "Traditional Folk Music of the Avar people."
+      },
+      {
+        "name": "Georgian Folk Music",
+        "description": "Traditions of the Georgian people, who mostly live in Georgia."
+      },
+      {
+        "name": "Ossetian Folk Music",
+        "description": "Folk music of Ossetians, an ethnic group that mainly inhabits a region located on both sides of the Greater Caucasus Mountains."
+      },
+      {
+        "name": "Chukchi Folk Music",
+        "description": "Traditional Folk Music of the Chukchi people."
+      },
+      {
+        "name": "East Asian Folk Music",
+        "description": "All the forms of Traditional Folk Music from East Asia, including Japanese Folk Music, Chinese Folk Music, and Korean Folk Music."
+      },
+      {
+        "name": "Chinese Folk Music",
+        "description": "Traditional folk of the Chinese people."
+      },
+      {
+        "name": "Han Folk Music",
+        "description": "Chinese folk form often played at weddings and funerals, using the Suona (a form of oboe) and Chuigushou (a specific type of percussive ensemble), together with heterophony."
+      },
+      {
+        "name": "Jiangnan sizhu",
+        "description": "Played by a varying ensemble of several different types of stringed instruments, flutes, small percussion instruments, and mouth organs."
+      },
+      {
+        "name": "Shan’ge",
+        "description": "Work Songs sung by Chinese agricultural workers."
+      },
+      {
+        "name": "Indigenous Taiwanese Music",
+        "description": "Traditional Folk Music of the various Austronesian people groups that make up the indigenous population of the island of Taiwan."
+      },
+      {
+        "name": "Japanese Folk Music",
+        "description": "Folk traditions of Japan."
+      },
+      {
+        "name": "Amami shimauta",
+        "description": "Tradition from the Amami Islands, located in southern Japan."
+      },
+      {
+        "name": "Heikyoku",
+        "description": "Semi-classical bardic tradition in Japan analogous to the troubadour music of medieval Europe."
+      },
+      {
+        "name": "Kagura",
+        "description": "Performed at Shinto shrines for ceremonies and rituals."
+      },
+      {
+        "name": "Kouta",
+        "description": "Kouta, which literally means \"little\" or \"short\" song, is one type of the many varieties of Japanese folk songs that is distinguished by its briefness and wittiness."
+      },
+      {
+        "name": "Min'yō",
+        "description": "Form of Japanese Folk Music which literally translates to \"folk song\"."
+      },
+      {
+        "name": "Ondō",
+        "description": "Originally referred to the type of call-and-response form of Gagaku, but later became to be known for and distinguished by a swung 2/2 rhythm and storytelling."
+      },
+      {
+        "name": "Rōkyoku",
+        "description": "Storytelling usually accompanied by a shamisen."
+      },
+      {
+        "name": "Taiko",
+        "description": "Modern style of ensemble drumming, sometimes called kumi-daiko."
+      },
+      {
+        "name": "Tsugaru shamisen",
+        "description": "Shamisen playing originating in the Tsugaru Peninsula of Aomori prefecture, recognizable in its percussive quality and special, slightly larger instrument."
+      },
+      {
+        "name": "Korean Folk Music",
+        "description": "Traditional Folk Music of the Korean people."
+      },
+      {
+        "name": "Pansori",
+        "description": "Korean style of storytelling characterized by over-the-top, passionate singing from a solo vocalist accompanied by minimal drumming."
+      },
+      {
+        "name": "Pungmul",
+        "description": "Consists of drumming, dancing, and singing, and is a tradition deeply ingrained in South Korean culture."
+      },
+      {
+        "name": "Sanjo",
+        "description": "Traditional instrumental Korean Folk Music that focuses on a wide variety of rhythmic changes with many different classical Korean instruments."
+      },
+      {
+        "name": "Sinawi",
+        "description": "Improvisational genre traditionally serving as an accompaniment to Korean shamanic rituals."
+      },
+      {
+        "name": "Vietnamese Folk Music",
+        "description": "Traditional Folk Music of the Vietnamese people, with traditions influenced by both Chinese Music and Austronesian culture through the Cham people."
+      },
+      {
+        "name": "Chèo",
+        "description": "Northern Vietnamese folk musical theatre, characterized by minimal set design and satirical content."
+      },
+      {
+        "name": "Quan họ",
+        "description": "Tradition of the Northern Vietnamese provinces of Bắc Ninh and Bắc Giang, originally consisting of harmonic, a cappella singing from two competing duos."
+      },
+      {
+        "name": "Xẩm",
+        "description": "Developed in Northern Vietnam, traditionally sung by blind bards accompanied by a đàn bầu or đàn nhị."
+      },
+      {
+        "name": "European Folk Music",
+        "description": "Encompasses numerous folk traditions found in Europe."
+      },
+      {
+        "name": "Alpine Folk Music",
+        "description": "Traditional Folk Music of the Alps, including parts of Germany, Austria, Slovenia, Switzerland, and Italy."
+      },
+      {
+        "name": "Narodno zabavna glasba",
+        "description": "Modernised form of Slovenian Folk Music from the Alpine region of Upper Carniola (Oberkrain)."
+      },
+      {
+        "name": "Naturjodel",
+        "description": "Originated in Toggenburg and Appenzell in Switzerland; deep vocal range, relaxed voice, free tempo, polyphony, elongated notes, improvisation, glissando, and use of syllabic sounds."
+      },
+      {
+        "name": "Balkan Folk Music",
+        "description": "Traditional Folk Music of the Balkan region of Southeastern Europe."
+      },
+      {
+        "name": "Albanian Folk Music",
+        "description": "Traditional Folk Music of Albania, including the area's traditions as well as influence from Turkish Music."
+      },
+      {
+        "name": "Lab Polyphony",
+        "description": "One of several genres of iso-polyphonic music performed in southern Albania, with \"iso\" referring to the distinctive drone voice used."
+      },
+      {
+        "name": "Musika popullore",
+        "description": "Tradition in Albania consisting of light, commercial, amplified Albanian Folk Music usually professionally arranged and manufactured in recording studios alongside video clips."
+      },
+      {
+        "name": "Tosk Polyphony",
+        "description": "Polyphonic singing in the Toskëri region of southern Albania."
+      },
+      {
+        "name": "Aromanian Folk Music",
+        "description": "Traditional Folk Music of the Aromanians."
+      },
+      {
+        "name": "Balkan Brass Band",
+        "description": "Balkan Folk Music played by brass bands."
+      },
+      {
+        "name": "Bosnian Folk Music",
+        "description": "Traditional Folk Music of the Bosnians."
+      },
+      {
+        "name": "Izvorna bosanska muzika",
+        "description": "Polyphonic vocal music that developed in Bosnia in the 20th century, bearing connections to traditional Bosnian genres."
+      },
+      {
+        "name": "Sevdalinka",
+        "description": "A melancholic folk song, originating from Bosnia and Herzegovina, typically love-themed and accompanied by instruments like guitar and accordion."
+      },
+      {
+        "name": "Bulgarian Folk Music",
+        "description": "Consists of a variety of traditions and styles, with distinct sounds originating from current and historical regions such as Sofia, Dobrudzha, Macedonia and Thrace."
+      },
+      {
+        "name": "Croatian Folk Music",
+        "description": "Traditional Folk Music of the Croats."
+      },
+      {
+        "name": "Klapa",
+        "description": "Traditional form characteristic of the Dalmatia region of Croatia rooted in littoral church singing."
+      },
+      {
+        "name": "Csango Folk Music",
+        "description": "Folk of the Csango, an ethnic minority group with Hungarian origins living primarily in the Romanian Moldavia region, but who are also found in the Transylvania, Dobruja, Moldova, the Ukrainian Chernivtsi region, and the Tolna region of Hungary."
+      },
+      {
+        "name": "Gagauz Folk Music",
+        "description": "Gagauz people are a Turkic group living mostly in the southern Gagauzia region of Moldova, but also nearby areas like southwestern Ukraine and southeastern Romania."
+      },
+      {
+        "name": "Ganga",
+        "description": "Dissonant form of polyphonic singing from the regions of Herzegovina and Dalmatia."
+      },
+      {
+        "name": "Greek Folk Music",
+        "description": "Greek folk traditions."
+      },
+      {
+        "name": "Aegean Islands Folk Music",
+        "description": "Music of the Greek Aegean Islands."
+      },
+      {
+        "name": "Cretan Folk Music",
+        "description": "Folk of the Greek island Crete."
+      },
+      {
+        "name": "Rizitika",
+        "description": "Some of the oldest and most important types of vocal music on the Cretan island, characterized by its dramatic style of singing."
+      },
+      {
+        "name": "Dimotika",
+        "description": "Traditional Folk Music of the Greek mainland, often using clarinet, guitar, tambourine, and violin as accompaniment, while also incorporating various forms of Greek dance and vocal music."
+      },
+      {
+        "name": "Ionian Islands Folk Music",
+        "description": "Traditional Folk Music from the Ionian Islands in Greece."
+      },
+      {
+        "name": "Rembetika",
+        "description": "Greek tradition originating in traditional Mikrasiatiki and Smyrnaiki music with elements of other local traditional Greek genres."
+      },
+      {
+        "name": "Macedonian Folk Music",
+        "description": "Folk music of Macedonians, a South Slavic ethnic group who are primarily associated with the Republic of Macedonia."
+      },
+      {
+        "name": "Čalgija",
+        "description": "Urban folk from Macedonia very popular in the 19th and 20th centuries performed by ensembles called Čalgii."
+      },
+      {
+        "name": "Montenegrin Folk Music",
+        "description": "Traditional folk music of Montenegro."
+      },
+      {
+        "name": "Muzică lăutărească",
+        "description": "Strongly influenced by folk from Turkey, Russia, and Western Europe, and even by Byzantine Church music."
+      },
+      {
+        "name": "Serbian Folk Music",
+        "description": "Traditional Folk Music of the Serbian people."
+      },
+      {
+        "name": "Starogradska muzika",
+        "description": "Translated as \"old city music\", this is the urban traditional music of Macedonia and Serbia."
+      },
+      {
+        "name": "Čalgija",
+        "description": "Urban folk from Macedonia very popular in the 19th and 20th centuries performed by ensembles called Čalgii."
+      },
+      {
+        "name": "Baltic Folk Music",
+        "description": "Traditional Folk Music of the Balts."
+      },
+      {
+        "name": "Latvian Folk Music",
+        "description": "Traditional Folk Music of the Latvians."
+      },
+      {
+        "name": "Lithuanian Folk Music",
+        "description": "The Traditional Folk Music of the Lithuanian people."
+      },
+      {
+        "name": "Sutartinės",
+        "description": "Highly unique form of polyphonic vocal folk music originating from a small area of Northeastern Lithuania."
+      },
+      {
+        "name": "Balto-Finnic Folk Music",
+        "description": "Traditional Folk Music of Balto-Finnic peoples."
+      },
+      {
+        "name": "Estonian Folk Music",
+        "description": "Traditional Folk Music of the Estonian people."
+      },
+      {
+        "name": "Seto leelo",
+        "description": "Style of polyphonic singing of the Seto people."
+      },
+      {
+        "name": "Finnish Folk Music",
+        "description": "Traditional Folk Music of the Finnish people."
+      },
+      {
+        "name": "Karelian Folk Music",
+        "description": "Traditional Folk Music of the Karelian people."
+      },
+      {
+        "name": "Livonian Folk Music",
+        "description": "Traditional Folk Music of the Livonian people."
+      },
+      {
+        "name": "Rune Singing",
+        "description": "Traditional vocal music of Baltic-Finnic peoples characterized by singing poems, performed solo or in groups."
+      },
+      {
+        "name": "Seto leelo",
+        "description": "Style of polyphonic singing of the Seto people."
+      },
+      {
+        "name": "Basque Folk Music",
+        "description": "Traditional Folk Music of the Basque people."
+      },
+      {
+        "name": "Catalan Folk Music",
+        "description": "Blend of local styles and influences from the Iberian Peninsula region and the Catalonian area of Southern France."
+      },
+      {
+        "name": "Sardana",
+        "description": "Traditional dance dating from the 16th century performed by large ensembles called 'Cobla' and danced by people holding hands in a circle."
+      },
+      {
+        "name": "Celtic Folk Music",
+        "description": "Derived from Celtic traditions of Ireland, Scotland, Wales, Cornwall, the Isle of Man, Brittany, Galicia, Cantabria, Asturias, and Trás-os-Montes (Portugal)."
+      },
+      {
+        "name": "Asturian Folk Music",
+        "description": "Traditions of the Spanish province of Asturias."
+      },
+      {
+        "name": "Breton Celtic Folk Music",
+        "description": "Movement in the Brittany region of France which translated Celtic Folk Music from Ireland and Scotland into the Celtic Breton language."
+      },
+      {
+        "name": "Bagad",
+        "description": "Breton style performed by bands featuring bagpipes, bombardes, and percussion."
+      },
+      {
+        "name": "Cape Breton Folk Music",
+        "description": "Celtic Folk Music that emerged in Cape Breton, an island at the eastern shore of Nova Scotia, through immigrants from Scotland and Ireland."
+      },
+      {
+        "name": "Cape Breton Fiddling",
+        "description": "Distinctive Celtic fiddling originating from the Scottish immigrants who settled in Canada on Cape Breton Island."
+      },
+      {
+        "name": "Cornish Folk Music",
+        "description": "Musical traditions developed by the Cornish people, mainly found in the county of Cornwall in South West England."
+      },
+      {
+        "name": "Galician Folk Music",
+        "description": "Traditional music of the Galician people."
+      },
+      {
+        "name": "Irish Folk Music",
+        "description": "Traditional Folk Music of Ireland."
+      },
+      {
+        "name": "Sean-nós",
+        "description": "Highly ornamented, unaccompanied singing in the Irish language."
+      },
+      {
+        "name": "Manx Folk Music",
+        "description": "Folk of the Isle of Man."
+      },
+      {
+        "name": "Scottish Folk Music",
+        "description": "Traditional Folk Music of the Scottish people."
+      },
+      {
+        "name": "Òrain Ghàidhlig",
+        "description": "Songs sung in Scottish Gaelic, often but not always unaccompanied."
+      },
+      {
+        "name": "Òrain luaidh",
+        "description": "Rhythmic call-and-response style song form that traditionally accompanied the production of tweed cloth through beating the material by hand to soften it after it came off the loom."
+      },
+      {
+        "name": "Seinn nan salm",
+        "description": "Unaccompanied, rhythmically free-flowing psalm singing in Gaelic practiced by Presbyterian churches, which involves a call-and-response between the precentor and the congregation."
+      },
+      {
+        "name": "Pìobaireachd",
+        "description": "Art tradition which originated in the Scottish Highlands, usually associated with the Great Highland bagpipes."
+      },
+      {
+        "name": "Pipe Band",
+        "description": "Tradition originating in the Scottish military; standard instruments consist of 6-25 sets of Great Highland bagpipes, 3-10 military snare drums, 1-6 Scottish tenor drums, and one bass drum."
+      },
+      {
+        "name": "Scots Song",
+        "description": "Traditional folk songs usually sung in Lowland Scots, often but not always unaccompanied."
+      },
+      {
+        "name": "Shetland & Orkney Folk Music",
+        "description": "Folk of the Shetland and Orkney Islands."
+      },
+      {
+        "name": "Trás-os-Montes Folk Music",
+        "description": "Folk of the Portuguese province of Trás-os-Montes, notable for a greater Celtic influence than other parts of the country."
+      },
+      {
+        "name": "Welsh Folk Music",
+        "description": "Traditions of the Welsh people."
+      },
+      {
+        "name": "Dutch Folk Music",
+        "description": "Traditional Folk Music from the Netherlands."
+      },
+      {
+        "name": "English Folk Music",
+        "description": "Musical traditions of the English people, primarily divided into dance music and folksongs."
+      },
+      {
+        "name": "Northumbrian Folk Music",
+        "description": "Traditional folk of Northumbria, a region of Northern England consisting of Northumberland and County Durham."
+      },
+      {
+        "name": "Scrumpy and Western",
+        "description": "Usually humorous music originating from England's West Country, heavily featuring traditional English folk instruments and often sung in the West Country accent."
+      },
+      {
+        "name": "Flemish Folk Music",
+        "description": "Traditional Folk Music of the Flanders region in northern Belgium, typically sung in the local Flemish dialect."
+      },
+      {
+        "name": "French Folk Music",
+        "description": "Traditional Folk Music of metropolitan France, including that of its regional cultures."
+      },
+      {
+        "name": "Alsatian Folk Music",
+        "description": "French folk music from the Alsatian language speaking area, either instrumental or, when sung, mainly in Alsatian."
+      },
+      {
+        "name": "Breton Folk Music",
+        "description": "Folk of the Brittany region in France, including Breton Celtic Folk Music and music in the regional Romance language, Gallo."
+      },
+      {
+        "name": "Breton Celtic Folk Music",
+        "description": "Movement in the Brittany region of France which translated Celtic Folk Music from Ireland and Scotland into the Celtic Breton language."
+      },
+      {
+        "name": "Bagad",
+        "description": "Breton style performed by bands featuring bagpipes, bombardes, and percussion."
+      },
+      {
+        "name": "Corsican Folk Music",
+        "description": "French folk from Corsica, sung mainly in Corsican and sometimes in French."
+      },
+      {
+        "name": "Paghjella",
+        "description": "Traditional Polyphonic Chant from Corsica consisting of three registers of vocalists singing in a semicircle."
+      },
+      {
+        "name": "Musette",
+        "description": "French popular music which arose in 1880s Paris, performed with the traditional instruments musette, grelottière, and accordion."
+      },
+      {
+        "name": "Swing musette",
+        "description": "Appeared in the 1930s in France, combination of Musette with Swing, mainly focusing on accordion playing."
+      },
+      {
+        "name": "Occitan Folk Music",
+        "description": "Sung mainly in Occitan and sometimes in French."
+      },
+      {
+        "name": "Auvergnat Folk Music",
+        "description": "Traditional Folk Music from Auvergne region."
+      },
+      {
+        "name": "Gascon Folk Music",
+        "description": "French Folk Music from the Gascony cultural region in southwest France."
+      },
+      {
+        "name": "German Folk Music",
+        "description": "Traditional Folk Music of Germany."
+      },
+      {
+        "name": "Għana",
+        "description": "Indigenous Maltese folk which consists of quatrains, ideally improvised, following a rhyme scheme of a-b-c-b, and sung to traditional tunes, usually accompanied by guitars."
+      },
+      {
+        "name": "Hungarian Folk Music",
+        "description": "Traditional Folk Music of the Hungarians."
+      },
+      {
+        "name": "Csárdás",
+        "description": "Traditional Hungarian dance and music form characterized by tempo variations."
+      },
+      {
+        "name": "Istrian Folk Music",
+        "description": "Traditional Folk Music of Istria."
+      },
+      {
+        "name": "Italian Folk Music",
+        "description": "Folk traditions of Italy."
+      },
+      {
+        "name": "Canzone napoletana",
+        "description": "Sung in the Neapolitan language by a male voice with instrumental accompaniment, originating in the Italian city of Naples and the surrounding regions."
+      },
+      {
+        "name": "Liscio",
+        "description": "Italian popular genre characterized by the fast execution of solo instruments such as clarinet, saxophone, or the accordion."
+      },
+      {
+        "name": "Stornello",
+        "description": "Italian folk poetry, generally improvised and handed down by street singers, carters or sellers."
+      },
+      {
+        "name": "Tarantella",
+        "description": "Fast upbeat tempo, switching between major and minor modes while gradually increasing in speed."
+      },
+      {
+        "name": "Pizzica",
+        "description": "Italian Folk dance and music from Apulia, belonging to the family of Tarantella."
+      },
+      {
+        "name": "Tammurriata",
+        "description": "Italian folk from Campania, belonging to the family of Tarantella."
+      },
+      {
+        "name": "Trallalero",
+        "description": "Polyphonic Traditional Folk Music originating in the Ligurian region of Genoa, in northern Italy."
+      },
+      {
+        "name": "Neo-Medieval Folk",
+        "description": "Emulates European Folk Music from the Middle Ages, originating in Germany in the 1980s."
+      },
+      {
+        "name": "Bardcore",
+        "description": "Rearranges contemporary music with an array of acoustic instrumentation to evoke the aesthetic of medieval Europe."
+      },
+      {
+        "name": "Neo-Pagan Folk",
+        "description": "Emulates music played by pagan people, particularly from pre-Christian Europe."
+      },
+      {
+        "name": "Nordic Folk Music",
+        "description": "Folk of Nordic countries of Denmark, Finland, Iceland, Norway, and Sweden."
+      },
+      {
+        "name": "Danish Folk Music",
+        "description": "Folk of the Danish people."
+      },
+      {
+        "name": "Faroese Folk Music",
+        "description": "Traditional Folk Music of the Faroe Islands."
+      },
+      {
+        "name": "Finnish Folk Music",
+        "description": "Traditional Folk Music of the Finnish people."
+      },
+      {
+        "name": "Icelandic Folk Music",
+        "description": "Traditional Folk Music of Iceland, including a variety of styles like the rímur, the kvædaskapur and langspil instrumental music."
+      },
+      {
+        "name": "Joik",
+        "description": "Traditional Sami singing style found in northern Finland, Sweden, Norway and Russia."
+      },
+      {
+        "name": "Nordic Old Time Dance Music",
+        "description": "Meta-genre strongly related to Nordic Folk Music having less complex structures, easy rhythms, and melodic lines."
+      },
+      {
+        "name": "Polska",
+        "description": "Traditional Nordic dance with a 3/4 rhythm."
+      },
+      {
+        "name": "Hambo",
+        "description": "Traditional Swedish dance with a 3/4 rhythm and an emphasis on the first beat."
+      },
+      {
+        "name": "Norwegian Folk Music",
+        "description": "Traditional Folk Music of Norway, primarily intended as accompaniment for dancing and coming in two main varieties, instrumental and vocal music."
+      },
+      {
+        "name": "Swedish Folk Music",
+        "description": "Traditional music of the Swedish people, commonly incorporating fiddle, accordion, flute, nyckelharpa, and/or voice."
+      },
+      {
+        "name": "Hambo",
+        "description": "Traditional Swedish dance with a 3/4 rhythm and an emphasis on the first beat."
+      },
+      {
+        "name": "Polka",
+        "description": "Lively style and corresponding dance originating in Central and Eastern Europe, featuring a 2/4 cut time beat and instruments which vary by region."
+      },
+      {
+        "name": "Portuguese Folk Music",
+        "description": "Traditional Folk Music from Portugal."
+      },
+      {
+        "name": "Cante alentejano",
+        "description": "Traditional Portuguese Music based on vocal music from the Alentejo region."
+      },
+      {
+        "name": "Chamarrita açoriana",
+        "description": "Refers to a popular folkloric dance, of the Azores islands, as well as the accompanying music."
+      },
+      {
+        "name": "Fado",
+        "description": "Tradition from Portugal originating in the first half of the 19th century, mainly consisting of melancholic songs accompanied by Portuguese guitars or classical guitars."
+      },
+      {
+        "name": "Fado de Coimbra",
+        "description": "Fado variant originated in the city of Coimbra, known for its serenades."
+      },
+      {
+        "name": "Trás-os-Montes Folk Music",
+        "description": "Folk of the Portuguese province of Trás-os-Montes, notable for a greater Celtic influence than other parts of the country."
+      },
+      {
+        "name": "Romanian Folk Music",
+        "description": "Traditional Folk Music of the Romanians."
+      },
+      {
+        "name": "Bocet",
+        "description": "Traditional Romanian music sung by women mourning at a funeral."
+      },
+      {
+        "name": "Colinde",
+        "description": "Christmas music from Romanian folklore with ritualistic and pagan roots."
+      },
+      {
+        "name": "Doină",
+        "description": "Melancholic, lyrical folk song characterised by its free rhythm."
+      },
+      {
+        "name": "Muzică lăutărească",
+        "description": "Strongly influenced by folk from Turkey, Russia, and Western Europe, and even by Byzantine Church music."
+      },
+      {
+        "name": "Sardinian Folk Music",
+        "description": "Traditional Folk Music of Sardinia, an island in the Mediterranean Sea."
+      },
+      {
+        "name": "Cantu a chiterra",
+        "description": "Traditional monophonic singing accompanied by a chittera sarda from the Mediterranean island of Sardinia."
+      },
+      {
+        "name": "Cantu a tenore",
+        "description": "Secular Polyphonic Chant from the Mediterranean island of Sardinia."
+      },
+      {
+        "name": "Slavic Folk Music",
+        "description": "Traditional Folk Music native to Slavic peoples."
+      },
+      {
+        "name": "Belarusian Folk Music",
+        "description": "Eastern Slavic Folk Music, including traditional ceremonial, wedding, and harvest songs."
+      },
+      {
+        "name": "Bosnian Folk Music",
+        "description": "Traditional Folk Music of the Bosnians."
+      },
+      {
+        "name": "Izvorna bosanska muzika",
+        "description": "Polyphonic vocal music that developed in Bosnia in the 20th century, bearing connections to traditional Bosnian genres."
+      },
+      {
+        "name": "Sevdalinka",
+        "description": "A melancholic folk song, originating from Bosnia and Herzegovina, typically love-themed and accompanied by instruments like guitar and accordion."
+      },
+      {
+        "name": "Bulgarian Folk Music",
+        "description": "Consists of a variety of traditions and styles, with distinct sounds originating from current and historical regions such as Sofia, Dobrudzha, Macedonia and Thrace."
+      },
+      {
+        "name": "Croatian Folk Music",
+        "description": "Traditional Folk Music of the Croats."
+      },
+      {
+        "name": "Klapa",
+        "description": "Traditional form characteristic of the Dalmatia region of Croatia rooted in littoral church singing."
+      },
+      {
+        "name": "Czech Folk Music",
+        "description": "Folk of the Czech people in central Europe."
+      },
+      {
+        "name": "Ganga",
+        "description": "Dissonant form of polyphonic singing from the regions of Herzegovina and Dalmatia."
+      },
+      {
+        "name": "Goral Music",
+        "description": "Music of highlanders occupying Northern Carpathians (Gorals)."
+      },
+      {
+        "name": "Polish Goral Music",
+        "description": "Music of indigenous highlanders native to the Western Beskids and the Podhale regions in Southern Poland."
+      },
+      {
+        "name": "Macedonian Folk Music",
+        "description": "Folk music of Macedonians, a South Slavic ethnic group who are primarily associated with the Republic of Macedonia."
+      },
+      {
+        "name": "Čalgija",
+        "description": "Urban folk from Macedonia very popular in the 19th and 20th centuries performed by ensembles called Čalgii."
+      },
+      {
+        "name": "Montenegrin Folk Music",
+        "description": "Traditional folk music of Montenegro."
+      },
+      {
+        "name": "Moravian Folk Music",
+        "description": "Traditional Folk Music of the Moravian people."
+      },
+      {
+        "name": "Polish Folk Music",
+        "description": "Traditional Folk Music of the Poles."
+      },
+      {
+        "name": "Folklor miejski",
+        "description": "Urban folk street band traditions of Polish cities."
+      },
+      {
+        "name": "Warsaw City Folk",
+        "description": "Traditional urban poetry sung in the Warsaw dialect by buskers, and accompanied by street bands."
+      },
+      {
+        "name": "Kashubian Folk Music",
+        "description": "Traditional Folk Music of the Kashubian people of northwestern Poland."
+      },
+      {
+        "name": "Krakowiak",
+        "description": "Fast, syncopated, duple-time national dance of Poland."
+      },
+      {
+        "name": "Kujawiak",
+        "description": "Calm, triple-time national dance of Poland."
+      },
+      {
+        "name": "Kurpian Folk Music",
+        "description": "Traditional Folk Music of the Kurpian people of eastern Poland."
+      },
+      {
+        "name": "Oberek",
+        "description": "Fastest triple-time national dance of Poland."
+      },
+      {
+        "name": "Polish Goral Music",
+        "description": "Music of indigenous highlanders native to the Western Beskids and the Podhale regions in Southern Poland."
+      },
+      {
+        "name": "Russian Folk Music",
+        "description": "Eastern Slavic Folk Music native to the Russian people."
+      },
+      {
+        "name": "Serbian Folk Music",
+        "description": "Traditional Folk Music of the Serbian people."
+      },
+      {
+        "name": "Slovak Folk Music",
+        "description": "Traditional Folk Music of the Slovaks."
+      },
+      {
+        "name": "Slovenian Folk Music",
+        "description": "Traditional Folk Music of the Slovenian people."
+      },
+      {
+        "name": "Narodno zabavna glasba",
+        "description": "Modernised form of Slovenian Folk Music from the Alpine region of Upper Carniola (Oberkrain)."
+      },
+      {
+        "name": "Starogradska muzika",
+        "description": "Translated as \"old city music\", this is the urban traditional music of Macedonia and Serbia."
+      },
+      {
+        "name": "Čalgija",
+        "description": "Urban folk from Macedonia very popular in the 19th and 20th centuries performed by ensembles called Čalgii."
+      },
+      {
+        "name": "Ukrainian Folk Music",
+        "description": "Traditions of the people of Ukraine."
+      },
+      {
+        "name": "Duma",
+        "description": "Type of Ukrainian sung epic poem."
+      },
+      {
+        "name": "Hutsul Folk Music",
+        "description": "Traditional Folk Music of the Hutsul people."
+      },
+      {
+        "name": "Spanish Folk Music",
+        "description": "Traditional Folk Music of Spain, widely diverse due to the distinct culture and traditions of the country's different regions."
+      },
+      {
+        "name": "Andalusian Folk Music",
+        "description": "Flamenco of Andalusia in southern Spain, rooted in traditional music and dances and developed mostly after the 18th century by the Romani people of Andalusia (known locally as gitanos)."
+      },
+      {
+        "name": "Saeta",
+        "description": "Traditional religious praise song that originated in Andalusia, Spain towards the end of the late Middle Ages."
+      },
+      {
+        "name": "Sevillanas",
+        "description": "Named after the city of Seville in Spain, typically rhythmic with a 3/4 beat and guitar accompaniment."
+      },
+      {
+        "name": "Aragonese Folk Music",
+        "description": "Traditional Folk Music of the Aragonese people."
+      },
+      {
+        "name": "Asturian Folk Music",
+        "description": "Traditions of the Spanish province of Asturias."
+      },
+      {
+        "name": "Canarian Folk Music",
+        "description": "Traditional folk of the Canary Islands."
+      },
+      {
+        "name": "Chotis madrileño",
+        "description": "Spanish variant of schottisch, a slow version of German Polka which developed through the incorporation of regional folk influences and an association with the local castizo culture in Madrid, the capital of Spain."
+      },
+      {
+        "name": "Copla",
+        "description": "Evolved from Spanish theatrical styles like Cuplé and has strong links to Flamenco."
+      },
+      {
+        "name": "Cuplé",
+        "description": "Originally developed in the 19th century as a blend of old theatre Spanish styles based in short monologues (jácara and tonadilla) and French Couplet."
+      },
+      {
+        "name": "Galician Folk Music",
+        "description": "Traditional music of the Galician people."
+      },
+      {
+        "name": "Pasodoble",
+        "description": "Mainly instrumental Spanish style primarily associated with bullfighting and popular celebrations, believed to originate from a double-time military march from France in the 18th century."
+      },
+      {
+        "name": "Volga-Ural Folk Music",
+        "description": "Traditional Folk Music of the Volga-Ural region in the European Russia."
+      },
+      {
+        "name": "Bashkir Folk Music",
+        "description": "Traditional folk of the Bashkir people, a Turkic ethnic group inhabiting the Republic of Bashkortostan (Bashkiria), a federal subject of the Russian Federation, and its neighboring areas on both sides of the Ural mountains."
+      },
+      {
+        "name": "Chuvash Folk Music",
+        "description": "Traditional Folk Music of the Chuvash people."
+      },
+      {
+        "name": "Komi Folk Music",
+        "description": "Traditional Folk Music of the Komi people."
+      },
+      {
+        "name": "Mari Folk Music",
+        "description": "Traditional Folk Music of the Mari people."
+      },
+      {
+        "name": "Mordvin Folk Music",
+        "description": "Traditional Folk Music of the Mordvin people."
+      },
+      {
+        "name": "Udmurt Folk Music",
+        "description": "Traditional Folk Music of the Udmurt people inhabiting areas in the Volga-Ural region of Russia."
+      },
+      {
+        "name": "Volga Tatar Folk Music",
+        "description": "Traditional Folk Music of the Volga Tatar people native to republics of Tatarstan and Bashkortostan."
+      },
+      {
+        "name": "Walloon Folk Music",
+        "description": "Traditional Folk Music of Wallonia, the mostly French-speaking southern region of Belgium which also includes a few Flemish and German minorities."
+      },
+      {
+        "name": "White Voice",
+        "description": "Traditional form of vocal music of Eastern European peoples."
+      },
+      {
+        "name": "Yiddish Folksong",
+        "description": "Traditional folk developed in Ashkenazi Jewish communities, particularly those of Yiddish-speaking Eastern and Central Europe."
+      },
+      {
+        "name": "Hazara Folk Music",
+        "description": "Folk music of the Hazara people, mainly native to central Afghanistan."
+      },
+      {
+        "name": "Hispanic American Folk Music",
+        "description": "Encompasses many varieties of folk traditions from Hispanic America."
+      },
+      {
+        "name": "Bambuco",
+        "description": "Follows a 6/8 or 3/4 time signature with non-percussive instrumentation, often melancholic in sound with bright guitars and a rich melodic base."
+      },
+      {
+        "name": "Bomba",
+        "description": "Percussive style from Puerto Rico, generally considered to be derived from West Africa."
+      },
+      {
+        "name": "Candombe",
+        "description": "Uruguayan popular music originating among Montevideo's Afro-Uruguayan population, based on three differently-sized drums."
+      },
+      {
+        "name": "Canto a lo poeta",
+        "description": "Sung poetry traditional to Chile and transmitted orally from one generation to another."
+      },
+      {
+        "name": "Carranga",
+        "description": "Colombian folk music that originated in Boyacá province, best known for its wordplay and humorous lyrics."
+      },
+      {
+        "name": "Chacarera",
+        "description": "Originated in northwest Argentina and southern Bolivia around 1850, typically in 6/8 and traditionally performed with instruments like the guitar, bombo legüero (traditional drum), and violin."
+      },
+      {
+        "name": "Chamamé",
+        "description": "Mixes native Guaraní music with Polka paraguaya and European schottische music."
+      },
+      {
+        "name": "Chamarrita rioplatense",
+        "description": "Traditional genre and dance featuring similar rhythms to Milonga and typically performed with the guitar and accordion."
+      },
+      {
+        "name": "Cueca",
+        "description": "Popular in Chile, Argentina, and Bolivia, accompanied by a 6/8 or 3/4 time signature and usually structured into 14 verses."
+      },
+      {
+        "name": "Jibaro",
+        "description": "Traditions of the mountain-dwelling jibaro people that live primarily in Puerto Rico."
+      },
+      {
+        "name": "Joropo",
+        "description": "Incorporates elements of Creole music and the Venezuelan waltz."
+      },
+      {
+        "name": "Malagueña venezolana",
+        "description": "Traditional musical accompaniment to the Venezuelan 'velorios de cruz de mayo' celebrations, played with the mandolin (as lead instrument), cuatro and guitar."
+      },
+      {
+        "name": "Mexican Folk Music",
+        "description": "Traditional Folk Music of the Mexican people."
+      },
+      {
+        "name": "Canto cardenche",
+        "description": "Overtly dramatic, and melancholic A cappella performed in the Comarca Lagunera region in northeast Mexico."
+      },
+      {
+        "name": "Son calentano",
+        "description": "Usually dominated by violin with accompaniment mainly provided by guitars and tamboras, occasionally dancers will stomp over a platform."
+      },
+      {
+        "name": "Son huasteco",
+        "description": "Bold rhythmic structure, lively violin playing, and extensive use of falsetto."
+      },
+      {
+        "name": "Son istmeño",
+        "description": "Developed in the Isthmus of Tehuantepec, traditionally played by guitar, requinto, marimba, and bajoquinto, usually played in 3/4 time."
+      },
+      {
+        "name": "Son jarocho",
+        "description": "Mexican Folk Music from the Gulf Coast Mexican state of Veracruz, with both Spanish and indigenous influences."
+      },
+      {
+        "name": "Trova yucateca",
+        "description": "Heavily influenced by Cuban Music, freely embracing Bolero, clave and Bambuco."
+      },
+      {
+        "name": "Milonga",
+        "description": "Characterized by a slow rhythm usually performed on a guitar; generally considered a precursor to Tango."
+      },
+      {
+        "name": "Muliza",
+        "description": "Mestizo folk genre popular in the central Peruvian Andes, characterized by a pronounced, though sedate, rhythm; traces of Andean melody; and octosyllabic verses."
+      },
+      {
+        "name": "Música criolla peruana",
+        "description": "Combination of African, Spanish, and Andean influences that originated after the time of the arrival of Spanish colonists and African slaves to Peru."
+      },
+      {
+        "name": "Marinera",
+        "description": "Component of the coastal dance of the same name, often considered the national dance of Peru."
+      },
+      {
+        "name": "Tondero",
+        "description": "Backing to the fast-paced dance that originated in northern Peru in the region of Piura of the same name; bands consist of a singer, a small chorus, two guitarists, along with the cajón and sometimes a spoon player."
+      },
+      {
+        "name": "Vals criollo",
+        "description": "Originally characterized by its 3/4 time, heavy reliance on strongly plucked phrase on upper strings, and its guitar solo; often accompanied by a duet or a solo singer, normally singing about patriotic themes or social dilemmas."
+      },
+      {
+        "name": "Plena",
+        "description": "Folk genre from Puerto Rico played with hand drums called panderetas."
+      },
+      {
+        "name": "Saya",
+        "description": "Fast-paced, percussive traditional genre created by the Afro-Bolivian people."
+      },
+      {
+        "name": "Tamborito",
+        "description": "Folk music and dance from Panama dating back to the 17th century."
+      },
+      {
+        "name": "Taquirari",
+        "description": "Developed by the indigenous peoples of eastern Bolivia, bringing in some elements of Hispanic Music, and featuring a syncopated rhythm."
+      },
+      {
+        "name": "Tonada chilena",
+        "description": "Traditional folk from the Chilean countryside distinguished by its prominent melody."
+      },
+      {
+        "name": "Yaraví",
+        "description": "Peruvian criollo-mestizo songs with recurring themes of sadness and unrequited love, usually in 6/8 meter."
+      },
+      {
+        "name": "Zamacueca",
+        "description": "Traditional genre and dance of 19th century Peru, sung in the minor mode and accompanied by a varying combination of guitar, vihuela, harp and cajón."
+      },
+      {
+        "name": "Zamba",
+        "description": "Folk dance that evolved out of Peruvian Zamacueca during the 19th century."
+      },
+      {
+        "name": "Indigenous American Traditional Music",
+        "description": "Meta-genre encompassing traditions attributed to the indigenous peoples of the Americas."
+      },
+      {
+        "name": "Athabaskan Fiddling",
+        "description": "Fiddle playing of the Dene or \"Athabaskan\" people of modern-day Alaska, Yukon and the Northwest Territories."
+      },
+      {
+        "name": "Inuit Vocal Games",
+        "description": "Practiced by the Inuit of Canada, two vocalists face each other decimeters away and try to outlast each other with intense and unusual vocal techniques."
+      },
+      {
+        "name": "James Bay Fiddling",
+        "description": "Fiddle playing of the James Bay Cree people, characterised by a fusion of Scottish style with Cree rhythms."
+      },
+      {
+        "name": "Mapuche Folk Music",
+        "description": "Traditional Folk Music of the Mapuche people of Chile and Argentina."
+      },
+      {
+        "name": "Powwow Music",
+        "description": "Drum-based traditional music of Plains region Native American tribes, traditionally played at Pow-wows."
+      },
+      {
+        "name": "Tonada potosina",
+        "description": "Traditional folk sung in Quechua, played on charangos and guitarillas, with a catchy, lively rhythm."
+      },
+      {
+        "name": "Unakesa",
+        "description": "Lay song and dance of the Fulni-ô people."
+      },
+      {
+        "name": "Ladino Folksong",
+        "description": "Ladino-language Traditional Folk Music tunes that were written and preserved by Sephardic Jews."
+      },
+      {
+        "name": "Ob-Ugric Folk Music",
+        "description": "Traditional Folk Music of the Ob-Ugric people of West Siberia Plain."
+      },
+      {
+        "name": "Payada",
+        "description": "Improvised poetry accompanied by a guitar that is tied to gaucho culture, usually performed in duo as a verse duel."
+      },
+      {
+        "name": "Romani Folk Music",
+        "description": "Folk of the Romani people, an ethnic group with origins in Northern India, but who have since the Middle Ages settled around Europe, principally Romania, Bulgaria, and Spain, and many other places."
+      },
+      {
+        "name": "Samoyedic Folk Music",
+        "description": "Traditional Folk Music of the Samoyedic peoples."
+      },
+      {
+        "name": "South Asian Folk Music",
+        "description": "Meta-genre which covers all the Traditional Folk Music forms from South Asia."
+      },
+      {
+        "name": "Assamese Folk Music",
+        "description": "Traditional Folk Music of the Assamese people, a people group mostly from the Northeastern Indian state of Assam."
+      },
+      {
+        "name": "Bengali Folk Music",
+        "description": "Traditions of the Bengali people found mainly in the Indian state of West Bengal and the country of Bangladesh."
+      },
+      {
+        "name": "Baul gaan",
+        "description": "Songs performed by the Bauls, a movement of mystic entertainers influenced by diverse spiritual traditions."
+      },
+      {
+        "name": "Bhojpuri Folk Music",
+        "description": "Traditions of the Bhojpuri people of India, originally from the states of Bihar and Uttar Pradesh."
+      },
+      {
+        "name": "Biraha",
+        "description": "Call-and-response style of folk music developed from the Ahir and neighboring castes of the Bhojpuri people."
+      },
+      {
+        "name": "Boduberu",
+        "description": "Traditional, percussion-based form of music popular in the Maldives, usually following a crescendo structure."
+      },
+      {
+        "name": "Burushaski Folk Music",
+        "description": "Traditional Folk Music of the Burusho people of northern Pakistan."
+      },
+      {
+        "name": "Gujarati Folk Music",
+        "description": "Traditional Folk Music of the Gujarati people, who primarily live in the western Indian state of Gujarat."
+      },
+      {
+        "name": "Kannada Folk Music",
+        "description": "Traditional Folk Music of the Kannada people, a large ethnolinguistic group who mainly inhabit the state of Karnataka in southwestern India."
+      },
+      {
+        "name": "Kirtan",
+        "description": "Call-and-response chanting that involves the singing of devotional mantras and hymns in a bhakti devotional style, occasionally accompanied with traditional folk instrumentation."
+      },
+      {
+        "name": "Shabad kirtan",
+        "description": "Religious Sikh Hymns backed by specially selected ragas and taal."
+      },
+      {
+        "name": "Malayali Folk Music",
+        "description": "Traditional Folk Music of Kerala, India primarily sung in the Malayalam language and known for its drumming and percussion."
+      },
+      {
+        "name": "Marathi Folk Music",
+        "description": "Traditional Folk Music of the Marathi people, a large ethnic group who mainly inhabit the state of Maharashtra in western India."
+      },
+      {
+        "name": "Newa Folk Music",
+        "description": "Traditions of the Newa people, who live in Nepal, performed with mostly percussive instruments and some wind instruments."
+      },
+      {
+        "name": "Odia Folk Music",
+        "description": "Traditional Folk Music of the Odia, a large ethnic group who mainly inhabit the state of Odisha in eastern India."
+      },
+      {
+        "name": "Pashto Folk Music",
+        "description": "Traditional Folk Music of the Pashtun people of southern Afghanistan and north-western Pakistan."
+      },
+      {
+        "name": "Punjabi Folk Music",
+        "description": "Traditional Folk Music of the Punjabi people, mostly from the Punjab regions of India and Pakistan, covering diverse styles often played with traditional instruments."
+      },
+      {
+        "name": "Rajasthani Folk Music",
+        "description": "Traditions of the Rajasthani people of Western India - who now mostly live in the eponymous Rajasthan state - originated across the various castes that inhabit the region."
+      },
+      {
+        "name": "Sinhalese Folk Music",
+        "description": "Folk of the Sinhalese people, the majority ethnic group of Sri Lanka."
+      },
+      {
+        "name": "Sarala gee",
+        "description": "Blend of Hindustani Classical Music with Sinhalese Folk Music."
+      },
+      {
+        "name": "Tamil Folk Music",
+        "description": "Traditional Folk Music of the Tamil people."
+      },
+      {
+        "name": "Urumi melam",
+        "description": "Percussive ensemble native to the Tamil Nadu region, taking its name from the urumi drum."
+      },
+      {
+        "name": "Telugu Folk Music",
+        "description": "Traditional Folk Music of the Telugu people, one of the largest ethnolinguistic groups of India, mainly living in the states of Andhra Pradesh and Telangana."
+      },
+      {
+        "name": "Southeast Asian Folk Music",
+        "description": "Meta-genre covering all folk forms from Southeast Asia, like Gondang, Hmong, Iban, Karen, Keroncong, Khmer, Lao, Lun Bawang, Molam, and Orang Ulu."
+      },
+      {
+        "name": "Balitaw",
+        "description": "Folk originating in the Visayas islands of the Philippines; dialogue or debate in which a man and a woman compete at improvising romantic verses."
+      },
+      {
+        "name": "Bamar Folk Music",
+        "description": "Traditional Folk Music of the majority ethnic group of Myanmar."
+      },
+      {
+        "name": "Filipino Rondalla",
+        "description": "Folk music composed by an ensemble of various pluck-stringed instruments typically played for traditional Filipino folk dances."
+      },
+      {
+        "name": "Gondang",
+        "description": "Traditional ensemble in Bataknese traditional music of North Sumatra, taking its name from its leading instrument - a unique set of toned drums."
+      },
+      {
+        "name": "Hill Tribe Music",
+        "description": "Traditions of the various tribal ethnic groups residing in the hills of Mainland Southeast Asia and Southwest China, also known as the region of Zomia."
+      },
+      {
+        "name": "Hmong Folk Music",
+        "description": "Folk traditions of the Hmong people, an ethnic group localized in Laos, Vietnam, China, and Thailand."
+      },
+      {
+        "name": "Khmer Folk Music",
+        "description": "Folk of the Khmer people, who mainly reside in Cambodia."
+      },
+      {
+        "name": "Kuda kepang",
+        "description": "Accompanies a traditional Javanese dance of the same name, featuring a stripped-back version of a Gamelan ensemble that removes softer instruments."
+      },
+      {
+        "name": "Kundiman",
+        "description": "Traditional Filipino love songs usually sung in Tagalog."
+      },
+      {
+        "name": "Lao Folk Music",
+        "description": "Traditional Folk Music of the Lao people."
+      },
+      {
+        "name": "Malay Folk Music",
+        "description": "Traditional Folk Music of the Malay people, who are native to Malaysia, Singapore, Brunei, northern Indonesia, and southern Thailand."
+      },
+      {
+        "name": "Thai Folk Music",
+        "description": "Traditional Folk Music of the Thai people."
+      },
+      {
+        "name": "Fon leb",
+        "description": "Traditional performance music originating in northern Thailand consist of an ensemble with Piphat instruments and a pair of female choreographers."
+      },
+      {
+        "name": "West Asian Folk Music",
+        "description": "Traditional Folk Music of West Asia, a region that covers much of what is commonly known in English as the Middle East (alternatively Southwestern Asia), includes the distinct but interconnected traditions of numerous ethnic groups."
+      },
+      {
+        "name": "Alevi Folk Music",
+        "description": "Anatolian folk pioneered by Turkish poets and bards, connected to the Alevist heterodox Islamic tradition."
+      },
+      {
+        "name": "Armenian Folk Music",
+        "description": "Traditional Folk Music of the Armenians, which is attested in historic Armenia since antiquity, with unique regional dialects unified by general melodic structure."
+      },
+      {
+        "name": "Kef Music",
+        "description": "Dance-oriented Armenian American music with prominent presence of Anatolian instruments and folkloric melodies (often in the 10/8 meter) paired with novel lyrics relating to a variety of topics."
+      },
+      {
+        "name": "Assyrian Folk Music",
+        "description": "Folk of the Assyrian or Syriac people, who are indigenous to the Upper Mesopotamian region roughly corresponding to ancient Assyria (which includes modern-day northern Iraq, northwestern Iran, northeastern Syria, and southeastern Turkey)."
+      },
+      {
+        "name": "Fijiri",
+        "description": "Deeply rooted in the Persian Gulf pearl diving culture, and sung during weekly gatherings combining solo and choral sections with minimal percussion."
+      },
+      {
+        "name": "Israeli Folk Music",
+        "description": "Folk of the Jewish settlers of Eretz Yisra'el."
+      },
+      {
+        "name": "Kurdish Folk Music",
+        "description": "Traditional Folk Music of the Kurds, an Iranian people who traditionally inhabit the mountainous region of the Middle East comprising southeastern Turkey, northern Iraq, northwestern Iran, and northeastern Syria."
+      },
+      {
+        "name": "Luri Folk Music",
+        "description": "Traditional Folk Music of the Luri people of southwestern Iran."
+      },
+      {
+        "name": "Meyxana",
+        "description": "Azerbaijani folk recitative genre."
+      },
+      {
+        "name": "Persian Folk Music",
+        "description": "Traditional Folk Music of the Persian people."
+      },
+      {
+        "name": "Turkish Folk Music",
+        "description": "Traditional Folk Music of Turkish people combines the distinct cultural heritages and traditions of Anatolian civilisations and former Ottoman territories."
+      },
+      {
+        "name": "Turkish Black Sea Region Folk Music",
+        "description": "Folk of the Turkish people who inhabit the northern region by the Black Sea."
+      },
+      {
+        "name": "Uzun Hava",
+        "description": "Semi-improvisational melodic structure in Turkish Folk Music."
+      },
+      {
+        "name": "Zeybek",
+        "description": "Turkish Folk Music music and dance that originated with the Zeybek people during the Ottoman Empire period, with slow and asymmetrical rhythms."
+      },
+      {
+        "name": "Work Songs",
+        "description": "Sung by laborers and prisoners while working in factories and fields."
+      },
+      {
+        "name": "Aboio",
+        "description": "Cattle-herding songs originating in rural Northeastern Brazil."
+      },
+      {
+        "name": "Aboio cantado",
+        "description": "Aboio that features rhyming verses."
+      },
+      {
+        "name": "Field Hollers",
+        "description": "Work song created by African-American slaves working on cotton plantations, which features an expressive vocal style to no strict rhythm."
+      },
+      {
+        "name": "Òrain luaidh",
+        "description": "Rhythmic call-and-response style song form that traditionally accompanied the production of tweed cloth through beating the material by hand to soften it after it came off the loom."
+      },
+      {
+        "name": "Sea Shanty",
+        "description": "Songs originally sung by sailors to coordinate work on ships."
+      },
+      {
+        "name": "Shan’ge",
+        "description": "Work Songs sung by Chinese agricultural workers."
+      },
+      {
+        "name": "Yodeling",
+        "description": "Vocal technique that arose in many cultures around the world as a form of calling and communication."
+      },
+      {
+        "name": "Country Yodeling",
+        "description": "Vocal technique of Yodeling, brought to the United States by German settlers, sung over the instrumentation of Traditional Country."
+      },
+      {
+        "name": "Naturjodel",
+        "description": "Originated in Toggenburg and Appenzell in Switzerland; deep vocal range, relaxed voice, free tempo, polyphony, elongated notes, improvisation, glissando, and use of syllabic sounds."
+      }
+    ]
+  }
+]

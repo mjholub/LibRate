@@ -1,0 +1,171 @@
+[
+  {
+    "name": "Acid Jazz",
+    "description": "Eclectic scene consisting of influences from Jazz, Funk, Hip Hop, Soul, and various styles of Dance that gained popularity during the 1990s.",
+    "children": []
+  },
+  {
+    "name": "Blue-Eyed Soul",
+    "description": "Usually refers to a Pop or Pop Rock song that contains strong Gospel-like elements, primarily popularized by white American and British singers in the 1960s through the 1980s.",
+    "children": []
+  },
+  {
+    "name": "Boogie",
+    "description": "Continuation of the Disco sound with increased influence from Funk, Synth Funk, and R&B and a slower tempo, often featuring drum machines and filter modulated synthesizers.",
+    "children": []
+  },
+  {
+    "name": "Contemporary R&B",
+    "description": "Characterized by soulful, passionate and melismatic vocals originally derived from popular Soul and Disco, and by smooth, lush and often synthezised production variously influenced by Hip Hop, Funk, and related strands of Pop.",
+    "children": [
+      {
+        "name": "Alternative R&B",
+        "description": "Deviating from the traditional styles of Contemporary R&B and featuring smooth, reverberated, Electronic-influenced production with heavy bass and often reverberated vocals."
+      },
+      {
+        "name": "Hip Hop Soul",
+        "description": "Hip Hop-oriented style that evolved out of New Jack Swing in the early 1990s."
+      },
+      {
+        "name": "New Jack Swing",
+        "description": "Mixes light Hip Hop & Funk production techniques with Contemporary R&B vocals and melodies as well as swinging and danceable drum grooves."
+      },
+      {
+        "name": "Trap Soul",
+        "description": "Mixes passionate vocals derived from Contemporary R&B with laid-back, nocturnal and atmospheric Trap production."
+      },
+      {
+        "name": "UK Street Soul",
+        "description": "Emerged in the late 1980s and early 1990s; combines raw basslines and breakbeats with Contemporary R&B/Soul vocals."
+      }
+    ]
+  },
+  {
+    "name": "Doo-Wop",
+    "description": "Heavy emphasis on male four-part harmonies and light instrumentation; peaked in popularity in the 1950s.",
+    "children": []
+  },
+  {
+    "name": "Funk",
+    "description": "Strong danceable grooves typically carried by bass guitar and drums, prominent use of extended chords, and a percussive guitar style using a wah pedal.",
+    "children": [
+      {
+        "name": "Afro-Funk",
+        "description": "Strongly mixed with traditional and more modern genres in sub-Saharan West Africa."
+      },
+      {
+        "name": "Britfunk",
+        "description": "Variety of Funk born out of late 1970s British nightclubs."
+      },
+      {
+        "name": "Deep Funk",
+        "description": "Focuses more on grooves and rhythm than songwriting."
+      },
+      {
+        "name": "Go-Go",
+        "description": "Dominated by drums and percussion (primarily congas) with heavily syncopated rhythms, bursts of horns, and call-and-response vocals."
+      },
+      {
+        "name": "Jazz-Funk",
+        "description": "Jazz highly influenced by Funk."
+      },
+      {
+        "name": "Latin Funk",
+        "description": "Funk combined with Hispanic American Music styles."
+      },
+      {
+        "name": "P-Funk",
+        "description": "Features a \"fat\", monotonic drum sound, spaced-out synthesizers, \"squelchy\" basslines, tight, syncopated horns, and sometimes heavy guitars."
+      },
+      {
+        "name": "Porn Groove",
+        "description": "Primarily found in the soundtracks to Pornographic films of the 1970s."
+      },
+      {
+        "name": "Synth Funk",
+        "description": "Emerged in the late 1970s; replaces horns traditionally used in melodic segments with synthesizers, while often incorporating drum machines to augment the futuristic sound."
+      },
+      {
+        "name": "Minneapolis Sound",
+        "description": "Emerged in late 1970s Minneapolis as a Synth Funk expansion characterized by glossy Contemporary R&B-influenced production techniques, angular New Wave-inspired rhythms, and a larger emphasis on electric guitar layers."
+      }
+    ]
+  },
+  {
+    "name": "New Orleans R&B",
+    "description": "Increased rhythmic complexity with added focus on piano and horns.",
+    "children": []
+  },
+  {
+    "name": "Rhythm & Blues",
+    "description": "Predominantly African American style that retains the defined backbeats, Blues chord progressions/melodies and passionate singing/shouting of Jump Blues, while appealing more to an urban audience with smaller bands and reduced Jazz influence.",
+    "children": [
+      {
+        "name": "British Rhythm & Blues",
+        "description": "A style infusing Rock and R&B that was hugely popular in the United Kingdom between 1963 and 1966."
+      },
+      {
+        "name": "Swamp Pop",
+        "description": "Uniquely Cajun style of Rhythm & Blues distinguished by tripleted pianos and a slow Blues structure."
+      },
+      {
+        "name": "Twist",
+        "description": "Simple, fast, and energetic dance popular in the early 1960s."
+      }
+    ]
+  },
+  {
+    "name": "Soul",
+    "description": "Originated in the African American culture of the 20th century, resulting from the combination of the ecstatic vocals of Gospel with the upbeat instrumentation of Rhythm & Blues, consisting of guitar, bass and percussion.",
+    "children": [
+      {
+        "name": "Chicago Soul",
+        "description": "Combination of the hard, groove-oriented rhythms of Southern Soul and the sophisticated gloss of the Motown Sound which was developed in Chicago."
+      },
+      {
+        "name": "Country Soul",
+        "description": "Combining the gritty horn-driven sound of Southern Soul with the textures and aesthetics of Country."
+      },
+      {
+        "name": "Deep Soul",
+        "description": "Draws on the typical Southern Soul groove and accentuates the Gospel and Blues influence, particularly Chicago Blues."
+      },
+      {
+        "name": "Latin Soul",
+        "description": "Soul combined with Hispanic American Music, such as Salsa and Mambo."
+      },
+      {
+        "name": "Neo-Soul",
+        "description": "Emerged during the mid-to-late 1990s; defined by a combination of Soul with the rhythmic percussion and groove of Hip Hop."
+      },
+      {
+        "name": "Northern Soul",
+        "description": "Soul popular in northern England in the late 1960s and early 1970s, consisting primarily of lesser-known American artists in the mid-1960s copying the Motown Sound."
+      },
+      {
+        "name": "Philly Soul",
+        "description": "Defined by lush arrangements, often borrowing upon the orchestral instrumentation seen on productions from the 1960s, with the commercial atmosphere exemplified by Pop Soul and the Motown Sound."
+      },
+      {
+        "name": "Pop Soul",
+        "description": "Fusion of Pop and Soul; originated in the 1960s as an attempt to give soul crossover success."
+      },
+      {
+        "name": "Motown Sound",
+        "description": "Succinct, catchy song structures; complex arrangements; Gospel-influenced vocals; highly melodic and rhythmic bass lines; 4-4 drum patterns; often syncopated piano parts; regular use of horn and string sections; and historically a distinctive reverb and treble-heavy production."
+      },
+      {
+        "name": "Psychedelic Soul",
+        "description": "Soul which incorporates the effects and instrumentation of Psychedelic Rock."
+      },
+      {
+        "name": "Smooth Soul",
+        "description": "Slow tempo ballads with silky, often sensual, vocals and light, polished arrangements, creating an intimate, romantic atmosphere."
+      },
+      {
+        "name": "Southern Soul",
+        "description": "Soul primarily from the American South that was popular in the 1960s and 1970s, with a gritty and raw sound that places an emphasis on the groove, making it highly danceable."
+      }
+    ]
+  }
+]

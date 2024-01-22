@@ -7,14 +7,14 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type StaticController struct {
+type Controller struct {
 	storage *models.Storage
 	log     *zerolog.Logger
 	conf    *cfg.Config
 }
 
-func NewStaticController(conf *cfg.Config, dbConn *sqlx.DB, logger *zerolog.Logger) *StaticController {
-	return &StaticController{
+func NewController(conf *cfg.Config, dbConn *sqlx.DB, logger *zerolog.Logger) *Controller {
+	return &Controller{
 		conf:    conf,
 		log:     logger,
 		storage: models.NewStorage(dbConn, logger),

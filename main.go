@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
+	"runtime/trace"
 	"strconv"
 	"time"
 
@@ -13,14 +16,18 @@ import (
 	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
-	"github.com/avast/retry-go/v4"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
+
+	_ "net/http/pprof"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
@@ -30,9 +37,6 @@ import (
 type FlagArgs struct {
 	// init is a flag to initialize the database
 	Init bool
-	// ExternalDBHealthCheck is a flag to skip the built-in healthcheck, especially for database
-	// Should be used in containers with external databases, where pg_isready is used instead
-	ExternalDBHealthCheck bool
 	// configFile is a flag to specify the path to the config file
 	ConfigFile string
 	// path is a flag to specify the path to the migrations that should be applied.
@@ -53,8 +57,11 @@ func main() {
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		err  error
-		conf *cfg.Config
+		dbConn    *sqlx.DB
+		pgConn    *pgxpool.Pool
+		err       error
+		conf      *cfg.Config
+		validator = validator.New()
 	)
 
 	if flags.ConfigFile == "" {
@@ -65,12 +72,47 @@ func main() {
 			log.Warn().Err(err).Msgf("Failed to load config file %s: %v", flags.ConfigFile, err)
 		}
 	}
+
+	if conf.LibrateEnv == "development" {
+		go func() {
+			log.Info().Msg("Starting pprof server")
+			err = http.ListenAndServe("localhost:6060", nil)
+			if err != nil {
+				log.Panic().Err(err).Msg("Failed to start pprof server")
+			}
+			f, err := os.Create("trace.out")
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+			if err := trace.Start(f); err != nil {
+				log.Panic().Err(err).Msg("Failed to start trace")
+			}
+			defer trace.Stop()
+		}()
+	}
+
 	log = initLogging(&conf.Logging)
 	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
+	validationErrors := cfg.Validate(conf, validator)
+	if len(validationErrors) > 0 {
+		for i := range validationErrors {
+			log.Warn().Msgf("Validation error: %+v", validationErrors[i])
+		}
+		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
+	}
+
+	// Create a new Fiber instance
+	app := cmd.CreateApp(conf)
+	s := &cmd.GrpcServer{
+		App:    app,
+		Log:    &log,
+		Config: &conf.GRPC,
+	}
+	go cmd.RunGrpcServer(s)
 
 	// database first-run initialization
-	// If the healtheck is to be handled externally, skip it
-	dbConn, err := connectDB(conf)
+	dbConn, pgConn, err = connectDB(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 	}
@@ -79,10 +121,15 @@ func main() {
 		if dbConn != nil {
 			dbConn.Close()
 		}
+		if pgConn != nil {
+			pgConn.Close()
+		}
 	}()
 
-	if err = initDB(conf, flags.Init, flags.ExternalDBHealthCheck, flags.Exit, &log); err != nil {
-		log.Panic().Err(err).Msg("Failed to initialize database")
+	if flags.Init {
+		if err = initDB(&conf.DBConfig, flags.Init, flags.Exit, &log); err != nil {
+			log.Panic().Err(err).Msg("Failed to initialize database")
+		}
 	}
 
 	err = handleMigrations(conf, &log, flags.Path)
@@ -101,8 +148,6 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
-	// Create a new Fiber instance
-	app := cmd.CreateApp(conf)
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	go func() {
 		for i := range middlewares {
@@ -112,27 +157,14 @@ func main() {
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
 
-	// setup secondary apps
-	profilesApp, err := setupSecondaryApps(app, middlewares)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to setup secondary apps")
-	}
-	apps := []*fiber.App{app, profilesApp}
+	setupPOW(conf, app)
 
-	setupPOW(conf, apps)
-
-	err = setupRoutes(conf, &log, fzlog, dbConn, app,
-		profilesApp, sess)
+	wsConfig := cmd.SetupWS(app, "/search")
+	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
 
-	s := &cmd.GrpcServer{
-		App:    app,
-		Log:    &log,
-		Config: &conf.GRPC,
-	}
-	go cmd.RunGrpcServer(s)
 	// Listen on chosen port, host and protocol
 	// (disabling HTTPS still works if you use reverse proxy)
 	err = modularListen(conf, app)
@@ -141,48 +173,37 @@ func main() {
 	}
 }
 
-func setupPOW(conf *cfg.Config, app []*fiber.App) {
+func setupPOW(conf *cfg.Config, app *fiber.App) {
 	if conf.Fiber.PowDifficulty == 0 {
 		conf.Fiber.PowDifficulty = 60000
 	}
-	for i := range app {
-		app[i].Use(fiberpow.New(fiberpow.Config{
-			PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
-			Difficulty:  conf.Fiber.PowDifficulty,
-			Filter: func(c *fiber.Ctx) bool {
-				return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "development"
-			},
-			Storage: redis.New(redis.Config{
-				Host:     conf.Redis.Host,
-				Port:     conf.Redis.Port,
-				Username: conf.Redis.Username,
-				Password: conf.Redis.Password,
-				Database: conf.Redis.PowDB,
-			}),
-		}))
-	}
+	app.Use(fiberpow.New(fiberpow.Config{
+		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
+		Difficulty:  conf.Fiber.PowDifficulty,
+		Filter: func(c *fiber.Ctx) bool {
+			return c.IP() == conf.Fiber.Host || conf.LibrateEnv == "development"
+		},
+		Storage: redis.New(redis.Config{
+			Host:     conf.Redis.Host,
+			Port:     conf.Redis.Port,
+			Username: conf.Redis.Username,
+			Password: conf.Redis.Password,
+			Database: conf.Redis.PowDB,
+		}),
+	}))
 }
 
-func initDB(conf *cfg.Config, do, externalHC, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
-	dbRunning := DBRunning(externalHC, conf.Port)
+	dbRunning := DBRunning(dbConf.Port)
 	if dbRunning {
-		logger.Warn().Msgf("Database already running on port %d. Not initializing.", conf.Port)
+		logger.Warn().Msgf("Database already running on port %d. Not initializing.", dbConf.Port)
 		return nil
 	}
-	// retry connecting to database
-	err := retry.Do(
-		func() error {
-			return db.InitDB(conf, exitAfter, logger)
-		},
-		retry.Attempts(5),
-		retry.Delay(3*time.Second), // Delay between retries
-		retry.OnRetry(func(n uint, err error) {
-			logger.Info().Msgf("Attempt %d in initDB() failed: %v; retrying...", n, err)
-		}),
-	)
+
+	err := db.InitDB(dbConf, exitAfter, logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -197,10 +218,7 @@ func initDB(conf *cfg.Config, do, externalHC, exitAfter bool, logger *zerolog.Lo
 	return nil
 }
 
-func DBRunning(skipCheck bool, port uint16) bool {
-	if skipCheck {
-		return true
-	}
+func DBRunning(port uint16) bool {
 	conn, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		return true // port in use => db running
@@ -211,29 +229,25 @@ func DBRunning(skipCheck bool, port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, ExternalDBHealthCheck, exit bool
-		configFile, path, skipErrors      string
+		init, exit                   bool
+		configFile, path, skipErrors string
 	)
 
 	const (
-		initVal         = false
-		initUse         = "Initialize database"
-		externalDBHCVal = false
-		exDBHCUse       = `Skip calling the built-in database health check.`
-		confVal         = "config.yml"
-		confUse         = "Path to config file"
-		skipErrVal      = ""
-		skipErrUse      = "Comma-separated list of error codes to skip and not panic on"
-		pathVal         = "db/migrations"
-		pathUse         = "Path to migrations to apply"
-		exitVal         = false
-		exitUse         = "Exit after running migrations"
-		short           = " (shorthand)"
+		initVal    = false
+		initUse    = "Initialize database"
+		confVal    = "config.yml"
+		confUse    = "Path to config file"
+		skipErrVal = ""
+		skipErrUse = "Comma-separated list of error codes to skip and not panic on"
+		pathVal    = "db/migrations"
+		pathUse    = "Path to migrations to apply"
+		exitVal    = false
+		exitUse    = "Exit after running migrations"
+		short      = " (shorthand)"
 	)
 	flag.BoolVar(&init, "init", initVal, initUse)
 	flag.BoolVar(&init, "i", initVal, initUse+short)
-	flag.BoolVar(&ExternalDBHealthCheck, "external-db-health-check", externalDBHCVal, exDBHCUse)
-	flag.BoolVar(&ExternalDBHealthCheck, "e", externalDBHCVal, exDBHCUse+short)
 	flag.StringVar(&configFile, "config", confVal, confUse)
 	flag.StringVar(&configFile, "c", confVal, confUse+short)
 	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
@@ -246,12 +260,11 @@ func parseFlags() FlagArgs {
 	flag.Parse()
 
 	return FlagArgs{
-		Init:                  init,
-		ExternalDBHealthCheck: ExternalDBHealthCheck,
-		ConfigFile:            configFile,
-		Path:                  path,
-		Exit:                  exit,
-		SkipErrors:            skipErrors,
+		Init:       init,
+		ConfigFile: configFile,
+		Path:       path,
+		Exit:       exit,
+		SkipErrors: skipErrors,
 	}
 }
 
@@ -273,38 +286,30 @@ func initLogging(logConf *logging.Config) zerolog.Logger {
 	return logging.Init(logConf)
 }
 
-func connectDB(conf *cfg.Config) (*sqlx.DB, error) {
+func connectDB(conf *cfg.Config) (*sqlx.DB, *pgxpool.Pool, error) {
 	// Connect to database
 	var (
 		err    error
 		dbConn *sqlx.DB
 	)
-	switch conf.Engine {
-	// TODO: add validate... oneof tags to config struct
-	case "postgres", "mariadb", "sqlite":
-		dbConn, err = db.Connect(conf)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-		return dbConn, nil
-	default:
-		return nil, fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
-	}
-}
 
-// unsure if middlewares need to be re-allocated for each subapp
-func setupSecondaryApps(mainApp *fiber.App,
-	middlewares []fiber.Handler,
-) (*fiber.App, error) {
-	profilesApp := fiber.New(fiber.Config{
-		EnableTrustedProxyCheck: true,
-	})
-	profilesApp.Static("/", "./fe/build/")
-	for i := range middlewares {
-		profilesApp.Use(middlewares[i])
+	dsn := db.CreateDsn(&conf.DBConfig)
+
+	switch conf.Engine {
+	// case "postgres", "mariadb", "sqlite":
+	case "postgres":
+		dbConn, err = db.Connect(conf.Engine, dsn, conf.RetryAttempts)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+		pgConnPool, err := pgxpool.New(context.Background(), dsn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+		return dbConn, pgConnPool, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	mainApp.Mount("/profiles", profilesApp)
-	return profilesApp, nil
 }
 
 func modularListen(conf *cfg.Config, app *fiber.App) error {
@@ -334,19 +339,16 @@ func setupRoutes(
 	conf *cfg.Config,
 	log *zerolog.Logger,
 	fzlog fiber.Handler,
+	pgConn *pgxpool.Pool,
 	dbConn *sqlx.DB,
-	app, profilesApp *fiber.App,
+	app *fiber.App,
 	sess *fiberSession.Store,
+	wsConfig websocket.Config,
 ) (err error) {
-	err = routes.SetupProfiles(log, conf, dbConn, profilesApp)
-	if err != nil {
-		return fmt.Errorf("failed to setup profiles routes: %w", err)
-	}
-
 	// Setup routes
-	err = routes.Setup(log, fzlog, conf, dbConn, app, sess)
+	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, wsConfig)
 	if err != nil {
-		return fmt.Errorf("failed to setup routes: %w", err)
+		return fmt.Errorf("failed to setup routes: %v", err)
 	}
 	return nil
 }
@@ -356,7 +358,7 @@ func handleMigrations(conf *cfg.Config, log *zerolog.Logger, path string) error 
 		return nil
 	}
 
-	if err := db.Migrate(conf, path); err != nil {
+	if err := db.Migrate(log, conf, path); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 	log.Info().Msg("Database migrated")

@@ -3,17 +3,19 @@ package static
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
 	"os"
 	"path/filepath"
 
-	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/internal/lib/thumbnailer"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
+
+	"codeberg.org/mjh/LibRate/db"
+	"codeberg.org/mjh/LibRate/internal/lib/thumbnailer"
 )
 
 type (
@@ -22,6 +24,15 @@ type (
 		Source    string         `json:"source" db:"source"`
 		Thumbnail sql.NullString `json:"thumbnail" db:"thumbnail"`
 		Alt       sql.NullString `json:"alt" db:"alt"`
+	}
+
+	// MediaProps are used in upload requests to specify the media type and uploader etc.
+	MediaProps struct {
+		Uploader  string     `json:"uploader"`
+		Ext       string     `json:"ext"`
+		Hash      string     `json:"hash,omitempty"`
+		ImageType string     `json:"imageType,omitempty"`
+		MediaID   *uuid.UUID `json:"mediaID,omitempty"`
 	}
 
 	Video struct {
@@ -119,38 +130,44 @@ func (s *Storage) GetImageSource(ctx context.Context, id int64) (source string, 
 	}
 }
 
-func (s *Storage) AddImage(ctx context.Context, imageType, ext, uploader string, mediaID *uuid.UUID) (dest string, id int64, err error) {
+func (s *Storage) AddImage(ctx context.Context, props *MediaProps) (dest string, id int64, err error) {
 	select {
 	case <-ctx.Done():
 		return "", 0, ctx.Err()
 	default:
-		stmt, err := s.db.PreparexContext(ctx, `INSERT INTO cdn.images (source, uploader) VALUES ($1, $2) RETURNING id`)
+		query := `INSERT INTO cdn.images (source, uploader) VALUES ($1, $2) RETURNING id`
+		if props.Hash != "" {
+			query = `INSERT INTO cdn.images (source, uploader, sha256sum) VALUES ($1, $2, $3) RETURNING id`
+		}
+		stmt, err := s.db.PreparexContext(ctx, query)
 		if err != nil {
-			return "", 0, fmt.Errorf("error adding file: %w", err)
+			return "", 0, fmt.Errorf("error adding file: error preparing statement: %w", err)
 		}
 		defer stmt.Close()
 
-		// TODO: test for path traversal
-		uploader = db.Sanitize([]string{uploader})[0]
+		uploader := db.Sanitize([]string{props.Uploader})[0]
 
-		switch imageType {
+		switch props.ImageType {
 		case "profile":
-			dest = fmt.Sprintf("static/img/profile/%s.%s", uploader, ext)
+			dest = fmt.Sprintf("static/img/profile/%s.%s", uploader, props.Ext)
 		case "album_cover":
-			if mediaID == nil {
-				return "", 0, fmt.Errorf("error adding file: %w", err)
+			if props.MediaID == nil {
+				return "", 0, errors.New("error adding file: mediaID is nil")
 			}
-			if mediaID.String() == "" {
-				return "", 0, fmt.Errorf("error adding file: %w", err)
+			if props.MediaID.String() == "" {
+				return "", 0, errors.New("error adding file: mediaID is empty")
 			}
-			dest = fmt.Sprintf("static/img/music/%s.%s", mediaID.String(), ext)
+			dest = fmt.Sprintf("static/img/music/%s.%s", props.MediaID.String(), props.Ext)
 		default:
-			return "", 0, fmt.Errorf("unknown image type %s", imageType)
+			return "", 0, fmt.Errorf("unknown image type %s", props.ImageType)
 		}
-
-		err = stmt.GetContext(ctx, &id, dest, uploader)
+		if props.Hash != "" {
+			err = stmt.GetContext(ctx, &id, dest, uploader, props.Hash)
+		} else {
+			err = stmt.GetContext(ctx, &id, dest, uploader)
+		}
 		if err != nil {
-			return "", 0, fmt.Errorf("error adding file: %w", err)
+			return "", 0, fmt.Errorf("error executing statement: %w", err)
 		}
 		return dest, id, nil
 	}
@@ -170,7 +187,8 @@ func (s *Storage) GetOwner(ctx context.Context, imageID int64) (owner string, er
 	}
 }
 
-// DeleteImage looks up the path of the image to delete based on it's id, then deletes the database record and returns the path to be deleted by the controller
+// DeleteImage looks up the path of the image to delete based on it's id,
+// then deletes the database record and returns the path to be deleted by the controller
 func (s *Storage) DeleteImage(ctx context.Context, imageID int64) (path string, err error) {
 	select {
 	case <-ctx.Done():
@@ -194,5 +212,18 @@ func (s *Storage) DeleteImage(ctx context.Context, imageID int64) (path string, 
 			return "", fmt.Errorf("error deleting image: %w", err)
 		}
 		return path, nil
+	}
+}
+
+func (s *Storage) LookupHash(ctx context.Context, hash, uploader string) (id int64, err error) {
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		err = s.db.GetContext(ctx, &id, `SELECT id FROM cdn.images WHERE sha256sum = $1 AND uploader = $2`, hash, uploader)
+		if err != nil {
+			return 0, err
+		}
+		return id, nil
 	}
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -54,13 +55,14 @@ func TestConnect(t *testing.T) {
 			Name: "HappyPath",
 			Inputs: &cfg.Config{
 				DBConfig: cfg.DBConfig{
-					Engine:   "postgres",
-					Host:     "localhost",
-					Port:     5432,
-					Database: "librate_test",
-					User:     "postgres",
-					Password: "postgres",
-					SSL:      "disable",
+					Engine:        "postgres",
+					Host:          "localhost",
+					Port:          5432,
+					Database:      "librate_test",
+					User:          "postgres",
+					Password:      "postgres",
+					SSL:           "disable",
+					RetryAttempts: 2,
 				},
 			},
 			WantErr: false,
@@ -69,13 +71,14 @@ func TestConnect(t *testing.T) {
 			Name: "BadEngine",
 			Inputs: &cfg.Config{
 				DBConfig: cfg.DBConfig{
-					Engine:   "badengine",
-					Host:     "localhost",
-					Port:     5432,
-					Database: "librate_test",
-					User:     "postgres",
-					Password: "postgres",
-					SSL:      "disable",
+					Engine:        "badengine",
+					Host:          "localhost",
+					Port:          5432,
+					Database:      "librate_test",
+					User:          "postgres",
+					Password:      "postgres",
+					SSL:           "disable",
+					RetryAttempts: 1,
 				},
 			},
 			WantErr: true,
@@ -83,7 +86,8 @@ func TestConnect(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			got, err := Connect(tc.Inputs)
+			dsn := CreateDsn(&tc.Inputs.DBConfig)
+			got, err := Connect(tc.Inputs.Engine, dsn, tc.Inputs.RetryAttempts)
 			if tc.WantErr {
 				assert.Error(t, err)
 				return
@@ -105,6 +109,15 @@ func TestInitDB(t *testing.T) {
 		require.NoError(t, err)
 	}(&config)
 	log := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	err := InitDB(&config, true, &log)
+	err := InitDB(&config.DBConfig, true, &log)
 	require.NoError(t, err)
+}
+
+func TestCreateExtension(t *testing.T) {
+	conn, err := sqlx.ConnectContext(context.Background(),
+		"postgres", CreateDsn(&cfg.TestConfig.DBConfig))
+	require.NotNil(t, conn)
+	require.NoError(t, err)
+	err = createExtension(conn, "sequential_uuids")
+	assert.NoError(t, err)
 }

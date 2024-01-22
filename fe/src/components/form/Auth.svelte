@@ -191,7 +191,7 @@
 						isAuthenticated: true
 					});
 					localStorage.removeItem('email_or_username');
-					window.location.href = '/';
+					window.location.reload();
 					console.info('Registration successful');
 					resolve(data.message);
 				} else {
@@ -247,7 +247,7 @@
 				  console.debug('authStore updated to ', authStore),
 				  localStorage.removeItem('email_or_username'),
 				  localStorage.setItem('jwtToken', response.data.token),
-				  (window.location.href = '/'),
+				  window.location.reload(),
 				  console.info('Login successful'))
 				: (errorMessage = response.data.message);
 			console.error(response.data.message);
@@ -349,15 +349,6 @@
 				value="rememberMe"
 				on:change={setRememberMe}
 			/>
-
-			<!-- FIXME: this is not getting updated properly -->
-			<!--
-			{#if  isAvailable}
-				<p>Nickname is available</p>
-			{:else}
-				<p>Nickname is not available</p>
-			{/if}
-      -->
 		{/if}
 
 		{#if isRegistration}
@@ -395,7 +386,7 @@
 			<button type="button" on:click={startRegistration}>Sign Up</button>
 		{:else}
 			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
-			<button type="submit">Sign Up</button>
+			<button type="submit" on:click={register}>Sign Up</button>
 		{/if}
 	</div>
 </form>

@@ -1,35 +1,51 @@
 fiber:
-  host: "0.0.0.0"
+  host: "localhost"
+  domain: "lr.localhost"
   port: 3000
+  prefork: true
+  reduceMemUsage: false
   staticDir: "./static"
-  prefork: false
-  reduceMemUsage: true
+  # in seconds
   powInterval: 300
   powDifficulty: 30000
+  tls: false
+  # -1 for graceful shutdown that will wait indefintely
+  shutdownTimeout: 10
+  maxUploadSize: 4194304
+# used to encrypt sensitive data that is stored in session redis store
 secret: "librate-secret-key"
 database:
-    engine: "postgres"
-    host: "db"
-    port: 5432
-    database: "librate"
-    user: "postgres"
-    password: "postgres"
-    SSL: "disable"
-    startCmd: "skip"
-    autoMigrate: true
-    exitAfterMigration: false 
+  engine: "postgres"
+  pgConfig: "/usr/bin/pg_config"
+  host: "librate-db"
+  port: 5432
+  database: "librate"
+  user: "postgres"
+  password: "postgres"
+  autoMigrate: true
+  exitAfterMigration: false
+  retryAttempts: 30
 redis:
-  host: "redis"
+  host: "librate-redis"
   port: 6379
   username: ""
   password: ""
-  database: 0
+  # database for use by the cache middleware and so on
+  cacheDb: 0
+  csrfDb: 2
+  powDb: 3
 logging:
   level: "info"
   output: "stdout"
-  format: "json"
+  format: "console"
   caller: true
   timestamp:
     enabled: true
-    format: "2006-01-0215:04:05.000Z07:00" 
-librateEnv: "dev"
+    format: "2006-01-0215:04:05.000Z07:00"
+grpc:
+  host: "127.0.0.1"
+  port: 3030
+  shutdownTimeout: 10
+# development or production
+librateEnv: "production"
+jwtSecret: "librate-jwt-secret"

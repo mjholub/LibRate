@@ -11,7 +11,7 @@ import (
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
-func (mc *MediaController) GetCreatorByID(c *fiber.Ctx) error {
+func (mc *Controller) GetCreatorByID(c *fiber.Ctx) error {
 	if c.Query("kind") == "" || c.Query("id") == "" {
 		return h.Res(c, fiber.StatusBadRequest, "Missing kind or ID")
 	}
@@ -52,7 +52,7 @@ func (mc *MediaController) GetCreatorByID(c *fiber.Ctx) error {
 	return h.Res(c, fiber.StatusBadRequest, "Invalid kind: "+c.Query("kind"))
 }
 
-func (mc *MediaController) GetCastByMediaID(c *fiber.Ctx) error {
+func (mc *Controller) GetCastByMediaID(c *fiber.Ctx) error {
 	// get the media ID and then query the junction tables in the database and perform a join into a JSON corresponding to the Cast type
 	if c.Params("media_id") == "" {
 		return h.Res(c, fiber.StatusBadRequest, "Missing ID")

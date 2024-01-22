@@ -7,8 +7,12 @@
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
+	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
+	import type { CustomHttpError } from '$lib/types/error';
+	import ErrorModal from '$components/modal/ErrorModal.svelte';
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
+	export let member: Member;
 	function splitNullable(input: NullableString, separator: string): string[] {
 		if (input.Valid) {
 			return input.String.split(separator);
@@ -34,15 +38,23 @@
 	}
 
 	let regDate: string;
-	export let member: Member;
-
+	let maxFileSize: number;
+	let maxFileSizeString: string;
+	let errorMessages: CustomHttpError[] = [];
 	onMount(async () => {
-		await getMaxFileSize();
+		maxFileSize = await getMaxFileSize();
 	});
 
 	onDestroy(() => {
 		maxFileSize = 0;
 	});
+
+	let uploaded: boolean;
+
+	$: {
+		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
+		uploaded = false;
+	}
 
 	const logout = async () => {
 		try {
@@ -59,82 +71,61 @@
 				localStorage.removeItem('jwtToken');
 			}
 		} catch (error) {
+			errorMessages.push({
+				message: 'Error logging out: ' + error,
+				status: 500
+			});
+			errorMessages = [...errorMessages];
 			console.error(error);
 		}
 	};
 
 	let isUploading = false;
 	let showModal = false;
-	let maxFileSize: number;
-	let maxFileSizeString: string;
-
-	const getMaxFileSize = async () => {
-		try {
-			const response = await axios.get('/api/upload/max-file-size');
-			maxFileSize = response.data.maxFileSize;
-		} catch (error) {
-			maxFileSize = 4 * 1024 * 1024;
-		}
-	};
-
-	$: {
-		maxFileSizeString = `${(maxFileSize / 1024 / 1024).toFixed(2)} MB`;
-	}
 
 	const toggleModal = () => {
 		showModal = !showModal;
 	};
 	const jwtToken = localStorage.getItem('jwtToken');
 
-	const openFilePicker = () => {
-		if (browser) {
-			const fileInput = document.createElement('input');
-			fileInput.type = 'file';
-			fileInput.accept = 'image/*';
-			fileInput.addEventListener('change', handleFileSelection);
-			fileInput.click();
-		}
-	};
-
 	const handleFileSelection = async (e: Event) => {
 		return new Promise(async (resolve, reject) => {
 			if (browser) {
-				let csrfToken: string | undefined;
-				csrfToken = document.cookie
-					.split('; ')
-					.find((row) => row.startsWith('csrf_'))
-					?.split('=')[1];
-
 				const fileInput = e.target as HTMLInputElement;
 				const file = fileInput.files?.[0];
 				if (!file) {
 					return;
 				}
-				await getMaxFileSize();
-				if (file.size > maxFileSize) {
-					alert('File too large.');
-					reject();
-				}
+				// checking file size is done in the backend
 				isUploading = true;
 				const formData = new FormData();
 				formData.append('fileData', file);
 				formData.append('imageType', 'profile');
 				formData.append('member', member.memberName);
+				let csrfToken: string | undefined;
+				csrfToken = document.cookie
+					.split('; ')
+					.find((row) => row.startsWith('csrf_'))
+					?.split('=')[1];
 				const response = await axios.post('/api/upload/image', formData, {
 					headers: {
 						'Content-Type': 'multipart/form-data',
 						Authorization: `Bearer ${jwtToken}`,
-						Expect: '100-continue',
 						'X-CSRF-Token': csrfToken || ''
 					}
 				});
 				if (response.status !== 201) {
-					alert('Error uploading file');
-					reject();
+					errorMessages.push({
+						message: 'Error uploading profile picture',
+						status: response.status
+					});
+					errorMessages = [...errorMessages];
+					reject(response.status);
 				}
-				console.log('uploaded');
+				console.log('uploaded!');
+				uploaded = true;
 				isUploading = false;
-				console.log(response.data);
+				// console.log(response.data);
 				const pic_id = response.data.data.pic_id;
 				console.log(pic_id);
 				const confirmSave = confirm('Save new profile picture?');
@@ -147,14 +138,17 @@
 						{
 							headers: {
 								'Content-Type': 'multipart/form-data',
-								Expect: '100-continue',
 								Authorization: `Bearer ${jwtToken}`,
 								'X-CSRF-Token': csrfToken || ''
 							}
 						}
 					);
 					if (res.status !== 200) {
-						alert('Error saving profile picture');
+						errorMessages.push({
+							message: 'Error updating profile picture',
+							status: res.status
+						});
+						errorMessages = [...errorMessages];
 						reject();
 					}
 				} else {
@@ -165,7 +159,11 @@
 						}
 					});
 					if (res.status !== 200) {
-						alert('Error deleting profile picture');
+						errorMessages.push({
+							message: 'Error deleting profile picture',
+							status: res.status
+						});
+						errorMessages = [...errorMessages];
 						reject();
 					}
 				}
@@ -173,6 +171,17 @@
 				resolve(void 0);
 			}
 		});
+	};
+
+	$: {
+		if (uploaded) {
+			member.profile_pic = `/static/img/profile/${member.memberName}.png`;
+		}
+	}
+
+	const reloadBio = (event: CustomEvent) => {
+		member.bio.Valid = true;
+		member.bio.String = event.detail.newBio;
 	};
 </script>
 
@@ -198,8 +207,8 @@
 			<button
 				aria-label="Change profile picture (max. {maxFileSizeString})"
 				id="change-profile-pic-button"
-				on:click={openFilePicker}
-				on:keypress={openFilePicker}
+				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
 				><span class="tooltip" aria-label={tooltipMessage} />
 				<div class="edit-button">
 					<EditIcon />
@@ -207,6 +216,9 @@
 			</button>
 			{#if isUploading}
 				<div class="spinner" />
+			{/if}
+			{#if errorMessages.length > 0}
+				<ErrorModal {errorMessages} />
 			{/if}
 		</div>
 	{:else}
@@ -219,8 +231,8 @@
 			<button
 				aria-label="Change profile picture (max. {maxFileSizeString})"
 				id="change-profile-pic-button"
-				on:click={openFilePicker}
-				on:keypress={openFilePicker}
+				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
 				><span class="tooltip" aria-label={tooltipMessage} />
 				<div class="edit-button">
 					<EditIcon />
@@ -238,9 +250,16 @@
 			memberName={member.memberName}
 			isBioPresent={member.bio.Valid}
 			bio={member.bio.String}
+			on:bioUpdated={reloadBio}
 		/>
 	{:else}
-		<UpdateBio memberName={member.memberName} isBioPresent={member.bio.Valid} bio="" />
+		<UpdateBio
+			memberName={member.memberName}
+			isBioPresent={member.bio.Valid}
+			bio=""
+			on:bioUpdated={reloadBio}
+		/>
+		/>
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
 	Other links and contact info for @{member.memberName}:

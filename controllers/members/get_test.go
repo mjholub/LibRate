@@ -160,7 +160,11 @@ func TestGetMember(t *testing.T) {
 	emailDomain := nameParts[1]
 	email := fmt.Sprintf("%s@%s.com", emailName, emailDomain)
 
-	conn, err := db.Connect(&cfg.TestConfig)
+	conn, err := db.Connect(
+		cfg.TestConfig.Engine,
+		db.CreateDsn(&cfg.TestConfig.DBConfig),
+		cfg.TestConfig.RetryAttempts,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, conn)
 	defer conn.Close()
@@ -223,7 +227,7 @@ func TestGetMember(t *testing.T) {
 		err = storage.Delete(ctx, testUser)
 		require.NoErrorf(t, err, "failed to delete test user %s", name)
 	}()
-	service := NewController(storage, &logger, &cfg.TestConfig)
+	service := NewController(storage, conn, &logger, &cfg.TestConfig)
 
 	app.Get("/api/members/:email_or_username/info", service.GetMemberByNickOrEmail)
 

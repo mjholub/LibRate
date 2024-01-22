@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -20,7 +21,7 @@ type (
 	}
 
 	Person struct {
-		ID         int32          `json:"id,omitempty" db:"id,pk,unique,autoincrement"`
+		ID         uuid.UUID      `json:"id,omitempty" db:"id,pk,unique"`
 		FirstName  string         `json:"first_name" db:"first_name"`
 		OtherNames pq.StringArray `json:"other_names,omitempty" db:"other_names"`
 		LastName   string         `json:"last_name" db:"last_name"`
@@ -39,7 +40,7 @@ type (
 	}
 
 	Group struct {
-		ID              int32          `json:"id,omitempty" db:"id"`
+		ID              uuid.UUID      `json:"id,omitempty" db:"id"`
 		Locations       []Place        `json:"locations,omitempty" db:"locations"`
 		Name            string         `json:"name" db:"name"`
 		Active          bool           `json:"active,omitempty" db:"active"`
@@ -75,25 +76,18 @@ type (
 	}
 
 	PeopleStorage struct {
+		newDBConn *pgxpool.Pool
+		// legacy
 		dbConn *sqlx.DB
 		logger *zerolog.Logger
 	}
 )
 
-var GroupKinds = []string{
-	"Orchestra",
-	"Choir",
-	"Ensemble",
-	"Collective",
-	"Band",
-	"Troupe",
-	"Other",
-}
-
-func NewPeopleStorage(dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
+func NewPeopleStorage(newConn *pgxpool.Pool, dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
 	return &PeopleStorage{
-		dbConn: dbConn,
-		logger: logger,
+		newDBConn: newConn,
+		dbConn:    dbConn,
+		logger:    logger,
 	}
 }
 
@@ -139,6 +133,61 @@ func (p *PeopleStorage) GetGroup(ctx context.Context, id int32) (Group, error) {
 	}
 }
 
+// FIXME: "scannable dest type slice with >1 columns (12) in result"
+func (p *PeopleStorage) GetArtistsByName(ctx context.Context, name string) (persons []Person, groups []Group, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, nil, ctx.Err()
+	default:
+		rows, err := p.newDBConn.Query(ctx, `SELECT *
+FROM people.person
+WHERE (first_name LIKE $1 OR last_name LIKE $1) OR $1 LIKE ANY(nick_names)`, name)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var person Person
+			if err := rows.Scan(&person.ID, &person.FirstName, &person.OtherNames, &person.LastName,
+				&person.NickNames, &person.Roles, &person.Works, &person.Birth, &person.Death,
+				&person.Website, &person.Bio, &person.Photos, &person.Hometown, &person.Residence,
+				&person.Added, &person.Modified); err != nil {
+				return nil, nil, err
+			}
+			persons = append(persons, person)
+		}
+
+		if err = rows.Err(); err != nil {
+			return nil, nil, err
+		}
+
+		// Query for groups
+		rows, err = p.newDBConn.Query(ctx, "SELECT * FROM people.group WHERE name LIKE $1", name)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var group Group
+			if err := rows.Scan(&group.ID, &group.Locations, &group.Name, &group.Active,
+				&group.Formed, &group.Disbanded, &group.Website, &group.Photos, &group.Works,
+				&group.Members, &group.PrimaryGenre, &group.SecondaryGenres, &group.Kind,
+				&group.Added, &group.Modified, &group.Wikipedia, &group.Bandcamp, &group.Soundcloud, &group.Bio); err != nil {
+				return nil, nil, err
+			}
+			groups = append(groups, group)
+		}
+
+		if err := rows.Err(); err != nil {
+			return nil, nil, err
+		}
+
+		return persons, groups, nil
+	}
+}
+
 func (p *PeopleStorage) GetStudio(ctx context.Context, id int32) (*Studio, error) {
 	var studio Studio
 	select {
@@ -168,44 +217,53 @@ func (p *PeopleStorage) GetGroupName(ctx context.Context, id int32) (Group, erro
 }
 
 func (g *Group) Validate() error {
+	GroupKinds := []string{
+		"Orchestra",
+		"Choir",
+		"Ensemble",
+		"Collective",
+		"Band",
+		"Troupe",
+		"Other",
+	}
 	if lo.Contains(GroupKinds, g.Kind) {
 		return nil
 	}
 	return fmt.Errorf("invalid group kind: %s, must be one of %s", g.Kind, strings.Join(GroupKinds, ", "))
 }
 
-func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (ID int32, err error) {
+func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (id int32, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
 		switch kind {
 		case "group":
-			err := p.dbConn.GetContext(ctx, &ID,
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.group WHERE name = $1 AND kind = $2 LIMIT 1",
 				name, kind)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		case "person":
-			first_name := strings.Split(name, " ")[0]
-			last_name := strings.Split(name, " ")[1]
-			err := p.dbConn.GetContext(ctx, &ID,
+			firstName := strings.Split(name, " ")[0]
+			lastName := strings.Split(name, " ")[1]
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.person WHERE first_name = $1 AND last_name = $2 LIMIT 1",
-				first_name, last_name)
+				firstName, lastName)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		case "studio":
-			err := p.dbConn.GetContext(ctx, &ID,
+			err := p.dbConn.GetContext(ctx, &id,
 				"SELECT id FROM people.studio WHERE name = $1 LIMIT 1",
 				name)
 			if err != nil {
 				return 0, err
 			}
-			return ID, nil
+			return id, nil
 		default:
 			return 0, fmt.Errorf("invalid kind: %s", kind)
 		}

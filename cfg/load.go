@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"codeberg.org/mjh/LibRate/cfg/parser"
 	"codeberg.org/mjh/LibRate/internal/logging"
 
-	"github.com/codingconcepts/env"
+	"dario.cat/mergo"
+	"github.com/caarlos0/env/v10"
 	"github.com/getsops/sops/v3/decrypt"
-	"github.com/imdario/mergo"
-	"github.com/mitchellh/mapstructure"
+	"github.com/goccy/go-yaml"
+	"github.com/joho/godotenv"
 	"github.com/samber/mo"
 )
 
@@ -23,13 +23,18 @@ var log = logging.Init(&logging.Config{
 
 // LoadFromFile loads the config from the config file, or tries to call LoadConfig.
 func LoadFromFile(path string) (conf *Config, err error) {
-	conf = &Config{}
 	if path == "env" {
-		err = env.Set(&conf)
-		if err != nil {
-			return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to load config from environment variables: %w", err)
+		var config Config
+		if err = godotenv.Load(); err != nil {
+			return nil, fmt.Errorf("failed to parse .env file: %v", err)
 		}
-		log.Info().Msgf("loaded config from environment variables: %+v", conf)
+		err = env.Parse(&config)
+		if err != nil {
+			return LoadConfig().OrElse(&DefaultConfig),
+				fmt.Errorf("failed to load config from environment variables: %w", err)
+		}
+		log.Info().Msgf("loaded config from environment variables: %+v", config)
+		conf = &config
 		return conf, nil
 	}
 	if path == "" {
@@ -43,10 +48,7 @@ func LoadFromFile(path string) (conf *Config, err error) {
 	if err != nil {
 		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to parse config: %w. Current workdir: %s", err, cwd)
 	}
-	if err = mergo.Merge(conf, loaded); err != nil {
-		return LoadConfig().OrElse(&DefaultConfig), fmt.Errorf("failed to merge config structs: %w", err)
-	}
-	return conf, nil
+	return loaded, nil
 }
 
 // LoadConfig loads the config from the config file, or falls back to defaults.
@@ -82,23 +84,24 @@ func LoadConfig() mo.Result[*Config] {
 
 // parseRaw parses the config file into a Config struct.
 func parseRaw(configLocation string) (conf *Config, err error) {
-	conf = &Config{}
-	// decrypt the config file
-	decrypted, err := decrypt.File(configLocation, "yaml")
-	if err != nil {
-		return nil, err
+	var c Config
+	var file []byte
+	// decrypt the config file or read from plain text
+	if os.Getenv("USE_SOPS") == "true" {
+		file, err = decrypt.File(configLocation, "yaml")
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt config file %s: %w", configLocation, err)
+		}
+	} else {
+		file, err = os.ReadFile(configLocation)
+		if err != nil {
+			return nil, fmt.Errorf("error while reading plaintext config: %v", err)
+		}
 	}
 
-	configRaw, err := parser.Parse(decrypted)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
+	if err = yaml.Unmarshal(file, &c); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	err = mapstructure.Decode(configRaw, &conf)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode config: %w", err)
-	}
-	log.Debug().Msgf("conf: %+v", conf)
-
-	return conf, nil
+	return &c, nil
 }

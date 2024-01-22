@@ -1,53 +1,61 @@
-version: "3.8"
+version: "3.7"
 
 services:
   app:
-    restart: always
+    hostname: "librate-app"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 6
+        window: 60s
     build:
       context: .
-      dockerfile: Dockerfile
-    environment:
-      - LIBRATE_ENV="dev"
-      - HOME="/app"
-      - GIT_TAG="0.6.1"
+      cache_from:
+        - "golang:1.21-alpine"
     depends_on:
       - db
       - redis
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3030:3030"
+    networks:
+      - librate-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:3000/api/health"]
+      test:
+        ["CMD", "curl", "-f", "-X", "GET", "http://localhost:3000/api/health"]
       interval: 10s
       timeout: 4s
       retries: 3
   db:
+    hostname: "librate-db"
+    networks:
+      - librate-net
     restart: always
     build:
       context: ./db
     ports:
-      - 5432:5432
-    shm_size: 256mb
+      - "5432:5432"
+    shm_size: 4gb
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    environment:
-      - "POSTGRES_DB=librate"
-      - "POSTGRES_USER=postgres"
-      - "POSTGRES_PASSWORD=postgres"
-    volumes:
-      - pg-data:/var/lib/postgresql/data
   redis:
+    hostname: "librate-redis"
     restart: always
+    networks:
+      - librate-net
     image: redis:7-alpine
-    volumes:
-      - redis-data:/data
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-volumes:
-  pg-data:
-  redis-data:
+networks:
+  librate-net:
+    name: librate-net
+    external: true

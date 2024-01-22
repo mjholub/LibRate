@@ -1,0 +1,1428 @@
+[
+  {
+    "name": "Acoustic Rock",
+    "description": "Rock with acoustic instrumentation, as opposed to the typical electric instrumentation.",
+    "children": []
+  },
+  {
+    "name": "Afro-Rock",
+    "description": "Incorporates West African influences; initially emerged in the early 1970s.",
+    "children": []
+  },
+  {
+    "name": "Alternative Rock",
+    "description": "Consists of verse-chorus song structures performed with a less commercial sensibility, pairing Pop songwriting with more eccentric, Punk-influenced sounds, moodier or quirkier lyricism, and sometimes ample amounts of distortion and fuzz.",
+    "children": [
+      {
+        "name": "Alternative Dance",
+        "description": "Incorporates rhythms and synthesizers from Electronic Dance Music within the context of Alternative Rock and related styles; predominantly popular in the 1990s."
+      },
+      {
+        "name": "Grebo",
+        "description": "Short-lived English subculture and associated music; raw, futuristic, sample-heavy form of Alternative Dance with a grungy guitar sound."
+      },
+      {
+        "name": "New Rave",
+        "description": "High energy mid-2000s form of Alternative Dance that combines Dance-Punk with elements of Electronic Dance Music styles like Electroclash and Electro House."
+      },
+      {
+        "name": "Baggy",
+        "description": "Psychedelic, dance-inflected Alternative Rock from the late 1980s that was initially associated with Manchester in northern England and later connected to the \"baggy\" fashion style that became popular across the country."
+      },
+      {
+        "name": "Britpop",
+        "description": "Emerged in the United Kingdom in the early 1990s, with a style hearkening back to the traditional guitar-driven songs and melodic hooks found in the British Pop Rock of the 1960s."
+      },
+      {
+        "name": "Dream Pop",
+        "description": "Characterized by reverberated guitars, effects-laden vocals, and dense productions, creating a psychedelic, spacious, and dreamlike sound."
+      },
+      {
+        "name": "Emo-Pop",
+        "description": "Mainstream derivative of Emo, puts more emphasis on the poppy sensibilities of Alternative Rock and Pop Punk."
+      },
+      {
+        "name": "Geek Rock",
+        "description": "Emphasizes a nerdy aesthetic, incorporating synthesizers and other instrumentation less common in Alternative Rock alongside quirky Pop-oriented songwriting and dense, witty lyricism on unconventional topics."
+      },
+      {
+        "name": "Grunge",
+        "description": "Characterized by a mid-tempo approach featuring a heavy 'sludgy' guitar-sound, 'raspy vocals', and angsty lyricism; noted for its mixture of Punk and Metal sensibilites, among several other influences."
+      },
+      {
+        "name": "Indie Rock",
+        "description": "Associated with a less mainstream-oriented and a DIY approach while often dabbling in Pop-informed melodic songwriting, eclecticism, and adopting an \"authentic\" or raw style."
+      },
+      {
+        "name": "C86",
+        "description": "Distinctly ramshackle, often Twee Pop-infused combination of British Indie Rock and Jangle Pop."
+      },
+      {
+        "name": "Dunedin Sound",
+        "description": "Emerged in Dunedin, New Zealand in the early 1980s, featuring a murky, lo-fi sound that overlaps with contemporaneous Jangle Pop and Slacker Rock styles."
+      },
+      {
+        "name": "Garage Rock Revival",
+        "description": "Incorporated the raucous spirit of '60s Garage Rock into the sensibilities of Alternative Rock and Indie Rock; predominant in the '00s."
+      },
+      {
+        "name": "Hamburger Schule",
+        "description": "Combines traditions of the Neue Deutsche Welle based on Grunge with Pop-hooks and elements of Indie Rock and Punk Rock."
+      },
+      {
+        "name": "Indie Surf",
+        "description": "Reverb-drenched, nostalgic, and often lo-fi, with influences from Surf Rock and Vocal Surf; rose to popularity around 2009."
+      },
+      {
+        "name": "Math Pop",
+        "description": "Energetic Indie Rock which incorporates poppier melodies and song structures into the unconventional rhythmic patterns of Math Rock."
+      },
+      {
+        "name": "Midwest Emo",
+        "description": "Features the emotional and melodic style of Emo that usually alternates between loud and soft dynamics; off-key, strained vocals with little screaming; and arpeggiated guitar parts."
+      },
+      {
+        "name": "New Rave",
+        "description": "High energy mid-2000s form of Alternative Dance that combines Dance-Punk with elements of Electronic Dance Music styles like Electroclash and Electro House."
+      },
+      {
+        "name": "Noise Pop",
+        "description": "Arose in the mid-1980s; blend of poppier Rock songwriting and melodies with the dissonant, noisy timbres of distorted guitars and frequent use of guitar feedback."
+      },
+      {
+        "name": "Post-Punk Revival",
+        "description": "Incorporating the sounds and aesthetics of Post-Punk into Indie Rock, with jagged guitarwork, a dominant and danceable rhythm section, clean production, and poppy song structures."
+      },
+      {
+        "name": "Slacker Rock",
+        "description": "Raw, noisy, melodic Indie Rock, with a loose, blasé approach to performances, and typically low-fidelity production, associated with Generation X \"slacker\" culture."
+      },
+      {
+        "name": "Shitgaze",
+        "description": "Extremely raw and lo-fi, blending raucous Garage Rock with the abrasive, often dissonant guitars of Noise Rock to create a sonic wall of deafening distortion inspired by Shoegaze."
+      },
+      {
+        "name": "Slowcore",
+        "description": "Characterized by its subdued, often sombre songwriting and slow tempos, while taking primarily from genres like Dream Pop and Folk Rock."
+      },
+      {
+        "name": "Twee Pop",
+        "description": "Distinct Post-Punk background and often jangling guitars, defined by a cute aesthetic and lyrics combined with an indie/DIY attitude and a simplicity often indebted to Punk Rock."
+      },
+      {
+        "name": "Jangle Pop",
+        "description": "Pop-oriented songwriting based around chiming jangly guitar lines, and propulsive rhythms often drawn from Post-Punk."
+      },
+      {
+        "name": "C86",
+        "description": "Distinctly ramshackle, often Twee Pop-infused combination of British Indie Rock and Jangle Pop."
+      },
+      {
+        "name": "Neo-Acoustic",
+        "description": "Japanese term for a cross-section of Indie Pop and Jangle Pop with more prominent acoustic instrumentation and songwriting/arrangements that draw from Sophisti-Pop."
+      },
+      {
+        "name": "Paisley Underground",
+        "description": "Emerged in Los Angeles in the early 1980s, featuring the energy of Power Pop and New Wave adorned with retro Psychedelia."
+      },
+      {
+        "name": "J-Rock",
+        "description": "Japanese style that grew out of the Shimokitazawa indie scene, featuring Pop-informed songwriting, melodic guitar leads, expressive vocals, and often loud, prominent overdriven guitars."
+      },
+      {
+        "name": "Post-Britpop",
+        "description": "Emerged in the late 1990s as a Britpop expansion mainly characterized by acoustic-leaning instrumentation, lush string arrangements, and mid-tempo song structures, as well as less apparent lyrical concerns for Britain in favor of introspective, contemplative themes."
+      },
+      {
+        "name": "Post-Grunge",
+        "description": "Derivative of Grunge that emerged in the mid-1990s with emphasis on catchier hooks and more conventional song structures."
+      },
+      {
+        "name": "Shoegaze",
+        "description": "Characterized by ethereal, noisy washes of sound created by extensive usage of multiple effect pedals, such as distortion, reverb, and delay; dreamy, usually unintelligible vocals, and roaring volumes."
+      }
+    ]
+  },
+  {
+    "name": "Anatolian Rock",
+    "description": "Turkish Rock with elements of Turkish Folk Music.",
+    "children": []
+  },
+  {
+    "name": "AOR",
+    "description": "Emerged in the late 1970s and early 1980s as an amalgamation of Hard Rock, Pop Rock, and Progressive Rock; characterized by a rich, layered sound, slick production and a heavy reliance on commercial melodic hooks.",
+    "children": []
+  },
+  {
+    "name": "Art Punk",
+    "description": "Combines the stripped-down aggression of rudimentary Punk Rock with frequent experimentation ranging from instrumental interplay, noise, dissonance, and/or influences from other genres such as Jazz or Funk.",
+    "children": [
+      {
+        "name": "Egg Punk",
+        "description": "Originated in the early 2010s; features lo-fi production, eccentric lyrics, quick tempos, nasally vocals, and cheap keyboard sounds."
+      }
+    ]
+  },
+  {
+    "name": "Art Rock",
+    "description": "Attempts to expand the bounds of Rock within conventional structures, often using outside influences or experimentation for conceptual or thematic purpose.",
+    "children": []
+  },
+  {
+    "name": "Bard Rock",
+    "description": "Mixes Rock music and styles with Avtorskaya pesnya.",
+    "children": []
+  },
+  {
+    "name": "Blues Rock",
+    "description": "Relies on the chords/scales and instrumental improvisation of Blues.",
+    "children": [
+      {
+        "name": "Boogie Rock",
+        "description": "Southern-influenced American Blues Rock that emphasizes a straightforward groove-oriented sound, rather than the instrumental experimentation found in more progressive and psychedelic blues rock bands."
+      }
+    ]
+  },
+  {
+    "name": "British Rhythm & Blues",
+    "description": "A style infusing Rock and R&B that was hugely popular in the United Kingdom between 1963 and 1966.",
+    "children": []
+  },
+  {
+    "name": "Candombe beat",
+    "description": "Fusion of Uruguayan Candombe with elements of Rock music.",
+    "children": []
+  },
+  {
+    "name": "Christian Rock",
+    "description": "Incorporates Christian lyrics, with topics such as faith, metaphysics, or biblical characters.",
+    "children": []
+  },
+  {
+    "name": "Comedy Rock",
+    "description": "Roughly defined as a mix of Rock or any of its subgenres with elements of Comedy such as Satire and Musical Parody, as well as concepts of Novelty.",
+    "children": []
+  },
+  {
+    "name": "Country Rock",
+    "description": "Combination of contemporary Rock with more traditional American Country.",
+    "children": []
+  },
+  {
+    "name": "Cowpunk",
+    "description": "Mixes together Country Rock, Rockabilly, and Contemporary Folk with the familiar punk sound.",
+    "children": []
+  },
+  {
+    "name": "Deutschrock",
+    "description": "Lyrics address German life, culture, and identity wrapped in upbeat songs, anthemic ballads, and a strong focus on the personality of the lead singer.",
+    "children": []
+  },
+  {
+    "name": "Emo",
+    "description": "Focuses on emotional lyrics, expressive vocals, melodic songwriting, and dynamic song structures.",
+    "children": [
+      {
+        "name": "Emocore",
+        "description": "Emerged primarily in Washington D.C. in 1985 as a reaction to the stagnant Hardcore Punk scene, with a less aggressive style that was more melodic and often featured emotional, introspective lyrics."
+      },
+      {
+        "name": "Emo-Pop",
+        "description": "Mainstream derivative of Emo, puts more emphasis on the poppy sensibilities of Alternative Rock and Pop Punk."
+      },
+      {
+        "name": "Midwest Emo",
+        "description": "Features the emotional and melodic style of Emo that usually alternates between loud and soft dynamics; off-key, strained vocals with little screaming; and arpeggiated guitar parts."
+      },
+      {
+        "name": "Screamo",
+        "description": "Began in the early 1990s, merging the emotional lyrics and melodicism of Emo with the intensity, aggression and speed of Hardcore Punk."
+      },
+      {
+        "name": "Emoviolence",
+        "description": "Volatile, aggressive sound of Screamo with slight Powerviolence undertones."
+      }
+    ]
+  },
+  {
+    "name": "Experimental Rock",
+    "description": "Eschews accessibility and convention, experimenting with song structures, time signatures, rhythm, dissonance, instrumentation, noise, electronics, studio manipulation, and other techniques not traditionally associated with Rock.",
+    "children": [
+      {
+        "name": "Avant-Prog",
+        "description": "Focuses on highly complex, dense arrangements often featuring high amounts of dissonance and uncommon time signatures, sometimes extending towards atonality, free time, Free Improvisation, and other avant-garde techniques."
+      },
+      {
+        "name": "Brutal Prog",
+        "description": "Characterized by highly intense and visceral songwriting, usually featuring substantial reliance on dissonance, odd time signatures, blistering tempos, angular and mercurial rhythms, and Punk's DIY attitude."
+      },
+      {
+        "name": "Rock in Opposition",
+        "description": "European, complex Avant-Prog from the 1970s, so named due to the artists' opposition to the music industry."
+      },
+      {
+        "name": "Zeuhl",
+        "description": "Epic, operatic sound fusing Jazz, Progressive Rock and Modern Classical music."
+      },
+      {
+        "name": "Krautrock",
+        "description": "Brings together Psychedelic Rock, avant-garde composition, and other eclectic sources, while dissociating itself from Rock's Rhythm & Blues influences."
+      },
+      {
+        "name": "No Wave",
+        "description": "Emerged in New York City during the late 1970s; took the ethos of Punk Rock but discarded melody and catchiness, including instead extreme noise, distortion, feedback, angular rhythms, stream-of-consciousness lyrics, and more."
+      }
+    ]
+  },
+  {
+    "name": "Folk Rock",
+    "description": "Influenced by Folk, particularly in the use of acoustic instrumentation and relatively simple arrangements; has its origins in the American Contemporary Folk movement of the 1960s.",
+    "children": [
+      {
+        "name": "Alpenrock",
+        "description": "Mixes Hard Rock and Blues Rock with traditional Alpine Folk Music elements such as Yodeling and use of the accordion."
+      },
+      {
+        "name": "British Folk Rock",
+        "description": "Developed in the late 1960s; influenced by traditional British folk music, particularly English Folk Music."
+      },
+      {
+        "name": "Celtic Rock",
+        "description": "Incorporates influences from Celtic Folk Music and its regional variants."
+      },
+      {
+        "name": "Mittelalter-Rock",
+        "description": "Emerged in the 1990s from the German Neo-Medieval movement, incorporating medieval instruments with Rock music."
+      },
+      {
+        "name": "Nordic Folk Rock",
+        "description": "Fusion of Nordic Folk Music and Rock."
+      },
+      {
+        "name": "Phleng phuea chiwit",
+        "description": "Political Thai Folk Rock born out of the 1973 student uprising, with a name translating to \"songs for life\"."
+      },
+      {
+        "name": "Pinoy Folk Rock",
+        "description": "Typically sung in Tagalog and pioneered in the 1970s, incorporating elements of indigenous music such as Kulintang gong music and the kubing bamboo jaw harp."
+      },
+      {
+        "name": "Rock rural",
+        "description": "Brazilian Folk Rock that emerged in the 1970s, incorporating elements of Sertanejo, Country Rock, and MPB."
+      }
+    ]
+  },
+  {
+    "name": "Funk Rock",
+    "description": "Rock that incorporates prominent Funk grooves.",
+    "children": [
+      {
+        "name": "Funk Metal",
+        "description": "Melds Funk Rock grooves with slap basslines and metallic guitarwork."
+      }
+    ]
+  },
+  {
+    "name": "Garage Rock",
+    "description": "Raw and energetic, generally employing simple, sloppy, and fuzzbox-distorted guitar melodies in addition to frequent shouting or screaming.",
+    "children": [
+      {
+        "name": "Freakbeat",
+        "description": "Combined elements of British Rhythm & Blues, Beat Music, and Pop Rock with the studio effects of Psychedelia - fuzztones, flanging, chorus - to create a style often seen as a British relative of American Garage Rock and Psychedelic Rock."
+      },
+      {
+        "name": "Garage Punk",
+        "description": "Combination of the raw fuzztones of the original Garage Rock bands of the 1960s with the tempo and attitude of Punk Rock."
+      },
+      {
+        "name": "Garage Rock Revival",
+        "description": "Incorporated the raucous spirit of '60s Garage Rock into the sensibilities of Alternative Rock and Indie Rock; predominant in the '00s."
+      }
+    ]
+  },
+  {
+    "name": "Glam Rock",
+    "description": "Incorporates elements of Rock & Roll and Blues Rock into catchy Pop Rock melodies, usually accompanied with a strong sense of theatricality.",
+    "children": [
+      {
+        "name": "Glam Punk",
+        "description": "Contrasts a snotty, nihilistic, and combative attitude of punk with theatrics and flamboyance."
+      }
+    ]
+  },
+  {
+    "name": "Hardcore [Punk]",
+    "description": "Broad genre which originated in the late 1970s; early work featured simple songs that took the punk formula and produced its most extreme result.",
+    "children": [
+      {
+        "name": "Beatdown Hardcore",
+        "description": "Heavy, urban inspired and breakdown oriented with strong relations to Metalcore."
+      },
+      {
+        "name": "Easycore",
+        "description": "Combines the pop choruses, high-pitched vocals, and playful nature of Pop Punk with heavy, metallic breakdowns and occasional unclean vocals akin to Metalcore and Post-Hardcore."
+      },
+      {
+        "name": "Electronicore",
+        "description": "Infuses melodic aspects of Metalcore and Post-Hardcore with various styles of Electronic Dance Music."
+      },
+      {
+        "name": "Grindcore",
+        "description": "Features shortened song structures and a diverse palette of intense techniques such as blast and skank beats, tremolo and down-picking, and various harsh vocal styles."
+      },
+      {
+        "name": "Cybergrind",
+        "description": "Standard conventions of Grindcore taken to an even more discordant and rapid-fire extreme, with added Electronic dimensions of computer-generated noises and drum machines."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Goregrind",
+        "description": "Death Metal-influenced riffs with rhythms ranging from very fast to slower mid-tempos correlated with pitch-shifted vocals, sloppy playing and production, and gore-themed aesthetics."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Pornogrind",
+        "description": "Groovy, mid-tempo style known for its exaggerated bouncy rhythm and common pornographic themes."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "Hardcore Punk",
+        "description": "Emerged in the late 1970s, often featuring extensive use of yelling or screaming, a stripped-down production style, and very short songs."
+      },
+      {
+        "name": "Burning Spirits",
+        "description": "Emphasis on delivering a very energetic and triumphant sound with flashy and soaring Metal solos, \"melodramatic\" or \"uplifting\" chord progressions, and singalong, over the top, harsh vocals."
+      },
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Crust Punk",
+        "description": "Metallic form of Hardcore Punk that grew out of the Anarcho-Punk movement in the mid-1980s."
+      },
+      {
+        "name": "Blackened Crust",
+        "description": "Borrows heavily from Black Metal production, blast beats, tremolo guitar, and vocals, while retaining the core Crust Punk sound, lyrical themes, and aesthetic."
+      },
+      {
+        "name": "Neocrust",
+        "description": "Melodic, dark, and atmospheric style that often incorporates influences from Sludge Metal, Post-Metal, Black Metal, and Screamo."
+      },
+      {
+        "name": "Stenchcore",
+        "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal."
+      },
+      {
+        "name": "D-Beat",
+        "description": "Early 1980s Hardcore Punk featuring Metal influences and a distinct drum style also known as the D-beat."
+      },
+      {
+        "name": "Japanese Hardcore",
+        "description": "Bands from Japan, performing styles such as Burning Spirits, Crust Punk, and Thrashcore."
+      },
+      {
+        "name": "Melodic Hardcore",
+        "description": "Emerged in the USA in the early to mid-1980s, placing emphasis on melodic vocals and technical guitar riffs rather than raw aggression."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "New York Hardcore",
+        "description": "Hardcore Punk bands from New York City from the 1980s and onwards."
+      },
+      {
+        "name": "Powerviolence",
+        "description": "Originated in the late 1980s/early 1990s; takes the blueprints of Thrashcore and Grindcore, with the addition of wildly fluctuating tempos within a single song."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Street Punk",
+        "description": "Driven by Oi! style group vocals, catchy melodies, and aggressive songwriting akin to Punk Rock of the 1970s fused with Hardcore Punk of the 1980s."
+      },
+      {
+        "name": "Thrashcore",
+        "description": "Fast tempos, brief song structures, and the occasional use of blast beats."
+      },
+      {
+        "name": "UK82",
+        "description": "UK scene that occurred during the early 1980s, consisting of developing hardcore styles such as early Street Punk and D-Beat bands."
+      },
+      {
+        "name": "Metalcore",
+        "description": "Drop-tuned guitar riffs, constant double kick drumming with varying tempos and techniques, breakdown sections, and screaming or shouting vocals."
+      },
+      {
+        "name": "Deathcore",
+        "description": "Fusion genre integrating elements from Death Metal, using harsh guttural vocals, blast beats, and palm-muted or tremolo-picked riffs in conjunction with breakdowns."
+      },
+      {
+        "name": "Mathcore",
+        "description": "Rhythmically complex, features unconventional time signatures, syncopated and dissonant riffs and erratic metric shifts."
+      },
+      {
+        "name": "Melodic Metalcore",
+        "description": "Originated in the late 1990s when some metalcore bands infused elements of Melodic Death Metal into their sound to create a more metallic and melodic style."
+      },
+      {
+        "name": "Nintendocore",
+        "description": "Fuses Post-Hardcore and Metalcore influences with Chiptune instrumentation."
+      },
+      {
+        "name": "Noisecore",
+        "description": "Short blasts of riff-less, Noise-driven music accompanied with chaotic drums and screamed vocals."
+      },
+      {
+        "name": "Post-Hardcore",
+        "description": "Emerged in the mid-1980s from Hardcore Punk that expanded on its aggression and dynamics through longer and more complex arrangements."
+      },
+      {
+        "name": "Emocore",
+        "description": "Emerged primarily in Washington D.C. in 1985 as a reaction to the stagnant Hardcore Punk scene, with a less aggressive style that was more melodic and often featured emotional, introspective lyrics."
+      },
+      {
+        "name": "Screamo",
+        "description": "Began in the early 1990s, merging the emotional lyrics and melodicism of Emo with the intensity, aggression and speed of Hardcore Punk."
+      },
+      {
+        "name": "Emoviolence",
+        "description": "Volatile, aggressive sound of Screamo with slight Powerviolence undertones."
+      },
+      {
+        "name": "Swancore",
+        "description": "High-register clean vocals and technical instrumentation drawn from Math Rock and Progressive Rock."
+      },
+      {
+        "name": "Sasscore",
+        "description": "Emerged in the early 2000s; characterized by sassy vocal styles and chaotic, erratic instrumentals."
+      }
+    ]
+  },
+  {
+    "name": "Hard Rock",
+    "description": "Heavier Rock originating in the mid-to-late 1960s from Psychedelic Rock and Blues Rock.",
+    "children": [
+      {
+        "name": "Glam Metal",
+        "description": "Very catchy hooks and guitar riffs, sing-along choruses, and lyrics often glamorizing the \"sex, drugs and rock & roll\" lifestyle."
+      },
+      {
+        "name": "Heavy Psych",
+        "description": "Developed in the late 1960s with influence from Blues Rock, such as heavy dependence on riffs and willingness to improvise, adding crushing levels of heaviness with thick fuzzy guitars to create a doomy and morose atmosphere."
+      },
+      {
+        "name": "Stoner Rock",
+        "description": "Psychedelic timbres, raw production, and stylistic influence from Doom Metal and Heavy Psych."
+      }
+    ]
+  },
+  {
+    "name": "Heartland Rock",
+    "description": "Borrows elements from Folk Rock, Roots Rock, and 1950s-60s Rock & Roll; often characterized by its conscious, communal lyrical concerns and working-class appeal.",
+    "children": []
+  },
+  {
+    "name": "Industrial Rock",
+    "description": "Incorporates abrasive guitars and synthesizers inspired by Industrial and various Post-Industrial styles.",
+    "children": []
+  },
+  {
+    "name": "Jam Band",
+    "description": "Often performed in a live setting and combines diverse styles under the Rock umbrella as well as Funk, Jazz, Country and/or Blues.",
+    "children": [
+      {
+        "name": "Jamgrass",
+        "description": "Emphasizes instrumental jamming and extended performances with many outside influences."
+      },
+      {
+        "name": "Livetronica",
+        "description": "Incorporates Electronic instrumentation into live Rock jamming, drawing on a wide variety of Electronic Dance Music and Downtempo styles."
+      }
+    ]
+  },
+  {
+    "name": "Jazz-Rock",
+    "description": "Strongly influenced by Jazz in structure and/or instrumentation.",
+    "children": []
+  },
+  {
+    "name": "Latin Rock",
+    "description": "Fusion of Rock, often Psychedelic Rock, with Latin American rhythms, especially Afro-Latin genres.",
+    "children": []
+  },
+  {
+    "name": "Manguebeat",
+    "description": "Counterculture fusion of traditional Northeastern Brazilian Music genres with modern Rock and Hip Hop.",
+    "children": []
+  },
+  {
+    "name": "Math Rock",
+    "description": "Typified by complex rhythmic patterns, angular chords and melodic structures, often featuring odd time signatures, resulting in a \"mathematical\" sound.",
+    "children": [
+      {
+        "name": "Math Pop",
+        "description": "Energetic Indie Rock which incorporates poppier melodies and song structures into the unconventional rhythmic patterns of Math Rock."
+      }
+    ]
+  },
+  {
+    "name": "Metal",
+    "description": "Driving and distorted riffs, aggressive drumming, vigorous vocals, and an all-around show of brute force in its early days, since branching into dozens of subgenres.",
+    "children": [
+      {
+        "name": "Alternative Metal",
+        "description": "Mid-tempo style emphasizing melodicism and rhythmic heaviness; branches outside of the stylistic conventions of Metal."
+      },
+      {
+        "name": "Funk Metal",
+        "description": "Melds Funk Rock grooves with slap basslines and metallic guitarwork."
+      },
+      {
+        "name": "Neue Deutsche Härte",
+        "description": "Alternative Metal and Industrial Metal that incorporates various aspects of electronic music, specifically Electronic Dance Music."
+      },
+      {
+        "name": "Nu Metal",
+        "description": "Emphasizes rhythm, using elements of Funk Metal and Hip Hop to create a cleaner, more groove-oriented sound."
+      },
+      {
+        "name": "Rap Metal",
+        "description": "Features rapped vocals, typically formed around heavy, mid-tempo, and groove-oriented playing in addition to elements of Hip Hop beats such as record scratching."
+      },
+      {
+        "name": "Avant-Garde Metal",
+        "description": "Often breaking the bounds of the genre through experimental structures and instrumentation, or by incorporating outside influences."
+      },
+      {
+        "name": "Black Metal",
+        "description": "Typified by highly distorted, trebly, tremolo-picked guitars, blast beats, double kick drumming, shrieked vocals, and raw, underproduced sound that often favors atmosphere over technical skills and melody."
+      },
+      {
+        "name": "Atmospheric Black Metal",
+        "description": "Focuses on the atmospheric element using slowly developing riffs, repetitive melodies, usually slow to medium tempos, and commonly synthesized ambient textures."
+      },
+      {
+        "name": "Blackgaze",
+        "description": "Melds tremolo-picked riffing, high-gain guitars, and harsh, often wailing, vocals with mellow, dreamy textures and melodic song structures."
+      },
+      {
+        "name": "Black 'n' Roll",
+        "description": "Incorporates elements of Hard Rock, Glam Rock, and Heavy Metal."
+      },
+      {
+        "name": "Black Noise",
+        "description": "Incorporates unconventional sounds with overpowering or constant Noise and Black Metal elements, often being heavily texture-oriented, abrasive, dissonant, atonal, or repetitive."
+      },
+      {
+        "name": "Depressive Black Metal",
+        "description": "Characterized by lethargic atmospheres; usually repetitive song structures and slow-mid tempos; high-pitched wailing and gruff vocals; and usage of non-distorted instruments like keyboards and acoustic guitars."
+      },
+      {
+        "name": "Melodic Black Metal",
+        "description": "Cleaner production, more diverse arrangements, and a stronger emphasis on melody than is typical for Black Metal."
+      },
+      {
+        "name": "Pagan Black Metal",
+        "description": "Incorporates acoustic guitar and traditional instrument passages, cleanly sung vocals, folk songs' melodies, and paganistic themes."
+      },
+      {
+        "name": "Symphonic Black Metal",
+        "description": "Symphonic soundscapes, typically but not always synthesized."
+      },
+      {
+        "name": "War Metal",
+        "description": "Aggressive, chaotic, and heavily Death Metal-influenced."
+      },
+      {
+        "name": "Death Metal",
+        "description": "Features distorted, commonly down-tuned guitars; palm-muted and tremolo-picked riffs; aggressive, double-kicked percussion that utilizes various blast beats techniques; abrupt changes in tempo and time signatures; and guttural vocal styles."
+      },
+      {
+        "name": "Brutal Death Metal",
+        "description": "Emphasizes abrasiveness, chunky rhythmic atonal riffs, and low guttural vocals."
+      },
+      {
+        "name": "Slam Death Metal",
+        "description": "Focuses on slow or midtempo (as well as breakdown-style) sections built on chromatic, palm-muted riffs - so-called \"slams\"."
+      },
+      {
+        "name": "Death 'n' Roll",
+        "description": "Incorporates elements of Hard Rock, Heavy Metal, and Blues Rock while retaining the typical heavily distorted rhythm guitars and gruff vocals."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Melodic Death Metal",
+        "description": "Utilizes the guitar harmonies and melodic sound of Heavy Metal, while keeping the main characteristics of Death Metal."
+      },
+      {
+        "name": "Technical Death Metal",
+        "description": "Focuses on challenging, demanding songwriting and instrumental skill."
+      },
+      {
+        "name": "Dissonant Death Metal",
+        "description": "Emphasizes discordant, dense songwriting and utilizes pinch harmonics, scratchy guitar leads, and atonality."
+      },
+      {
+        "name": "Doom Metal",
+        "description": "Plodding tempos, repeated chords, and thick, distorted, down-tuned guitars in a style focused on foreboding, atmosphere, and tension."
+      },
+      {
+        "name": "Death Doom Metal",
+        "description": "Fuses down-tuned guitars, growled vocals, and aggressive, often double-kick drumming with a mournful, somber atmosphere and plodding tempos."
+      },
+      {
+        "name": "Funeral Doom Metal",
+        "description": "Features exceptionally slow, funeral dirge-like tempos, heavily distorted, sluggish guitars, mournful atmosphere, and distant, hushed growls and grunts."
+      },
+      {
+        "name": "Traditional Doom Metal",
+        "description": "Monotonous and heavy playing style; repetitive, rough, and sometimes atonal guitar riffs; a \"rocking to sleep\" bass; and influences from both Blues Rock and Psychedelic Rock."
+      },
+      {
+        "name": "Epic Doom Metal",
+        "description": "Emphasizes Heavy Metal influence and theatrical vocals."
+      },
+      {
+        "name": "Drone Metal",
+        "description": "Composed with heavy repetitive drones, minimalist structure, and slow tempos."
+      },
+      {
+        "name": "Folk Metal",
+        "description": "Features influences from various types of Traditional Folk Music expressed through melodies and/or traditional instrumentation, notably having a large scene in Europe."
+      },
+      {
+        "name": "Celtic Metal",
+        "description": "Features Celtic Folk Music elements."
+      },
+      {
+        "name": "Mittelalter-Metal",
+        "description": "Emerged as a metallic style in the mid-to-late 1990s from the German Neo-Medieval movement."
+      },
+      {
+        "name": "Gothic Metal",
+        "description": "Features heavy, low-mid tempo riffs, somber, gloomy atmosphere accentuated by ethereal keyboards and synthesizer layers, and vocal styles ranging from raspy growls to female operatic singing."
+      },
+      {
+        "name": "Grindcore",
+        "description": "Features shortened song structures and a diverse palette of intense techniques such as blast and skank beats, tremolo and down-picking, and various harsh vocal styles."
+      },
+      {
+        "name": "Cybergrind",
+        "description": "Standard conventions of Grindcore taken to an even more discordant and rapid-fire extreme, with added Electronic dimensions of computer-generated noises and drum machines."
+      },
+      {
+        "name": "Deathgrind",
+        "description": "Combines the intensity and high-pitched screams of Grindcore with the technicality and low guttural vocals of Death Metal."
+      },
+      {
+        "name": "Goregrind",
+        "description": "Death Metal-influenced riffs with rhythms ranging from very fast to slower mid-tempos correlated with pitch-shifted vocals, sloppy playing and production, and gore-themed aesthetics."
+      },
+      {
+        "name": "Gorenoise",
+        "description": "Combines and subverts Goregrind and Grindcore with brash Noise and even faster drum tempos."
+      },
+      {
+        "name": "Pornogrind",
+        "description": "Groovy, mid-tempo style known for its exaggerated bouncy rhythm and common pornographic themes."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "Groove Metal",
+        "description": "Midtempo riffs influenced by Thrash Metal but with a greater focus on rhythmic syncopation and heaviness over speed."
+      },
+      {
+        "name": "Heavy Metal",
+        "description": "Heavier outgrowth of Hard Rock featuring greater distortion and intensity along with lesser Blues influences."
+      },
+      {
+        "name": "NWOBHM",
+        "description": "Acronym for new wave of British Heavy Metal, which occurred in the late 1970s, taking some influence from Punk Rock."
+      },
+      {
+        "name": "Speed Metal",
+        "description": "Originating from the NWOBHM and influenced by the work of early heavy metal bands, being faster and somewhat more aggressive than heavy metal."
+      },
+      {
+        "name": "US Power Metal",
+        "description": "American style influenced by NWOBHM that features heavily distorted guitars paired with more aggressive riffs, mid-tempo Heavy Metal rhythms, and over-the-top theatrical vocals with fantasy or conceptual themes."
+      },
+      {
+        "name": "Industrial Metal",
+        "description": "Incorporates the abrasive and heavy sound from Industrial into a Metal context by using elements from Post-Industrial like synthesizers and drum machines."
+      },
+      {
+        "name": "Cyber Metal",
+        "description": "Originated around 1999, influenced by EBM and Aggrotech with more melodic and less repetitive riffs as well as harsh vocals."
+      },
+      {
+        "name": "Neue Deutsche Härte",
+        "description": "Alternative Metal and Industrial Metal that incorporates various aspects of electronic music, specifically Electronic Dance Music."
+      },
+      {
+        "name": "Kawaii Metal",
+        "description": "Combines a heavy and metallic style with an upbeat, J-Pop-indebted tone and vocal style; associated with a \"kawaii\" aesthetic."
+      },
+      {
+        "name": "Metalcore",
+        "description": "Drop-tuned guitar riffs, constant double kick drumming with varying tempos and techniques, breakdown sections, and screaming or shouting vocals."
+      },
+      {
+        "name": "Deathcore",
+        "description": "Fusion genre integrating elements from Death Metal, using harsh guttural vocals, blast beats, and palm-muted or tremolo-picked riffs in conjunction with breakdowns."
+      },
+      {
+        "name": "Mathcore",
+        "description": "Rhythmically complex, features unconventional time signatures, syncopated and dissonant riffs and erratic metric shifts."
+      },
+      {
+        "name": "Melodic Metalcore",
+        "description": "Originated in the late 1990s when some metalcore bands infused elements of Melodic Death Metal into their sound to create a more metallic and melodic style."
+      },
+      {
+        "name": "Neoclassical Metal",
+        "description": "Greatly influenced by Western Classical Music in its style of playing and composing."
+      },
+      {
+        "name": "Post-Metal",
+        "description": "Heavily utilizes timbre and texture to have enormous song build-ups and huge atmosphere."
+      },
+      {
+        "name": "Atmospheric Sludge Metal",
+        "description": "Combines slow, churning guitar riffs and thunderous percussion with dark, extensive otherworldly sonic landscapes."
+      },
+      {
+        "name": "Doomgaze",
+        "description": "Gloomy and somber atmosphere, amplified by the slow tempo and gloominess of Doom Metal, combined with the effects, washes of sound, and vocals found within Shoegaze."
+      },
+      {
+        "name": "Power Metal",
+        "description": "Developed from Heavy Metal and Speed Metal; characterized by its emphasis on speed, vocal melody and harmonized lead guitars."
+      },
+      {
+        "name": "Progressive Metal",
+        "description": "Fuses amplified, guitar-driven sound with technical proficiency, virtuosity, complex compositions, innovative arrangements, eclecticism, and additional instrumentation."
+      },
+      {
+        "name": "Djent",
+        "description": "Syncopated rhythmic structures, angular melodies, and dissonant chords."
+      },
+      {
+        "name": "Sludge Metal",
+        "description": "Combines the slow, dark instrumentals and atmosphere of Doom Metal with the aggressive, harsh screams and shouts credited to Hardcore Punk."
+      },
+      {
+        "name": "Atmospheric Sludge Metal",
+        "description": "Combines slow, churning guitar riffs and thunderous percussion with dark, extensive otherworldly sonic landscapes."
+      },
+      {
+        "name": "Southern Metal",
+        "description": "Blues-influenced style that primarily incorporates Sludge Metal and Stoner Metal with metallic Southern Rock riffs."
+      },
+      {
+        "name": "Stenchcore",
+        "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal."
+      },
+      {
+        "name": "Stoner Metal",
+        "description": "Combines elements of Doom Metal with elements of Psychedelic Rock and Blues Rock to create a melodic yet heavy sound."
+      },
+      {
+        "name": "Symphonic Metal",
+        "description": "Elements of symphonic and orchestral music."
+      },
+      {
+        "name": "Thrash Metal",
+        "description": "Features fast tempos; rhythmically focused, frequently palm-muted riffs; shredding solos; aggressive, often double-kicked drumming; skank beats; and vocal styles ranging from shouts to melodic singing."
+      },
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Technical Thrash Metal",
+        "description": "Places great emphasis on complex songwriting and demanding instrumental parts."
+      },
+      {
+        "name": "Trance Metal",
+        "description": "Tempo between 130 and 160 BPM, played with keyboards and metal instrumentation, sung with harsh and aggressive vocals including many clean melodic styles; regularly uses elements of Melodic Death Metal, Symphonic Metal, and Electronic Dance Music."
+      },
+      {
+        "name": "Viking Metal",
+        "description": "Developed out of Black Metal and embodies an epic, Viking-like aesthetic."
+      }
+    ]
+  },
+  {
+    "name": "Miejski folk",
+    "description": "Alternative and Punk music influenced by Folklor miejski and Contemporary Folk.",
+    "children": []
+  },
+  {
+    "name": "Mod",
+    "description": "1960s youth subculture in the United Kingdom, drawing from British Rhythm & Blues, Beat Music, Garage Rock, and Pop sensibilities alongside a distinctive fashion style.",
+    "children": [
+      {
+        "name": "Mod Revival",
+        "description": "Late 1970s and early 1980s revival of Mod fashion and music, featuring influence from the nascent Punk Rock scene."
+      }
+    ]
+  },
+  {
+    "name": "New Wave",
+    "description": "Agitated and busy guitar melodies, jerky rhythms, often a heavy reliance on synthesizers, and typically intricate percussive sections, closely related to Post-Punk and influenced by Pop Rock and Electronic.",
+    "children": [
+      {
+        "name": "Neue Deutsche Welle",
+        "description": "German genre primarily associated with New Wave; influenced by Punk Rock, Post-Punk, Synthpop, Synth Punk, and Industrial."
+      },
+      {
+        "name": "New Romantic",
+        "description": "UK pop cultural movement associated with the early 1980s and defined by a distinct, flamboyant fashion sense."
+      }
+    ]
+  },
+  {
+    "name": "Noise Rock",
+    "description": "Incorporates high amounts of distortion and varying levels of dissonance, lo-fi production, and feedback.",
+    "children": [
+      {
+        "name": "Shitgaze",
+        "description": "Extremely raw and lo-fi, blending raucous Garage Rock with the abrasive, often dissonant guitars of Noise Rock to create a sonic wall of deafening distortion inspired by Shoegaze."
+      }
+    ]
+  },
+  {
+    "name": "Pop Rock",
+    "description": "Standard verse-chorus Pop that can also be categorized under Rock for its use of guitars, drums, and propulsive rhythms.",
+    "children": [
+      {
+        "name": "Beat Music",
+        "description": "Emerged in the early 1960s in the United Kingdom, drawing on Rock & Roll and the late 1950s Skiffle revival."
+      },
+      {
+        "name": "Freakbeat",
+        "description": "Combined elements of British Rhythm & Blues, Beat Music, and Pop Rock with the studio effects of Psychedelia - fuzztones, flanging, chorus - to create a style often seen as a British relative of American Garage Rock and Psychedelic Rock."
+      },
+      {
+        "name": "Group Sounds",
+        "description": "Japanese bands in the mid-to-late 1960s who began performing a style of Beat Music primarily in English."
+      },
+      {
+        "name": "Jovem Guarda",
+        "description": "1960s Brazilian youth-oriented Pop Rock, with romantic lyrics and influenced by Merseybeat and Rockabilly."
+      },
+      {
+        "name": "Merseybeat",
+        "description": "Light, highly melodic style of Beat Music popular in the UK during the early 1960s, named due to the abundance of bands from Liverpool beside the River Mersey."
+      },
+      {
+        "name": "Nederbeat",
+        "description": "Dutch answer to the UK Beat Music boom of the 1960s."
+      },
+      {
+        "name": "Big Music",
+        "description": "Rooted in Post-Punk and popular in the 1980s, with anthemic songwriting and a grandiose, stadium-ready sound."
+      },
+      {
+        "name": "Britpop",
+        "description": "Emerged in the United Kingdom in the early 1990s, with a style hearkening back to the traditional guitar-driven songs and melodic hooks found in the British Pop Rock of the 1960s."
+      },
+      {
+        "name": "Jangle Pop",
+        "description": "Pop-oriented songwriting based around chiming jangly guitar lines, and propulsive rhythms often drawn from Post-Punk."
+      },
+      {
+        "name": "C86",
+        "description": "Distinctly ramshackle, often Twee Pop-infused combination of British Indie Rock and Jangle Pop."
+      },
+      {
+        "name": "Neo-Acoustic",
+        "description": "Japanese term for a cross-section of Indie Pop and Jangle Pop with more prominent acoustic instrumentation and songwriting/arrangements that draw from Sophisti-Pop."
+      },
+      {
+        "name": "Paisley Underground",
+        "description": "Emerged in Los Angeles in the early 1980s, featuring the energy of Power Pop and New Wave adorned with retro Psychedelia."
+      },
+      {
+        "name": "Manila Sound",
+        "description": "Philippine Pop Rock movement most prominent in the 1970s; served as a predecessor of OPM."
+      },
+      {
+        "name": "Piano Rock",
+        "description": "Based around the piano, as opposed to most traditional Rock, which is based around the guitar."
+      },
+      {
+        "name": "Post-Britpop",
+        "description": "Emerged in the late 1990s as a Britpop expansion mainly characterized by acoustic-leaning instrumentation, lush string arrangements, and mid-tempo song structures, as well as less apparent lyrical concerns for Britain in favor of introspective, contemplative themes."
+      },
+      {
+        "name": "Power Pop",
+        "description": "Heavier Pop Rock that combines strong Pop melodies with loud power chords, characterized by prominent electric guitars, clear vocals, crisp harmonies, and economical arrangements."
+      },
+      {
+        "name": "Soft Rock",
+        "description": "Light, melodic, radio-friendly Rock which gained huge commercial success in the 1970s."
+      },
+      {
+        "name": "Tropical Rock",
+        "description": "Combines influences from Country Rock and Caribbean Music to create an acoustic and breezy \"island\" themed sound."
+      },
+      {
+        "name": "Yacht Rock",
+        "description": "Slick Pop Rock influenced by smoother R&B styles, popular in the late 1970s and often associated with California."
+      },
+      {
+        "name": "Sonido Donosti",
+        "description": "Sentimental and melancholic scene, influenced by Twee Pop, that emerged in the late 1980s in Donostia / San Sebastián, Spain."
+      },
+      {
+        "name": "Stereo",
+        "description": "Burmese Pop Rock genre which emerged in the mid-1960s."
+      },
+      {
+        "name": "Twee Pop",
+        "description": "Distinct Post-Punk background and often jangling guitars, defined by a cute aesthetic and lyrics combined with an indie/DIY attitude and a simplicity often indebted to Punk Rock."
+      },
+      {
+        "name": "Vocal Surf",
+        "description": "Appropriates the sounds of instrumental Surf Rock, combining surfing- and car-themed lyrics with a style that draws primarily from Doo-Wop and Rock & Roll."
+      }
+    ]
+  },
+  {
+    "name": "Post-Punk",
+    "description": "Emerged alongside the initial Punk Rock explosion in the mid-to-late 1970s, putting a greater emphasis on frequent experimentation, atmosphere, generally stripped-back instrumentation and, at times, angular-sounding guitars, throbbing bass lines, and interlocked drumming.",
+    "children": [
+      {
+        "name": "Coldwave",
+        "description": "Originated in Europe in the late 1970s and early 1980s and is known for its generally dark, gloomy atmosphere and heavy reliance on synthesizers."
+      },
+      {
+        "name": "Dance-Punk",
+        "description": "Mixes the energy of Punk Rock with the danceable rhythms of Funk and Disco."
+      },
+      {
+        "name": "Gothic Rock",
+        "description": "Dark atmosphere and gothic imagery, featuring synthesizers and moderate use of chorus and echo effects."
+      },
+      {
+        "name": "Deathrock",
+        "description": "More Punk-oriented offshoot of Gothic Rock that emphasizes energy and an effect-laden sound over pure atmosphere."
+      },
+      {
+        "name": "No Wave",
+        "description": "Emerged in New York City during the late 1970s; took the ethos of Punk Rock but discarded melody and catchiness, including instead extreme noise, distortion, feedback, angular rhythms, stream-of-consciousness lyrics, and more."
+      },
+      {
+        "name": "Post-Punk Revival",
+        "description": "Incorporating the sounds and aesthetics of Post-Punk into Indie Rock, with jagged guitarwork, a dominant and danceable rhythm section, clean production, and poppy song structures."
+      }
+    ]
+  },
+  {
+    "name": "Post-Rock",
+    "description": "Emphasis on timbre, texture, and atmosphere over traditional conventions while often embracing influences from genres not usually associated with Rock.",
+    "children": []
+  },
+  {
+    "name": "Progressive Rock",
+    "description": "Associated with complex harmonies, instrumental virtuosity, and usually multi-section song structures featuring broader instrumentation compared to other Rock styles.",
+    "children": [
+      {
+        "name": "Avant-Prog",
+        "description": "Focuses on highly complex, dense arrangements often featuring high amounts of dissonance and uncommon time signatures, sometimes extending towards atonality, free time, Free Improvisation, and other avant-garde techniques."
+      },
+      {
+        "name": "Brutal Prog",
+        "description": "Characterized by highly intense and visceral songwriting, usually featuring substantial reliance on dissonance, odd time signatures, blistering tempos, angular and mercurial rhythms, and Punk's DIY attitude."
+      },
+      {
+        "name": "Rock in Opposition",
+        "description": "European, complex Avant-Prog from the 1970s, so named due to the artists' opposition to the music industry."
+      },
+      {
+        "name": "Zeuhl",
+        "description": "Epic, operatic sound fusing Jazz, Progressive Rock and Modern Classical music."
+      },
+      {
+        "name": "Canterbury Scene",
+        "description": "Offshoot of Progressive Rock developed in the counterculture of the English city of Canterbury in the late 1960s, emphasizing the influence of Jazz-Rock and Jazz Fusion."
+      },
+      {
+        "name": "Neo-Prog",
+        "description": "Synthesizer-driven style of Progressive Rock that emerged in the early 1980s in the United Kingdom."
+      },
+      {
+        "name": "Symphonic Prog",
+        "description": "Incorporates Classical Music elements that can manifest in longer form works that deviate from traditional popular song structures, and the use of lush keyboards to replicate Orchestral textures."
+      }
+    ]
+  },
+  {
+    "name": "Proto-Punk",
+    "description": "Used to describe what influenced or in some way resembled Punk Rock before that genre's commercial breakthrough in 1976.",
+    "children": []
+  },
+  {
+    "name": "Psychedelic Rock",
+    "description": "Rock which emerged in the mid-1960s that often attempts to emulate or enhance the effects of psychedelic drugs.",
+    "children": [
+      {
+        "name": "Acid Rock",
+        "description": "Heavier with an emphasis on instrumental jamming and \"wah\" guitar effects."
+      },
+      {
+        "name": "Heavy Psych",
+        "description": "Developed in the late 1960s with influence from Blues Rock, such as heavy dependence on riffs and willingness to improvise, adding crushing levels of heaviness with thick fuzzy guitars to create a doomy and morose atmosphere."
+      },
+      {
+        "name": "Raga Rock",
+        "description": "Influenced by South Asian Music, featuring a droning compositional quality and commonly incorporating instruments like sitar, tambura, and tablas."
+      },
+      {
+        "name": "Space Rock",
+        "description": "Heavy use of synthesizers and guitar effects to create dense atmospheric soundscapes intended to evoke images of outer space and science fiction scenarios."
+      },
+      {
+        "name": "Space Rock Revival",
+        "description": "Type of Neo-Psychedelia that draws from the aesthetics and expansive sonic palette of Space Rock combined with the more minimal, back-to-basics approach of the Post-Punk era."
+      },
+      {
+        "name": "Zamrock",
+        "description": "Zambian 1970s Psychedelic Rock found mainly throughout the Copperbelt region."
+      }
+    ]
+  },
+  {
+    "name": "Pub Rock",
+    "description": "Rock that developed in the United Kingdom in the early to mid-1970s mainly as a reaction to the perceived excess and pretension of the Progressive Rock and Glam Rock genres.",
+    "children": []
+  },
+  {
+    "name": "Punk Blues",
+    "description": "Fusion of the instrumentation and scales of Blues Rock with Punk.",
+    "children": []
+  },
+  {
+    "name": "Punk Rock",
+    "description": "Fast tempos, loud and distorted riffs, simple songs, frequent use of power chords, and shouted vocals, originating in the mid-1970s in response to commercial, sentimental, and complex Rock.",
+    "children": [
+      {
+        "name": "Anarcho-Punk",
+        "description": "In part a reaction to the commercial breakthrough of Punk Rock in the late 1970s, with some artists adopting an intentionally rougher and sloppier sound combined with lyrical themes of anarchism and related issues that gave the genre its name."
+      },
+      {
+        "name": "Celtic Punk",
+        "description": "Infuses the sounds of Celtic Folk Music into Punk Rock."
+      },
+      {
+        "name": "Deathrock",
+        "description": "More Punk-oriented offshoot of Gothic Rock that emphasizes energy and an effect-laden sound over pure atmosphere."
+      },
+      {
+        "name": "Deutschpunk",
+        "description": "Partly a reaction to the commercialization of the German movement Neue Deutsche Welle; characterized by extreme speed, consciously basic songwriting, crude musicianship, and radical leftism."
+      },
+      {
+        "name": "Garage Punk",
+        "description": "Combination of the raw fuzztones of the original Garage Rock bands of the 1960s with the tempo and attitude of Punk Rock."
+      },
+      {
+        "name": "Glam Punk",
+        "description": "Contrasts a snotty, nihilistic, and combative attitude of punk with theatrics and flamboyance."
+      },
+      {
+        "name": "Hardcore Punk",
+        "description": "Emerged in the late 1970s, often featuring extensive use of yelling or screaming, a stripped-down production style, and very short songs."
+      },
+      {
+        "name": "Burning Spirits",
+        "description": "Emphasis on delivering a very energetic and triumphant sound with flashy and soaring Metal solos, \"melodramatic\" or \"uplifting\" chord progressions, and singalong, over the top, harsh vocals."
+      },
+      {
+        "name": "Crossover Thrash",
+        "description": "Fusion of Thrash Metal and Hardcore Punk which started in the 1980s."
+      },
+      {
+        "name": "Crust Punk",
+        "description": "Metallic form of Hardcore Punk that grew out of the Anarcho-Punk movement in the mid-1980s."
+      },
+      {
+        "name": "Blackened Crust",
+        "description": "Borrows heavily from Black Metal production, blast beats, tremolo guitar, and vocals, while retaining the core Crust Punk sound, lyrical themes, and aesthetic."
+      },
+      {
+        "name": "Neocrust",
+        "description": "Melodic, dark, and atmospheric style that often incorporates influences from Sludge Metal, Post-Metal, Black Metal, and Screamo."
+      },
+      {
+        "name": "Stenchcore",
+        "description": "Heavier, more metallic form of Crust Punk drawing influence from Thrash Metal as well as Death Metal and Heavy Metal."
+      },
+      {
+        "name": "D-Beat",
+        "description": "Early 1980s Hardcore Punk featuring Metal influences and a distinct drum style also known as the D-beat."
+      },
+      {
+        "name": "Japanese Hardcore",
+        "description": "Bands from Japan, performing styles such as Burning Spirits, Crust Punk, and Thrashcore."
+      },
+      {
+        "name": "Melodic Hardcore",
+        "description": "Emerged in the USA in the early to mid-1980s, placing emphasis on melodic vocals and technical guitar riffs rather than raw aggression."
+      },
+      {
+        "name": "Mincecore",
+        "description": "Raw and simplistic with heavy reliance on Punk structures while including political and socially aware themes."
+      },
+      {
+        "name": "New York Hardcore",
+        "description": "Hardcore Punk bands from New York City from the 1980s and onwards."
+      },
+      {
+        "name": "Powerviolence",
+        "description": "Originated in the late 1980s/early 1990s; takes the blueprints of Thrashcore and Grindcore, with the addition of wildly fluctuating tempos within a single song."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Street Punk",
+        "description": "Driven by Oi! style group vocals, catchy melodies, and aggressive songwriting akin to Punk Rock of the 1970s fused with Hardcore Punk of the 1980s."
+      },
+      {
+        "name": "Thrashcore",
+        "description": "Fast tempos, brief song structures, and the occasional use of blast beats."
+      },
+      {
+        "name": "UK82",
+        "description": "UK scene that occurred during the early 1980s, consisting of developing hardcore styles such as early Street Punk and D-Beat bands."
+      },
+      {
+        "name": "Horror Punk",
+        "description": "Horror movie-themed genre of Punk Rock."
+      },
+      {
+        "name": "Könsrock",
+        "description": "Inspired by Post-Punk but with a more bizarre atmosphere with unusual or comic vocal techniques and a lyrical focus on the offensive and scatological."
+      },
+      {
+        "name": "Oi!",
+        "description": "Rejection to burgeoning Art Punk; a much simpler and more melodic style."
+      },
+      {
+        "name": "Pop Punk",
+        "description": "Blends the loud, fast-paced, and sometimes sloppy sound of Punk Rock with the catchy sound and songwriting of Pop."
+      },
+      {
+        "name": "Easycore",
+        "description": "Combines the pop choruses, high-pitched vocals, and playful nature of Pop Punk with heavy, metallic breakdowns and occasional unclean vocals akin to Metalcore and Post-Hardcore."
+      },
+      {
+        "name": "Seishun Punk",
+        "description": "Short-lived Japanese style popular in the early 2000s, characterized by a raw and abrasive style, Folk-inspired songwriting, and youth-oriented straightforward lyrics."
+      },
+      {
+        "name": "Psychobilly",
+        "description": "Cross-pollination of Punk Rock and Rockabilly."
+      },
+      {
+        "name": "Queercore",
+        "description": "Movement mainly distinguished by its lyrical content expressing the viewpoints of the LGBTQ+ community, as well as promoting queer pride and unity."
+      },
+      {
+        "name": "Riot Grrrl",
+        "description": "Underground feminist Punk Rock movement and related scene(s) which emerged in the United States in the early 1990s."
+      },
+      {
+        "name": "Ska Punk",
+        "description": "Characterized by up-tempo skank rhythms, catchy horn sections, and spirited guitar work; delivered with a fun and rebellious energy."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      },
+      {
+        "name": "Skate Punk",
+        "description": "Combines the speed of Melodic Hardcore with the catchiness of Pop Punk, finding a middle ground between the two."
+      },
+      {
+        "name": "Surf Punk",
+        "description": "Punk Rock that incorporates elements of Surf Rock."
+      },
+      {
+        "name": "Vikingarock",
+        "description": "Incorporates influences from Nordic Folk Music and the imagery of Viking romanticism and Norse mythology."
+      }
+    ]
+  },
+  {
+    "name": "Rap Rock",
+    "description": "Fusion of Hip Hop and Rock, often featuring the former’s rhythmic vocal delivery and the latter’s heavy, distorted instrumentation.",
+    "children": [
+      {
+        "name": "Rap Metal",
+        "description": "Features rapped vocals, typically formed around heavy, mid-tempo, and groove-oriented playing in addition to elements of Hip Hop beats such as record scratching."
+      }
+    ]
+  },
+  {
+    "name": "Reggae Rock",
+    "description": "Incorporates the offbeat rhythms and staccato \"skank\" guitar of Reggae.",
+    "children": []
+  },
+  {
+    "name": "Rock & Roll",
+    "description": "Developed in the United States and popularized in the 1950s, featuring prominent Blues scales, poppy structures, and strong rhythms.",
+    "children": [
+      {
+        "name": "Indorock",
+        "description": "Originated in the Netherlands in the 1950s, with Dutch-Indonesian musicians incorporating traditional Indonesian influences."
+      },
+      {
+        "name": "Rockabilly",
+        "description": "Driving guitars, frantic vocals, and slap-back echo in the bass."
+      },
+      {
+        "name": "Psychobilly",
+        "description": "Cross-pollination of Punk Rock and Rockabilly."
+      },
+      {
+        "name": "Twist",
+        "description": "Simple, fast, and energetic dance popular in the early 1960s."
+      }
+    ]
+  },
+  {
+    "name": "Rock andaluz",
+    "description": "Emerged during the mid-1970s in Spain; primarily utilizes Flamenco and often Symphonic Prog elements.",
+    "children": []
+  },
+  {
+    "name": "Rock andino",
+    "description": "Emerged in the Andean countries in the late 1960s and early 1970s, incorporating traditional instruments and harmonies from Indigenous Andean Music within a Rock format.",
+    "children": []
+  },
+  {
+    "name": "Rock Musical",
+    "description": "Style of musical theatre inspired by Rock.",
+    "children": []
+  },
+  {
+    "name": "Rock Opera",
+    "description": "Hybrid of rock and, sometimes, musical theatre stylings with heavily rock-tinged songs combining to tell a coherent story.",
+    "children": []
+  },
+  {
+    "name": "Rock urbano español",
+    "description": "Spanish scene originating in the mid-to-late 1970s that gained dominance with the end of the Francoist dictatorship and the end of censorship around lyrical topics like social issues.",
+    "children": []
+  },
+  {
+    "name": "Roots Rock",
+    "description": "Consciously and predominantly incorporates elements of its predecessors and original roots such as Country, Blues, Rhythm & Blues, Rock & Roll, and American Folk Music, but also many other American traditions.",
+    "children": [
+      {
+        "name": "Swamp Rock",
+        "description": "Intermixture of Zydeco, Cajun Music, New Orleans Blues, and Pop under the roof of Rock."
+      },
+      {
+        "name": "Tex-Mex",
+        "description": "Mixes Rock & Roll, Blues, Country, and several types of Hispanic American Music, particularly Tejano Music."
+      }
+    ]
+  },
+  {
+    "name": "Southern Rock",
+    "description": "Emerged from the American South in the early 1970s, blending Blues Rock, Hard Rock, and Rock & Roll with elements of Country and Contemporary Folk.",
+    "children": []
+  },
+  {
+    "name": "Sufi Rock",
+    "description": "Pakistani subgenre rooted in Sufi tradition, featuring South Asian instruments like the dhol, tabla, and sitar within a Rock band format with lyrics and imagery inspired by traditional Sufi poets.",
+    "children": []
+  },
+  {
+    "name": "Surf Music",
+    "description": "Evolved from late 1950s instrumental Rock & Roll in the USA, particularly associated with the surfing culture in Southern California.",
+    "children": [
+      {
+        "name": "Indie Surf",
+        "description": "Reverb-drenched, nostalgic, and often lo-fi, with influences from Surf Rock and Vocal Surf; rose to popularity around 2009."
+      },
+      {
+        "name": "Surf Punk",
+        "description": "Punk Rock that incorporates elements of Surf Rock."
+      },
+      {
+        "name": "Surf Rock",
+        "description": "Short instrumental songs with Rock & Roll rhythms overlaid with cheerful melodies played on reverb-drenched tremolo guitar."
+      },
+      {
+        "name": "Eleki",
+        "description": "Japanese Surf Rock that emerged during the early to mid-1960s incorporating the use of pentatonic scales, traditional instrumentation, and covers of folk songs."
+      },
+      {
+        "name": "Rautalanka",
+        "description": "Finnish guitar style mainly influenced by Rock & Roll, Surf Rock, and traditional European/Nordic Schlager."
+      },
+      {
+        "name": "Wong shadow",
+        "description": "Small, short-lived guitar Pop movement in Thailand in the 1960s, fusing Surf Rock  with local melodies."
+      },
+      {
+        "name": "Vocal Surf",
+        "description": "Appropriates the sounds of instrumental Surf Rock, combining surfing- and car-themed lyrics with a style that draws primarily from Doo-Wop and Rock & Roll."
+      }
+    ]
+  },
+  {
+    "name": "Symphonic Rock",
+    "description": "Incorporates elements resembling symphonic and orchestral music.",
+    "children": []
+  },
+  {
+    "name": "Tolai Rock",
+    "description": "Fuses the music of the Tolai people of Papua New Guinea with Rock.",
+    "children": []
+  },
+  {
+    "name": "Zolo",
+    "description": "Retrospective term grouping artists that fuse elements of New Wave and Progressive Rock with a flamboyant, quirky aesthetic and often the energy of Punk.",
+    "children": []
+  }
+]

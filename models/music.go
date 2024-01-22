@@ -15,7 +15,7 @@ type (
 	Album struct {
 		MediaID      *uuid.UUID     `json:"media_id" db:"media_id,pk,unique"`
 		Name         string         `json:"name" db:"name"`
-		AlbumArtists AlbumArtist    `json:"album_artists" db:"album_artists"`
+		AlbumArtists []AlbumArtist  `json:"album_artists" db:"album_artists"`
 		ImagePaths   pq.StringArray `json:"image_paths,omitempty"` // we make use of a junction table that utilizes the image IDs
 		ReleaseDate  time.Time      `json:"release_date" db:"release_date"`
 		Genres       []Genre        `json:"genres,omitempty" db:"genres"`
@@ -26,9 +26,11 @@ type (
 		//	Languages int16         `json:"languages" db:"languages,omitempty"`
 	}
 
+	// junction table media.album_artists
 	AlbumArtist struct {
-		PersonArtists []Person `json:"person_artist,omitempty" db:"person_artist"`
-		GroupArtists  []Group  `json:"group_artist,omitempty" db:"group_artist"`
+		ID         uuid.UUID `json:"artist" db:"artist,pk,unique"`
+		Name       string    `json:"name" db:"-"` // must perform a join operation to get the name
+		ArtistType string    `json:"artist_type" db:"artist_type" validate:"required,oneof=individual group"`
 	}
 
 	Track struct {
@@ -43,7 +45,7 @@ type (
 	}
 )
 
-func addAlbum(ctx context.Context, db *sqlx.DB, album Album) error {
+func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 	// Insert the album into the media.albums table
 	_, err := db.ExecContext(ctx, `
 		INSERT INTO media.albums (media_id, name, release_date, duration)
@@ -72,22 +74,13 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album Album) error {
 
 	errChan := make(chan error)
 	go func() {
-		pa := album.AlbumArtists.PersonArtists
-		for i := range pa {
-			_, err = db.ExecContext(ctx, "INSERT INTO media.album_artists (album, person_artist) VALUES ($1, $2)",
-				album.MediaID, pa[i].ID)
+		aa := album.AlbumArtists
+		for i := range aa {
+			_, err := db.ExecContext(ctx, `INSERT INTO media.album_artists (album, artist, artist_type)
+				VALUES ($1, $2, $3)`,
+				album.MediaID, aa[i].ID, "individual")
 			if err != nil {
 				errChan <- fmt.Errorf("failed to insert album artist into media.album_artists: %w", err)
-				return
-			}
-		}
-		ga := album.AlbumArtists.GroupArtists
-		for i := range ga {
-			_, err = db.ExecContext(ctx, "INSERT INTO media.album_artists (album, group_artist) VALUES ($1, $2)",
-				album.MediaID, ga[i].ID)
-			if err != nil {
-				errChan <- fmt.Errorf("failed to insert album artist into media.album_artists: %w", err)
-				return
 			}
 		}
 		close(errChan)
@@ -128,46 +121,41 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	if err != nil {
 		return Album{}, fmt.Errorf("error scanning row: %w", err)
 	}
-	rows, err := ms.db.QueryContext(ctx, "SELECT person_artist FROM media.album_artists WHERE album = $1", album.MediaID)
+	// join to get the name of the artist based on the artist ID, by looking up the people.person and people.group tables
+	// In people.person table, we need to select first_name, last_name and nick_names columns
+	// then format that using Sprintf
+	rows, err := ms.db.QueryContext(ctx, `
+SELECT 
+    p.first_name, 
+    p.last_name, 
+    p.nick_names, 
+		g.name,
+    a.artist, 
+    a.artist_type 
+FROM 
+    media.album_artists AS a
+JOIN 
+    people.person AS p ON a.artist = p.id
+		people.group AS g ON a.artist = g.id
+WHERE 
+    a.album = $1
+`, id)
 	if err != nil {
 		return Album{}, fmt.Errorf("error querying album artists: %w", err)
 	}
+	defer rows.Close()
 
+	var albumArtists []AlbumArtist
 	for rows.Next() {
-		var personID int64
-		err = rows.Scan(&personID)
-		if err != nil {
-			return Album{}, err
-		}
-		var person Person
-		person, err = ms.Ps.GetPerson(ctx, personID)
-		if err != nil {
-			return Album{}, fmt.Errorf("error getting person names: %w", err)
-		}
-		album.AlbumArtists.PersonArtists = append(album.AlbumArtists.PersonArtists, person)
-	}
-
-	// Fetch group artists
-	rows, err = ms.db.QueryContext(ctx, "SELECT group_artist FROM media.album_artists WHERE album = $1", album.MediaID)
-	if err != nil {
-		return Album{}, fmt.Errorf("error querying album artists: %w", err)
-	}
-
-	for rows.Next() {
-		var groupID int32
-		err = rows.Scan(&groupID)
+		var albumArtist AlbumArtist
+		err = rows.Scan(&albumArtist.ID, &albumArtist.ArtistType, &albumArtist.Name)
 		if err != nil {
 			return Album{}, fmt.Errorf("error scanning row: %w", err)
 		}
-		var group Group
-		group, err = ms.Ps.GetGroup(ctx, groupID)
-		if err != nil {
-			return Album{}, fmt.Errorf("error getting group name: %w", err)
-		}
-		album.AlbumArtists.GroupArtists = append(album.AlbumArtists.GroupArtists, group)
+		albumArtists = append(albumArtists, albumArtist)
 	}
-	ms.Log.Debug().Msgf("person artists: %v", album.AlbumArtists.PersonArtists)
-	ms.Log.Debug().Msgf("group artists: %v", album.AlbumArtists.GroupArtists)
+
+	album.AlbumArtists = albumArtists
 
 	rows, err = ms.db.QueryContext(ctx, `SELECT genre FROM media.album_genres WHERE album = $1`, id)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func People(ctx context.Context, db *sqlx.DB) error {
+func People(ctx context.Context, db *sqlx.DB) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -18,7 +18,17 @@ func People(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people", err)
 		}
-		defer tx.Rollback()
+
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 
 		_, err = db.Exec(`
 			CREATE SCHEMA IF NOT EXISTS people;
@@ -37,7 +47,8 @@ func People(ctx context.Context, db *sqlx.DB) error {
 
 // Roles creates the people.roles enum type and the people.person table
 // Supported roles are:
-// actor, director, producer, writer, composer, artist, author, publisher, editor, photographer, illustrator, narrator, performer, host, guest, other
+// actor, director, producer, writer, composer, artist,
+// author, publisher, editor, photographer, illustrator, narrator, performer, host, guest, other
 func Roles(ctx context.Context, db *sqlx.DB) error {
 	select {
 	case <-ctx.Done():
@@ -47,7 +58,16 @@ func Roles(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people.roles", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 		var mu sync.Mutex
 		mu.Lock()
 		err = roleTypes(ctx, db)
@@ -91,7 +111,16 @@ func roleTypes(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people.role_types", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 		peopleRoles := []string{
 			"actor", "director", "producer", "writer",
 			"composer", "artist", "author", "publisher", "editor", "photographer",
@@ -119,7 +148,16 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("media.media_creators", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 		// junction table for additional media creators
 		_, err = db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS media.media_creators (
@@ -131,23 +169,8 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create media creators table: %w", err)
 		}
 
-		_, err = db.ExecContext(ctx, `CREATE SEQUENCE media.media_creators_seq
-	INCREMENT BY 1
-	MINVALUE 1
-	MAXVALUE 2147483647
-	START 1
-	CACHE 1
-	NO CYCLE;`)
-		if err != nil {
-			pqErr, ok := err.(*pq.Error)
-			if !ok {
-				return fmt.Errorf("error occurred while creating media creators sequence: %w", err)
-			}
-
-			// Check if the error code indicates a duplicate constraint
-			if pqErr.Code.Name() != "duplicate_table" {
-				return fmt.Errorf("failed to create media creators sequence: %w", err)
-			}
+		if err := createCreatorSeq(ctx, db); err != nil {
+			return err
 		}
 
 		if err = tx.Commit(); err != nil {
@@ -161,6 +184,28 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 
 		return nil
 	}
+}
+
+func createCreatorSeq(ctx context.Context, db *sqlx.DB) error {
+	_, err := db.ExecContext(ctx, `CREATE SEQUENCE media.media_creators_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;`)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if !ok {
+			return fmt.Errorf("error occurred while creating media creators sequence: %w", err)
+		}
+
+		// Check if the error code indicates a duplicate constraint
+		if pqErr.Code.Name() != "duplicate_table" {
+			return fmt.Errorf("failed to create media creators sequence: %w", err)
+		}
+	}
+	return nil
 }
 
 func mediaFkey(ctx context.Context, db *sqlx.DB) error {
@@ -199,7 +244,16 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people.person", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 
 		_, err = db.Exec(`
 			CREATE TABLE IF NOT EXISTS people.person_photos (
@@ -210,15 +264,8 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people photos table: %w", err)
 		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.person_works (
-				person_id SERIAL REFERENCES people.person(id),
-				media_id UUID REFERENCES media.media(id),
-				PRIMARY KEY (person_id, media_id)
-			);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people works table: %w", err)
-		}
+
+		err = createWorks(db)
 
 		if err = tx.Commit(); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
@@ -226,6 +273,19 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 
 		return nil
 	}
+}
+
+func createWorks(db *sqlx.DB) error {
+	_, err := db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.person_works (
+				person_id SERIAL REFERENCES people.person(id),
+				media_id UUID REFERENCES media.media(id),
+				PRIMARY KEY (person_id, media_id)
+			);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people works table: %w", err)
+	}
+	return nil
 }
 
 // CreatorGroups creates the people.group table and its associated tables
@@ -239,7 +299,16 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 			return txErr("people.group", err)
 		}
 
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 
 		groupTypes := []string{"band", "orchestra", "choir", "ensemble", "troupe", "collective", "other"}
 		err = createEnumType(ctx, db, "group_kind", "people", groupTypes...)
@@ -265,50 +334,9 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people group table: %w", err)
 		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.group_locations (
-				group_id SERIAL REFERENCES people.group(id),
-				location_id UUID REFERENCES places.place(uuid),
-				PRIMARY KEY (group_id, location_id)
-	);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people group locations table: %w", err)
-		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.group_photos (
-				group_id SERIAL REFERENCES people.group(id),
-				image_id BIGINT REFERENCES cdn.images(id),
-				PRIMARY KEY (group_id, image_id)
-	);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people group photos table: %w", err)
-		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.group_members (
-				group_id SERIAL REFERENCES people.group(id),
-				person_id SERIAL REFERENCES people.person(id),
-				PRIMARY KEY (group_id, person_id)
-			);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people group members table: %w", err)
-		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.group_genres (
-				group_id SERIAL REFERENCES people.group(id),
-				primary_genre_id SMALLINT REFERENCES media.genres(id),
-				PRIMARY KEY (group_id, primary_genre_id)
-			);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people group genres table: %w", err)
-		}
-		_, err = db.Exec(`
-			CREATE TABLE IF NOT EXISTS people.group_works (
-				group_id SERIAL REFERENCES people.group(id),
-				media_id UUID REFERENCES media.media(id),
-				PRIMARY KEY (group_id, media_id)
-			);`)
-		if err != nil {
-			return fmt.Errorf("failed to create people group works table: %w", err)
+
+		if err := createGroupMeta(db); err != nil {
+			return err
 		}
 
 		if err = tx.Commit(); err != nil {
@@ -317,6 +345,55 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 
 		return nil
 	}
+}
+
+func createGroupMeta(db *sqlx.DB) error {
+	_, err := db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_locations (
+				group_id SERIAL REFERENCES people.group(id),
+				location_id UUID REFERENCES places.place(uuid),
+				PRIMARY KEY (group_id, location_id)
+	);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people group locations table: %w", err)
+	}
+	_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_photos (
+				group_id SERIAL REFERENCES people.group(id),
+				image_id BIGINT REFERENCES cdn.images(id),
+				PRIMARY KEY (group_id, image_id)
+	);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people group photos table: %w", err)
+	}
+	_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_members (
+				group_id SERIAL REFERENCES people.group(id),
+				person_id SERIAL REFERENCES people.person(id),
+				PRIMARY KEY (group_id, person_id)
+			);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people group members table: %w", err)
+	}
+	_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_genres (
+				group_id SERIAL REFERENCES people.group(id),
+				primary_genre_id SMALLINT REFERENCES media.genres(id),
+				PRIMARY KEY (group_id, primary_genre_id)
+			);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people group genres table: %w", err)
+	}
+	_, err = db.Exec(`
+			CREATE TABLE IF NOT EXISTS people.group_works (
+				group_id SERIAL REFERENCES people.group(id),
+				media_id UUID REFERENCES media.media(id),
+				PRIMARY KEY (group_id, media_id)
+			);`)
+	if err != nil {
+		return fmt.Errorf("failed to create people group works table: %w", err)
+	}
+	return nil
 }
 
 // Studios creates the people.studio table and its associated tables
@@ -331,7 +408,16 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people.studio", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 
 		_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS people.studio (
@@ -375,6 +461,7 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 }
 
 // Cast creates the people.cast table and its associated tables
+// nolint:gocognit // would need to remove error checking for rollback
 func Cast(ctx context.Context, db *sqlx.DB) error {
 	select {
 	case <-ctx.Done():
@@ -384,7 +471,16 @@ func Cast(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return txErr("people.cast", err)
 		}
-		defer tx.Rollback()
+		defer func() {
+			if e := recover(); e != nil {
+				rb := tx.Rollback()
+				if rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %w", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled back due to error: %v", err)
+				}
+			}
+		}()
 
 		_, err = db.Exec(`
 CREATE TABLE IF NOT EXISTS people.cast (

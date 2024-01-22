@@ -1,0 +1,35 @@
+[
+  {
+    "name": "2 Tone",
+    "description": "Combines 1960s Jamaican Ska with Punk Rock and New Wave to create tracks played at faster tempos and with a harder edge than the original Jamaican records.",
+    "children": []
+  },
+  {
+    "name": "Jamaican Ska",
+    "description": "Originated in Jamaica with groups who combined Jazz and Rhythm & Blues with rhythms of traditional Caribbean Music like Mento and Calypso.",
+    "children": []
+  },
+  {
+    "name": "Spouge",
+    "description": "Fusion of Calypso and Ska originating in Barbados during the 1960s and 70s.",
+    "children": []
+  },
+  {
+    "name": "Third Wave Ska",
+    "description": "Expanded on the 2 Tone period, adding further Rock elements resulting in a heavier sound.",
+    "children": [
+      {
+        "name": "Ska Punk",
+        "description": "Characterized by up-tempo skank rhythms, catchy horn sections, and spirited guitar work; delivered with a fun and rebellious energy."
+      },
+      {
+        "name": "Skacore",
+        "description": "Fuses skank rhythms and frantic blasts of horns with hardcore intensity."
+      },
+      {
+        "name": "Crack Rock Steady",
+        "description": "Fuses Skacore with elements of Crust Punk and sometimes Metal; coupled with anti-establishment lyrics."
+      }
+    ]
+  }
+]

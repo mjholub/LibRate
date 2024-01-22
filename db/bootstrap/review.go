@@ -45,6 +45,9 @@ CREATE TABLE reviews.cast_ratings (
 	user_id int references public.members(id)
 );
 `)
+		if err != nil {
+			return fmt.Errorf("failed to create cast_ratings table: %w", err)
+		}
 		return nil
 	}
 }

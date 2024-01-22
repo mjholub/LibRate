@@ -2,10 +2,17 @@
 	import { onDestroy } from 'svelte';
 	import { submitMediaForm } from '$stores/form/add_media';
 	import type { Media } from '$lib/types/media';
-	import Search from '$components/utility/Search.svelte';
-	import Footer from '$components/footer/footer.svelte';
+	import AddAlbum from './media/AddAlbum.svelte';
+	import AddFilm from './media/AddFilm.svelte';
+	import AddTVShow from './media/AddTVShow.svelte';
+	import AddBook from './media/AddBook.svelte';
+	import AddAnime from './media/AddAnime.svelte';
+	import AddManga from './media/AddManga.svelte';
+	import AddComic from './media/AddComic.svelte';
+	import AddGame from './media/AddGame.svelte';
 
 	let media: Media;
+	export let nickname: string;
 
 	const unsubscribe = submitMediaForm.subscribe((value) => {
 		media = value;
@@ -35,8 +42,62 @@
 	};
 </script>
 
-<div class="form-body" />
-<Search />
-<h2 class="form-title">Add Media</h2>
-<form on:submit|preventDefault={handleSubmit} />
-<Footer />
+<div class="form-body">
+	<h2 class="form-title">Add Media</h2>
+	<form on:submit|preventDefault={handleSubmit}>
+		<label for="kind">Select media type:</label>
+		<select bind:value={media.kind} id="kind">
+			<option value="none">---</option>
+			<option value="album">Album</option>
+			<option value="film">Film</option>
+			<option value="tv_show">TV Show</option>
+			<option value="book">Book</option>
+			<option value="anime">Anime</option>
+			<option value="manga">Manga</option>
+			<option value="comic">Comic</option>
+			<option value="game">Game</option>
+		</select>
+
+		{#if media.kind == 'none'}
+			<p>Please select a media type.</p>
+		{/if}
+
+		{#if media.kind === 'album'}
+			<AddAlbum {nickname} />
+		{/if}
+
+		{#if media.kind === 'film'}
+			<AddFilm />
+		{/if}
+
+		{#if media.kind === 'tv_show'}
+			<AddTVShow />
+		{/if}
+
+		{#if media.kind === 'book'}
+			<AddBook />
+		{/if}
+
+		{#if media.kind === 'anime'}
+			<AddAnime />
+		{/if}
+
+		{#if media.kind === 'manga'}
+			<AddManga />
+		{/if}
+
+		{#if media.kind === 'comic'}
+			<AddComic />
+		{/if}
+
+		{#if media.kind === 'game'}
+			<AddGame />
+		{/if}
+	</form>
+</div>
+
+<style>
+	.form-title {
+		padding-top: 1em;
+	}
+</style>

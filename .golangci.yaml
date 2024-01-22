@@ -24,7 +24,10 @@ linters:
     - gocritic # https://github.com/go-critic/go-critic
     - revive # NOTE: might be worth considering disabling this or gocritic
     - musttag # enforce field tags in (un)marshaled structs
+    - testifylint
+    - tenv # use t.Setenv instead of os.Setenv
     #bugs
+    - contextcheck # check for use of non-inherited context
     - dupl # WARN: can cause false positives. Finds code clones.
     - exportloopref # checks for pointers to enclosing loop variables. More details: https://github.com/kyoh86/exportloopref
     - gosec
@@ -39,13 +42,13 @@ linters:
     # complexity
     - funlen # NOTE: might need to be disabled to stick to DRY and the rule of three
     - gocognit # compute and check the cognitive complexity of functions
-    - gocyclo # https://en.wikipedia.org/wiki/Cyclomatic_complexity
     - nilnil # enforce use of sentinel errors when returning nil. https://github.com/Antonboom/nilnil
     # performance
     - prealloc #find slice declarations that could potentially be preallocated
     - bodyclose #checks whether HTTP response body is closed successfully
   disable: 
     - typecheck # duplicates capabilities of standard gopls
+    - gocyclo # pretty much the same as gocognit
 linters-settings:
   funlen:
     lines: 75 # default is 60
@@ -54,9 +57,9 @@ linters-settings:
   dupl:
     threshold: 160 # default is 150
   gocyclo:
-   min-complexity: 15 # default is 30, golangci-lint recommends 10-20 
+   min-complexity: 18 # default is 30, golangci-lint recommends 10-20 
   gocognit:
-    min-complexity: 15 # default is 30, golangci-lint recommends 10-20
+    min-complexity: 18 # default is 30, golangci-lint recommends 10-20
   gocritic:
     # Which checks should be enabled; can't be combined with 'disabled-checks'.
     # See https://go-critic.github.io/overview#checks-overview.
@@ -64,9 +67,12 @@ linters-settings:
     # By default, list of stable checks is used.
     enabled-tags:
       - diagnostic
+      - style
       - performance
+    disabled-checks:
+      - sloppyReassign
   interfacebloat:
-    max: 12 # default is 10
+    max: 10 # default is 10
   revive:
     #NOTE: this is vital to controlling the likelihood of false positives
     confidence: 0.7 # default is 0.8

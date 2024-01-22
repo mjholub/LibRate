@@ -1,0 +1,36 @@
+[
+  {
+    "name": "Ambient Americana",
+    "description": "Ambient music made using traditional Americana and Country instrumentation.",
+    "children": []
+  },
+  {
+    "name": "Ambient Noise Wall",
+    "description": "Combines the static approach of Harsh Noise Wall with textures leaning towards Ambient music.",
+    "children": []
+  },
+  {
+    "name": "Dark Ambient",
+    "description": "Emphasizes an ominous, gloomy, and dissonant atmosphere.",
+    "children": [
+      {
+        "name": "Black Ambient",
+        "description": "Incorporates elements such as guitars, synthesizers, harsh or whispered vocals, raw production, or other elements associated with Black Metal and Dungeon Synth."
+      },
+      {
+        "name": "Ritual Ambient",
+        "description": "Dark, deep, disturbing, ritualistic, and occult atmosphere."
+      }
+    ]
+  },
+  {
+    "name": "Space Ambient",
+    "description": "Flowing and relaxing synthesizer-based music derived from Progressive Electronic, often oriented around imagery of outer space.",
+    "children": []
+  },
+  {
+    "name": "Tribal Ambient",
+    "description": "Combines the theory and atmosphere of Ambient with traditional instruments and sounds from around the globe.",
+    "children": []
+  }
+]
