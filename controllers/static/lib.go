@@ -1,14 +1,17 @@
 package static
 
 import (
-	"codeberg.org/mjh/LibRate/cfg"
-	models "codeberg.org/mjh/LibRate/models/static"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
+
+	"codeberg.org/mjh/LibRate/cfg"
+	models "codeberg.org/mjh/LibRate/models/static"
 )
 
 type Controller struct {
 	storage *models.Storage
+	cache   *redis.Storage
 	log     *zerolog.Logger
 	conf    *cfg.Config
 }
