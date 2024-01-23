@@ -8,6 +8,273 @@ definitions:
       status:
         type: integer
     type: object
+  member.Member:
+    properties:
+      active:
+        example: true
+        type: boolean
+      bio:
+        example: Wherever you go, everyone is connected.
+        type: string
+      displayName:
+        example: Lain Iwakura
+        type: string
+      email:
+        example: lain@wired.jp
+        type: string
+      followers_uri:
+        description: URI for getting the followers list of this account
+        type: string
+      following_uri:
+        description: URI for getting the following list of this account
+        type: string
+      homepage:
+        example: https://webnavi.neocities.org/
+        type: string
+      irc:
+        description: doomed fields, will be removed by arbitrary user-defined fields
+        type: string
+      matrix:
+        type: string
+      memberName:
+        description: MemberName != webfinger
+        example: lain
+        maxLength: 30
+        minLength: 3
+        type: string
+      profile_pic:
+        example: /static/img/profile/lain.jpg
+        type: string
+      regdate:
+        example: "2020-01-01T00:00:00Z"
+        type: string
+      roles:
+        example:
+        - '["admin"'
+        - ' "moderator"]'
+        items:
+          type: string
+        type: array
+      uuid:
+        type: string
+      visibility:
+        example: followers_only
+        type: string
+      xmpp:
+        type: string
+    required:
+    - email
+    - memberName
+    type: object
+  models.Cast:
+    properties:
+      ID:
+        type: integer
+      actors:
+        items:
+          $ref: '#/definitions/models.Person'
+        type: array
+      directors:
+        items:
+          $ref: '#/definitions/models.Person'
+        type: array
+    type: object
+  models.Country:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.Genre:
+    properties:
+      children:
+        items:
+          type: integer
+        type: array
+      description:
+        items:
+          $ref: '#/definitions/models.GenreDescription'
+        type: array
+      id:
+        type: integer
+      keywords:
+        description: DescLong    string   `json:"desc_long" db:"desc_long"`
+        example:
+        - '[''dark'''
+        - ' ''gloomy'''
+        - ' ''atmospheric'''
+        - ' ''raw'''
+        - ' ''underproduced'']'
+        items:
+          type: string
+        type: array
+      kind:
+        example:
+        - music
+        items:
+          type: string
+        type: array
+      name:
+        example: Black Metal
+        type: string
+      parent_genre:
+        type: integer
+    type: object
+  models.GenreDescription:
+    properties:
+      description:
+        example: Typified by highly distorted, trebly, tremolo-picked guitars, blast
+          beats, double kick drumming, shrieked vocals, and raw, underproduced sound
+          that often favors atmosphere over technical skills and melody.
+        type: string
+      genre_id:
+        example: 2958
+        type: integer
+      language:
+        example: en
+        type: string
+    type: object
+  models.Group:
+    properties:
+      active:
+        type: boolean
+      added:
+        type: string
+      bandcamp:
+        type: string
+      bio:
+        type: string
+      disbanded:
+        type: string
+      formed:
+        type: string
+      genres:
+        items:
+          $ref: '#/definitions/models.Genre'
+        type: array
+      id:
+        type: string
+      kind:
+        description: Orchestra, Choir, Ensemble, Collective, etc.
+        type: string
+      locations:
+        items:
+          $ref: '#/definitions/models.Place'
+        type: array
+      members:
+        items:
+          $ref: '#/definitions/models.Person'
+        type: array
+      modified:
+        type: string
+      name:
+        type: string
+      photos:
+        items:
+          type: string
+        type: array
+      primary_genre:
+        $ref: '#/definitions/models.Genre'
+      soundcloud:
+        type: string
+      website:
+        type: string
+      wikipedia:
+        type: string
+      works:
+        items:
+          type: string
+        type: array
+    type: object
+  models.GroupedArtists:
+    properties:
+      group:
+        items:
+          $ref: '#/definitions/models.Group'
+        type: array
+      individual:
+        items:
+          $ref: '#/definitions/models.Person'
+        type: array
+    type: object
+  models.Person:
+    properties:
+      added:
+        type: string
+      bio:
+        example: wojtyła disco dance
+        type: string
+      birth:
+        description: DOB can also be unknown
+        type: string
+      death:
+        example: "2005-04-02T21:37:00Z"
+        type: string
+      first_name:
+        example: Karol
+        type: string
+      hometown:
+        $ref: '#/definitions/models.Place'
+      id:
+        example: 12345678-90ab-cdef-9876-543210fedcba
+        type: string
+      last_name:
+        example: Wojtyła
+        type: string
+      modified:
+        type: string
+      name:
+        description: helper field for complete name
+        type: string
+      nick_names:
+        example:
+        - '[''pawlacz'''
+        - ' ''jan pawulon'']'
+        items:
+          type: string
+        type: array
+      other_names:
+        example:
+        - '[''Jan Paweł II'']'
+        items:
+          type: string
+        type: array
+      photos:
+        items:
+          type: string
+        type: array
+      residence:
+        $ref: '#/definitions/models.Place'
+      roles:
+        items:
+          type: string
+        type: array
+      website:
+        example: https://www.vatican.va/content/john-paul-ii/en.html
+        type: string
+      works:
+        items:
+          type: string
+        type: array
+    type: object
+  models.Place:
+    properties:
+      country:
+        $ref: '#/definitions/models.Country'
+      id:
+        type: integer
+      kind:
+        type: string
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+    type: object
 info:
   contact:
     email: TODO@flagship.instance
@@ -19,11 +286,183 @@ info:
   title: LibRate
   version: dev
 paths:
+  /artists/by-name:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Retrieve the artists with the given names
+      parameters:
+      - collectionFormat: csv
+        description: Artist names
+        in: formData
+        items:
+          type: string
+        name: names
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.GroupedArtists'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Retrieve artists
+      tags:
+      - media
+      - artists
+      - bulk operations
+  /genre/{kind}/{genre}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the genre with the given name and type
+      parameters:
+      - description: Genre kind
+        enum:
+        - film
+        - tv
+        - music
+        - book
+        - game
+        in: path
+        name: kind
+        required: true
+        type: string
+      - description: Genre name (snake_lowercase)
+        in: path
+        name: genre
+        required: true
+        type: string
+      - description: ISO-639-1 language code
+        enum:
+        - en
+        - de
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Genre'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Retrieve genre
+      tags:
+      - media
+      - genres
+  /genres/{kind}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the list of genres of the specified type
+      parameters:
+      - description: Genre kind
+        enum:
+        - film
+        - tv
+        - music
+        - book
+        - game
+        in: path
+        name: kind
+        required: true
+        type: string
+      - description: Return only genre names. Usually used for populating dropdowns
+        in: query
+        name: names_only
+        type: boolean
+      - description: Return the genre names as links
+        in: query
+        name: as_links
+        type: boolean
+      - description: Return all genres, not only the ones without a parent genre (e.g.
+          Twee Pop and Jangle Pop instead of just Pop)
+        in: query
+        name: all
+        type: boolean
+      - collectionFormat: csv
+        description: Return only the specified columns
+        in: query
+        items:
+          enum:
+          - name
+          - id
+          - kinds
+          - parent
+          - children
+          type: string
+        name: columns
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If names_only=false and as_links=false
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Genre'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Retrieve genres
+      tags:
+      - media
+      - genres
+      - bulk operations
   /media/{id}:
     get:
       consumes:
       - application/json
       description: Retrieve complete media information for the given media ID
+      parameters:
+      - description: Media UUID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -46,5 +485,126 @@ paths:
             $ref: '#/definitions/handlers.ResponseHTTP'
       summary: Retrieve media information
       tags:
-      - media metadata
+      - media
+      - metadata
+  /media/{media_id}/cast:
+    get:
+      consumes:
+      - application/json
+      description: Get the full cast and crew involved with the creation of the media
+        with given ID
+      parameters:
+      - description: The UUID of the media to get the cast of
+        in: path
+        name: media_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Cast'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Get the cast of the media with given ID
+      tags:
+      - media
+      - artists
+      - bulk operations
+      - films
+      - television
+      - anime
+  /media/{media_id}/images:
+    get:
+      consumes:
+      - json text/plain
+      description: Retrieve the image paths for the media with the given ID
+      parameters:
+      - description: Media UUID
+        in: path
+        name: media_id
+        required: true
+        type: string
+      - description: Media UUID
+        in: path
+        name: media_id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Image path
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Retrieve image paths
+      tags:
+      - media
+      - metadata
+      - images
+  /members/{email_or_username}/info:
+    get:
+      consumes:
+      - json application/activity+json
+      description: Retrieve the information the requester is allowed to see about
+        a member
+      parameters:
+      - description: The nickname or email of the member to get
+        in: path
+        name: email_or_username
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  $ref: '#/definitions/member.Member'
+              type: object
+        "401":
+          description: When certain access prerequisites are not met, e.g. a follower's
+            only-visible metadata is requested
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Get a member (user) by nickname or email
+      tags:
+      - accounts
+      - interactions
+      - metadata
 swagger: "2.0"
