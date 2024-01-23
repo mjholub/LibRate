@@ -4,7 +4,7 @@
 	import { authStore } from '$stores/members/auth.ts';
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
 	import Auth from '$components/form/Auth.svelte';
-	import Search from '$components/utility/Search.svelte';
+	import Header from '$components/header/Header.svelte';
 	import Footer from '$components/footer/footer.svelte';
 	import MemberCard from '$components/member/MemberCard.svelte';
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
@@ -13,7 +13,6 @@
 	import type { authData } from '$stores/members/auth.ts';
 	import { memberStore, memberInfo } from '$stores/members/getInfo';
 	import type { CustomHttpError } from '$lib/types/error';
-	import Review from '$components/form/Review.svelte';
 	import ReviewCard from '$components/review/ReviewCard.svelte';
 
 	let windowWidth: number;
@@ -95,7 +94,25 @@
 
 <div class="app">
 	<div class="navbar">
-		<Search />
+		{#await handleAuthentication()}
+			<p>Loading header</p>
+			<span class="spinner" />
+		{:then}
+			{#if !isAuthenticated}
+				<Header authenticated={isAuthenticated} nickname="" />
+			{:else}
+				<Header authenticated={isAuthenticated} nickname={authstatus.memberName} />
+			{/if}
+		{:catch error}
+			<ErrorModal
+				errorMessages={[
+					{
+						message: "Couldn't load header",
+						status: error.status
+					}
+				]}
+			/>
+		{/await}
 	</div>
 	<div class="content">
 		<div id="left">
@@ -136,9 +153,6 @@
 			{/await}
 		</div>
 	</div>
-	{#if errors.length > 0}
-		<ErrorModal errorMessages={errors} />
-	{/if}
 	<div class="footer">
 		<Footer />
 	</div>
