@@ -5,6 +5,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type ResponseHTTP struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
 func Res(c *fiber.Ctx, statusCode int, message string) error {
 	return c.Status(statusCode).JSON(fiber.Map{
 		"message": message,
