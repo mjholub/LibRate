@@ -6,17 +6,24 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/lo"
 
+	"github.com/chai2010/webp"
 	"github.com/golang-jwt/jwt/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"codeberg.org/mjh/LibRate/internal/lib/thumbnailer"
 	"codeberg.org/mjh/LibRate/models/static"
 )
 
@@ -81,9 +88,89 @@ func (s *Controller) UploadImage(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
+	go s.saveThumb(imageType, savePath, file.Header.Get("Content-Type"))
+	// flush the cache
+	// e.g. for static/img/profile/lain.png
+	// redis caches "static/img/profile/lain.png_GET_body"
+	if err := s.cache.Delete(savePath + "_GET_body"); err != nil {
+		s.log.Warn().Err(err).Msgf("Failed to flush cache for %s", savePath)
+	}
+
 	return h.ResData(c, 201, "Success", fiber.Map{
 		"pic_id": imageID,
 	})
+}
+
+// we are using the recover middleware, so it's relatively safe to call this in a goroutine
+// without returning an error, since goroutine callback would necessitate a blocking call to wait on reading from
+// error channel
+func (s *Controller) saveThumb(
+	imageType,
+	imagePath,
+	imageFormat string,
+) {
+	var dims *thumbnailer.Dims
+	ns := s.conf.Fiber.Thumbnailing.TargetNS
+	for i := range ns {
+		// #wontfix providing more than one ns and all simultaneously
+		if lo.Contains(ns[i].Names, imageType) || ns[i].Names[0] == "all" {
+			dims = &ns[i].MaxSize
+			break
+		}
+	}
+
+	if dims == nil {
+		s.log.Warn().Msgf(
+			`Image of type (as in use case) %s was provided,
+		but no thumbnailing namespace was found for it.`,
+			imageType,
+		)
+		return
+	}
+
+	imagePathBase := strings.TrimSuffix(imagePath, filepath.Ext(imagePath))
+	imgPathNew := imagePathBase + "_thumb" + filepath.Ext(imagePath)
+	f, err := os.Create(imgPathNew)
+	if err != nil {
+		s.log.Error().Err(err).Msgf("Failed to save thumbnail for image %s", imagePath)
+		return
+	}
+	defer f.Close()
+
+	thumb, err := thumbnailer.Thumbnail(*dims, imagePath)
+	if err != nil {
+		s.log.Error().Err(err).Msgf("Failed to create thumbnail for image %s", imagePath)
+		return
+	}
+	switch imageFormat {
+	case "image/jpeg":
+		if err := jpeg.Encode(f, thumb, nil); err != nil {
+			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
+			return
+		}
+	case "image/png":
+		if err := png.Encode(f, thumb); err != nil {
+			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
+			return
+		}
+	case "image/gif":
+		if err := gif.Encode(f, thumb, nil); err != nil {
+			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
+			return
+		}
+	case "image/webp":
+		opts := &webp.Options{
+			Lossless: false,
+			Quality:  80,
+		}
+		if err := webp.Encode(f, thumb, opts); err != nil {
+			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
+			return
+		}
+	default:
+		s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s for MIME %s", imagePath, imageType)
+		return
+	}
 }
 
 func (s *Controller) saveProfileImage(
