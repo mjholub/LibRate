@@ -18,27 +18,29 @@ import (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID               int            `json:"-" db:"id"`
-		UUID             uuid.UUID      `json:"uuid,omitempty" db:"uuid"`
-		PassHash         string         `json:"-" db:"passhash"`
-		MemberName       string         `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30"`
-		DisplayName      sql.NullString `json:"displayName,omitempty" db:"display_name"`
-		Email            string         `json:"email" db:"email" validate:"required,email"`
-		Bio              sql.NullString `json:"bio,omitempty" db:"bio"`
-		Active           bool           `json:"active" db:"active"`
-		Roles            pq.StringArray `json:"roles,omitempty" db:"roles"`
-		RegTimestamp     time.Time      `json:"regdate" db:"reg_timestamp"`
+		ID       int       `json:"-" db:"id"`
+		UUID     uuid.UUID `json:"uuid,omitempty" db:"uuid"`
+		PassHash string    `json:"-" db:"passhash"`
+		// MemberName != webfinger
+		MemberName       string         `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
+		DisplayName      sql.NullString `json:"displayName,omitempty" db:"display_name" example:"Lain Iwakura"`
+		Email            string         `json:"email" db:"email" validate:"required,email" example:"lain@wired.jp"`
+		Bio              sql.NullString `json:"bio,omitempty" db:"bio" example:"Wherever you go, everyone is connected."`
+		Active           bool           `json:"active" db:"active" example:"true"`
+		Roles            pq.StringArray `json:"roles,omitempty" db:"roles" example:"[\"admin\", \"moderator\"]"`
+		RegTimestamp     time.Time      `json:"regdate" db:"reg_timestamp" example:"2020-01-01T00:00:00Z"`
 		ProfilePicID     sql.NullInt64  `json:"-" db:"profilepic_id"`
-		ProfilePicSource string         `json:"profile_pic,omitempty" db:"-"`
-		Homepage         sql.NullString `json:"homepage,omitempty" db:"homepage"`
-		IRC              sql.NullString `json:"irc,omitempty" db:"irc"`
-		XMPP             sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
-		Matrix           sql.NullString `json:"matrix,omitempty" db:"matrix"`
-		Visibility       string         `json:"visibility" db:"visibility"`
-		FollowingURI     string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
-		FollowersURI     string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
-		SessionTimeout   sql.NullInt64  `json:"-" db:"session_timeout"`
-		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"-" db:"public_key_pem"`
+		ProfilePicSource string         `json:"profile_pic,omitempty" db:"-" example:"/static/img/profile/lain.jpg"`
+		Homepage         sql.NullString `json:"homepage,omitempty" db:"homepage" example:"https://webnavi.neocities.org/"`
+		// doomed fields, will be removed by arbitrary user-defined fields
+		IRC            sql.NullString `json:"irc,omitempty" db:"irc"`
+		XMPP           sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
+		Matrix         sql.NullString `json:"matrix,omitempty" db:"matrix"`
+		Visibility     string         `json:"visibility" db:"visibility" example:"followers_only"`
+		FollowingURI   string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
+		FollowersURI   string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
+		SessionTimeout sql.NullInt64  `json:"-" db:"session_timeout"`
+		PublicKeyPem   string         `jsonld:"publicKeyPem,omitempty" json:"-" db:"public_key_pem"`
 	}
 
 	Device struct {

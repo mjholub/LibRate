@@ -50,7 +50,8 @@ func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
 // TODO: modify the response to utilize generics instead of interface{}
 // @Summary Retrieve media information
 // @Description Retrieve complete media information for the given media ID
-// @Tags media metadata
+// @Tags media,metadata
+// @Param id path string true "Media UUID"
 // @Accept json
 // @Produce json
 // @Success 200 {object} h.ResponseHTTP{data=any}
@@ -85,7 +86,19 @@ func (mc *Controller) GetMedia(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", detailedMedia)
 }
 
-// TODO: when upload form is implemented, flush the redis cache, since the response might change
+// GetImagePaths retrieves the image paths for the media with the given ID
+// @Summary Retrieve image paths
+// @Description Retrieve the image paths for the media with the given ID
+// @Tags media,metadata,images
+// @Param media_id path string true "Media UUID"
+// @Accept json text/plain
+// @Produce text/plain
+// @Param media_id path string true "Media UUID"
+// @Success 200 {string} string "Image path"
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 404 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /media/{media_id}/images [get]
 func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	mc.storage.Log.Info().Msg("Hit endpoint " + c.Path())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -112,6 +125,24 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 	return handleImageResponse(mc.storage.Log, c, path)
 }
 
+// GetGenres retrieves the genres for the given genre kind
+// @Summary Retrieve genres
+// @Description Retrieve the list of genres of the specified type
+// @Tags media,genres,bulk operations
+// @Param kind path string true "Genre kind" Enums(film, tv, music, book, game)
+// @Param names_only query bool false "Return only genre names. Usually used for populating dropdowns"
+// @Param as_links query bool false "Return the genre names as links"
+// @Param all query bool false "Return all genres, not only the ones without a parent genre (e.g. Twee Pop and Jangle Pop instead of just Pop)"
+// @Param columns query []string false "Return only the specified columns" Enums(name, id, kinds, parent, children)
+// @default names
+// @example kind=film&names_only=true&as_links=true&all=true&columns=name,id,kinds,parent,children
+// @Accept json
+// @Produce json
+// @Success 200 {object} h.ResponseHTTP{data=[]string} "If names_only or as_links=true"
+// @Success 200 {object} h.ResponseHTTP{data=[]models.Genre} "If names_only=false and as_links=false"
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /genres/{kind} [get]
 func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	genreKind := c.Params("kind")
 	namesOnly := c.QueryBool("names_only", true)
@@ -121,6 +152,10 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	}
 
 	asLinks := c.QueryBool("as_links", false)
+	if !namesOnly && asLinks {
+		mc.storage.Log.Warn().Msg("correcting incorrect query param combination names_only=false and as_links=true")
+		namesOnly = true
+	}
 	all := c.QueryBool("all", true)
 
 	if namesOnly {
@@ -146,6 +181,20 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", genres)
 }
 
+// GetGenre retrieves a single genre
+// @Summary Retrieve genre
+// @Description Retrieve the genre with the given name and type
+// @Tags media,genres
+// @Param kind path string true "Genre kind" Enums(film, tv, music, book, game)
+// @Param genre path string true "Genre name (snake_lowercase)"
+// @Param lang query string false "ISO-639-1 language code" Enums(en, de)
+// @Accept json
+// @Produce json
+// @Success 200 {object} h.ResponseHTTP{data=models.Genre}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 404 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /genre/{kind}/{genre} [get] "Note the singular genre, not genres"
 func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 	genreKind := c.Params("kind")
 	possible := []string{"film", "tv", "music", "book", "game"}
@@ -165,8 +214,18 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", genre)
 }
 
-// GetArtistsByName is a POST endpoint that takes the list of artists aa a multipart form data
+// GetArtistsByName is a POST endpoint that takes the list of artists as a multipart form data
 // and returns the artists with their IDs as a response
+// @Summary Retrieve artists
+// @Description Retrieve the artists with the given names
+// @Tags media,artists,bulk operations
+// @Param names formData []string true "Artist names"
+// @Accept multipart/form-data
+// @Produce json
+// @Success 200 {object} h.ResponseHTTP{data=models.GroupedArtists}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /artists/by-name [post]
 func (mc *Controller) GetArtistsByName(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }

@@ -59,11 +59,11 @@ type (
 	// Genre does not hage a UUID due to parent-child relationships
 	Genre struct {
 		ID          int64              `json:"id" db:"id,pk,autoinc"`
-		Kinds       pq.StringArray     `json:"kind" db:"kind" enum:"music,film,tv,book,game"`
-		Name        string             `json:"name" db:"name"`
+		Kinds       pq.StringArray     `json:"kind" db:"kind" enum:"music,film,tv,book,game" example:"music"`
+		Name        string             `json:"name" db:"name" example:"Black Metal"`
 		Description []GenreDescription `json:"description,omitempty" db:"-"`
 		//	DescLong    string   `json:"desc_long" db:"desc_long"`
-		Characteristics []string `json:"keywords" db:"-"`
+		Characteristics []string `json:"keywords" db:"-" example:"['dark', 'gloomy', 'atmospheric', 'raw', 'underproduced']"`
 		ParentGenreID   *int64   `json:"parent_genre,omitempty" db:"parent,omitempty"`
 		Children        []int64  `json:"children,omitempty" db:"children,omitempty"`
 	}
@@ -75,9 +75,9 @@ type (
 	}
 
 	GenreDescription struct {
-		GenreID     int64  `json:"genre_id" db:"genre_id"`
-		Language    string `json:"language" db:"language"`
-		Description string `json:"description" db:"description"`
+		GenreID     int64  `json:"genre_id" db:"genre_id" example:"2958"`
+		Language    string `json:"language" db:"language" example:"en"`
+		Description string `json:"description" db:"description" example:"Typified by highly distorted, trebly, tremolo-picked guitars, blast beats, double kick drumming, shrieked vocals, and raw, underproduced sound that often favors atmosphere over technical skills and melody."`
 	}
 
 	MediaStorage struct {
@@ -187,7 +187,7 @@ func GetGenres[G GenresOrGenreNames](
 		}
 		ms.Log.Debug().Msg("validated columns")
 	}
-	const baseGenres = "WHERE $1 = ANY(kinds) AND children IS NULL"
+	const baseGenres = "WHERE $1 = ANY(kinds) AND parent IS NULL"
 	const allGenres = "WHERE $1 = ANY(kinds)"
 
 	queryTemplate := "SELECT %v FROM media.genres %v"

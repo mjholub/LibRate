@@ -52,6 +52,16 @@ func (mc *Controller) GetCreatorByID(c *fiber.Ctx) error {
 	return h.Res(c, fiber.StatusBadRequest, "Invalid kind: "+c.Query("kind"))
 }
 
+// @Summary Get the cast of the media with given ID
+// @Description Get the full cast and crew involved with the creation of the media with given ID
+// @Tags media,artists,bulk operations,films,television,anime
+// @Accept json
+// @Produce json
+// @Param media_id path string true "The UUID of the media to get the cast of"
+// @Success 200 {object} h.ResponseHTTP{data=models.Cast}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /media/{media_id}/cast [get]
 func (mc *Controller) GetCastByMediaID(c *fiber.Ctx) error {
 	// get the media ID and then query the junction tables in the database and perform a join into a JSON corresponding to the Cast type
 	if c.Params("media_id") == "" {
