@@ -1,0 +1,50 @@
+basePath: /api
+definitions:
+  handlers.ResponseHTTP:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact:
+    email: TODO@flagship.instance
+    name: MJH
+  description: API for LibRate, a social media cataloguing and reviewing service
+  license:
+    name: GNU Affero General Public License v3
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+  title: LibRate
+  version: dev
+paths:
+  /media/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve complete media information for the given media ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Retrieve media information
+      tags:
+      - media metadata
+swagger: "2.0"

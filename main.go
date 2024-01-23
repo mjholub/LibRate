@@ -27,6 +27,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
+	_ "codeberg.org/mjh/LibRate/static/meta" // swagger docs
 	_ "net/http/pprof"
 
 	"codeberg.org/mjh/LibRate/db"
@@ -49,6 +50,17 @@ type FlagArgs struct {
 	SkipErrors string
 }
 
+// @title LibRate
+// @version dev
+// @description API for LibRate, a social media cataloguing and reviewing service
+
+// @contact.name MJH
+// @contact.email TODO@flagship.instance
+
+// @license.name GNU Affero General Public License v3
+// @license.url https://www.gnu.org/licenses/agpl-3.0.html
+
+// @BasePath /api
 func main() {
 	flags := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
@@ -101,6 +113,7 @@ func main() {
 		}
 		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
 	}
+	log.Debug().Msgf("Config: %+v", conf)
 
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)

@@ -9,15 +9,19 @@
 	import MemberCard from '$components/member/MemberCard.svelte';
 	import MediaCarousel from '$components/media/MediaCarousel.svelte';
 	import type { Member } from '$lib/types/member.ts';
+	import type { Review } from '$lib/types/review.ts';
 	import type { authData } from '$stores/members/auth.ts';
 	import { memberStore, memberInfo } from '$stores/members/getInfo';
 	import type { CustomHttpError } from '$lib/types/error';
+	import Review from '$components/form/Review.svelte';
+	import ReviewCard from '$components/review/ReviewCard.svelte';
 
 	let windowWidth: number;
 	let isAuthenticated: boolean;
 	let member: Member;
 	let authstatus: authData;
 	let errors: CustomHttpError[];
+	let reviews: Review[] = [];
 	$: errors = [];
 	$: member = memberInfo;
 	async function handleAuthentication() {
@@ -25,21 +29,33 @@
 			const jwtToken = localStorage.getItem('jwtToken');
 			try {
 				if (jwtToken === null) {
-					console.error('jwtToken is null');
+					errors.push({
+						message: 'Missing JWT token',
+						status: 401
+					});
+					errors = [...errors];
 					return;
 				}
 				authstatus = await authStore.authenticate(jwtToken);
 				isAuthenticated = authstatus.isAuthenticated;
 				console.debug('authstatus', authstatus);
 			} catch (error) {
-				console.error('error', error);
+				errors.push({
+					message: error as string,
+					status: 500
+				});
+				errors = [...errors];
 			}
 		}
 	}
 	async function getMember(memberName: string) {
 		const jwtToken = localStorage.getItem('jwtToken');
 		if (jwtToken === null) {
-			console.error('jwtToken is null');
+			errors.push({
+				message: 'Missing JWT token',
+				status: 401
+			});
+			errors = [...errors];
 			return;
 		}
 		try {
@@ -49,6 +65,7 @@
 				message: error as string,
 				status: 500
 			});
+			errors = [...errors];
 		}
 	}
 	if (browser) {
@@ -87,7 +104,13 @@
 		<div class="center">
 			<div class="feed">
 				<h2>Reviews feed</h2>
-				<p>Coming soon...</p>
+				{#if reviews.length > 0}
+					{#each reviews as review}
+						<ReviewCard {review} />
+					{/each}
+				{:else}
+					<p>No reviews found</p>
+				{/if}
 			</div>
 		</div>
 		<div class="right">
@@ -113,6 +136,9 @@
 			{/await}
 		</div>
 	</div>
+	{#if errors.length > 0}
+		<ErrorModal errorMessages={errors} />
+	{/if}
 	<div class="footer">
 		<Footer />
 	</div>

@@ -45,8 +45,18 @@ func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
 }
 
 // GetMedia retrieves media information based on the media ID
-// media ID is a UUID (binary, but passed from the fronetend as a string,
-// since typescript doesn't support binary)
+// `media ID` is a UUID (binary, but passed from the frontend as a string)
+// This might be changed in the future, most likely to uint8array
+// TODO: modify the response to utilize generics instead of interface{}
+// @Summary Retrieve media information
+// @Description Retrieve complete media information for the given media ID
+// @Tags media metadata
+// @Accept json
+// @Produce json
+// @Success 200 {object} h.ResponseHTTP{data=any}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /media/{id} [get]
 func (mc *Controller) GetMedia(c *fiber.Ctx) error {
 	mediaID, err := uuid.FromString(c.Params("id"))
 	if err != nil {
