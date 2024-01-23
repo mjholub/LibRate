@@ -12,7 +12,16 @@ fiber:
   tls: false
   # -1 for graceful shutdown that will wait indefintely
   shutdownTimeout: 10
-  maxUploadSize: 4194304
+  maxUploadSize: 4194304 # 4MB
+  thumbnailing:
+    namespaces:
+      - names:  
+          - "film_cover"
+          - "album_poster"
+          - "profile"
+        size: 
+          width: 500
+          height: 500
 # used to encrypt sensitive data that is stored in session redis store
 secret: "librate-secret-key"
 database:
