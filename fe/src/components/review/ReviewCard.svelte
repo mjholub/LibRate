@@ -4,10 +4,10 @@
 	import type { Media } from '$lib/types/media.ts';
 	import { keywordStore } from '$stores/form/keyword.ts';
 
-	export let media: Media;
+	let media: Media;
 	export let review: Review;
 	let userImage = '';
-	export let nick: string;
+	let nick: string;
 
 	$: (async () => {
 		if (nick) {

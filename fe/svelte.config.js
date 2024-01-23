@@ -7,6 +7,11 @@ const config = {
   // for more information about preprocessors
   preprocess: vitePreprocess(),
   kit: {
+    prerender: {
+      handleHttpError: 'warn',
+      // TODO: whitelist entries array with svelte's own routes (e.g. not swagger or anything provided by the server)
+      crawl: false
+    },
     adapter: adapter({
       // default options are shown. On some platforms
       // these options are set automatically — see below
@@ -24,9 +29,6 @@ const config = {
       $components: './src/components',
       $stores: './src/stores',
       $lib: './src/lib'
-    },
-    version: {
-      name: ""
     },
   },
 

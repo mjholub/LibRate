@@ -10,8 +10,10 @@ require (
 	dario.cat/mergo v1.0.0
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/caarlos0/env/v10 v10.0.0
+	github.com/chai2010/webp v1.1.1
 	github.com/georgysavva/scany/v2 v2.1.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
@@ -39,6 +41,7 @@ require (
 	github.com/samber/lo v1.39.0
 	github.com/samber/mo v1.11.0
 	github.com/stretchr/testify v1.8.4
+	github.com/swaggo/swag v1.16.2
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.8
 	github.com/zmb3/spotify/v2 v2.4.0
@@ -65,6 +68,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0 // indirect
+	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
@@ -105,6 +109,10 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/jsonreference v0.20.4 // indirect
+	github.com/go-openapi/spec v0.20.14 // indirect
+	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gofiber/template v1.8.2 // indirect
@@ -131,11 +139,12 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -151,11 +160,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/redis/go-redis/v9 v9.3.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/swaggo/files v1.0.1 // indirect
 	github.com/tinylib/msgp v1.1.9 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -170,10 +179,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.154.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

@@ -2,11 +2,13 @@ package routes
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"path/filepath"
 	"sync"
 	"time"
 
+	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -43,6 +45,15 @@ func Setup(
 	wsConfig websocket.Config,
 ) error {
 	api := app.Group("/api", fzlog)
+
+	app.Get("/docs/*", swagger.New(swagger.Config{
+		URL: "/static/meta/swagger.json",
+		// TODO: figure out how to use https://github.com/svmk/swagger-i18n-extension#readme
+		// with this middleware
+		Plugins: []template.JS{
+			template.JS("SwaggerUIBundle.plugins.DownloadUrl"),
+		},
+	}))
 
 	var (
 		mStor     member.MemberStorer
