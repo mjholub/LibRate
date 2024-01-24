@@ -409,6 +409,7 @@
 		width: calc(98% - 0.2em);
 		height: 2rem;
 		left: 0.2em;
+		z-index: -1;
 	}
 
 	.error-message {

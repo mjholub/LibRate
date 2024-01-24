@@ -24,7 +24,7 @@ func SetupHelmet(conf *cfg.Config) (h fiber.Handler) {
 		ContentSecurityPolicy: fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
 				style-src 'self' cdn.jsdelivr.net 'unsafe-inline';
 				script-src 'self' https://unpkg.com/htmx.org@1.9.9 %s 'unsafe-inline' 'unsafe-eval';
-				img-src 'self' *  %s data: blob:;`,
+				img-src 'self' * %s data: blob:;`,
 			localAliases, localAliases, localAliases),
 	})
 }
