@@ -25,7 +25,12 @@ type SessionData struct {
 	LastSeen   time.Time `json:"last_seen"`
 }
 
-func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Member) error {
+type SessionResponse struct {
+	Token      string `json:"token" example:"[A-Za-z0-9]{37}.[A-Za-z0-9]{147}.L-[A-Za-z0-9]{24}_[A-Za-z0-9]{25}-zNjCwGMr-[A-Za-z0-9]{27}"`
+	MemberName string `json:"membername" example:"lain"`
+}
+
+func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Member) error {
 	var deviceHash string
 	if c.Cookies("device_id") == "" {
 		deviceID, err := a.identifyDevice()
@@ -37,7 +42,7 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 		c.Cookie(&fiber.Cookie{
 			Domain:      a.conf.Fiber.Domain,
 			SessionOnly: true,
-			Expires:     time.Now().Add(time.Hour * 24 * 90),
+			Expires:     time.Now().Add(time.Minute * time.Duration(timeout)),
 			SameSite:    "Lax",
 			Name:        "device_id",
 			Value:       deviceHash,
@@ -59,19 +64,18 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 	a.log.Debug().Msgf("Creating session with ID: %s", sess.ID())
 	var mu sync.Mutex
 
+	// TODO: add lock acquisition timeout
 	mu.Lock()
 	go sess.Set("member_name", member.MemberName)
 	go sess.Set("session_id", sess.ID())
 	go sess.Set("device_id", deviceHash)
 	go sess.Set("ip", c.IP())
 	go sess.Set("user_agent", string(c.Request().Header.UserAgent()))
-	timeout, err := a.GetSessionTimeoutPrefs(rememberMe)
-	if err != nil {
-		return err
-	}
-	sess.SetExpiry(timeout)
+	sessionExpiry := time.Duration(timeout) * time.Minute
+	sess.SetExpiry(sessionExpiry)
+	mu.Unlock()
 
-	signedToken, err := a.createToken(member, &timeout, sess)
+	signedToken, err := a.createToken(member, &sessionExpiry, sess)
 	if err != nil {
 		a.log.Err(err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to prepare session")
@@ -79,14 +83,12 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 	c.Cookie(&fiber.Cookie{
 		HTTPOnly: true,
 		Name:     "session_id",
-		MaxAge:   int(timeout.Seconds()),
+		MaxAge:   int(sessionExpiry.Seconds()),
 		Domain:   a.conf.Fiber.Domain,
 		SameSite: "Lax",
 		Value:    sess.ID(),
 	},
 	)
-
-	mu.Unlock()
 
 	if err = sess.Save(); err != nil {
 		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
@@ -101,7 +103,6 @@ func (a *Service) createSession(c *fiber.Ctx, rememberMe bool, member *member.Me
 }
 
 func (a *Service) createToken(member *member.Member, timeout *time.Duration, sess *session.Session) (t string, err error) {
-	// TODO: add role checking that works with pq.StringArray
 	claims := jwt.MapClaims{
 		"member_name": member.MemberName,
 		"session_id":  sess.ID(),
@@ -188,13 +189,4 @@ func (a *Service) identifyDevice() (uuid.UUID, error) {
 	}
 
 	return deviceID, nil
-}
-
-// GetSessionTimeoutPrefs returns the session timeout preferences
-// Currently, only support for "remember me" is implemented
-func (a *Service) GetSessionTimeoutPrefs(rememberMe bool) (timeout time.Duration, err error) {
-	if rememberMe {
-		return time.ParseDuration("2160h") // 90 days
-	}
-	return time.ParseDuration("1h")
 }

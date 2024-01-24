@@ -28,3 +28,4 @@ LibRate
 ./static/img/profile/*.{jpeg,jpg,png,webp}
 librate-bin
 ./profile*
+static/templates/privacy_en.md

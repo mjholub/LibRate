@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Search from '$components/utility/Search.svelte';
 	import ProfileControls from './ProfileControls.svelte';
+	import LangSwitch from '$components/utility/LangSwitch.svelte';
+	import { _ } from 'svelte-i18n';
 	import {
 		DropdownToggle,
 		Dropdown,
@@ -33,30 +35,30 @@
 		</span>
 		<Nav class="ms-auto" navbar tabs={true} card={true}>
 			<Dropdown group={true} direction={'down'}>
-				<DropdownToggle caret>Discover</DropdownToggle>
+				<DropdownToggle caret>{$_('discover')}</DropdownToggle>
 				<DropdownMenu id="grouped-discover" right end>
 					<Dropdown isOpen={musicOpen} toggle={() => (musicOpen = !musicOpen)} direction={'right'}>
-						<DropdownToggle nav caret>Music</DropdownToggle>
+						<DropdownToggle nav caret>{$_('music')}</DropdownToggle>
 						<DropdownMenu id="music-discover">
-							<DropdownItem><a href="/genres/music">Genres</a></DropdownItem>
-							<DropdownItem><a href="/releases/music">Releases</a></DropdownItem>
+							<DropdownItem><a href="/genres/music">{$_('genres')}</a></DropdownItem>
+							<DropdownItem><a href="/releases/music">{$_('releases')}</a></DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 					<DropdownItem divider />
 					<Dropdown isOpen={filmOpen} toggle={() => (filmOpen = !filmOpen)} direction={'right'}>
 						<DropdownToggle caret nav>Film</DropdownToggle>
 						<DropdownMenu id="film-discover">
-							<DropdownItem><a href="/genres/film">Genres</a></DropdownItem>
-							<DropdownItem><a href="/releases/film">Releases</a></DropdownItem>
+							<DropdownItem><a href="/genres/film">{$_('genres')}</a></DropdownItem>
+							<DropdownItem><a href="/releases/film">{$_('releases')}</a></DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 					<DropdownItem divider />
 					<Dropdown isOpen={booksOpen} toggle={() => (booksOpen = !booksOpen)} direction={'right'}>
-						<DropdownToggle caret nav>Books</DropdownToggle>
+						<DropdownToggle caret nav>{$_('books')}</DropdownToggle>
 						<DropdownMenu id="book-discover">
-							<DropdownItem><a href="/genres/books">Genres</a></DropdownItem>
-							<DropdownItem><a href="/releases/books">Releases</a></DropdownItem>
-							<DropdownItem><a href="/authors">Authors</a></DropdownItem>
+							<DropdownItem><a href="/genres/books">{$_('genres')}</a></DropdownItem>
+							<DropdownItem><a href="/releases/books">{$_('releases')}</a></DropdownItem>
+							<DropdownItem><a href="/authors">{$_('authors')}</a></DropdownItem>
 						</DropdownMenu>
 					</Dropdown>
 				</DropdownMenu>
@@ -70,7 +72,7 @@
 			<Search />
 		</span>
 		<span class="add-media">
-			<a href="/form/media/add">Add Media</a>
+			<a href="/form/media/add">{$_('add_media')}</a>
 		</span>
 		<span class="profile-controls">
 			<ProfileControls {nickname} />
@@ -78,6 +80,10 @@
 	{:else}
 		<span class="search">
 			<Search />
+		</span>
+		<!-- when logged in, language switching available via settings modal -->
+		<span class="lang-switch">
+			<LangSwitch />
 		</span>
 	{/if}
 </div>

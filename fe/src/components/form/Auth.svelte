@@ -2,11 +2,12 @@
 	import axios from 'axios';
 	import { onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+	import { _ } from 'svelte-i18n';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import { PasswordMeter } from 'password-meter';
 
-	const tooltipMessage = 'Not recommended on shared computers';
+	const tooltipMessage = $_('remember_me_tooltip');
 	let isRegistration = false;
 	let email_or_username = '';
 	if (browser) {
@@ -14,12 +15,12 @@
 	}
 	let email = '';
 	let nickname = '';
+	let sessionTimeMinutes = 30;
 
 	let isEmailAvailable = true;
 	let isNickAvailable = true;
 
 	let password = '';
-	let rememberMe = false;
 	let showPassword = false;
 	let passwordConfirm = '';
 	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
@@ -127,12 +128,6 @@
 		}
 	}
 
-	const setRememberMe = (event: Event) => {
-		if (browser) {
-			rememberMe = (event.target as HTMLInputElement).checked;
-		}
-	};
-
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
 		isRegistration = true;
@@ -231,7 +226,7 @@
 			{
 				membername: nickName,
 				email: emailValue,
-				remember_me: rememberMe,
+				session_time: sessionTimeMinutes,
 				password
 			},
 			{
@@ -339,16 +334,21 @@
 				{showPassword}
 				{toggleObfuscation}
 			/>
-			<label for="rememberMe"
-				>Remember me<span class="tooltip" aria-label={tooltipMessage}> *</span></label
-			>
-			<input
-				type="checkbox"
-				id="rememberMe"
-				name="rememberMe"
-				value="rememberMe"
-				on:change={setRememberMe}
-			/>
+			<span class="session-timeout-selector">
+				<label for="logout-after">
+					{$_('logout_after')}
+				</label>
+				<select class="session-time" bind:value={sessionTimeMinutes}>
+					<option value="30">30 {$_('minutes_locative')}</option>
+					<option value="60">1 {$_('hour_locative')}</option>
+					<option value="120">2 {$_('hours_locative')}</option>
+					<option value="360">6 {$_('hours_locative')}</option>
+					<option value="720">12 {$_('hours_locative')}</option>
+					<option value="1440">1 {$_('day_locative')}</option>
+					<option value="10080">1 {$_('week_locative')}</option>
+					<option value="2147483647">{$_('never')}</option>
+				</select>
+			</span>
 		{/if}
 
 		{#if isRegistration}
@@ -382,11 +382,11 @@
 	<!-- End of input container -->
 	<div class="button-container">
 		{#if !isRegistration}
-			<button type="submit" on:click={login}>Sign In</button>
-			<button type="button" on:click={startRegistration}>Sign Up</button>
+			<button type="submit" on:click={login}>{$_('sign_in')}</button>
+			<button type="button" on:click={startRegistration}>{$_('sign_up')}</button>
 		{:else}
-			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
-			<button type="submit" on:click={register}>Sign Up</button>
+			<button type="button" on:click={() => (isRegistration = false)}>{$_('sign_in')}</button>
+			<button type="submit" on:click={register}>{$_('sign_up')}</button>
 		{/if}
 	</div>
 </form>
