@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Search from '$components/utility/Search.svelte';
 	import ProfileControls from './ProfileControls.svelte';
+	import LangSwitch from '$components/utility/LangSwitch.svelte';
 	import { _ } from 'svelte-i18n';
 	import {
 		DropdownToggle,
@@ -79,6 +80,10 @@
 	{:else}
 		<span class="search">
 			<Search />
+		</span>
+		<!-- when logged in, language switching available via settings modal -->
+		<span class="lang-switch">
+			<LangSwitch />
 		</span>
 	{/if}
 </div>
