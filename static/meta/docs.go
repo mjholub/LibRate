@@ -84,6 +84,103 @@ const docTemplate = `{
                 }
             }
         },
+        "/authenticate/login": {
+            "post": {
+                "description": "Create a session for the user",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth",
+                    "accounts"
+                ],
+                "summary": "Login to the application",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Member name. Request must include either membername or email",
+                        "name": "membername",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email address",
+                        "name": "email",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 2147483647,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Session time in minutes",
+                        "name": "session_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Referrer-Policy header",
+                        "name": "Referrer-Policy",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "X-CSRF-Token header",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseHTTP"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/auth.SessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    }
+                }
+            }
+        },
         "/genre/{kind}/{genre}": {
             "get": {
                 "description": "Retrieve the genre with the given name and type",
@@ -514,6 +611,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "memberName": {
+                    "type": "string",
+                    "example": "lain"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "[A-Za-z0-9]{37}.[A-Za-z0-9]{147}.L-[A-Za-z0-9]{24}_[A-Za-z0-9]{25}-zNjCwGMr-[A-Za-z0-9]{27}"
+                }
+            }
+        },
         "handlers.ResponseHTTP": {
             "type": "object",
             "properties": {

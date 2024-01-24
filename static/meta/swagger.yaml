@@ -1,5 +1,14 @@
 basePath: /api
 definitions:
+  auth.SessionResponse:
+    properties:
+      memberName:
+        example: lain
+        type: string
+      token:
+        example: '[A-Za-z0-9]{37}.[A-Za-z0-9]{147}.L-[A-Za-z0-9]{24}_[A-Za-z0-9]{25}-zNjCwGMr-[A-Za-z0-9]{27}'
+        type: string
+    type: object
   handlers.ResponseHTTP:
     properties:
       data: {}
@@ -325,6 +334,69 @@ paths:
       - media
       - artists
       - bulk operations
+  /authenticate/login:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a session for the user
+      parameters:
+      - description: Member name. Request must include either membername or email
+        in: query
+        name: membername
+        type: string
+      - description: Email address
+        in: query
+        name: email
+        type: string
+      - default: 30
+        description: Session time in minutes
+        in: query
+        maximum: 2147483647
+        minimum: 1
+        name: session_time
+        type: integer
+      - description: Password
+        in: query
+        name: password
+        required: true
+        type: string
+      - description: Referrer-Policy header
+        in: header
+        name: Referrer-Policy
+        type: string
+      - description: X-CSRF-Token header
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.SessionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Login to the application
+      tags:
+      - auth
+      - accounts
   /genre/{kind}/{genre}:
     get:
       consumes:
