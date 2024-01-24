@@ -339,13 +339,13 @@
 					{$_('logout_after')}
 				</label>
 				<select class="session-time" bind:value={sessionTimeMinutes}>
-					<option value="30">30 {$_('minutes')}</option>
-					<option value="60">1 {$_('hour')}</option>
-					<option value="120">2 {$_('hours')}</option>
-					<option value="360">6 {$_('hours')}</option>
-					<option value="720">12 {$_('hours')}</option>
-					<option value="1440">1 {$_('day')}</option>
-					<option value="10080">1 {$_('week')}</option>
+					<option value="30">30 {$_('minutes_locative')}</option>
+					<option value="60">1 {$_('hour_locative')}</option>
+					<option value="120">2 {$_('hours_locative')}</option>
+					<option value="360">6 {$_('hours_locative')}</option>
+					<option value="720">12 {$_('hours_locative')}</option>
+					<option value="1440">1 {$_('day_locative')}</option>
+					<option value="10080">1 {$_('week_locative')}</option>
 					<option value="2147483647">{$_('never')}</option>
 				</select>
 			</span>
