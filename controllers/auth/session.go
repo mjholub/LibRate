@@ -27,7 +27,7 @@ type SessionData struct {
 
 type SessionResponse struct {
 	Token      string `json:"token" example:"[A-Za-z0-9]{37}.[A-Za-z0-9]{147}.L-[A-Za-z0-9]{24}_[A-Za-z0-9]{25}-zNjCwGMr-[A-Za-z0-9]{27}"`
-	MemberName string `json:"memberName" example:"lain"`
+	MemberName string `json:"membername" example:"lain"`
 }
 
 func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Member) error {
@@ -64,6 +64,7 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 	a.log.Debug().Msgf("Creating session with ID: %s", sess.ID())
 	var mu sync.Mutex
 
+	// TODO: add lock acquisition timeout
 	mu.Lock()
 	go sess.Set("member_name", member.MemberName)
 	go sess.Set("session_id", sess.ID())
@@ -72,6 +73,7 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 	go sess.Set("user_agent", string(c.Request().Header.UserAgent()))
 	sessionExpiry := time.Duration(timeout) * time.Minute
 	sess.SetExpiry(sessionExpiry)
+	mu.Unlock()
 
 	signedToken, err := a.createToken(member, &sessionExpiry, sess)
 	if err != nil {
@@ -87,8 +89,6 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 		Value:    sess.ID(),
 	},
 	)
-
-	mu.Unlock()
 
 	if err = sess.Save(); err != nil {
 		a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())

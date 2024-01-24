@@ -72,7 +72,7 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
-func (a *Service) parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
+func parseLoginInput(c *fiber.Ctx, log *zerolog.Logger) (*LoginInput, error) {
 	var input LoginInput
 	var err error
 	if input.Email != "" || input.MemberName != "" {
@@ -80,16 +80,20 @@ func (a *Service) parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
 	}
+	input.Email = c.FormValue("email", "")
+	input.MemberName = c.FormValue("membername", "")
+	input.Password = c.FormValue("password", "")
 	sessionTime := c.FormValue("session_time", "30")
 	sTimeout, err := strconv.Atoi(sessionTime)
 	if err != nil {
-		a.log.Warn().Msgf("Failed to parse session time \"%q\" for user %s (%s): %s. Falling back to the default of 30 minutes",
+		log.Log().Err(err).Msgf("Failed to parse session time %s for member %s (%s): %s",
 			sessionTime, input.MemberName, input.Email, err.Error())
 		input.SessionTime = 30
 	} else {
 		if sTimeout < 0 || sTimeout > 2147483647 {
 			input.SessionTime = 2147483647 // assume the user used -1 as infinite session time, also protects from overflow
 		} else {
+			// nolint:gosec //check for overflow is done above
 			input.SessionTime = int32(sTimeout)
 		}
 	}

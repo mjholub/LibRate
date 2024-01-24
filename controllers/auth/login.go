@@ -33,7 +33,7 @@ import (
 // @Router /authenticate/login [post]
 func (a *Service) Login(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Login request")
-	input, err := a.parseLoginInput(c)
+	input, err := parseLoginInput(c, a.log)
 	if err != nil {
 		a.log.Debug().Msgf("Failed to parse input: %s", err.Error())
 		return h.Res(c, http.StatusBadRequest, "Invalid login request")
