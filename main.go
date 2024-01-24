@@ -27,11 +27,13 @@ import (
 	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
-	_ "codeberg.org/mjh/LibRate/static/meta" // swagger docs
 	_ "net/http/pprof"
+
+	_ "codeberg.org/mjh/LibRate/static/meta" // swagger docs
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/render"
 	"codeberg.org/mjh/LibRate/middleware/session"
 )
 
@@ -123,6 +125,20 @@ func main() {
 		Config: &conf.GRPC,
 	}
 	go cmd.RunGrpcServer(s)
+
+	// Setup templated pages, like privacy policy and TOS
+	go func() {
+		pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to render pages from markdown")
+		}
+		for i := range pages {
+			app.Get("/"+pages[i].Name, func(c *fiber.Ctx) error {
+				c.Set("Content-Type", "text/html")
+				return c.Send(pages[i].Data)
+			})
+		}
+	}()
 
 	// database first-run initialization
 	dbConn, pgConn, err = connectDB(conf)

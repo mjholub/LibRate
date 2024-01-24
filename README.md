@@ -83,14 +83,31 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 ### **Other**
 
 - [x] Extended configurability
-- [ ] Internationalization
+- [x] Internationalization
 - [ ] Events, federating with Mobilizon
 - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
 - [ ] Mobile app (although the frontend is and will be mobile friendly, but also never at the expense of desktop experience. We'll also try to make it work with Fedilab, though the number of distinctive features may make it difficult)
 
+## General administration information
+
+Adjust the configuration file *example_config.yml* to suit your needs. 
+
+The following configuration paths will be automatically checked and not require passing a `-c` flag. These paths can either contain no or a .yml or .yaml extension.
+
+- "./config",
+-     "./config/config",
+-     "/etc/librate/config",
+-     "/var/lib/librate/config",
+-     "/opt/librate/config",
+-     "/usr/local/librate/config",
+-     ~/.local/share/librate/config",
+-     ~/.config/librate/config"
+
+Then make the necessary adjustments to the privacy policy and Terms of Service, located in _static/templates/examples_ and move them one directory up. If your instance is country-specific, you can add another file with your prospective users' main language code as a suffix to that directory. Preserve the English TOS as without modifications to the frontend code, the app will not have a fallback to use.
+
 ## Deploying with Docker
 
-You can use compose or 
+You can use compose. Just remember to execute the commands from step 5.
 
 1. Create a Docker network with
 
@@ -153,17 +170,6 @@ and use that to handle the config, run the binary and store the
 All you need to do is [generate an age X25519 identity](https://github.com/FiloSottile/age)
 and then [encrypt the config file](https://github.com/getsops/sops#22encrypting-using-age)
 with SOPS. Don't forget to pass the `-c` flag if you decide to save the encrypted file under a new path.
-
-The following config paths will be automatically checked and not require passing a `-c` flag. These paths can either contain no or a .yml or .yaml extension.
-
-- "./config",
--     "./config/config",
--     "/etc/librate/config",
--     "/var/lib/librate/config",
--     "/opt/librate/config",
--     "/usr/local/librate/config",
--     ~/.local/share/librate/config",
--     ~/.config/librate/config"
 
 # IMPORTANT: Updating the app and instance administration
 
