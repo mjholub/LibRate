@@ -2,6 +2,7 @@
 	import axios from 'axios';
 	import { onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+	import { _ } from 'svelte-i18n';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import { PasswordMeter } from 'password-meter';
@@ -382,11 +383,11 @@
 	<!-- End of input container -->
 	<div class="button-container">
 		{#if !isRegistration}
-			<button type="submit" on:click={login}>Sign In</button>
-			<button type="button" on:click={startRegistration}>Sign Up</button>
+			<button type="submit" on:click={login}>{$_('sign_in')}</button>
+			<button type="button" on:click={startRegistration}>{$_('sign_up')}</button>
 		{:else}
-			<button type="button" on:click={() => (isRegistration = false)}>Sign In</button>
-			<button type="submit" on:click={register}>Sign Up</button>
+			<button type="button" on:click={() => (isRegistration = false)}>{$_('sign_in')}</button>
+			<button type="submit" on:click={register}>{$_('sign_up')}</button>
 		{/if}
 	</div>
 </form>
