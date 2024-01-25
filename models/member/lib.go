@@ -97,6 +97,7 @@ type (
 		HasRole(ctx context.Context, name, role string, exact bool) bool
 		Ban(ctx context.Context, member *Member, input *BanInput) error
 		Unban(ctx context.Context, member *Member) error
+		VerifyViewability(ctx context.Context, viewer, viewee string) (bool, error)
 		// Check checks if a member with the given email or nickname already exists
 		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error

@@ -158,9 +158,12 @@ func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...st
 		keyNames = []string{"email", "nick"}
 	}
 	keyNames = db.Sanitize(keyNames)
-
-	query := fmt.Sprintf(
-		"SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
+	var query string
+	if len(keyNames) == 2 {
+		query = fmt.Sprintf("SELECT * FROM members WHERE %s = $1 OR %s = $1 LIMIT 1", keyNames[0], keyNames[1])
+	} else {
+		query = fmt.Sprintf("SELECT * FROM members WHERE %s = $1 LIMIT 1", keyNames[0])
+	}
 	member := &Member{}
 	st, err := s.client.PreparexContext(ctx, query)
 	if err != nil {
@@ -174,6 +177,50 @@ func (s *PgMemberStorage) Read(ctx context.Context, value string, keyNames ...st
 	}
 
 	return member, nil
+}
+
+func (s *PgMemberStorage) VerifyViewability(ctx context.Context, viewer, viewee string) (bool, error) {
+	select {
+	case <-ctx.Done():
+		return false, ctx.Err()
+	default:
+		var visibility string
+		var canView bool
+		viewer = db.Sanitize([]string{viewer})[0]
+		viewee = db.Sanitize([]string{viewee})[0]
+		err := s.newClient.QueryRow(ctx, `SELECT visibility FROM members WHERE nick = $1`, viewee).Scan(&visibility)
+		if err != nil {
+			return false, fmt.Errorf("failed to get visibility: %v", err)
+		}
+		if viewer == "" {
+			if visibility == "public" {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		}
+		if viewer == viewee {
+			return true, nil
+		}
+		switch visibility {
+		case "public":
+			return true, nil
+		case "private":
+			return false, nil
+		case "followers_only":
+			// compare based on the webfinger junction table
+			err = s.newClient.QueryRow(ctx, `SELECT EXISTS(
+		SELECT 1 FROM public.followers WHERE
+	follower = $1 AND followee = $2
+) AS is_follower`).Scan(&canView, viewer, viewee)
+			if err != nil {
+				return false, fmt.Errorf("failed to check if viewer is a follower: %v", err)
+			}
+			return canView, nil
+		default:
+			return false, fmt.Errorf("invalid visibility: %s", visibility)
+		}
+	}
 }
 
 // GetID retrieves the ID required for JWT on the basis of one of the credentials,

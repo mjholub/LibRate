@@ -94,8 +94,6 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/activity+json")
 		return h.ResData(c, fiber.StatusOK, "success", actor)
 	}
-	// TODO: check if the requester is a follower when
-	// member.Visibility == "followers_only"
 	var followStatus bool
 	if member.Visibility == "followers_only" {
 		followStatus, err = requester.IsFollowing(ctx, member.ID)
@@ -151,4 +149,38 @@ func (mc *MemberController) GetID(c *fiber.Ctx) error {
 	mc.log.Info().Msgf("Member: %+v", member)
 
 	return h.ResData(c, fiber.StatusOK, "success", member)
+}
+
+// @Summary Verify if user A can see user B's metadata
+// @Description Retrieve the visibility of a member
+// @Tags accounts,interactions,metadata,privacy
+// @Param viewee path string true "The nickname or email of the member to get"
+// @Param Authorization header string false "The requester's JWT"
+// @Accept json
+// @Success 200 {object} h.ResponseHTTP{data=bool}
+// @Failure 400 {object} h.ResponseHTTP{} "Note that we don't return a 401 but just a 'false' response"
+// @Failure 404 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /members/{viewee}/visibility [get]
+func (mc *MemberController) GetVisibility(c *fiber.Ctx) error {
+	viewee := c.Params("viewee")
+	if c.Request().Header.Peek("Authorization") == nil {
+		// check if account is public
+		if viewee == "" {
+			return h.Res(c, fiber.StatusBadRequest, "No nickname or email provided")
+		}
+		canView, err := mc.storage.VerifyViewability(c.Context(), "", viewee)
+		if err != nil {
+			mc.log.Log().Err(err).Msgf("Error verifying viewability of member \"%s\": %v", viewee, err)
+			return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+		}
+		return h.ResData(c, fiber.StatusOK, "success", canView)
+	}
+	viewer := c.Params("viewer")
+	canView, err := mc.storage.VerifyViewability(c.Context(), viewee, viewer)
+	if err != nil {
+		mc.log.Log().Err(err).Msgf("Error verifying viewability of member \"%s\": %v", viewee, err)
+		return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+	}
+	return h.ResData(c, fiber.StatusOK, "success", canView)
 }

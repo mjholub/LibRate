@@ -13,6 +13,7 @@
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	export let member: Member;
+	export let showLogout: boolean = true;
 	function splitNullable(input: NullableString, separator: string): string[] {
 		if (input.Valid) {
 			return input.String.split(separator);
@@ -280,7 +281,9 @@
 		<p><b>Homepage:</b> <a href={member.homepage.String}>{member.homepage}</a></p>
 	{/if}
 </div>
-<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
+{#if showLogout}
+	<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
+{/if}
 {#if showModal}
 	<div class="modal">
 		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />

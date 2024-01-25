@@ -25,6 +25,7 @@ export const memberInfo: Member = {
 
 interface MemberStore extends Writable<Member> {
   getMember: (jwtToken: string, email_or_username: string) => Promise<Member>;
+  verifyViewablity: (jwtToken: string, viewer: string, viewee: string) => Promise<boolean>;
 }
 
 function createMemberStore(): MemberStore {
@@ -46,6 +47,22 @@ function createMemberStore(): MemberStore {
       const member: Member = res.data.data;
       console.debug('member data retrieved from API: ', member);
       return member;
+    },
+    verifyViewablity: async (jwtToken: string, viewer: string, viewee: string) => {
+      return new Promise<boolean>(async (resolve, reject) => {
+        await axios.get(`/api/members/${viewee}/visibility`, {
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`
+          },
+          params: {
+            viewer: viewer
+          }
+        }).then(res => {
+          resolve(res.data.data);
+        }).catch(err => {
+          reject(err);
+        });
+      });
     },
   };
 }
