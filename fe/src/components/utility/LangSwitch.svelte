@@ -10,7 +10,7 @@
 	onMount(async () => {
 		let count = 0;
 		while (isLoading) {
-			if (count > 20) {
+			if (count > 25) {
 				console.error('locales failed to load');
 				break;
 			}

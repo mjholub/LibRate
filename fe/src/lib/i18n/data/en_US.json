@@ -25,9 +25,12 @@
   "nickname": "Nickname",
   "nickname_available": "Nickname is available",
   "nickname_not_available": "Nickname is not available",
+  "email_available:": "E-mail address available",
+  "email_not_available": "E-mail address already in use",
   "try": "Try",
   "another_instance": "another instance",
   "or": "or",
+  "and": "and",
   "recover_account": "Recover your account",
   "discover": "Discover",
   "music": "Music",
@@ -40,6 +43,10 @@
   "search_placeholder": "Enter search keywords...",
   "log_in_first": "Log in first",
   "settings": "Settings",
+  "privacy_policy_instrumental": "Privacy policy",
   "privacy_policy": "Privacy policy",
-  "tos": "Terms of service"
+  "tos": "Terms of service",
+  "tos_instrumental": "Terms of service",
+  "tos_privacy_ack": "I have read and agree to",
+  "help_translate": "Translate this project"
 }

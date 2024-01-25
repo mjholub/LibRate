@@ -2,7 +2,7 @@
 	import axios from 'axios';
 	import { onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
-	import { _ } from 'svelte-i18n';
+	import { _, locale } from 'svelte-i18n';
 	import { authStore } from '../../stores/members/auth.ts';
 	import PasswordInput from './PasswordInput.svelte';
 	import { PasswordMeter } from 'password-meter';
@@ -127,6 +127,8 @@
 			checkEntropy(password);
 		}
 	}
+	$: tos_url = `/tos_${$locale}.html`;
+	$: privacy_url = `/privacy_${$locale}.html`;
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -273,19 +275,18 @@
 			/>
 			{#if email.length > 0}
 				{#if isEmailAvailable && email_input.validity.valid}
-					<p>Email is available</p>
+					<p>{$_('email_available')}.</p>
 				{:else if !email.match(/(\w+)@(\w+)\.(\w+)/)}
 					<span class="spinner" />
 				{:else}
 					<p class="error-message">
-						Email is not available. Try <a href="https://librate.fediverse.observer/"
-							>another instance</a
-						>
-						or <a href="/form/account/recover">recover your password</a>
+						{$_('email_not_available')}. {$_('try')}
+						<a href="https://librate.fediverse.observer/">{$_('another_instance')}</a>
+						or <a href="/form/account/recover">{$_('recover_account')}</a>
 					</p>
 				{/if}
 			{/if}
-			<label for="nickname">Nickname:</label>
+			<label for="nickname">{$_('nickname')}:</label>
 			<input
 				type="text"
 				bind:this={nickname_input}
@@ -297,12 +298,12 @@
 			/>
 			{#if nickname.length > 0}
 				{#if isNickAvailable}
-					<p class="info-message">Nickname available</p>
+					<p class="info-message">{$_('nickname_available')}</p>
 				{:else}
 					<p class="error-message">
-						Nickname not available. Try
-						<a href="https://librate.fediverse.observer/">another instance</a>
-						or <a href="/form/account/recover">recover your account</a>
+						{$_('nickname_not_available')}. {$_('try')}
+						<a href="https://librate.fediverse.observer/">{$_('another_instance')}</a>
+						{$_('or')}<a href="/form/account/recover">{$_('recover_account')}</a>
 					</p>
 				{/if}
 			{/if}
@@ -317,7 +318,7 @@
 				{toggleObfuscation}
 			/>
 		{:else}
-			<label for="email_or_username">Email or Username:</label>
+			<label for="email_or_username">{$_('email_or_username')}:</label>
 			<input
 				type="text"
 				id="email_or_username"
@@ -326,7 +327,7 @@
 				class="input"
 			/>
 
-			<label for="password">Password:</label>
+			<label for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -352,7 +353,7 @@
 		{/if}
 
 		{#if isRegistration}
-			<label for="password">Confirm Password:</label>
+			<label for="password">{$_('confirm')} {$_('password')}:</label>
 			<PasswordInput
 				id="password"
 				bind:value={passwordConfirm}
@@ -363,16 +364,26 @@
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
 				<p>
-					Password strength: {passwordStrength} of (<a
+					{$_('password')}
+					{$_('strength')}: {passwordStrength} of (<a
 						href="https://www.omnicalculator.com/other/password-entropy">entropy</a
-					>), required: 50
+					>), {$_('required')}: 50
 				</p>
 			{:else}
-				<p>Password strength: {passwordStrength}</p>
+				<p>
+					{$_('password')}
+					{$_('strength')}: {passwordStrength}
+				</p>
 			{/if}
-			{#if errorMessage}
-				<p><span class="error-icon" /><span class="error-message">{errorMessage}</span></p>
-			{/if}
+
+			<div class="tos_privacy_ack">
+				<input type="checkbox" id="tos_privacy_ack" required />
+				<label for="tos_privacy_ack" id="tos_privacy_ack_label">
+					{$_('tos_privacy_ack')}
+					<a href={privacy_url} target="_blank">{$_('privacy_policy_instrumental')}</a>
+					{$_('and')} <a href={tos_url} target="_blank">{$_('tos_instrumental')}</a>
+				</label>
+			</div>
 		{/if}
 
 		{#if errorMessage}
@@ -490,6 +501,17 @@
 
 	.tooltip:hover::before {
 		display: block;
+	}
+
+	.tos_privacy_ack {
+		display: inline-flex;
+		font-size: 80%;
+		float: inline-start;
+		align-items: center;
+	}
+
+	#tos_privacy_ack_label {
+		margin-left: 2%;
 	}
 
 	.spinner {
