@@ -40,7 +40,7 @@ type (
 	Service struct {
 		conf *cfg.Config
 		log  *zerolog.Logger
-		ms   member.MemberStorer
+		ms   member.Storer
 		sess *session.Store
 	}
 
@@ -60,7 +60,7 @@ type (
 // where the db connection and config are passed from the main package
 func NewService(
 	conf *cfg.Config,
-	ms member.MemberStorer,
+	ms member.Storer,
 	log *zerolog.Logger,
 	sess *session.Store,
 ) *Service {

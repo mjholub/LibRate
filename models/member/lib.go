@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -72,25 +73,43 @@ type (
 		Password   string `json:"password"`
 	}
 
-	MemberStorer interface {
+	// BanInput is used to ban a member
+	BanInput struct {
+		Reason    string    `json:"reason" db:"reason" validate:"required" example:"spam"`
+		Ends      time.Time `json:"ends" db:"ends" validate:"required" example:"2038-01-16T00:00:00Z"`
+		CanAppeal bool      `json:"canAppeal" db:"can_appeal" validate:"required" example:"true"`
+		// usage: https://pkg.go.dev/net#ParseCIDR
+		Mask *net.IPNet `json:"mask" db:"mask"`
+	}
+
+	// BanStatus is used to retrieve the ban details
+	BanStatus struct {
+		BanInput
+		MemberUUID uuid.UUID `json:"memberUUID" db:"member_uuid"`
+		// Occurrence is the n-th time a ban has been issued
+		Occurrence int16     `json:"occurrence" db:"occurrence"`
+		Started    time.Time `json:"started" db:"started"`
+	}
+
+	Storer interface {
 		Save(ctx context.Context, member *Member) error
 		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
+		HasRole(ctx context.Context, name, role string, exact bool) bool
+		Ban(ctx context.Context, member *Member, input *BanInput) error
+		Unban(ctx context.Context, member *Member) error
 		// Check checks if a member with the given email or nickname already exists
 		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error
 		Delete(ctx context.Context, member *Member) error
 		GetID(ctx context.Context, key string) (int, error)
 		GetPassHash(email, login string) (string, error)
-		// GetSessionTimeout retrieves the preferred timeout until the session expires,
-		// represented as number of seconds
-		GetSessionTimeout(ctx context.Context, memberID int, deviceID uuid.UUID) (timeout int, err error)
-		LookupDevice(ctx context.Context, deviceID uuid.UUID) error
 		CreateSession(ctx context.Context, member *Member) (string, error)
 		RequestFollow(ctx context.Context, fr *FollowRequest) error
 	}
 
 	PgMemberStorage struct {
 		client        *sqlx.DB
+		newClient     *pgxpool.Pool
 		log           *zerolog.Logger
 		config        *cfg.Config
 		nicknameCache []string
@@ -98,6 +117,6 @@ type (
 	}
 )
 
-func NewSQLStorage(client *sqlx.DB, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
-	return &PgMemberStorage{client: client, log: log, config: conf}
+func NewSQLStorage(client *sqlx.DB, newClient *pgxpool.Pool, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
+	return &PgMemberStorage{client: client, newClient: newClient, log: log, config: conf}
 }

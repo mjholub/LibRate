@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
 
@@ -242,17 +243,6 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowRequest) 
 	}
 }
 
-// TODO: implement
-func (s *PgMemberStorage) GetSessionTimeout(
-	ctx context.Context, memberID int, deviceID uuid.UUID,
-) (timeout int, err error) {
-	return 0, fmt.Errorf("GetSessionTimeout not implemented yet")
-}
-
-func (s *PgMemberStorage) LookupDevice(ctx context.Context, deviceID uuid.UUID) error {
-	return fmt.Errorf("LookupDevice not implemented yet")
-}
-
 // Check checks if a member with the given email or nickname already exists
 func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool, error) {
 	defer func() {
@@ -277,5 +267,81 @@ func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool
 			return false, err
 		}
 		return true, nil
+	}
+}
+
+func (s *PgMemberStorage) Ban(ctx context.Context, member *Member, input *BanInput) (err error) {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+			AccessMode:     pgx.ReadWrite,
+			DeferrableMode: pgx.NotDeferrable,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %v", err)
+		}
+		defer func() {
+			if e := tx.Rollback(ctx); e != nil {
+				if rb := tx.Rollback(ctx); rb != nil {
+					err = fmt.Errorf("failed to rollback transaction: %v", rb)
+				} else {
+					err = fmt.Errorf("transaction rolled bact: %v", err)
+				}
+			}
+		}()
+
+		// occurrence and start time are set by the database
+		_, err = tx.Prepare(ctx, "ban", `
+			INSERT INTO bans (member_uuid, reason, ends, can_appeal, mask)
+			VALUES ($1, $2, $3, $4, $5)`)
+		if err != nil {
+			return fmt.Errorf("failed to prepare statement: %v", err)
+		}
+
+		_, err = tx.Exec(ctx, "ban", member.UUID, input.Reason, input.Ends, input.CanAppeal, input.Mask)
+		if err != nil {
+			return fmt.Errorf("failed to execute statement: %v", err)
+		}
+
+		return tx.Commit(ctx)
+
+	}
+}
+
+func (s *PgMemberStorage) Unban(ctx context.Context, member *Member) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		_, err := uuid.Parse(member.UUID.String())
+		if err != nil {
+			return fmt.Errorf("invalid UUID: %v", member.UUID)
+		}
+		_, err = s.client.ExecContext(ctx, `DELETE FROM bans WHERE member_uuid = $1`, member.UUID)
+		if err != nil {
+			return fmt.Errorf("failed to delete ban: %v", err)
+		}
+		return nil
+	}
+}
+
+// if exact is true, the role must match exactly
+// otherwise we can match moderators with admins on tasks that can be performed by both
+func (s *PgMemberStorage) HasRole(ctx context.Context, name, role string, exact bool) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	default:
+		var roles pq.StringArray
+		err := s.newClient.QueryRow(ctx, `SELECT roles FROM members WHERE nick = $1`, name).Scan(&roles)
+		if err != nil {
+			return false
+		}
+		if lo.Contains(roles, "mod") && !exact {
+			return true
+		}
+		return lo.Contains(roles, role)
 	}
 }

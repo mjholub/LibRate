@@ -24,7 +24,7 @@ type (
 
 	// MemberController is the controller for member endpoints
 	MemberController struct {
-		storage member.MemberStorer
+		storage member.Storer
 		log     *zerolog.Logger
 		conf    *cfg.Config
 		images  *static.Storage
@@ -32,7 +32,7 @@ type (
 )
 
 func NewController(
-	storage member.MemberStorer,
+	storage member.Storer,
 	db *sqlx.DB,
 	logger *zerolog.Logger,
 	conf *cfg.Config,

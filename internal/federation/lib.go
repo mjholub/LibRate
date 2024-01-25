@@ -20,7 +20,7 @@ type FedHandler interface {
 type FedController struct {
 	log     zerolog.Logger
 	storage *sqlx.DB
-	members member.MemberStorer
+	members member.Storer
 }
 
 // NewFedController returns a new FedController

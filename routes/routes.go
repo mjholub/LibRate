@@ -56,13 +56,13 @@ func Setup(
 	}))
 
 	var (
-		mStor     member.MemberStorer
+		mStor     member.Storer
 		mediaStor *models.MediaStorage
 	)
 
 	switch conf.Engine {
 	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(dbConn, logger, conf)
+		mStor = member.NewSQLStorage(dbConn, newDBConn, logger, conf)
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
@@ -82,6 +82,8 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
+	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
+	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	setupMedia(api, mediaStor, conf)
@@ -137,7 +139,7 @@ func setupAuth(
 	sess *session.Store,
 	logger *zerolog.Logger,
 	conf *cfg.Config,
-	mStor member.MemberStorer,
+	mStor member.Storer,
 ) {
 	authSvc := auth.NewService(conf, mStor, logger, sess)
 
