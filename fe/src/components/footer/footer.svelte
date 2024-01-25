@@ -17,6 +17,7 @@
 		Licensed under the <link rel="license" href="https://gnu.org/licenses/agpl-3.0.html" />AGPL-3.0
 	</p>
 	<p><a href={tos_url}>{$_('tos')}</a> | <a href={privacy_url}>{$_('privacy_policy')}</a></p>
+	<p><a href="https://translate.codeberg.org/projects/librate/">{$_('help_translate')}</a></p>
 </footer>
 
 <style>
