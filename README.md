@@ -2,7 +2,8 @@
 [![weblate badge](https://translate.codeberg.org/widget/librate/frontend-messages/svg-badge.svg?native=1
 )](https://translate.codeberg.org/projects/librate/)
 [![GoDoc](https://godoc.org/codeberg.org/mjh/LibRate?status.svg)](https://pkg.go.dev/codeberg.org/mjh/LibRate)
-![Matrix](https://img.shields.io/matrix/librate-dev%3Amatrix.org)
+![Matrix](https://img.shields.io/matrix/libratedev:matrix.org)
+![Depfu](https://img.shields.io/depfu/dependencies/github/mjholub%2FLibRate)
 
 This project aims to bring a website combining the functionality of such projects as Bookwyrm, RateYourMusic/Sonemic, IMDB and similar to the #fediverse.
 
