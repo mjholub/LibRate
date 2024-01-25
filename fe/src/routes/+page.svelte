@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
+	import { _ } from 'svelte-i18n';
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
 	import Auth from '$components/form/Auth.svelte';
 	import Header from '$components/header/Header.svelte';
@@ -120,13 +121,13 @@
 		</div>
 		<div class="center">
 			<div class="feed">
-				<h2>Reviews feed</h2>
+				<h2>{$_('reviews_feed')}</h2>
 				{#if reviews.length > 0}
 					{#each reviews as review}
 						<ReviewCard {review} />
 					{/each}
 				{:else}
-					<p>No reviews found</p>
+					<p>{$_('no_reviews_found')}</p>
 				{/if}
 			</div>
 		</div>

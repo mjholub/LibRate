@@ -25,9 +25,12 @@
   "nickname": "Nazwa użytkownika",
   "nickname_available": "Nazwa użytkownika jest dostępna",
   "nickname_not_available": "Nazwa użytkownika jest zajęta",
+  "email_available:": "Adres email jest dostępny",
+  "email_not_available": "Adres email jest zajęty",
   "try": "Spróbuj",
   "another_instance": "użyć innej instancji",
   "or": "lub",
+  "and": "i",
   "recover_acconut": "Przejdź do odzyskiwania konta",
   "discover": "Odkrywaj",
   "music": "Muzyka",
@@ -40,6 +43,9 @@
   "search_placeholder": "Wpisz szukaną frazę...",
   "log_in_first": "Najpierw zaloguj się",
   "settings": "Ustawienia",
+  "privacy_policy_instrumental": "Polityką prywatności",
+  "tos_instrumental": "Regulaminem",
   "privacy_policy": "Polityka prywatności",
-  "tos": "Regulamin"
+  "tos": "Regulamin",
+  "tos_privacy_ack": "Potwierdzam zapoznanie się z"
 }

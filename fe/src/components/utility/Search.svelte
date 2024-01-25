@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import axios from 'axios';
+	import { _ } from 'svelte-i18n';
 	import type { SearchItem } from '$lib/types/search.ts';
 	import { SearchIcon } from 'svelte-feather-icons';
 
@@ -46,7 +47,7 @@
 		type="text"
 		class="search-input"
 		bind:value={search}
-		placeholder="Enter search keywords..."
+		placeholder={$_('search_placeholder')}
 		on:input={searchItems}
 		on:keydown={(e) => {
 			if (e.key === 'Enter') {
