@@ -302,8 +302,8 @@
 		--icon-color: #ffcbcc;
 		--button-bg: #60605190;
 		--button-radius: 20%;
-		--change-profile-pic-btn-right: 3.1rem;
-		--change-profile-pic-btn-top: -4rem;
+		--change-profile-pic-btn-right: -60%;
+		--change-profile-pic-btn-top: -2.5rem;
 		--expand-image-btn-right: 1.15rem;
 		--expand-image-btn-bottom: 0.65rem;
 	}

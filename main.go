@@ -29,8 +29,11 @@ import (
 
 	_ "net/http/pprof"
 
+	_ "codeberg.org/mjh/LibRate/static/meta" // swagger docs
+
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/render"
 	"codeberg.org/mjh/LibRate/middleware/session"
 )
 
@@ -49,6 +52,17 @@ type FlagArgs struct {
 	SkipErrors string
 }
 
+// @title LibRate
+// @version dev
+// @description API for LibRate, a social media cataloguing and reviewing service
+
+// @contact.name MJH
+// @contact.email TODO@flagship.instance
+
+// @license.name GNU Affero General Public License v3
+// @license.url https://www.gnu.org/licenses/agpl-3.0.html
+
+// @BasePath /api
 func main() {
 	flags := parseFlags()
 	// first, start logging with some opinionated defaults, just for the config loading phase
@@ -101,6 +115,7 @@ func main() {
 		}
 		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
 	}
+	log.Debug().Msgf("Config: %+v", conf)
 
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)
@@ -110,6 +125,20 @@ func main() {
 		Config: &conf.GRPC,
 	}
 	go cmd.RunGrpcServer(s)
+
+	// Setup templated pages, like privacy policy and TOS
+	go func() {
+		pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to render pages from markdown")
+		}
+		for i := range pages {
+			app.Get("/"+pages[i].Name, func(c *fiber.Ctx) error {
+				c.Set("Content-Type", "text/html")
+				return c.Send(pages[i].Data)
+			})
+		}
+	}()
 
 	// database first-run initialization
 	dbConn, pgConn, err = connectDB(conf)

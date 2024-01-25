@@ -84,7 +84,7 @@
 		border: none;
 		border-radius: 4px;
 		width: inherit;
-		display: inline-block;
+		display: grid;
 		position: relative;
 	}
 
@@ -109,17 +109,14 @@
 		-moz-osx-font-smoothing: grayscale;
 		font-feature-settings: 'liga';
 	}
-	.hidden {
-		display: none;
-	}
 
 	.toggle-btn {
-		position: relative;
-		right: 0.6rem;
-		top: 30%;
+		position: abosolute !important;
+		right: 0.75rem;
+		top: 50%;
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		display: ruby-text-container;
+		display: inline-grid;
 	}
 </style>

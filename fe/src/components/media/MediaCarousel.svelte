@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { _ } from 'svelte-i18n';
 	import { randomStore } from '$stores/media/getRandom.ts';
 	import { mediaImageStore } from '$stores/media/image.ts';
 	import { formatDuration } from '$stores/time/duration.ts';
@@ -285,7 +286,7 @@
 </script>
 
 <div class="carousel-container">
-	<div class="carousel-title">Randomly selected media:</div>
+	<div class="carousel-title">{$_('random_media')}:</div>
 	<div class="carousel">
 		{#if $randomStore.isLoading}
 			<div>Loading...</div>
@@ -336,6 +337,8 @@
 	}
 	.carousel {
 		display: flex;
+		position: relative;
+		z-index: -2;
 		overflow-x: scroll;
 	}
 	.media-card-wrapper {

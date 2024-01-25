@@ -44,6 +44,16 @@ func (mc *MemberController) Check(c *fiber.Ctx) error {
 	return h.Res(c, fiber.StatusOK, "available")
 }
 
+// @Summary Get a member (user) by nickname or email
+// @Description Retrieve the information the requester is allowed to see about a member
+// @Tags accounts,interactions,metadata
+// @Param email_or_username path string true "The nickname or email of the member to get"
+// @Accept json application/activity+json
+// @Success 200 {object} h.ResponseHTTP{data=member.Member}
+// @Failure 401 {object} h.ResponseHTTP{} "When certain access prerequisites are not met, e.g. a follower's only-visible metadata is requested"
+// @Failure 404 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /members/{email_or_username}/info [get]
 func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	// TODO:
 	// 1. compare the requester's public key with the private key in the database

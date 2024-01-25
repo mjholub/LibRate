@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	"codeberg.org/mjh/LibRate/internal/lib/thumbnailer"
 	"codeberg.org/mjh/LibRate/internal/logging"
 )
 
@@ -55,17 +56,29 @@ type RedisConfig struct {
 
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
-	Host           string `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
-	Domain         string `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
-	Port           int    `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
-	Prefork        bool   `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
-	ReduceMemUsage bool   `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
-	StaticDir      string `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
-	PowInterval    int    `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
-	PowDifficulty  int    `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
-	RequestTimeout int    `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
-	TLS            bool   `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
-	MaxUploadSize  int64  `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_SIZE"`
+	Host           string          `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
+	Domain         string          `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
+	Port           int             `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
+	Prefork        bool            `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
+	ReduceMemUsage bool            `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
+	StaticDir      string          `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
+	PowInterval    int             `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
+	PowDifficulty  int             `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
+	RequestTimeout int             `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
+	TLS            bool            `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
+	MaxUploadSize  int64           `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_SIZE"`
+	Thumbnailing   ThumbnailConfig `yaml:"thumbnailing" default:"{namespaces: [{name: album_cover, size: {Width: 500, Height: 500}}]"`
+}
+
+// FIXME: currently this cannot be reliably configured via environment variables
+type ThumbnailConfig struct {
+	// Target namespaces can be grouped together or defined individually
+	TargetNS []ThumbnailerNamespace `yaml:"namespaces" default:"[{names: {album_cover, film_poster} size: {Width: 500, Height: 500}}]"`
+}
+
+type ThumbnailerNamespace struct {
+	Names   []string         `yaml:"names" validate:"required,oneof='album_cover' 'film_poster' 'profile' 'all'"`
+	MaxSize thumbnailer.Dims `yaml:"size" default:"{Width: 500, Height: 500}"`
 }
 
 // KeysConfig defines the location of keys used for TLS

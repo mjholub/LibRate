@@ -20,18 +20,24 @@ type (
 		GetID() int
 	}
 
+	GroupedArtists struct {
+		Individual []Person `json:"individual,omitempty" db:"individual"`
+		Group      []Group  `json:"group,omitempty" db:"group"`
+	}
+
 	Person struct {
-		ID         uuid.UUID      `json:"id,omitempty" db:"id,pk,unique"`
-		FirstName  string         `json:"first_name" db:"first_name"`
-		OtherNames pq.StringArray `json:"other_names,omitempty" db:"other_names"`
-		LastName   string         `json:"last_name" db:"last_name"`
-		NickNames  pq.StringArray `json:"nick_names,omitempty" db:"nick_names"`
+		ID         uuid.UUID      `json:"id,omitempty" db:"id,pk,unique" swaggertype:"string" example:"12345678-90ab-cdef-9876-543210fedcba"`
+		Name       string         `json:"name,omitempty" db:"-"` // helper field for complete name
+		FirstName  string         `json:"first_name" db:"first_name" example:"Karol"`
+		OtherNames pq.StringArray `json:"other_names,omitempty" db:"other_names" example:"['Jan Paweł II']"`
+		LastName   string         `json:"last_name" db:"last_name" example:"Wojtyła"`
+		NickNames  pq.StringArray `json:"nick_names,omitempty" db:"nick_names" example:"['pawlacz', 'jan pawulon']"`
 		Roles      pq.StringArray `json:"roles,omitempty" db:"roles"`
 		Works      []*uuid.UUID   `json:"works,omitempty" db:"works"`
 		Birth      sql.NullTime   `json:"birth,omitempty" db:"birth"` // DOB can also be unknown
-		Death      sql.NullTime   `json:"death,omitempty" db:"death"`
-		Website    sql.NullString `json:"website,omitempty" db:"website"`
-		Bio        sql.NullString `json:"bio,omitempty" db:"bio"`
+		Death      sql.NullTime   `json:"death,omitempty" db:"death" example:"2005-04-02T21:37:00Z"`
+		Website    sql.NullString `json:"website,omitempty" db:"website" example:"https://www.vatican.va/content/john-paul-ii/en.html"`
+		Bio        sql.NullString `json:"bio,omitempty" db:"bio" example:"wojtyła disco dance"`
 		Photos     pq.StringArray `json:"photos,omitempty" db:"photos"`
 		Hometown   Place          `json:"hometown,omitempty" db:"hometown"`
 		Residence  Place          `json:"residence,omitempty" db:"residence"`

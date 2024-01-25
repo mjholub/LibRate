@@ -3,6 +3,7 @@ package auth
 import (
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -28,10 +29,10 @@ type (
 
 	// LoginInput is the input for the login request
 	LoginInput struct {
-		Email      string `json:"email,omitempty"`
-		MemberName string `json:"membername,omitempty"`
-		Password   string `json:"password"`
-		RememberMe bool   `json:"remember_me"`
+		Email       string `json:"email,omitempty"`
+		MemberName  string `json:"membername,omitempty"`
+		Password    string `json:"password"`
+		SessionTime int32  `json:"session_time" default:"30"` // in minutes. Setting to 2^31-1 is used to keep user signed in
 	}
 
 	// Service allows dependency injection for the controller methods,
@@ -71,17 +72,31 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
-func parseLoginInput(c *fiber.Ctx) (*LoginInput, error) {
+func parseLoginInput(c *fiber.Ctx, log *zerolog.Logger) (*LoginInput, error) {
 	var input LoginInput
+	var err error
 	if input.Email != "" || input.MemberName != "" {
 		if !isEmail(input.Email) {
 			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
 		}
 	}
-	if c.FormValue("remember_me") != "true" && c.FormValue("remember_me") != "false" {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid remember_me value")
+	input.Email = c.FormValue("email", "")
+	input.MemberName = c.FormValue("membername", "")
+	input.Password = c.FormValue("password", "")
+	sessionTime := c.FormValue("session_time", "30")
+	sTimeout, err := strconv.Atoi(sessionTime)
+	if err != nil {
+		log.Log().Err(err).Msgf("Failed to parse session time %s for member %s (%s): %s",
+			sessionTime, input.MemberName, input.Email, err.Error())
+		input.SessionTime = 30
+	} else {
+		if sTimeout < 0 || sTimeout > 2147483647 {
+			input.SessionTime = 2147483647 // assume the user used -1 as infinite session time, also protects from overflow
+		} else {
+			// nolint:gosec //check for overflow is done above
+			input.SessionTime = int32(sTimeout)
+		}
 	}
-	err := c.BodyParser(&input)
 	if err != nil {
 		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
 	}

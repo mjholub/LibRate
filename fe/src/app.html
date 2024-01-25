@@ -10,7 +10,76 @@
 </head>
 
 <body data-sveltekit-preload-data="hover">
+  <noscript data-sveltekit-preload-data="false">
+    <div>
+      <p>Sadly we currently do not have a frontend that works without Javascript.</p>
+      <p>You can however use our <a href="/docs/index.html">API</a> to interact with the backend (and thus also use it to build a native app!).</p>
+      <p>Problem visiting the API documentation? <a href="static/meta/swagger.json">click here</a> to download the OpenAPI specification.</p>
+      <p>PS: If you've picked a "cloudflared" instance, please accept <a href="https://git.kescher.at/dCF/deCloudflare">my condolences</a> and move to another one instead</p>
+      <p>of dealing with curl-impersonate/puppeteer trickery (also how did you even get here without JS ｢(･ิ.･ิ)?)</p>
+      <p>At least good for you the bastard operator didn't remove this line.</p>
+      <details>
+      <summary>日本語</summary>
+      <p>遗憾的是，我们目前还没有不使用 Javascript 的前台，但我们正在努力！</p>
+      <p>但是您可以使用我们的  <a href="/docs/index.html">API</a> 与后端交互。</p>
+      <p>查看 API 文档时遇到问题？ <a href="static/meta/swagger.json">单击此处</a>下载 OpenAPI 规范。</p>
+      </details>
+      <details>
+      <summary>Deutsch</summary>
+      <p>Leider haben wir derzeit kein Frontend, das ohne JavaScript nutzbar ist, aber wir arbeiten daran!</p>
+      <p>Sie können jedoch unsere <a href="/docs/index.html">API</a> verwenden, um das Backend zu verwenden.</p>
+      <p>Probleme beim Zugriff auf die API-Dokumentation? <a href="static/meta/swagger.json">Klicken Sie hier</a>, um die OpenAPI-Spezifikation herunterzuladen (auf Englisch).</p>
+      </details>
+      <details>
+      <summary>Русский</summary>
+      <p>Сейчас, сожаление, у нас нет фронтенда, который можно было бы использовать без JavaScript, но мы работаем над этим!</p>
+      <p>Однако вы можете использовать наш <a href="/docs/index.html">API</a> для связи с бэкэндом.</p>
+      <p>Если у вас проблемы с доступом к документации API<a href="static/meta/swagger.json">, нажмите здесь</a>, чтобы загрузить спецификацию OpenAPI (на английском языке).</p>
+      </details>
+      <details>
+      <summary>Français</summary>
+      <p>Actuellement, nous n'avons malheureusement pas de frontend utilisable sans JavaScript, mais nous y travaillons!</p>
+      <p>Cependant, vous pouvez utiliser notre <a href="/docs/index.html">API</a> pour interagir avec le backend.</p>
+      <p>Problème pour accéder à la documentation de l'API ? <a href="static/meta/swagger.json">cliquez ici</a> pour télécharger la spécification OpenAPI (en anglais).</p>
+      </details>
+      <details>
+      <summary>Espa&ntilde;ol</summary>
+      <p>Por ahora, sentimos no disponer de una interfaz que pueda utilizarse sin JavaScript, pero estamos trabajando en ello.</p>
+      <p>Aunque puedes utilizar nuestra <a href="/docs/index.html">API</a> para communicarse con el backend.</p>
+      <p>¿Problemas para acceder a la documentación de la API? <a href="static/meta/swagger.json">haga clic aquí</a> para descargar la especificación OpenAPI (en inglés).</p>
+      </details>
+      <details>
+      <summary>中文</summary>
+      <p>現在、残念ながら JavaScript なしで使用できるフロントエンドはありませんが、作業中です！</p>
+      <p>ただし、バックエンドとやり取りするために <a href="/docs/index.html">API</a> を使用できます。</p>
+      <p>APIドキュメントの閲覧に問題がありますか？<a href="static/meta/swagger.json">はこちら</a>OpenAPIのドキュメント（英語）をダウンロードするには</p>
+      </details>
+      <details>
+      <summary>عربي</summary>
+      <p>حاليًا، لا توجد واجهة أمامية متاحة تعمل بدون JavaScript، ولكننا نعمل على ذلك!</p>
+      <p>ومع ذلك، يمكنك استخدام <a href="/docs/index.html">API</a> للتواصل مع الخلفية.</p>
+      <p>هل تواجه مشكلة في الوصول إلى وثائق API؟ <a href="static/meta/swagger.json">انقر هنا</a> لتنزيل مواصفات OpenAPI (باللغة الإنجليزية).</p>
+      </details>
+      <details>
+      <summary>Polski</summary>
+      <p>Niestety nie mamy obecnie frontendu, który działałby bez JS, ale nad tym pracujemy!</p>
+      <p>Ponadto mamy dostępną dokumentację <a href="/docs/index.html">API</a>, w oparciu o którą możesz komunikować się z backendem wybranej instancji.</p>
+      <p>Problemy z dostępem do dokumentacji API? <a href="static/meta/swagger.json">Kliknij tutaj</a>, aby pobrać specyfikację OpenAPI (w języku angielskim).</p>
+      </details>
+      <h1 id="tracker-link">See <a href="https://codeberg.org/mjh/LibRate/issues/20">
+        this issue</a> for more information.</h1>
+      </p></p>
+    </div>
+  </noscript>
   <div style="display: contents">%sveltekit.body%</div>
 </body>
+<style>
+  #tracker-link {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin-top: 1em;
+  }
+</style>
 
 </html>
