@@ -30,12 +30,18 @@ func (a *Service) Register(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	member, err := createMember(validatedInput)
+	memberData, err := createMember(validatedInput)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	err = a.saveMember(member)
+	if a.conf.Fiber.Domain != c.Hostname() {
+		return h.Res(c, fiber.StatusBadRequest, "Request domain and configured domain mismatch")
+	}
+
+	memberData.Webfinger = memberData.MemberName + "@" + c.Hostname()
+
+	err = a.saveMember(memberData)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -81,7 +87,7 @@ func createMember(input *member.Input) (*member.Member, error) {
 		return nil, err
 	}
 
-	member := &member.Member{
+	memberData := &member.Member{
 		UUID:         uuid.Must(uuid.NewV4()),
 		PassHash:     passhash,
 		MemberName:   in.MemberName,
@@ -90,7 +96,7 @@ func createMember(input *member.Input) (*member.Member, error) {
 		Roles:        []string{"member"},
 	}
 
-	return member, nil
+	return memberData, nil
 }
 
 func (a *Service) saveMember(member *member.Member) error {

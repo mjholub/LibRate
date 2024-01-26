@@ -164,7 +164,7 @@ func (mr *MockStorerMockRecorder) Read(ctx, key any, keyNames ...any) *gomock.Ca
 }
 
 // RequestFollow mocks base method.
-func (m *MockStorer) RequestFollow(ctx context.Context, fr *member.FollowRequest) error {
+func (m *MockStorer) RequestFollow(ctx context.Context, fr *member.FollowBlockRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequestFollow", ctx, fr)
 	ret0, _ := ret[0].(error)

@@ -33,6 +33,7 @@ func Protected(sess *session.Store, log *zerolog.Logger, conf *cfg.Config) fiber
 			claims := jwt.MapClaims{
 				"exp":         s.Get("claims_exp"),
 				"member_name": s.Get("member_name"),
+				"webfinger":   s.Get("webfinger"),
 				"session_id":  s.ID(),
 				"roles":       s.Get("claims_roles"),
 			}

@@ -37,7 +37,7 @@
 		{:then}
 			{#if canView}
 				<div class="member-info">
-					<MemberCard {member} showLogout={false} />
+					<MemberCard {member} />
 				</div>
 			{:else}
 				<p>Account not found or private.</p>
@@ -60,9 +60,5 @@
 
 	.member-info {
 		flex: 1 0 40%;
-	}
-
-	.reviews {
-		flex: 1 0 60%;
 	}
 </style>

@@ -23,7 +23,9 @@ type (
 		UUID     uuid.UUID `json:"uuid,omitempty" db:"uuid"`
 		PassHash string    `json:"-" db:"passhash"`
 		// MemberName != webfinger
-		MemberName       string         `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
+		MemberName string `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
+		// email like
+		Webfinger        string         `json:"webfinger" db:"webfinger,unique" validate:"required,email" example:"lain@librate.club"`
 		DisplayName      sql.NullString `json:"displayName,omitempty" db:"display_name" example:"Lain Iwakura"`
 		Email            string         `json:"email" db:"email" validate:"required,email" example:"lain@wired.jp"`
 		Bio              sql.NullString `json:"bio,omitempty" db:"bio" example:"Wherever you go, everyone is connected."`
@@ -41,7 +43,7 @@ type (
 		FollowingURI   string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
 		FollowersURI   string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
 		SessionTimeout sql.NullInt64  `json:"-" db:"session_timeout"`
-		PublicKeyPem   string         `jsonld:"publicKeyPem,omitempty" json:"-" db:"public_key_pem"`
+		PublicKeyPem   string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem" db:"public_key_pem"`
 	}
 
 	Device struct {
@@ -53,17 +55,21 @@ type (
 		ID        uuid.UUID `json:"id" db:"id,unique,notnull"`
 	}
 
-	FollowRequest struct {
-		ID        int64  `json:"id" db:"id"`
-		ActorID   string `json:"actor_id" db:"actor_id"`
-		FollowsID string `json:"follows_id" db:"follows_id"`
+	FollowBlockRequest struct {
+		ID        int64     `json:"id" db:"id"`
+		Requester string    `json:"requester" db:"requester_webfinger"`
+		Target    string    `json:"target" db:"target_webfinger"`
+		Reblogs   bool      `json:"reblogs" db:"reblogs" default:"true" sql:"-"` // only used for follow requests
+		Notify    bool      `json:"notify" db:"notify" default:"true" sql:"-"`
+		Created   time.Time `json:"created" db:"created"`
 	}
 
 	// Follower represents a follower-followee relationship
 	Follower struct {
-		ID       uint32 `json:"id" db:"id"`
-		Follower uint32 `json:"follower" db:"follower"`
-		Followee uint32 `json:"followee" db:"followee"`
+		ID       uint32    `json:"id" db:"id"`
+		Created  time.Time `json:"created" db:"created"`
+		Follower string    `json:"follower" db:"follower"`
+		Followee string    `json:"followee" db:"followee"`
 	}
 
 	// Input holds the information required to create a new member account
@@ -91,6 +97,7 @@ type (
 		Started    time.Time `json:"started" db:"started"`
 	}
 
+	// TODO: debload this interface
 	Storer interface {
 		Save(ctx context.Context, member *Member) error
 		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
@@ -105,7 +112,12 @@ type (
 		GetID(ctx context.Context, key string) (int, error)
 		GetPassHash(email, login string) (string, error)
 		CreateSession(ctx context.Context, member *Member) (string, error)
-		RequestFollow(ctx context.Context, fr *FollowRequest) error
+		RequestFollow(ctx context.Context, fr *FollowBlockRequest) error
+		AcceptFollow(ctx context.Context, acceper string, requestID int64) error
+		RejectFollow(ctx context.Context, rejecter string, requestID int64) error
+		GetFollowRequests(ctx context.Context, member string, own bool) ([]int64, error)
+		RemoveFollower(ctx context.Context, follower, followee string) error
+		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
 	}
 
 	PgMemberStorage struct {

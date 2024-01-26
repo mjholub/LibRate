@@ -1,6 +1,8 @@
 package members
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
@@ -25,7 +27,13 @@ import (
 func (mc *MemberController) Ban(c *fiber.Ctx) error {
 	requester := c.Locals("jwtToken").(*jwt.Token)
 	claims := requester.Claims.(jwt.MapClaims)
-	name := claims["member_name"].(string)
+	wf := claims["webfinger"].(string)
+	name := strings.Split(wf, "@")[0]
+	domain := strings.Split(wf, "@")[1]
+	if domain != mc.conf.Fiber.Domain {
+		mc.log.Warn().Msgf("Remote actor %s tried to ban %s", wf, c.Params("uuid"))
+		return h.Res(c, 403, "Forbidden")
+	}
 	if !mc.storage.HasRole(c.Context(), name, "mod", true) || !mc.storage.HasRole(c.Context(), name, "admin", true) {
 		mc.log.Warn().Msgf("Member %s tried to ban a member", name)
 		return h.Res(c, 403, "Forbidden")
@@ -62,6 +70,7 @@ func (mc *MemberController) Ban(c *fiber.Ctx) error {
 // @Param uuid path string true "UUID of the member to unban"
 // @Param X-CSRF-Token header string true "X-CSRF-Token header"
 // @Success 200 {object} h.ResponseHTTP{}
+// @Success 202 {object} h.ResponseHTTP{} "When "
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 401 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
@@ -70,7 +79,7 @@ func (mc *MemberController) Unban(c *fiber.Ctx) error {
 	requester := c.Locals("jwtToken").(*jwt.Token)
 	claims := requester.Claims.(jwt.MapClaims)
 	name := claims["member_name"].(string)
-	if !mc.storage.HasRole(c.Context(), name, "moderator") {
+	if !mc.storage.HasRole(c.Context(), name, "moderator", false) {
 		mc.log.Warn().Msgf("Member %s tried to unban a member", name)
 		return h.Res(c, 403, "Forbidden")
 	}

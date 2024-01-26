@@ -68,7 +68,7 @@ func Setup(
 	}
 	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
 
-	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
+	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	uploadSvc := static.NewController(conf, dbConn, logger)
 	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
@@ -83,6 +83,11 @@ func Setup(
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
+	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
+	members.Put("/follow/requests/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
+	members.Delete("/follow/requests/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
+	members.Get("/follow/requests", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
 	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 	// we wrap the Protected middleware INSIDE the handler for this route,
