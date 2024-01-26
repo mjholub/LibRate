@@ -29,5 +29,6 @@
     "music": "Musik",
     "error": "Fehler",
     "error_updating_follow_status": "Fehler bei der Aktualisierung des Verfolgungsstatus",
-    "cancel_follow_request": "Folgeanfrage stornieren"
+    "cancel_follow_request": "Folgeanfrage stornieren",
+    "nickname": ""
 }
