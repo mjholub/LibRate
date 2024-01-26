@@ -375,7 +375,7 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 	}
 }
 
-func (s *PgMemberStorage) AcceptFollow(ctx context.Context, requestID int64) error {
+func (s *PgMemberStorage) AcceptFollow(ctx context.Context, accepter string, requestID int64) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -389,6 +389,17 @@ func (s *PgMemberStorage) AcceptFollow(ctx context.Context, requestID int64) err
 		}
 		//nolint:errcheck // In case of failure during commit, "err" from commit will be returned
 		defer tx.Rollback(ctx)
+
+		// check if the request with the given ID was sent to the accepter
+		var target string
+
+		err = tx.QueryRow(ctx, `SELECT target_webfinger FROM public.follow_requests WHERE id = $1`, requestID).Scan(&target)
+		if err != nil {
+			return fmt.Errorf("error chectking if request with ID %d exists: %v", requestID, err)
+		}
+		if target != accepter {
+			return fmt.Errorf("request with ID %d does not belong to %s", requestID, accepter)
+		}
 
 		batch := &pgx.Batch{}
 		// copy all rows but 'created' (creation set by DB) to followers
@@ -408,12 +419,25 @@ func (s *PgMemberStorage) AcceptFollow(ctx context.Context, requestID int64) err
 }
 
 // TODO: add option to send a note to the requester stating the reason for rejection
-func (s *PgMemberStorage) RejectFollow(ctx context.Context, requestID int64) error {
+func (s *PgMemberStorage) RejectFollow(ctx context.Context, rejecter string, requestID int64) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := s.client.ExecContext(ctx, `DELETE FROM public.follow_requests WHERE id = $1`, requestID)
+
+		// check if the request with the given ID was sent to the accepter
+		var target string
+
+		err := s.newClient.QueryRow(ctx, `SELECT target_webfinger FROM public.follow_requests WHERE id = $1`, requestID).Scan(&target)
+		if err != nil {
+			return fmt.Errorf("error chectking if request with ID %d exists: %v", requestID, err)
+		}
+
+		if target != rejecter {
+			return fmt.Errorf("request with ID %d does not belong to %s", requestID, rejecter)
+		}
+
+		_, err = s.client.ExecContext(ctx, `DELETE FROM public.follow_requests WHERE id = $1`, requestID)
 		if err != nil {
 			return fmt.Errorf("failed to delete follow request: %v", err)
 		}
@@ -423,6 +447,7 @@ func (s *PgMemberStorage) RejectFollow(ctx context.Context, requestID int64) err
 
 // RemoveFollower handles both the followee and follower initiated removal of a follower
 // due to the reciprocal nature of the relationship
+// It can also deal with cancelling pending follow requests
 func (s *PgMemberStorage) RemoveFollower(ctx context.Context, follower, followee string) error {
 	select {
 	case <-ctx.Done():
@@ -433,6 +458,24 @@ func (s *PgMemberStorage) RemoveFollower(ctx context.Context, follower, followee
 		if err != nil || e != nil {
 			return fmt.Errorf("failed to sanitize follow request: %v, %v", err, e)
 		}
+		// check if there is a pending follow request from follower to followee
+		var pending bool
+
+		row := s.newClient.QueryRow(ctx, `SELECT EXISTS(
+			SELECT 1 FROM public.follow_requests WHERE
+			requester_webfinger = $1 AND target_webfinger = $2
+		) AS pending`, follower, followee)
+		if err = row.Scan(&pending); err != nil {
+			return fmt.Errorf("failed to check if follow request is pending: %v", err)
+		}
+		if pending {
+			_, err = s.newClient.Exec(ctx, `DELETE FROM public.follow_requests WHERE requester_webfinger = $1 AND target_webfinger = $2`, follower, followee)
+			if err != nil {
+				return fmt.Errorf("failed to delete follow request: %v", err)
+			}
+			return nil
+		}
+
 		_, err = s.newClient.Exec(ctx, `DELETE FROM public.followers WHERE follower = $1 AND followee = $2`, follower, followee)
 		if err != nil {
 			return fmt.Errorf("failed to delete follower: %v", err)
@@ -510,6 +553,35 @@ func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool
 			return false, err
 		}
 		return true, nil
+	}
+}
+
+func (s *PgMemberStorage) GetFollowRequests(ctx context.Context, member string, own bool) ([]int64, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		var (
+			rows     pgx.Rows
+			err      error
+			requests []int64
+		)
+		if own {
+			rows, err = s.newClient.Query(ctx, `SELECT id FROM follow_requests WHERE target_webfinger = $1`, member)
+		} else {
+			rows, err = s.newClient.Query(ctx, `SELECT id FROM follow_requests WHERE requester_webfinger = $1`, member)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get follow requests: %v", err)
+		}
+		for rows.Next() {
+			var id int64
+			if err = rows.Scan(&id); err != nil {
+				return nil, fmt.Errorf("failed to scan row: %v", err)
+			}
+			requests = append(requests, id)
+		}
+		return requests, nil
 	}
 }
 

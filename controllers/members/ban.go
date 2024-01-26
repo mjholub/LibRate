@@ -17,7 +17,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param uuid path string true "UUID of the member to ban"
-// @Param input body BanInput true "Ban details"
+// @Param input body member.BanInput true "Ban details"
 // @Param X-CSRF-Token header string true "X-CSRF-Token header"
 // @Success 200 {object} h.ResponseHTTP{}
 // @Failure 400 {object} h.ResponseHTTP{}

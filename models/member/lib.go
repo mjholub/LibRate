@@ -113,7 +113,7 @@ type (
 		GetPassHash(email, login string) (string, error)
 		CreateSession(ctx context.Context, member *Member) (string, error)
 		RequestFollow(ctx context.Context, fr *FollowBlockRequest) error
-		AcceptFollow(ctx context.Context, acceper string, requestID int64) error
+		AcceptFollow(ctx context.Context, accepter string, requestID int64) error
 		RejectFollow(ctx context.Context, rejecter string, requestID int64) error
 		GetFollowRequests(ctx context.Context, member string, own bool) ([]int64, error)
 		RemoveFollower(ctx context.Context, follower, followee string) error
