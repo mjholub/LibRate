@@ -2,7 +2,7 @@ basePath: /api
 definitions:
   auth.SessionResponse:
     properties:
-      memberName:
+      membername:
         example: lain
         type: string
       token:
@@ -16,6 +16,8 @@ definitions:
         type: string
       status:
         type: integer
+    type: object
+  member.BanInput:
     type: object
   member.Member:
     properties:
@@ -54,6 +56,8 @@ definitions:
       profile_pic:
         example: /static/img/profile/lain.jpg
         type: string
+      publicKeyPem:
+        type: string
       regdate:
         example: "2020-01-01T00:00:00Z"
         type: string
@@ -69,11 +73,16 @@ definitions:
       visibility:
         example: followers_only
         type: string
+      webfinger:
+        description: email like
+        example: lain@librate.club
+        type: string
       xmpp:
         type: string
     required:
     - email
     - memberName
+    - webfinger
     type: object
   models.Cast:
     properties:
@@ -679,4 +688,356 @@ paths:
       - accounts
       - interactions
       - metadata
+  /members/{uuid}/ban:
+    delete:
+      consumes:
+      - application/json
+      description: removes a ban from a user with the given UUID
+      parameters:
+      - description: UUID of the member to unban
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: X-CSRF-Token header
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "202":
+          description: 'When '
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Unban user
+      tags:
+      - members
+      - accounts
+      - administration
+    post:
+      consumes:
+      - application/json
+      description: issues a ban to a user with the given UUID
+      parameters:
+      - description: UUID of the member to ban
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Ban details
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/member.BanInput'
+      - description: X-CSRF-Token header
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Ban user
+      tags:
+      - members
+      - accounts
+      - administration
+  /members/{viewee}/visibility:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the visibility of a member
+      parameters:
+      - description: The webfinger of the member to get
+        in: path
+        name: viewee
+        required: true
+        type: string
+      - description: The requester's JWT. It's encrypted claims [
+        in: header
+        name: Authorization
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Note that we don't return a 401 but just a 'false' response
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Verify if user A can see user B's metadata
+      tags:
+      - accounts
+      - interactions
+      - metadata
+      - privacy
+  /members/follow:
+    delete:
+      consumes:
+      - application/json
+      description: Unfollow a member or remove follower
+      parameters:
+      - description: The follower's JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The webfinger of the member to unfollow
+        in: body
+        name: followee
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Unfollow a member
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Send a follow request to another user. If the user has automatic follow request acceptance
+        enabled, the follow request will be accepted immediately.
+      parameters:
+      - description: The requester's JWT. Contains encrypted claims to the webfinger
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The webfinger of the member to follow
+        in: body
+        name: followee
+        required: true
+        schema:
+          type: string
+      - description: Receive notifications for all content created by the followee
+        in: body
+        name: notify
+        schema:
+          type: boolean
+      - description: Show this account's reblogs in home timeline
+        in: body
+        name: reblogs
+        required: true
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "204":
+          description: When the followee is already followed
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "403":
+          description: When at least one party blocks the other
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Send a follow request to a member (user)
+  /members/follow/requests:
+    get:
+      consumes:
+      - application/json
+      description: Get own received follow requests or sent follow requests
+      parameters:
+      - description: The JWT of the member. Contains encrypted claims to webfinger
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Get own sent follow requests. If false, get received follow requests
+        in: query
+        name: own
+        type: boolean
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.ResponseHTTP'
+            - properties:
+                data:
+                  items:
+                    type: integer
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Get follow requests
+  /members/follow/requests/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Reject a follow request
+      parameters:
+      - description: The rejecter's JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The webfinger of the member who requested to follow
+        in: body
+        name: follower
+        required: true
+        schema:
+          type: string
+      - description: The ID of the follow request
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Reject a follow request
+    put:
+      consumes:
+      - application/json
+      description: Accept a follow request
+      parameters:
+      - description: The accepter's JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The ID of the follow request
+        in: body
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ResponseHTTP'
+      summary: Accept a follow request
 swagger: "2.0"
