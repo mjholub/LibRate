@@ -10,5 +10,14 @@
     "confirm": "Bestätigen",
     "add_media": "Medien-Eintrag hinzufügen",
     "genres": "Gattungen",
-    "email_or_username": "E-Mail Addresse oder Nickname"
+    "email_or_username": "E-Mail Addresse oder Nickname",
+    "nickname_available": "Nickname verfügbar",
+    "logout_after": "Abmelden nach",
+    "log_in_first": "Anmeldung erförderlich",
+    "log_out": "Abmelden",
+    "nickname": "Nickname",
+    "films": "Filme",
+    "tos_privacy_ack": "Ich habe gelesen und stimme zu",
+    "nickname_not_available": "Nickname nicht verfügbar",
+    "music": "Musik"
 }
