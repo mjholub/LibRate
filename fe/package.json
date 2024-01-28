@@ -55,7 +55,7 @@
     "@appbaseio/searchbase": "^1.8.1",
     "@sveltestrap/sveltestrap": "^6.2.2",
     "@types/http-errors": "^2.0.4",
-    "axios": "^1.5.0",
+    "axios": "^1.6.7",
     "feather-icons": "^4.29.1",
     "http-errors": "^2.0.0",
     "password-meter": "^3.10.2",
