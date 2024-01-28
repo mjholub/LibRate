@@ -3,6 +3,7 @@ CREATE TABLE public.member_prefs (
 	auto_accept_follow bool NOT NULL DEFAULT true,
 	locally_searchable bool NOT NULL DEFAULT true,
 	robots_searchable bool NOT NULL DEFAULT false,
+  blur_nsfw bool NOT NULL DEFAULT true,
 	rating_scale_lower int2 NOT NULL DEFAULT 1,
 	rating_scale_upper int2 NOT NULL DEFAULT 10,
 	searchable_to_federated bool NOT NULL DEFAULT true,
