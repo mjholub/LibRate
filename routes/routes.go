@@ -84,15 +84,14 @@ func Setup(
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
 	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
 	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
-	members.Put("/follow/requests/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
-	members.Delete("/follow/requests/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
-	members.Get("/follow/requests", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
+	members.Delete("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
+	members.Delete("/follow/requests/out/:id", middleware.Protected(sess, logger, conf), memberSvc.CancelFollowRequest)
+	members.Get("/follow/requests/:type", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Get("/follow/status/:followee_webfinger", middleware.Protected(sess, logger, conf), memberSvc.FollowStatus)
 	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
 	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
-	// we wrap the Protected middleware INSIDE the handler for this route,
-	// since public accounts don't need a JWT to be viewed
-	members.Get("/:viewee/visibility", memberSvc.GetVisibility)
 
 	setupMedia(api, mediaStor, conf)
 

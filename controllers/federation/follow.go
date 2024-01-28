@@ -41,12 +41,12 @@ func (fc *FedController) Follow(c *fiber.Ctx) error {
 	follows := activity.Object.GetLink()
 	fc.log.Info().Msgf("Follow request from %s to %s", actor, follows)
 
-	err := fc.members.RequestFollow(c.Context(), &member.FollowBlockRequest{
+	resp := fc.members.RequestFollow(c.Context(), &member.FollowBlockRequest{
 		Requester: actor.String(),
 		Target:    follows.String(),
 	})
-	if err != nil {
-		return fmt.Errorf("error requesting follow: %w", err)
+	if resp.Error != nil {
+		return fmt.Errorf("error requesting follow: %w", resp.Error)
 	}
 
 	return h.Res(c, fiber.StatusOK, "Follow request sent")

@@ -1,33 +1,30 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { memberStore } from '$stores/members/getInfo';
 	import MemberCard from './MemberCard.svelte';
 	import type { Review } from '$lib/types/review';
 	import type { Member } from '$lib/types/member';
 
 	export let nickname: string;
-	export let viewerName: string;
 	let canView: boolean = false;
 	let member: Member;
 	console.info('fetching member info for', nickname);
 
 	const jwtToken = localStorage.getItem('jwtToken');
 	const getMember = async (nickname: string) => {
-		if (jwtToken === null) {
-			console.error('jwtToken is null');
-			return;
+		try {
+			if (jwtToken) {
+				member = await memberStore.getMember(jwtToken, nickname);
+			} else {
+				// this can still work for public profiles
+				member = await memberStore.getMember('', nickname);
+			}
+			if (member) {
+				canView = true;
+			}
+		} catch (error) {
+			canView = false;
 		}
-		member = await memberStore.getMember(jwtToken, nickname);
 	};
-
-	onMount(async () => {
-		if (jwtToken === null) {
-			// we use "" since public accounts do not require a jwtToken
-			canView = await memberStore.verifyViewablity('', viewerName, nickname);
-		} else {
-			canView = await memberStore.verifyViewablity(jwtToken, viewerName, nickname);
-		}
-	});
 </script>
 
 <div class="member-page">

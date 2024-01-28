@@ -3,6 +3,7 @@ package members
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -74,9 +75,30 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		mc.log.Error().Msgf("Error getting member \"%s\": %v", c.Params("email_or_username"), err)
 		return h.Res(c, fiber.StatusBadRequest, "Member not found")
 	}
+	mc.log.Info().Msgf("Member: %+v", memberData)
 	// check for authorization and if the request was made by a non-authorized user and the member.Visibility is not public, return 401
 	if len(authorized) == 0 && memberData.Visibility != "public" {
 		return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
+
+	if memberData.Visibility != "public" {
+		sessionData, err := mc.sessionStore.Get(c)
+		if err != nil {
+			return h.Res(c, fiber.StatusInternalServerError, "Error retrieving session")
+		}
+
+		token, err := middleware.DecryptJWT(string(authorized), sessionData, mc.conf)
+		if err != nil {
+			return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
+		}
+
+		viewable, err := mc.canView(c.UserContext(), token, memberData.Webfinger)
+		if err != nil {
+			return h.Res(c, fiber.StatusInternalServerError, "Error verifying viewability")
+		}
+		if !viewable {
+			return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
+		}
 	}
 
 	if memberData.ProfilePicID.Valid {
@@ -122,43 +144,18 @@ func (mc *MemberController) GetID(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberData)
 }
 
-// @Summary Verify if user A can see user B's metadata
-// @Description Retrieve the visibility of a member
-// @Tags accounts,interactions,metadata,privacy
-// @Param viewee path string true "The webfinger of the member to get"
-// @Param Authorization header string false "The requester's JWT. It's encrypted claims ["member_name"] value is used to identify nickname in a way that isn't easy to forge"
-// @Accept json
-// @Success 200 {object} h.ResponseHTTP{data=bool}
-// @Failure 400 {object} h.ResponseHTTP{} "Note that we don't return a 401 but just a 'false' response"
-// @Failure 404 {object} h.ResponseHTTP{}
-// @Failure 500 {object} h.ResponseHTTP{}
-// @Router /members/{viewee}/visibility [get]
-func (mc *MemberController) GetVisibility(c *fiber.Ctx) error {
-	viewee := c.Params("viewee")
-	if c.Request().Header.Peek("Authorization") == nil {
-		// check if account is public
-		if viewee == "" {
-			return h.Res(c, fiber.StatusBadRequest, "No nickname or email provided")
-		}
-		canView, err := mc.storage.VerifyViewability(c.Context(), "", viewee)
-		if err != nil {
-			mc.log.Log().Err(err).Msgf("Error verifying viewability of member \"%s\": %v", viewee, err)
-			return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
-		}
-		return h.ResData(c, fiber.StatusOK, "success", canView)
+func (mc *MemberController) canView(ctx context.Context, authorization *jwt.Token, viewee string) (bool, error) {
+	if viewee == "" {
+		return false, fmt.Errorf("No nickname or email provided")
 	}
 
-	viewer := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
-	// embed the protected middleware indirectly instead of routing table so that public accounts work
-	if err := middleware.Protected(mc.sessionStore, mc.log, mc.conf)(c); err != nil {
-		mc.log.Log().Err(err).Msgf("Error embedding JWT middleware: %v", err)
-		return h.Res(c, fiber.StatusUnauthorized, "Unauthorized")
-	}
+	viewer := authorization.Claims.(jwt.MapClaims)["webfinger"].(string)
+	mc.log.Debug().Msgf("Viewer: %s", viewer)
 
-	canView, err := mc.storage.VerifyViewability(c.Context(), viewee, viewer)
+	canView, err := mc.storage.VerifyViewability(ctx, viewer, viewee)
 	if err != nil {
 		mc.log.Log().Err(err).Msgf("Error verifying viewability of member \"%s\": %v", viewee, err)
-		return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
+		return false, err
 	}
-	return h.ResData(c, fiber.StatusOK, "success", canView)
+	return canView, nil
 }

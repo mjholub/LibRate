@@ -56,12 +56,34 @@ type (
 	}
 
 	FollowBlockRequest struct {
-		ID        int64     `json:"id" db:"id"`
-		Requester string    `json:"requester" db:"requester_webfinger"`
+		ID        int64     `json:"id,omitempty" db:"id"`
+		Requester string    `json:"requester,omitempty" db:"requester_webfinger"`
 		Target    string    `json:"target" db:"target_webfinger"`
 		Reblogs   bool      `json:"reblogs" db:"reblogs" default:"true" sql:"-"` // only used for follow requests
 		Notify    bool      `json:"notify" db:"notify" default:"true" sql:"-"`
-		Created   time.Time `json:"created" db:"created"`
+		Created   time.Time `json:"created,omitempty" db:"created"`
+	}
+
+	FollowResponse struct {
+		// when checking status, we treat not_found as not following
+		// but when creating a request, we treat not_found as target account not existing
+		Status     string     `json:"status" db:"status", validate:"required,oneof=accepted failed pending blocked already_following not_found"`
+		ID         int64      `json:"id,omitempty" db:"id"`
+		Reblogs    bool       `json:"reblogs,omitempty" db:"reblogs"`
+		Notify     bool       `json:"notify,omitempty" db:"notify"`
+		Error      error      `json:"-"`
+		AcceptTime *time.Time `json:"acceptTime" db:"created"`
+	}
+	// received follow request
+	FollowRequestIn struct {
+		ID        int64      `json:"id" db:"id"`
+		Requester string     `json:"requester" db:"requester_webfinger"`
+		Created   *time.Time `json:"created" db:"created"`
+	}
+
+	FollowRequestGroup struct {
+		Sent     []FollowResponse  `json:"sent" db:"sent"`
+		Received []FollowRequestIn `json:"received" db:"received"`
 	}
 
 	// Follower represents a follower-followee relationship
@@ -112,12 +134,19 @@ type (
 		GetID(ctx context.Context, key string) (int, error)
 		GetPassHash(email, login string) (string, error)
 		CreateSession(ctx context.Context, member *Member) (string, error)
-		RequestFollow(ctx context.Context, fr *FollowBlockRequest) error
-		AcceptFollow(ctx context.Context, accepter string, requestID int64) error
-		RejectFollow(ctx context.Context, rejecter string, requestID int64) error
-		GetFollowRequests(ctx context.Context, member string, own bool) ([]int64, error)
-		RemoveFollower(ctx context.Context, follower, followee string) error
 		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
+		FollowStorer
+	}
+
+	FollowStorer interface {
+		RequestFollow(ctx context.Context, fr *FollowBlockRequest) FollowResponse
+		//	UpdateFollow(ctx context.Context, fr *FollowBlockRequest) error
+		AcceptFollow(ctx context.Context, accepter string, requestID int64) error
+		CancelFollow(ctx context.Context, canceler string, requestID int64) error
+		RejectFollow(ctx context.Context, rejecter string, requestID int64) error
+		GetFollowStatus(ctx context.Context, follower, followee string) FollowResponse
+		GetFollowRequests(ctx context.Context, member string, reqType string) (any, error)
+		RemoveFollower(ctx context.Context, follower, followee string) error
 	}
 
 	PgMemberStorage struct {

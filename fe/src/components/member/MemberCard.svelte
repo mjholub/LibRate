@@ -1,5 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
+	import { _ } from 'svelte-i18n';
 	import { XIcon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
 	import { Button } from '@sveltestrap/sveltestrap';
 	import { onMount, onDestroy } from 'svelte';
@@ -8,6 +9,7 @@
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
 	import { memberStore } from '$stores/members/getInfo';
+	import type { FollowRequestOut, FollowResponse } from '$stores/members/getInfo';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
 	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
@@ -44,19 +46,27 @@
 	}
 
 	let regDate: string;
-	let isFollowing: boolean = false;
+	let csrfToken: string | undefined;
+	csrfToken = document.cookie
+		.split('; ')
+		.find((row) => row.startsWith('csrf_'))
+		?.split('=')[1];
+	let followStatus: FollowResponse;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
 	let errorMessages: CustomHttpError[] = [];
 
-	const currentUserWebfinger = currentUser + '@' + window.location.host;
 	onMount(async () => {
 		isSelfView = (await checkSelfView()) || false;
-		if (!isSelfView) {
-			isFollowing = await memberStore.isFollowing(jwtToken, currentUserWebfinger, member.webfinger);
-		}
 		maxFileSize = await getMaxFileSize();
 	});
+
+	const getFollowStatus = async () => {
+		if (!jwtToken) {
+			throw new Error('Not logged in');
+		}
+		followStatus = await memberStore.followStatus(jwtToken, member.webfinger);
+	};
 
 	onDestroy(() => {
 		maxFileSize = 0;
@@ -64,18 +74,27 @@
 
 	const followUnfollow = async () => {
 		try {
-			if (isFollowing) {
+			if (!jwtToken) {
+				throw new Error('Not logged in');
+			}
+			const req: FollowRequestOut = {
+				jwtToken: jwtToken,
+				target: member.webfinger,
+				reblogs: true,
+				notify: false,
+				CSRFToken: csrfToken || ''
+			};
+
+			if (followStatus.status === 'accepted') {
 				if (!jwtToken) {
 					throw new Error('Not logged in');
 				}
-				await memberStore.unfollow(jwtToken, currentUserWebfinger, member.webfinger);
-				isFollowing = false;
+				followStatus = await memberStore.unfollow(req);
 			} else {
 				if (!jwtToken) {
 					throw new Error('Not logged in');
 				}
-				await memberStore.follow(jwtToken, currentUserWebfinger, member.webfinger);
-				isFollowing = true;
+				followStatus = await memberStore.follow(req);
 			}
 		} catch (error) {
 			errorMessages.push({
@@ -84,6 +103,7 @@
 			});
 			errorMessages = [...errorMessages];
 			console.error(error);
+			followStatus.status = 'failed';
 		}
 	};
 
@@ -147,11 +167,6 @@
 				formData.append('fileData', file);
 				formData.append('imageType', 'profile');
 				formData.append('member', member.memberName);
-				let csrfToken: string | undefined;
-				csrfToken = document.cookie
-					.split('; ')
-					.find((row) => row.startsWith('csrf_'))
-					?.split('=')[1];
 				const response = await axios.post('/api/upload/image', formData, {
 					headers: {
 						'Content-Type': 'multipart/form-data',
@@ -228,6 +243,22 @@
 		member.bio.Valid = true;
 		member.bio.String = event.detail.newBio;
 	};
+
+	const cancelFollowReq = async (requestID: number) => {
+		try {
+			if (!jwtToken || !csrfToken) {
+				throw new Error('Not logged in');
+			}
+			await memberStore.cancelFollowRequest(jwtToken, csrfToken, requestID);
+		} catch (error) {
+			errorMessages.push({
+				message: 'Error cancelling follow request: ' + error,
+				status: 400
+			});
+			errorMessages = [...errorMessages];
+			console.error(error);
+		}
+	};
 </script>
 
 <div class="member-card">
@@ -295,13 +326,24 @@
 	<div class="member-name">@{member.memberName}</div>
 	<!-- follow button -->
 	{#if !isSelfView}
-		<Button on:click={followUnfollow}>
-			{#if isFollowing}
-				Unfollow
-			{:else}
-				Follow
+		{#await getFollowStatus()}
+			<div class="spinner" />
+		{:then}
+			{#if followStatus.status === 'failed'}
+				<div class="error-message">{$_('error_updating_follow_status')}</div>
+			{:else if followStatus.status === 'pending'}
+				<Button on:click={() => cancelFollowReq(followStatus.id)}>
+					{$_('cancel_follow_request')}
+				</Button>
 			{/if}
-		</Button>
+			<Button on:click={followUnfollow}>
+				{#if followStatus.status === 'accepted'}
+					Unfollow
+				{:else if followStatus.status === 'not_found'}
+					Follow
+				{/if}
+			</Button>
+		{/await}
 	{/if}
 	{#if member.bio.Valid}
 		<div id="member-bio">{member.bio.String}</div>

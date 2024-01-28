@@ -67,6 +67,7 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, memberData *member.
 	// TODO: add lock acquisition timeout
 	mu.Lock()
 	go sess.Set("member_name", memberData.MemberName)
+	go sess.Set("webfinger", memberData.Webfinger)
 	go sess.Set("session_id", sess.ID())
 	go sess.Set("device_id", deviceHash)
 	go sess.Set("ip", c.IP())
