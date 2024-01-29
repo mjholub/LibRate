@@ -1,5 +1,6 @@
 <script lang="ts">
 	import axios from 'axios';
+	import { filterXSS } from 'xss';
 	import {
 		Card,
 		Label,
@@ -233,8 +234,9 @@
 	const handleFileLoad = (e: ProgressEvent<FileReader>) => {
 		try {
 			const jsonData = JSON.parse(e.target?.result as string);
+			const filteredJSON = filterXSS(jsonData);
 			releaseDate = parseJSONDate(jsonData.release_date) || new Date();
-			Object.assign(album, jsonData);
+			Object.assign(album, filteredJSON);
 			album.duration = sumAlbumDuration(album.tracks);
 			// Trigger a reassignment to make Svelte detect the changes
 			album = { ...album };
