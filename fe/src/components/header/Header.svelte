@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Search from '$components/utility/Search.svelte';
+	import { PlusCircleIcon, HomeIcon } from 'svelte-feather-icons';
 	import ProfileControls from './ProfileControls.svelte';
 	import LangSwitch from '$components/utility/LangSwitch.svelte';
 	import { _ } from 'svelte-i18n';
@@ -32,6 +33,11 @@
 	<div class="dropdown-left">
 		<span class="hostname">
 			<NavbarBrand href="/">{window.location.host}&nbsp;&nbsp;</NavbarBrand>
+		</span>
+		<span class="home-icon">
+			<NavbarBrand href="/">
+			<HomeIcon />
+			</NavbarBrand>
 		</span>
 		<Nav class="ms-auto" navbar tabs={true} card={true}>
 			<Dropdown group={true} direction={'down'}>
@@ -72,7 +78,13 @@
 			<Search />
 		</span>
 		<span class="add-media">
-			<a href="/form/media/add">{$_('add_media')}</a>
+			<a href="/form/media/add" class="media-add">{$_('add_media')}</a>
+		</span>
+		<span class="add-media-mobile">
+			<!-- svelte-ignore a11y-missing-content -->
+			<PlusCircleIcon><a href="/form/media/add"
+				aria-describedby="{$_('add_media')}"
+				></a></PlusCircleIcon>
 		</span>
 		<span class="profile-controls">
 			<ProfileControls {nickname} />
@@ -90,6 +102,52 @@
 
 <style lang="scss">
 	$justify-header-content: left;
+	
+	@media (max-width: 900px) {
+		.hostname {
+			display: none !important;
+		}
+		.home-icon {
+			align-items: center;
+			padding: 0.5em 0.1em 0 0;
+			display: flex !important;
+		}	
+	}
+	
+	@media (max-width: 600px) {
+		.add-media-mobile {
+			margin-top: 0.5em;
+			display: inline-flex;
+		}
+		
+		.media-add {
+			display: none !important;
+		}
+	}
+
+	@media (min-width: 600px) {
+		.add-media-mobile {
+			display: none !important;
+		}
+
+		.media-add {
+			display: inline-flex !important;
+		}
+	}
+
+
+	@media (min-width: 900px) {
+			.home-icon {
+				display: none !important;
+			}
+			.hostname {
+				display: flex !important;
+			}
+	}
+
+	.media-add {
+		margin-top: 0.5em;
+	}
 
 	.hostname {
 		font-weight: 300;
@@ -97,7 +155,6 @@
 		word-break: break-all;
 		position: relative;
 		width: 5% !important;
-		display: flex;
 	}
 
 	.header {
@@ -126,8 +183,8 @@
 	span.profile-controls {
 		display: inline-flex;
 		flex-shrink: 0;
-		padding-left: 3.2em;
-		align-items: center;
+		padding-left: 2em;
+		align-items: baseline !important;
 		justify-content: center;
 		padding-block-end: 0.5em;
 	}

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/text/language"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
@@ -44,6 +46,32 @@ type (
 		FollowersURI   string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
 		SessionTimeout sql.NullInt64  `json:"-" db:"session_timeout"`
 		PublicKeyPem   string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem" db:"public_key_pem"`
+	}
+
+	// TODO: move the password here
+	Preferences struct {
+		// NOTE:not using DB tags since the structure for this is actually flat in the DB
+		UX              UXPreferences              `json:"ux,omitempty"`
+		PrivacySecurity PrivacySecurityPreferences `json:"privsec,omitempty"`
+	}
+
+	// Theme is stored in localStorage since some people might prefer to have a different theme on
+	// different devices
+	UXPreferences struct {
+		Locale language.Tag `json:"locale,omitempty" db:"locale"`
+		// everything is calculated relative to the maximum scale of 0-100
+		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatinScaleUpper",min=0,max=1" default:"1"`
+		RatingScaleUpper int16 `json:"rating_scale_upper,omitempty" db:"rating_scale_upper" validate:"min=2,max=100" default:"10"`
+	}
+
+	PrivacySecurityPreferences struct {
+		MessageAutohideWords pq.StringArray `json:"message_autohide_words,omitempty" db:"message_autohide_words"`
+		// domain names alone, without protocol etc.
+		MutedInstances      pq.StringArray `json:"muted_instances,omitempty" db:"muted_instances"`
+		AutoAcceptFollow    bool           `json:"auto_accept_follow,omitempty" db:"auto_accept_follow" default:"true"`
+		LocallySearchable   bool           `json:"locally_searchable,omitempty" db:"locally_searchable" default:"true"`
+		FederatedSearchable bool           `json:"searchable_to_federated,omitempty" db:"searchable_to_federated" default:"true"`
+		RobotsSearchable    bool           `json:"robots_searchable,omitempty" db:"robots_searchable" default:"false"`
 	}
 
 	Device struct {

@@ -398,7 +398,6 @@
 <style>
 	:root {
 		--member-card-border-radius: 0.25em;
-		--member-card-background-color: #1f1f1f;
 		--logout-button-align: right;
 		--logout-button-padding-top: 0.25em;
 		--close-button-align: right;
@@ -407,7 +406,6 @@
 		--icon-color: #ffcbcc;
 		--button-bg: #60605190;
 		--button-radius: 20%;
-		--change-profile-pic-btn-right: -60%;
 		--change-profile-pic-btn-top: -2.5rem;
 		--expand-image-btn-right: 1.15rem;
 		--expand-image-btn-bottom: 0.65rem;
@@ -421,7 +419,6 @@
 
 	#change-profile-pic-button {
 		position: relative !important;
-		right: var(--change-profile-pic-btn-right) !important;
 		top: var(--change-profile-pic-btn-top) !important;
 		margin-right: 0.7em !important;
 		width: 1.75em !important;
@@ -464,7 +461,7 @@
 	.member-card {
 		border: 1px solid #ccc;
 		padding: 1em;
-		margin: 1em;
+		margin: 1em 0.3em 1em 0.6em;	
 		border-radius: var(--member-card-border-radius);
 		background-color: var(--member-card-background-color);
 	}
