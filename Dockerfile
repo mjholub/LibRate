@@ -33,7 +33,6 @@ RUN --mount=type=cache,target=/app/pkg/mod \
   CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s" -o /app/bin/librate && \
   go install codeberg.org/mjh/lrctl@latest
 WORKDIR /app
-COPY --chown=librate:librate .env /app/.env
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
 COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
@@ -47,5 +46,5 @@ USER librate
 ENV USE_SOPS=false
 
 EXPOSE 3000
-CMD [ "/app/bin/librate", "-c", "env" ]
+CMD [ "/app/bin/librate", "-c", "/app/data/config.yml" ]
 # [ "/usr/bin/bash" ]
