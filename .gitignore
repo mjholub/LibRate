@@ -30,3 +30,4 @@ librate-bin
 ./profile*
 static/templates/privacy_en.md
 .vscode
+fe/bun.lockb
