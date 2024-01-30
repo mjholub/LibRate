@@ -50,8 +50,9 @@ COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
 COPY --chown=librate:librate ./views/ /app/bin/views
 COPY --chown=librate:librate ./data /app/query-builder
 # large query for genre information
-RUN mv /app/data/migrations/000023-media-form-pt2/6_sixth_migration.up.sql /app/data/migrations/000023-media-form-pt2/7_seventh_migration.up.sql && \
-  mv /app/data/queries.sql /app/data/migrations/000023-media-form-pt/6_sixth_migration.up.sql 
+WORKDIR  /app/data/migrations/000023-media-form-pt2/
+RUN mv 6_sixth_migration.up.sql 7_seventh_migration.up.sql && \
+  mv /app/data/queries.sql 6_sixth_migration.up.sql
 
 RUN chmod -R 755 /app/bin/
 
