@@ -1,29 +1,21 @@
-FROM opensuse/leap:15 AS app
+# Build frontend
+FROM node:lts-alpine AS frontend-builder
 
-RUN --mount=type=cache,target=/var/cache/zypp \
-  zypper --non-interactive \
-  install --no-recommends \
-  go \
-  unzip \
-  npm
+WORKDIR /app/fe
+COPY ./fe /app/fe
 
-RUN useradd -U -m -r librate \
-  -d /app
+RUN --mount=type=cache,target=/app/.cache \
+  npm install && npm run build
 
-USER librate
-WORKDIR /app
-RUN source /app/.bashrc
+# Build backend
+# TODO: try moving backend to src/
+FROM golang:1.21-alpine3.19 AS backend-builder
 
 VOLUME /app
 ENV HOME /app
 ENV PATH /app/bin:$PATH
 ENV GOPATH /app
 
-WORKDIR /app/fe
-COPY --chown=librate:librate ./fe /app/fe
-RUN npm install && npm run build
-
-USER root
 WORKDIR /app/src
 COPY . /app/src
 RUN --mount=type=cache,target=/app/pkg/mod \
@@ -31,14 +23,26 @@ RUN --mount=type=cache,target=/app/pkg/mod \
   go mod tidy && \
   CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s" -o /app/bin/librate && \
   go install codeberg.org/mjh/lrctl@latest
+
+# Build final image
+FROM alpine:3.19 AS app
+RUN apk update && apk add 'ca-certificates' \
+  && apk cache purge \
+  && addgroup -S librate \ 
+  && adduser -G librate -S -D librate \
+  -h /app
+
+USER librate
+
 WORKDIR /app
+COPY --from=frontend-builder --chown=librate:librate /app/fe/build /app/data/fe/build
+COPY --from=backend-builder --chown=librate:librate /app/bin /app/bin
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
 COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
 # TODO: change the path being used by tke app so that it doesn't hardcode relative directory
 COPY --chown=librate:librate ./views/ /app/bin/views
-RUN chown -R librate:librate /app/bin && \
-  chmod -R 755 /app/bin/
+RUN chmod -R 755 /app/bin/
 
 USER librate
 

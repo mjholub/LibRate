@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/pixiv/go-libwebp/webp"
 	"github.com/samber/lo"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -159,15 +158,8 @@ func (s *Controller) saveThumb(
 			return
 		}
 	case "image/webp":
-		opts, err := webp.ConfigPreset(webp.PresetPicture, 80)
-		if err != nil {
-			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
-			return
-		}
-		if err := webp.EncodeRGBA(f, thumb, opts); err != nil {
-			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
-			return
-		}
+		s.log.Error().Msg("WebP thumbnailing disabled since both libraries I've found break my builds.")
+		return
 	default:
 		s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s for MIME %s", imagePath, imageType)
 		return
