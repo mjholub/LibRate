@@ -17,9 +17,9 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pixiv/go-libwebp/webp"
 	"github.com/samber/lo"
 
-	"github.com/chai2010/webp"
 	"github.com/golang-jwt/jwt/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
@@ -159,11 +159,12 @@ func (s *Controller) saveThumb(
 			return
 		}
 	case "image/webp":
-		opts := &webp.Options{
-			Lossless: false,
-			Quality:  80,
+		opts, err := webp.ConfigPreset(webp.PresetPicture, 80)
+		if err != nil {
+			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
+			return
 		}
-		if err := webp.Encode(f, thumb, opts); err != nil {
+		if err := webp.EncodeRGBA(f, thumb, opts); err != nil {
 			s.log.Error().Err(err).Msgf("Failed to encode thumbnail for image %s", imagePath)
 			return
 		}
