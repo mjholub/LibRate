@@ -1,11 +1,14 @@
-FROM opensuse/leap:15 AS app
+FROM ubuntu:noble AS app
 
-RUN --mount=type=cache,target=/var/cache/zypp \
-  zypper --non-interactive \
-  install --no-recommends \
+RUN --mount=type=cache,target=/var/cache/apt \
+  apt update && \
+  apt -y \
+  install --no-install-recommends \
+  --no-install-suggests \
   go \
-  unzip \
-  npm
+  ca-certificates \
+  npm \
+  libwebp
 
 RUN useradd -U -m -r librate \
   -d /app
@@ -32,11 +35,12 @@ RUN --mount=type=cache,target=/app/pkg/mod \
   CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s" -o /app/bin/librate && \
   go install codeberg.org/mjh/lrctl@latest
 WORKDIR /app
+
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
 COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
-# TODO: change the path being used by tke app so that it doesn't hardcode relative directory
 COPY --chown=librate:librate ./views/ /app/bin/views
+
 RUN chown -R librate:librate /app/bin && \
   chmod -R 755 /app/bin/
 
