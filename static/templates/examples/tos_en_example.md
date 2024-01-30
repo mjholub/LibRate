@@ -1,4 +1,3 @@
-<div class="panel" border="2px solid">
 ## <center>Staff</center>
 ----------
 ## Admins
@@ -6,9 +5,9 @@
 [admin name](https://{{domain}}/profiles/{{Admin handle (without @)}})
 
 ## Moderators
+[!moderator profile picture](/static/img/profile/thumbs/{{Mod handle}}.png)
 {{Moderator handle}}
 [moderator name](https://{{domain}}/profiles/{{Mod handle}})
-</div>
 
 
 # <center>Terms of Service</center>
