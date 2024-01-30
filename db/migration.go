@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 
@@ -25,11 +26,11 @@ func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	conn, err := pgx.Connect(ctx, dsn)
+	conn, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
 	}
-	defer conn.Close(ctx)
+	defer conn.Close()
 
 	if paths == nil {
 		// list all directories in migrations folder
@@ -103,7 +104,7 @@ func getMigrationNames(files []os.DirEntry) (migrationNames []string) {
 }
 
 func migrateUp(
-	ctx context.Context, log *zerolog.Logger, conn *pgx.Conn,
+	ctx context.Context, log *zerolog.Logger, conn *pgxpool.Pool,
 	migrationsPath, dirPath string, migrationNames []string,
 ) error {
 	for i := range migrationNames {
@@ -111,6 +112,14 @@ func migrateUp(
 		if err != nil {
 			return fmt.Errorf("error reading migration file %s/%s: %v", dirPath, migrationNames[i]+".up.sql", err)
 		}
+		tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			return fmt.Errorf("error starting transaction: %v", err)
+		}
+
+		// nolint: errcheck // we don't care about the error here
+		defer tx.Rollback(ctx)
+
 		_, err = conn.Exec(ctx, string(f))
 		log.Info().Msgf("running query: %s", string(f))
 		if err != nil {
@@ -120,11 +129,15 @@ func migrateUp(
 			}
 			return fmt.Errorf("error running migration %s: %v", migrationNames[i], err)
 		}
+
+		if err := tx.Commit(ctx); err != nil {
+			return fmt.Errorf("error committing transaction: %v", err)
+		}
 	}
 	return nil
 }
 
-func migrateDown(ctx context.Context, conn *pgx.Conn,
+func migrateDown(ctx context.Context, conn *pgxpool.Pool,
 	migrationsPath, dirPath, migrationName string,
 ) error {
 	downFile, err := os.ReadFile(filepath.Join(migrationsPath, dirPath, migrationName+".down.sql"))

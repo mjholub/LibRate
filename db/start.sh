@@ -13,7 +13,7 @@ fi
 
 # Write the pg_hba.conf and postgresql.conf files
 if [ "$(wc -l /var/lib/postgresql/data/pg_hba.conf)" -lt 5 ]; then
-	echo "host    all             all             127.0.0.1/32            trust" >/var/lib/postgresql/data/pg_hba.conf
+	echo "host    all             all             127.0.0.1/32            trust" >>/var/lib/postgresql/data/pg_hba.conf
 	echo "host    all             all             172.20.0.0/16           trust" >>/var/lib/postgresql/data/pg_hba.conf
 	echo "host    all             all             librate-app             trust" >>/var/lib/postgresql/data/pg_hba.conf
 	echo "host    all             all             [local]                 trust" >>/var/lib/postgresql/data/pg_hba.conf
