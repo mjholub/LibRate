@@ -63,6 +63,7 @@ type FiberConfig struct {
 	Prefork         bool            `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
 	ReduceMemUsage  bool            `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
 	StaticDir       string          `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
+	FrontendDir     string          `yaml:"frontendDir" default:"./fe/build" env:"LIBRATE_FRONTEND"`
 	PowInterval     int             `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
 	PowDifficulty   int             `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
 	RequestTimeout  int             `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`

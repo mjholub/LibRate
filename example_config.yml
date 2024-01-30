@@ -5,7 +5,8 @@ fiber:
   port: 3000
   prefork: true
   reduceMemUsage: false
-  staticDir: "./static"
+  staticDir: "/app/data/static"
+  frontendDir: "/app/data/fe/build"
   # in seconds
   powInterval: 300
   powDifficulty: 30000
