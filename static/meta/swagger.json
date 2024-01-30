@@ -587,7 +587,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseHTTP"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/member.FollowResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "204": {
@@ -644,7 +656,7 @@
                     },
                     {
                         "description": "The webfinger of the member to unfollow",
-                        "name": "followee",
+                        "name": "target",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -702,10 +714,16 @@
                         "required": true
                     },
                     {
-                        "type": "boolean",
-                        "description": "Get own sent follow requests. If false, get received follow requests",
-                        "name": "own",
-                        "in": "query"
+                        "enum": [
+                            "sent",
+                            "received",
+                            "all"
+                        ],
+                        "type": "string",
+                        "description": "Which follow requests should be looked up",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -757,7 +775,7 @@
                 }
             }
         },
-        "/members/follow/requests/{id}": {
+        "/members/follow/requests/in/{id}": {
             "put": {
                 "description": "Accept a follow request",
                 "consumes": [
@@ -851,6 +869,142 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    }
+                }
+            }
+        },
+        "/members/follow/requests/out/{id}": {
+            "delete": {
+                "description": "Cancel a sent follow request if it's pending",
+                "consumes": [
+                    "application/json"
+                ],
+                "summary": "Cancel a follow request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The requester's JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The CSRF token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The ID of the follow request",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    }
+                }
+            }
+        },
+        "/members/follow/status/{followee_webfinger}": {
+            "get": {
+                "description": "Check if a member is followed by the request initiator",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Check if a member is followed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The follower's JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The webfinger of the member to check",
+                        "name": "followee_webfinger",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.ResponseHTTP"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/member.FollowResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1066,61 +1220,179 @@
                 }
             }
         },
-        "/members/{viewee}/visibility": {
-            "get": {
-                "description": "Retrieve the visibility of a member",
+        "/update/{member_name}": {
+            "patch": {
+                "description": "Handle updating those member properties that can be exposed publicly, i.e. not settings",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data json"
                 ],
                 "tags": [
-                    "accounts",
-                    "interactions",
+                    "account",
                     "metadata",
-                    "privacy"
+                    "updating"
                 ],
-                "summary": "Verify if user A can see user B's metadata",
+                "summary": "Update member information",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "The webfinger of the member to get",
-                        "name": "viewee",
+                        "description": "The nickname of the member being updated",
+                        "name": "member_name",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "The requester's JWT. It's encrypted claims [",
+                        "description": "The JWT token",
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the picture that is returned after making a request to /api/upload/image",
+                        "name": "profile_pic_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.ResponseHTTP"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
                         }
                     },
                     "400": {
-                        "description": "Note that we don't return a 401 but just a 'false' response",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseHTTP"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    }
+                }
+            }
+        },
+        "/update/{member_name}/preferences": {
+            "patch": {
+                "description": "Handle updating private member preferences",
+                "consumes": [
+                    "json multipart/form-data"
+                ],
+                "tags": [
+                    "account",
+                    "updating",
+                    "settings"
+                ],
+                "summary": "Update member preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The nickname of the member being updated",
+                        "name": "member_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JWT token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The ISO 639-1 locale to use",
+                        "name": "locale",
+                        "in": "formData"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "The lower bound of the rating scale",
+                        "name": "rating_scale_lower",
+                        "in": "formData"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 2,
+                        "type": "integer",
+                        "description": "The upper bound of the rating scale",
+                        "name": "rating_scale_upper",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "A comma-separated list of words to autohide in messages",
+                        "name": "message_autohide_words",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "A comma-separated list of instance domains to mute",
+                        "name": "muted_instances",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to automatically accept follow requests",
+                        "name": "auto_accept_follow",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to allow local searches",
+                        "name": "locally_searchable",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to allow federated searches",
+                        "name": "federated_searchable",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to allow robots to index the profile",
+                        "name": "robots_searchable",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseHTTP"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseHTTP"
                         }
@@ -1163,6 +1435,27 @@
         },
         "member.BanInput": {
             "type": "object"
+        },
+        "member.FollowResponse": {
+            "type": "object",
+            "properties": {
+                "acceptTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notify": {
+                    "type": "boolean"
+                },
+                "reblogs": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "when checking status, we treat not_found as not following\nbut when creating a request, we treat not_found as target account not existing",
+                    "type": "string"
+                }
+            }
         },
         "member.Member": {
             "type": "object",

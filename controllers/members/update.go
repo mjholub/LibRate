@@ -18,7 +18,7 @@ import (
 // @Summary Update member information
 // @Tags account,metadata,updating
 // @Description Handle updating those member properties that can be exposed publicly, i.e. not settings
-// @Accept multipart/form-data application/json
+// @Accept multipart/form-data json
 // @Param member_name path string true "The nickname of the member being updated"
 // @Param Authorization header string true "The JWT token"
 // @Param X-CSRF-Token header string true "CSRF token"
@@ -72,7 +72,7 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 // @Summary Update member preferences
 // @Description Handle updating private member preferences
 // @Tags account,updating,settings
-// @Accept application/json multipart/form-data
+// @Accept json multipart/form-data
 // @Param member_name path string true "The nickname of the member being updated"
 // @Param Authorization header string true "The JWT token"
 // @Param X-CSRF-Token header string true "CSRF token"
