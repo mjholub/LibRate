@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime/trace"
 	"strconv"
+	"strings"
 	"time"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -132,10 +133,39 @@ func main() {
 		if err != nil {
 			log.Panic().Err(err).Msg("Failed to render pages from markdown")
 		}
-		for i := range pages {
-			app.Get("/"+pages[i].Name, func(c *fiber.Ctx) error {
-				c.Set("Content-Type", "text/html")
-				return c.Send(pages[i].Data)
+
+		languages := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
+			return strings.Split(strings.Split(entry.Name, "_")[1], ".")[0]
+		}))
+		log.Debug().Msgf("Languages: %+v", languages)
+		fileNames := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
+			return strings.Split(entry.Name, "_")[0]
+		}))
+		log.Debug().Msgf("File names: %+v", fileNames)
+
+		for i := range fileNames {
+			app.Get("/"+fileNames[i]+"*", func(c *fiber.Ctx) error {
+				path := strings.Split(c.Path(), "/")
+				requestedDoc := path[len(path)-1]
+				langName := strings.Split(strings.Split(requestedDoc, "_")[1], ".")[0]
+				if !lo.Contains(languages, langName) {
+					// redirect to default language
+					c.Set("Content-Type", "text/html")
+					page, ok := lo.Find(pages, func(entry render.HTMLPage) bool {
+						return strings.Contains(entry.Name, fileNames[i]+"_"+conf.Fiber.DefaultLanguage)
+					})
+					if !ok {
+						return c.Send(pages[0].Data)
+					}
+					return c.Send(page.Data)
+				}
+				for j := range pages {
+					if strings.HasPrefix(pages[j].Name, fileNames[i]+"_") {
+						c.Set("Content-Type", "text/html")
+						return c.Send(pages[j].Data)
+					}
+				}
+				return c.SendStatus(404)
 			})
 		}
 	}()

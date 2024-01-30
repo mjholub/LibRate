@@ -12,6 +12,7 @@ fiber:
   tls: false
   # -1 for graceful shutdown that will wait indefintely
   shutdownTimeout: 10
+  defaultLanguage: "en-US"
   maxUploadSize: 4194304 # 4MB
   thumbnailing:
     namespaces:
