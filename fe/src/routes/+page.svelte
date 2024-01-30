@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
 	import { _ } from 'svelte-i18n';
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
@@ -67,30 +66,7 @@
 			});
 			errors = [...errors];
 		}
-	}
-	if (browser) {
-		onMount(async () => {
-			windowWidth = window.innerWidth;
-			const handleResize = () => {
-				windowWidth = window.innerWidth;
-				const left = document.getElementById('left');
-				if (left) {
-					// if the window size is less than 768px, hide the left column
-					if (windowWidth < 768) {
-						left.style.display = 'none';
-					} else {
-						left.style.display = 'block';
-					}
-				}
-			};
-			window.addEventListener('resize', handleResize);
-		});
-	}
-	onDestroy(() => {
-		if (browser) {
-			window.removeEventListener('resize', () => {});
-		}
-	});
+	};
 </script>
 
 <div class="app">
@@ -116,7 +92,7 @@
 		{/await}
 	</div>
 	<div class="content">
-		<div id="left">
+		<div class="left">
 			<MediaCarousel authenticated={isAuthenticated} />
 		</div>
 		<div class="center">
@@ -165,6 +141,18 @@
 		--text-color: #fff;
 		--padding-base: 20px;
 	}
+	
+	@media (max-width: 768px) {
+		.left {
+			display: none !important;
+		}
+		.right {
+			max-width: 45% !important;
+		}
+		.center {
+			max-width: 50% !important;
+		}
+	}
 
 	.app {
 		display: flex;
@@ -177,9 +165,9 @@
 	.navbar {
 		background-color: var(--main-bg-color);
 		color: var(--text-color);
-		padding: 1rem 0;
+		padding: 0.3rem 0.1rem 0.6rem 0.1rem;
 		text-align: left;
-		display: block;
+		display: unset;
 	}
 
 	.content {
@@ -190,19 +178,19 @@
 		flex: 1;
 	}
 
-	div#left,
+	.left,
 	.center,
 	.right {
 		display: flex;
 		flex-direction: column;
 	}
 
-	div#left {
-		width: 34%;
+	.left {
+		max-width: 34%;
 	}
 
 	.center {
-		width: 33%;
+		max-width: 33%;
 		justify-content: center;
 	}
 
@@ -211,7 +199,7 @@
 	}
 
 	.right {
-		width: 33%;
+		max-width: 33%;
 	}
 
 	.footer {

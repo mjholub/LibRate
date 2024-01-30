@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"codeberg.org/mjh/LibRate/models/member"
@@ -69,6 +70,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	memberData := member.Member{
 		Email:      validatedInput.Email,
 		MemberName: validatedInput.MemberName,
+		Webfinger:  fmt.Sprintf("%s@%s", validatedInput.MemberName, a.conf.Fiber.Domain),
 		PassHash:   validatedInput.Password,
 	}
 

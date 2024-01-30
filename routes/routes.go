@@ -56,19 +56,19 @@ func Setup(
 	}))
 
 	var (
-		mStor     member.MemberStorer
+		mStor     member.Storer
 		mediaStor *models.MediaStorage
 	)
 
 	switch conf.Engine {
 	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(dbConn, logger, conf)
+		mStor = member.NewSQLStorage(dbConn, newDBConn, logger, conf)
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
 	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
 
-	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
+	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	uploadSvc := static.NewController(conf, dbConn, logger)
 	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
@@ -82,6 +82,16 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
+	members.Patch("/update/:memeber_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
+	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
+	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
+	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
+	members.Delete("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
+	members.Delete("/follow/requests/out/:id", middleware.Protected(sess, logger, conf), memberSvc.CancelFollowRequest)
+	members.Get("/follow/requests/:type", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Get("/follow/status/:followee_webfinger", middleware.Protected(sess, logger, conf), memberSvc.FollowStatus)
+	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
+	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	setupMedia(api, mediaStor, conf)
@@ -137,7 +147,7 @@ func setupAuth(
 	sess *session.Store,
 	logger *zerolog.Logger,
 	conf *cfg.Config,
-	mStor member.MemberStorer,
+	mStor member.Storer,
 ) {
 	authSvc := auth.NewService(conf, mStor, logger, sess)
 

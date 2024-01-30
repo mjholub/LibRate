@@ -12,7 +12,7 @@
 	$: bioSaved = false;
 	const jwtToken = localStorage.getItem('jwtToken') || '';
 
-	const errorMessages: string[] = [];
+	let errorMessages: string[] = [];
 
 	const getBioComponents = () => {
 		const bioInput = document.getElementById('bio-input') as HTMLTextAreaElement;
@@ -69,7 +69,8 @@
 				}
 			});
 			if (response.status !== 200) {
-				errorMessages.push('Error saving bio');
+				errorMessages.push(`Error saving bio: ${response.data.message} (${response.status})`);
+				errorMessages = [...errorMessages]
 			}
 
 			bioSaved = true;

@@ -97,7 +97,7 @@
 
 	.search-bar {
 		width: 100%; /* initial width */
-		padding-left: 1em;
+		padding-left: 2%;
 		display: inline-flex;
 	}
 

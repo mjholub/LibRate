@@ -30,7 +30,7 @@ type SessionResponse struct {
 	MemberName string `json:"membername" example:"lain"`
 }
 
-func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Member) error {
+func (a *Service) createSession(c *fiber.Ctx, timeout int32, memberData *member.Member) error {
 	var deviceHash string
 	if c.Cookies("device_id") == "" {
 		deviceID, err := a.identifyDevice()
@@ -66,7 +66,8 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 
 	// TODO: add lock acquisition timeout
 	mu.Lock()
-	go sess.Set("member_name", member.MemberName)
+	go sess.Set("member_name", memberData.MemberName)
+	go sess.Set("webfinger", memberData.Webfinger)
 	go sess.Set("session_id", sess.ID())
 	go sess.Set("device_id", deviceHash)
 	go sess.Set("ip", c.IP())
@@ -75,7 +76,7 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 	sess.SetExpiry(sessionExpiry)
 	mu.Unlock()
 
-	signedToken, err := a.createToken(member, &sessionExpiry, sess)
+	signedToken, err := a.createToken(memberData, &sessionExpiry, sess)
 	if err != nil {
 		a.log.Err(err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to prepare session")
@@ -98,13 +99,14 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, member *member.Memb
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message":    "Logged in successfully",
 		"token":      signedToken,
-		"memberName": member.MemberName,
+		"memberName": memberData.MemberName,
 	})
 }
 
-func (a *Service) createToken(member *member.Member, timeout *time.Duration, sess *session.Session) (t string, err error) {
+func (a *Service) createToken(memberData *member.Member, timeout *time.Duration, sess *session.Session) (t string, err error) {
 	claims := jwt.MapClaims{
-		"member_name": member.MemberName,
+		"member_name": memberData.MemberName,
+		"webfinger":   memberData.Webfinger,
 		"session_id":  sess.ID(),
 		"roles":       []string{"member"},
 		"exp":         time.Now().Add(*timeout).Unix(),
@@ -139,7 +141,7 @@ func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
 		a.log.Warn().Msgf("No CSRF token found for request on %s on %s", c.OriginalURL(), c.IP())
 		return h.Res(c, http.StatusForbidden, "Forbidden")
 	}
-	a.log.Debug().Msg("CSRF token found")
+	a.log.Trace().Msg("CSRF token found")
 
 	sess, err := a.sess.Get(c)
 	if err != nil {
@@ -150,13 +152,13 @@ func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
 		a.log.Warn().Msg("No session cookie found")
 		return h.Res(c, http.StatusUnauthorized, "Not logged in")
 	}
-	a.log.Debug().Msgf("Session cookie: %s", c.Cookies("session_id"))
+	a.log.Trace().Msgf("Session cookie: %s", c.Cookies("session_id"))
 
 	sessionID := sess.ID()
 	sessionFallback := sess.Get(c.Cookies("session_id"))
 	if sessionID == "" && sessionFallback == nil {
 		a.log.Warn().Msg("No session ID found")
-		a.log.Debug().Msgf("session keys: %+v", sess.Keys())
+		a.log.Trace().Msgf("session keys: %+v", sess.Keys())
 		return h.Res(c, http.StatusUnauthorized, "Not logged in")
 	}
 
@@ -166,7 +168,7 @@ func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
 		a.log.Debug().Msgf("Cookie session ID: %s", c.Cookies("session_id"))
 		return h.Res(c, http.StatusUnauthorized, "Not logged in")
 	}
-	a.log.Debug().Msg("Session ID matches cookie")
+	a.log.Trace().Msg("Session ID matches cookie")
 
 	memName := sess.Get("member_name")
 	if memName == nil {
@@ -174,7 +176,7 @@ func (a *Service) GetAuthStatus(c *fiber.Ctx) error {
 		return h.Res(c, http.StatusUnauthorized, "Not logged in")
 	}
 
-	a.log.Debug().Msg("should be logged in")
+	a.log.Trace().Msg("should be logged in")
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message":         "Logged in",
 		"isAuthenticated": true,

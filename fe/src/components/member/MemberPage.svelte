@@ -1,24 +1,30 @@
 <script lang="ts">
 	import { memberStore } from '$stores/members/getInfo';
 	import MemberCard from './MemberCard.svelte';
-	import ReviewList from '../review/ReviewList.svelte';
 	import type { Review } from '$lib/types/review';
 	import type { Member } from '$lib/types/member';
 
 	export let nickname: string;
+	let canView: boolean = false;
 	let member: Member;
 	console.info('fetching member info for', nickname);
 
+	const jwtToken = localStorage.getItem('jwtToken');
 	const getMember = async (nickname: string) => {
-		const jwtToken = localStorage.getItem('jwtToken');
-		if (jwtToken === null) {
-			console.error('jwtToken is null');
-			return;
+		try {
+			if (jwtToken) {
+				member = await memberStore.getMember(jwtToken, nickname);
+			} else {
+				// this can still work for public profiles
+				member = await memberStore.getMember('', nickname);
+			}
+			if (member) {
+				canView = true;
+			}
+		} catch (error) {
+			canView = false;
 		}
-		member = await memberStore.getMember(jwtToken, nickname);
 	};
-
-	let reviews: Review[];
 </script>
 
 <div class="member-page">
@@ -26,17 +32,16 @@
 		{#await getMember(nickname)}
 			<p>loading...</p>
 		{:then}
-			<div class="member-info">
-				<MemberCard {member} />
-			</div>
+			{#if canView}
+				<div class="member-info">
+					<MemberCard {member} />
+				</div>
+			{:else}
+				<p>Account not found or private.</p>
+			{/if}
 		{:catch error}
 			<p>error: {error.message}</p>
 		{/await}
-		<!--
-		<div class="reviews">
-			<ReviewList {reviews} />
-		</div>
-        -->
 	</div>
 </div>
 
@@ -52,9 +57,5 @@
 
 	.member-info {
 		flex: 1 0 40%;
-	}
-
-	.reviews {
-		flex: 1 0 60%;
 	}
 </style>

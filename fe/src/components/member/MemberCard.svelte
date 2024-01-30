@@ -1,11 +1,15 @@
 <script lang="ts">
 	import axios from 'axios';
+	import { _ } from 'svelte-i18n';
 	import { XIcon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
+	import { Button } from '@sveltestrap/sveltestrap';
 	import { onMount, onDestroy } from 'svelte';
 	import type { Member } from '$lib/types/member.ts';
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
+	import { memberStore } from '$stores/members/getInfo';
+	import type { FollowRequestOut, FollowResponse } from '$stores/members/getInfo';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
 	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
@@ -13,6 +17,10 @@
 
 	const tooltipMessage = 'Change profile picture (max. 400x400px)';
 	export let member: Member;
+	let currentUser: string = '';
+	const jwtToken = localStorage.getItem('jwtToken');
+
+	let isSelfView: boolean = false;
 	function splitNullable(input: NullableString, separator: string): string[] {
 		if (input.Valid) {
 			return input.String.split(separator);
@@ -38,16 +46,66 @@
 	}
 
 	let regDate: string;
+	let csrfToken: string | undefined;
+	csrfToken = document.cookie
+		.split('; ')
+		.find((row) => row.startsWith('csrf_'))
+		?.split('=')[1];
+	let followStatus: FollowResponse;
 	let maxFileSize: number;
 	let maxFileSizeString: string;
 	let errorMessages: CustomHttpError[] = [];
+
 	onMount(async () => {
+		isSelfView = (await checkSelfView()) || false;
 		maxFileSize = await getMaxFileSize();
 	});
+
+	const getFollowStatus = async () => {
+		if (!jwtToken) {
+			throw new Error('Not logged in');
+		}
+		followStatus = await memberStore.followStatus(jwtToken, member.webfinger);
+	};
 
 	onDestroy(() => {
 		maxFileSize = 0;
 	});
+
+	const followUnfollow = async () => {
+		try {
+			if (!jwtToken) {
+				throw new Error('Not logged in');
+			}
+			const req: FollowRequestOut = {
+				jwtToken: jwtToken,
+				target: member.webfinger,
+				reblogs: true,
+				notify: false,
+				CSRFToken: csrfToken || ''
+			};
+
+			if (followStatus.status === 'accepted') {
+				if (!jwtToken) {
+					throw new Error('Not logged in');
+				}
+				followStatus = await memberStore.unfollow(req);
+			} else {
+				if (!jwtToken) {
+					throw new Error('Not logged in');
+				}
+				followStatus = await memberStore.follow(req);
+			}
+		} catch (error) {
+			errorMessages.push({
+				message: 'Error following/unfollowing member: ' + error,
+				status: 400
+			});
+			errorMessages = [...errorMessages];
+			console.error(error);
+			followStatus.status = 'failed';
+		}
+	};
 
 	let uploaded: boolean;
 
@@ -86,7 +144,14 @@
 	const toggleModal = () => {
 		showModal = !showModal;
 	};
-	const jwtToken = localStorage.getItem('jwtToken');
+
+	const checkSelfView = async () => {
+		if (jwtToken) {
+			const authStatus = await authStore.authenticate(jwtToken);
+			currentUser = authStatus.memberName;
+			return currentUser === member.memberName;
+		}
+	};
 
 	const handleFileSelection = async (e: Event) => {
 		return new Promise(async (resolve, reject) => {
@@ -102,11 +167,6 @@
 				formData.append('fileData', file);
 				formData.append('imageType', 'profile');
 				formData.append('member', member.memberName);
-				let csrfToken: string | undefined;
-				csrfToken = document.cookie
-					.split('; ')
-					.find((row) => row.startsWith('csrf_'))
-					?.split('=')[1];
 				const response = await axios.post('/api/upload/image', formData, {
 					headers: {
 						'Content-Type': 'multipart/form-data',
@@ -183,6 +243,22 @@
 		member.bio.Valid = true;
 		member.bio.String = event.detail.newBio;
 	};
+
+	const cancelFollowReq = async (requestID: number) => {
+		try {
+			if (!jwtToken || !csrfToken) {
+				throw new Error('Not logged in');
+			}
+			await memberStore.cancelFollowRequest(jwtToken, csrfToken, requestID);
+		} catch (error) {
+			errorMessages.push({
+				message: 'Error cancelling follow request: ' + error,
+				status: 400
+			});
+			errorMessages = [...errorMessages];
+			console.error(error);
+		}
+	};
 </script>
 
 <div class="member-card">
@@ -204,21 +280,23 @@
 					<MaximizeIcon class="maximize-icon" />
 				</div>
 			</button>
-			<button
-				aria-label="Change profile picture (max. {maxFileSizeString})"
-				id="change-profile-pic-button"
-				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
-				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
-				><span class="tooltip" aria-label={tooltipMessage} />
-				<div class="edit-button">
-					<EditIcon />
-				</div>
-			</button>
-			{#if isUploading}
-				<div class="spinner" />
-			{/if}
-			{#if errorMessages.length > 0}
-				<ErrorModal {errorMessages} />
+			{#if isSelfView}
+				<button
+					aria-label="Change profile picture (max. {maxFileSizeString})"
+					id="change-profile-pic-button"
+					on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+					on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
+					><span class="tooltip" aria-label={tooltipMessage} />
+					<div class="edit-button">
+						<EditIcon />
+					</div>
+				</button>
+				{#if isUploading}
+					<div class="spinner" />
+				{/if}
+				{#if errorMessages.length > 0}
+					<ErrorModal {errorMessages} />
+				{/if}
 			{/if}
 		</div>
 	{:else}
@@ -228,38 +306,63 @@
 				src="/static/avatar-placeholder.png"
 				alt="{member.memberName}'s profile picture"
 			/>
-			<button
-				aria-label="Change profile picture (max. {maxFileSizeString})"
-				id="change-profile-pic-button"
-				on:click={() => openFilePicker(handleFileSelection, 'image/*')}
-				on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
-				><span class="tooltip" aria-label={tooltipMessage} />
-				<div class="edit-button">
-					<EditIcon />
-				</div>
-			</button>
-			{#if isUploading}
-				<div class="spinner" />
+			{#if isSelfView}
+				<button
+					aria-label="Change profile picture (max. {maxFileSizeString})"
+					id="change-profile-pic-button"
+					on:click={() => openFilePicker(handleFileSelection, 'image/*')}
+					on:keypress={() => openFilePicker(handleFileSelection, 'image/*')}
+					><span class="tooltip" aria-label={tooltipMessage} />
+					<div class="edit-button">
+						<EditIcon />
+					</div>
+				</button>
+				{#if isUploading}
+					<div class="spinner" />
+				{/if}
 			{/if}
 		</div>
 	{/if}
 	<div class="member-name">@{member.memberName}</div>
+	<!-- follow button -->
+	{#if !isSelfView}
+		{#await getFollowStatus()}
+			<div class="spinner" />
+		{:then}
+			{#if followStatus.status === 'failed'}
+				<div class="error-message">{$_('error_updating_follow_status')}</div>
+			{:else if followStatus.status === 'pending'}
+				<Button on:click={() => cancelFollowReq(followStatus.id)}>
+					{$_('cancel_follow_request')}
+				</Button>
+			{/if}
+			<Button on:click={followUnfollow}>
+				{#if followStatus.status === 'accepted'}
+					Unfollow
+				{:else if followStatus.status === 'not_found'}
+					Follow
+				{/if}
+			</Button>
+		{/await}
+	{/if}
 	{#if member.bio.Valid}
 		<div id="member-bio">{member.bio.String}</div>
-		<UpdateBio
-			memberName={member.memberName}
-			isBioPresent={member.bio.Valid}
-			bio={member.bio.String}
-			on:bioUpdated={reloadBio}
-		/>
-	{:else}
-		<UpdateBio
-			memberName={member.memberName}
-			isBioPresent={member.bio.Valid}
-			bio=""
-			on:bioUpdated={reloadBio}
-		/>
-		/>
+		{#if isSelfView}
+			<UpdateBio
+				memberName={member.memberName}
+				isBioPresent={member.bio.Valid}
+				bio={member.bio.String}
+				on:bioUpdated={reloadBio}
+			/>
+		{:else}
+			<UpdateBio
+				memberName={member.memberName}
+				isBioPresent={member.bio.Valid}
+				bio=""
+				on:bioUpdated={reloadBio}
+			/>
+			/>
+		{/if}
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
 	Other links and contact info for @{member.memberName}:
@@ -280,7 +383,9 @@
 		<p><b>Homepage:</b> <a href={member.homepage.String}>{member.homepage}</a></p>
 	{/if}
 </div>
-<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
+{#if isSelfView}
+	<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
+{/if}
 {#if showModal}
 	<div class="modal">
 		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
@@ -293,7 +398,6 @@
 <style>
 	:root {
 		--member-card-border-radius: 0.25em;
-		--member-card-background-color: #1f1f1f;
 		--logout-button-align: right;
 		--logout-button-padding-top: 0.25em;
 		--close-button-align: right;
@@ -302,7 +406,6 @@
 		--icon-color: #ffcbcc;
 		--button-bg: #60605190;
 		--button-radius: 20%;
-		--change-profile-pic-btn-right: -60%;
 		--change-profile-pic-btn-top: -2.5rem;
 		--expand-image-btn-right: 1.15rem;
 		--expand-image-btn-bottom: 0.65rem;
@@ -316,7 +419,6 @@
 
 	#change-profile-pic-button {
 		position: relative !important;
-		right: var(--change-profile-pic-btn-right) !important;
 		top: var(--change-profile-pic-btn-top) !important;
 		margin-right: 0.7em !important;
 		width: 1.75em !important;
@@ -359,7 +461,7 @@
 	.member-card {
 		border: 1px solid #ccc;
 		padding: 1em;
-		margin: 1em;
+		margin: 1em 0.3em 1em 0.6em;	
 		border-radius: var(--member-card-border-radius);
 		background-color: var(--member-card-background-color);
 	}

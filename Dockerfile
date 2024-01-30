@@ -4,15 +4,14 @@ RUN --mount=type=cache,target=/var/cache/zypp \
   zypper --non-interactive \
   install --no-recommends \
   go \
-  unzip 
+  unzip \
+  npm
 
 RUN useradd -U -m -r librate \
   -d /app
 
 USER librate
 WORKDIR /app
-RUN --mount=type=cache,target=/app/.cache \
-  curl -fsSL https://bun.sh/install | bash
 RUN source /app/.bashrc
 
 VOLUME /app
@@ -22,7 +21,7 @@ ENV GOPATH /app
 
 WORKDIR /app/fe
 COPY --chown=librate:librate ./fe /app/fe
-RUN /app/.bun/bin/bun install && /app/.bun/bin/bun run build
+RUN npm install && npm run build
 
 USER root
 WORKDIR /app/src
