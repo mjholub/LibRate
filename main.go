@@ -127,13 +127,13 @@ func main() {
 	}
 	go cmd.RunGrpcServer(s)
 
+	pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
+	if err != nil {
+		log.Panic().Err(err).Msg("Failed to render pages from markdown")
+	}
+
 	// Setup templated pages, like privacy policy and TOS
 	go func() {
-		pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
-		if err != nil {
-			log.Panic().Err(err).Msg("Failed to render pages from markdown")
-		}
-
 		languages := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
 			return strings.Split(strings.Split(entry.Name, "_")[1], ".")[0]
 		}))
@@ -144,7 +144,8 @@ func main() {
 		log.Debug().Msgf("File names: %+v", fileNames)
 
 		for i := range fileNames {
-			app.Get("/"+fileNames[i]+"*", func(c *fiber.Ctx) error {
+			currentFileName := fileNames[i]
+			app.Get("/"+currentFileName+"*", func(c *fiber.Ctx) error {
 				path := strings.Split(c.Path(), "/")
 				requestedDoc := path[len(path)-1]
 				langName := strings.Split(strings.Split(requestedDoc, "_")[1], ".")[0]
@@ -152,7 +153,7 @@ func main() {
 					// redirect to default language
 					c.Set("Content-Type", "text/html")
 					page, ok := lo.Find(pages, func(entry render.HTMLPage) bool {
-						return strings.Contains(entry.Name, fileNames[i]+"_"+conf.Fiber.DefaultLanguage)
+						return strings.Contains(entry.Name, currentFileName+"_"+conf.Fiber.DefaultLanguage)
 					})
 					if !ok {
 						return c.Send(pages[0].Data)
@@ -160,9 +161,10 @@ func main() {
 					return c.Send(page.Data)
 				}
 				for j := range pages {
-					if strings.HasPrefix(pages[j].Name, fileNames[i]+"_") {
+					currentPage := pages[j]
+					if strings.HasPrefix(currentPage.Name, currentFileName+"_") {
 						c.Set("Content-Type", "text/html")
-						return c.Send(pages[j].Data)
+						return c.Send(currentPage.Data)
 					}
 				}
 				return c.SendStatus(404)
