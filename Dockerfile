@@ -40,8 +40,14 @@ COPY --from=backend-builder --chown=librate:librate /app/bin /app/bin
 COPY --chown=librate:librate ./config.yml /app/data/config.yml
 COPY --chown=librate:librate ./static/ /app/data/static
 COPY --chown=librate:librate ./db/migrations/ /app/data/migrations
-# TODO: change the path being used by tke app so that it doesn't hardcode relative directory
 COPY --chown=librate:librate ./views/ /app/bin/views
+COPY --chown=librate:librate ./data /app/query-builder
+# large query for genre information
+RUN go run /app/query-builder/main.go && \
+  mv /app/data/migrations/000023-media-form-pt/6_sixth_migration.up.sql /app/data/migrations/000023-media-form-pt/7_seventh_migration.up.sql && \
+  mv /app/data/query-builder/queries.sql /app/data/migrations/000023-media-form-pt/6_sixth_migration.up.sql && \
+  rm -rf /app/query-builder
+
 RUN chmod -R 755 /app/bin/
 
 USER librate
