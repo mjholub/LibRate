@@ -4,6 +4,7 @@ recommendation/target
 recommendation/go/services
 config.yml
 node_modules
+fe/bun.lockb
 fe/_app
 *.pem
 *.tar
@@ -30,3 +31,4 @@ librate-bin
 ./profile*
 static/templates/privacy_en.md
 fe/.vscode
+librate-nightly
