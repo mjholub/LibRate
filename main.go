@@ -127,13 +127,13 @@ func main() {
 	}
 	go cmd.RunGrpcServer(s)
 
-	pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
-	if err != nil {
-		log.Panic().Err(err).Msg("Failed to render pages from markdown")
-	}
-
 	// Setup templated pages, like privacy policy and TOS
 	go func() {
+		pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
+		if err != nil {
+			log.Panic().Err(err).Msg("Failed to render pages from markdown")
+		}
+
 		languages := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
 			return strings.Split(strings.Split(entry.Name, "_")[1], ".")[0]
 		}))
@@ -209,6 +209,8 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
+	var mu sync.Mutex
+	mu.Lock()
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	go func() {
 		for i := range middlewares {
@@ -219,6 +221,7 @@ func main() {
 	app.Use(fzlog)
 
 	setupPOW(conf, app)
+	mu.Unlock()
 
 	wsConfig := cmd.SetupWS(app, "/search")
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
