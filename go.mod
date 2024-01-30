@@ -13,7 +13,6 @@ require (
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/chai2010/webp v1.1.1
 	github.com/georgysavva/scany/v2 v2.1.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
@@ -40,6 +39,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0
 	github.com/pashagolub/pgxmock/v3 v3.3.0
+	github.com/pixiv/go-libwebp v0.1.1
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/samber/mo v1.11.0
