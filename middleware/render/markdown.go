@@ -21,23 +21,26 @@ func MarkdownToHTML(staticDir string) (htmlPages []HTMLPage, err error) {
 		return nil, fmt.Errorf("error reading templates directory: %w", err)
 	}
 
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	p := parser.NewWithExtensions(extensions)
-
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank | html.CompletePage
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer := html.NewRenderer(opts)
-
 	for i := range files {
 		if files[i].IsDir() {
 			continue
 		}
-		contents, err := os.ReadFile(staticDir + "/templates/" + files[i].Name())
+		extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.LaxHTMLBlocks
+		p := parser.NewWithExtensions(extensions)
+
+		htmlFlags := html.CommonFlags | html.HrefTargetBlank | html.CompletePage
+
+		opts := html.RendererOptions{Flags: htmlFlags}
+		renderer := html.NewRenderer(opts)
+
+		currentFile := files[i]
+
+		contents, err := os.ReadFile(staticDir + "/templates/" + currentFile.Name())
 		if err != nil {
-			return nil, fmt.Errorf("error reading file %s: %w", files[i].Name(), err)
+			return nil, fmt.Errorf("error reading file %s: %w", currentFile.Name(), err)
 		}
 		page := HTMLPage{
-			Name: strings.Replace(files[i].Name(), ".md", ".html", 1),
+			Name: strings.Replace(currentFile.Name(), ".md", ".html", 1),
 			Data: markdown.ToHTML(contents, p, renderer),
 		}
 

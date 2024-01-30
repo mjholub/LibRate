@@ -1,4 +1,3 @@
-# WARN: version 16 does not seem to parse network mask correctly
 FROM postgres:15-alpine
 
 WORKDIR /tmp/
