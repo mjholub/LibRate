@@ -3,6 +3,7 @@
 if [ ! -d "/var/lib/postgresql/data" ]; then
 	initdb -D /var/lib/postgresql/data &&
 		pg_ctl -D /var/lib/postgresql/data -o "-c listen_addresses='*'" -l /var/lib/postgresql/logfile start &&
+		psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'CHANGE_ME';" &&
 		createdb -U postgres librate &&
 		createdb -U postgres librate_sessions &&
 		createdb -U postgres librate_test &&
