@@ -1,17 +1,10 @@
 # Build frontend
-FROM ubuntu:noble AS frontend-builder 
+FROM node:lts-alpine AS frontend-builder
 
 WORKDIR /app/fe
 COPY ./fe /app/fe
 
-RUN --mount=type=cache,target=/var/cache/apt \
-  apt update && \
-  apt upgrade -y && \
-  apt -y \
-  install --no-install-recommends \
-  --no-install-suggests \
-  'npm'=9.2.0~ds1-2 \
-  'nodejs'=18.13.0+dfsg1-1ubuntu2 && \
+RUN --mount=type=cache,target=/app/.cache \
   npm install && npm run build
 
 # Build backend
@@ -33,7 +26,7 @@ RUN --mount=type=cache,target=/app/pkg/mod \
 
 # Build final image
 FROM alpine:3.19 AS app
-RUN apk update && apk add --no-cache 'libwebp'=1.3.2-r0 'libwebp-dev'=1.3.2-r0 'ca-certificates' \
+RUN apk update && apk add 'ca-certificates' \
   && apk cache purge \
   && addgroup -S librate \ 
   && adduser -G librate -S -D librate \
