@@ -112,7 +112,15 @@ Then make the necessary adjustments to the privacy policy and Terms of Service, 
 
 ## Deploying with Docker
 
-You can use compose. Just remember to execute the commands from step 5.
+Set up your config. If something's wrong with the networking, try setting the hostnames in config for anything except the gRPC server to `0.0.0.0`.
+
+Then, before deploying, update the following line in [postgres container start script](./db/start.sh):
+
+```sh
+psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'CHANGE_ME';"
+```
+
+You can use compose. Just remember to execute the commands from step 5 and create the network first.
 
 1. Create a Docker network with
 
@@ -137,7 +145,7 @@ docker build -t librate-db . && \
 docker run -it --network=librate-net --hostname "librate-db" librate-db:latest
 ```
 
-4. Create an .env file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/.env.example). Alternatively you can configure the container to use the .yml config, but .env is somewhat more reliable.
+4. Create an config file from the [provided example](https://codeberg.org/mjh/LibRate/src/branch/main/example_config.yml). Alternatively you can configure the container to use the .env config, but .yaml is somewhat more reliable (for example, as of 30-01-2024 there is no way of setting up thumbnailing with .env).
 
 5. Build and run the app container. In the container run
 ```sh
