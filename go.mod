@@ -39,7 +39,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0
 	github.com/pashagolub/pgxmock/v3 v3.3.0
-	github.com/pixiv/go-libwebp v0.1.1
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/samber/mo v1.11.0
