@@ -4,7 +4,9 @@
 
 	const localeToName = new Map<string, string>([
 		['en-US', 'English (U.S.)'],
-		['pl', 'Polski']
+		['pl', 'Polski'],
+		['id', 'Indonesia'],
+		['de', 'Deutsch']
 	]);
 
 	onMount(async () => {
