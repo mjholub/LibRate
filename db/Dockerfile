@@ -36,7 +36,9 @@ RUN apk del \
 RUN chown postgres:postgres /usr/bin/start.sh && \
   chown -R postgres:postgres /var/lib/postgresql && \
   chmod -R 750 /var/lib/postgresql/data 
+
 USER postgres
+VOLUME /var/lib/postgresql/data 
 CMD ["sh", "/usr/bin/start.sh"]
 EXPOSE 5432
 
