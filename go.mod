@@ -5,8 +5,8 @@ go 1.21
 toolchain go1.21.4
 
 require (
-	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240130003130-83b0cdf8c648
-	codeberg.org/mjh/lrctl v0.1.10
+	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db
+	codeberg.org/mjh/lrctl v0.1.11
 	dario.cat/mergo v1.0.0
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -57,10 +57,10 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.23.3 // indirect
+	cloud.google.com/go/compute v1.23.4 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.1.5 // indirect
-	cloud.google.com/go/kms v1.15.5 // indirect
+	cloud.google.com/go/iam v1.1.6 // indirect
+	cloud.google.com/go/kms v1.15.6 // indirect
 	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.1 // indirect
@@ -183,7 +183,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/api v0.160.0 // indirect
+	google.golang.org/api v0.161.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe // indirect
