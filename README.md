@@ -67,6 +67,8 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 - [ ] Customizable, shareable media collections and logging
 - [x] (**WIP**) Convenient submission form, with decentralized deduplication and POW-based anti-spam (a bit similar to Bookwyrm)
 - [x] Automated imports from 3rd party sources
+- [ ] Scrobbling
+- [ ] Decentralized subtitle repository
 - [ ] DRM-free audio hosting and streaming(?)
 - [ ] Artwork galleries for visual artists(?)
 
@@ -108,7 +110,7 @@ The following configuration paths will be automatically checked and not require 
 -     ~/.local/share/librate/config",
 -     ~/.config/librate/config"
 
-Then make the necessary adjustments to the privacy policy and Terms of Service, located in _static/templates/examples_ and move them one directory up. If your instance is country-specific, you can add another file with your prospective users' main language code as a suffix to that directory. Preserve the English TOS as without modifications to the frontend code, the app will not have a fallback to use.
+Then make the necessary adjustments to the privacy policy and Terms of Service, located in _static/templates/examples_ and move them one directory up. If your instance is country-specific, you can add another file with your prospective users' main language code as a suffix to that directory. You need to at keep at least one version of TOS and Privacy using the [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) you've set as `defaultLanguage` in config.
 
 ## Deploying with Docker
 
@@ -120,7 +122,9 @@ Then, before deploying, update the following line in [postgres container start s
 psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'CHANGE_ME';"
 ```
 
-You can use compose. Just remember to execute the commands from step 5 and create the network first.
+You can use compose. Just remember to execute the commands from step 5 and create the network first. 
+
+Optionally in compose you can enable monitoring of your instance with Grafana and Prometheus, make sure to modify your password and remove the entrypoint lines for these services.
 
 1. Create a Docker network with
 

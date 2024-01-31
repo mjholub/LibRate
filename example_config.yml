@@ -2,7 +2,7 @@
 fiber:
   host: "localhost"
   domain: "lr.localhost"
-  port: 3000
+  port: 3001
   prefork: true
   reduceMemUsage: false
   staticDir: "/app/data/static"
