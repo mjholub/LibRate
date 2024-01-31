@@ -4,11 +4,13 @@
 [![GoDoc](https://godoc.org/codeberg.org/mjh/LibRate?status.svg)](https://pkg.go.dev/codeberg.org/mjh/LibRate)
 ![Matrix](https://img.shields.io/matrix/libratedev:matrix.org)
 ![Depfu](https://img.shields.io/depfu/dependencies/github/mjholub%2FLibRate)
-![LiberaPay](https://img.shields.io/liberapay/receives/TeamLibrate.svg?logo=liberapay)
+![LiberaPay](https://img.shields.io/liberapay/receives/Librate.svg?logo=liberapay)
 
-This project aims to bring a website combining the functionality of such projects as Bookwyrm, RateYourMusic/Sonemic, IMDB and similar to the #fediverse.
+LibRate is a project that aims to provide a free, federated service for tracking, reviewing, sharing and discovering films, books, music, games and other culture texts.
 
 This project is currently in early beta stage, bugs are expected and PRs are very welcome.
+
+You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate) Monero or BLIK (contact me on Matrix for the latter two).
 
 **The only public beta instance can be found at [librate.club](https://librate.club/). Federation is currently work in progress. Bleeding edge branch can be found [here](https://codeberg.org/mjh/LibRate/src/branch/dev)**
 
