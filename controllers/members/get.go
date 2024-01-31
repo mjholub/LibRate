@@ -101,6 +101,9 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		}
 	}
 
+	memberData.Email = ""
+	memberData.PassHash = ""
+
 	if memberData.ProfilePicID.Valid {
 		memberData.ProfilePicSource, err = mc.images.GetImageSource(c.UserContext(), memberData.ProfilePicID.Int64)
 		if err != nil {
@@ -108,7 +111,6 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 				"Error getting profile picture for member \"%s\" despite valid picture ID: %v", c.Params("email_or_username"), err)
 			// send a warning in headers
 			c.Set("X-Warning", "Error getting profile picture for member")
-			return c.SendStatus(fiber.StatusOK)
 		}
 	}
 
