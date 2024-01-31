@@ -15,7 +15,8 @@
 	import type { CustomHttpError } from '$lib/types/error';
 	import ReviewCard from '$components/review/ReviewCard.svelte';
 
-	let windowWidth: number;
+	$: theme = localStorage.getItem('theme') || 'default';
+
 	let isAuthenticated: boolean;
 	let member: Member;
 	let authstatus: authData;
@@ -66,7 +67,7 @@
 			});
 			errors = [...errors];
 		}
-	};
+	}
 </script>
 
 <div class="app">
@@ -141,7 +142,7 @@
 		--text-color: #fff;
 		--padding-base: 20px;
 	}
-	
+
 	@media (max-width: 768px) {
 		.left {
 			display: none !important;
