@@ -35,3 +35,6 @@ librate-bin
 static/templates/privacy_en.md
 .vscode
 fe/bun.lockb
+static/templates/tos_en-US.md
+static/templates/privacy_en-GB.md
+static/templates/privacy_en-US.md

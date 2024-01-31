@@ -16,7 +16,7 @@ func SetupHelmet(conf *cfg.Config) (h fiber.Handler) {
 		ReferrerPolicy:            "no-referrer-when-downgrade",
 		CrossOriginResourcePolicy: "cross-origin",
 		CrossOriginEmbedderPolicy: "creadentialless",
-		XFrameOptions:             "ALLOW FROM %s https://www.gravatar.com https://http.cat",
+		XFrameOptions:             "SAMEORIGIN",
 		ContentSecurityPolicy: fmt.Sprintf(`default-src 'self' https://gnu.org https://www.gravatar.com %s;
 				style-src 'self' cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css 'unsafe-inline';
 				script-src 'self' %s 'unsafe-inline' 'unsafe-eval';

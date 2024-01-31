@@ -103,7 +103,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
-				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Path(), "sha256.min.js")
+				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Route().Path, "sha256.min.js")
 			},
 		}),
 		compress.New(compress.Config{
