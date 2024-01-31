@@ -403,7 +403,6 @@
 		--close-button-align: right;
 		--close-button-width: 1.2em;
 		--close-button-height: 1.2em;
-		--icon-color: #ffcbcc;
 		--button-bg: #60605190;
 		--button-radius: 20%;
 		--change-profile-pic-btn-top: -2.5rem;
@@ -461,9 +460,10 @@
 	.member-card {
 		border: 1px solid #ccc;
 		padding: 1em;
-		margin: 1em 0.3em 1em 0.6em;	
+		margin: 1em 0.3em 1em 0.6em;
 		border-radius: var(--member-card-border-radius);
 		background-color: var(--member-card-background-color);
+		color: var(--member-card-color);
 	}
 
 	button#expand-image-button {
@@ -508,7 +508,7 @@
 
 	div#member-bio {
 		font-size: 0.9em;
-		color: #666;
+		color: var(--tertiary-text-color);
 		margin-bottom: 1em;
 		width: 85%;
 		position: relative;
@@ -519,7 +519,7 @@
 
 	.member-joined-date {
 		font-size: 0.8em;
-		color: #999;
+		color: var(--minor-text-color);
 	}
 
 	button#logout-button {
@@ -528,6 +528,8 @@
 		float: var(--logout-button-align);
 		padding-top: var(--logout-button-padding-top);
 		margin-left: 10%;
+		background: var(--button-bg);
+		border-radius: var(--button-radius);
 	}
 
 	.spinner {

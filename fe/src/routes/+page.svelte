@@ -70,6 +70,33 @@
 	}
 </script>
 
+<svelte:head>
+	{#if theme === 'light'}
+		<style>
+			:root {
+				--main-bg-color: #faeffe !important;
+				--body-bgcolor: #faeffe !important;
+				--text-color: #111 !important;
+				--member-card-background-color: ghostwhite !important;
+			}
+		</style>
+	{:else if theme === 'sage'}
+		<style>
+			:root {
+				--main-bg-color: #487b63 !important;
+				--body-bgcolor: #487b63 !important;
+				--text-color: #202020 !important;
+				--tertiary-text-color: #111515 !important;
+				--member-card-background-color: #8b5848 !important;
+				--member-card-color: #fgfefc !important;
+				--button-bg: #94c1a6 !important;
+				--button-radius: 16px !important;
+				--icon-color: #d6f2c9 !important;
+			}
+		</style>
+	{/if}
+</svelte:head>
+
 <div class="app">
 	<div class="navbar">
 		{#await handleAuthentication()}

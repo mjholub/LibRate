@@ -24,6 +24,10 @@ pnpm-lock.yaml
 librate
 lrctl
 LibRate-*
+# various named binaries, e.g. '-dev, -nightly, -debug'
+./librate-*
+# user-modified templates from examples
+./static/templates/*.md
 LibRate
 ./static/img/profile/*.{jpeg,jpg,png,webp}
 librate-bin

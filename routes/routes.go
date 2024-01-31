@@ -214,7 +214,7 @@ func setupStatic(app *fiber.App, assets, artifacts string) error {
 		mu.Lock()
 		app.Use("/static", filesystem.New(filesystem.Config{
 			Root:         http.Dir(assetPath),
-			Browse:       false,
+			Browse:       true,
 			NotFoundFile: "404.html",
 		}))
 		mu.Unlock()
