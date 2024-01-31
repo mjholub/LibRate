@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onDestroy, onMount } from 'svelte';
 	import { authStore } from '$stores/members/auth.ts';
 	import { _ } from 'svelte-i18n';
 	import ErrorModal from '$components/modal/ErrorModal.svelte';
@@ -16,7 +15,8 @@
 	import type { CustomHttpError } from '$lib/types/error';
 	import ReviewCard from '$components/review/ReviewCard.svelte';
 
-	let windowWidth: number;
+	$: theme = localStorage.getItem('theme') || 'default';
+
 	let isAuthenticated: boolean;
 	let member: Member;
 	let authstatus: authData;
@@ -68,30 +68,34 @@
 			errors = [...errors];
 		}
 	}
-	if (browser) {
-		onMount(async () => {
-			windowWidth = window.innerWidth;
-			const handleResize = () => {
-				windowWidth = window.innerWidth;
-				const left = document.getElementById('left');
-				if (left) {
-					// if the window size is less than 768px, hide the left column
-					if (windowWidth < 768) {
-						left.style.display = 'none';
-					} else {
-						left.style.display = 'block';
-					}
-				}
-			};
-			window.addEventListener('resize', handleResize);
-		});
-	}
-	onDestroy(() => {
-		if (browser) {
-			window.removeEventListener('resize', () => {});
-		}
-	});
 </script>
+
+<svelte:head>
+	{#if theme === 'light'}
+		<style>
+			:root {
+				--main-bg-color: #faeffe !important;
+				--body-bgcolor: #faeffe !important;
+				--text-color: #111 !important;
+				--member-card-background-color: ghostwhite !important;
+			}
+		</style>
+	{:else if theme === 'sage'}
+		<style>
+			:root {
+				--main-bg-color: #487b63 !important;
+				--body-bgcolor: #487b63 !important;
+				--text-color: #202020 !important;
+				--tertiary-text-color: #111515 !important;
+				--member-card-background-color: #8b5848 !important;
+				--member-card-color: #fgfefc !important;
+				--button-bg: #94c1a6 !important;
+				--button-radius: 16px !important;
+				--icon-color: #d6f2c9 !important;
+			}
+		</style>
+	{/if}
+</svelte:head>
 
 <div class="app">
 	<div class="navbar">
@@ -116,7 +120,7 @@
 		{/await}
 	</div>
 	<div class="content">
-		<div id="left">
+		<div class="left">
 			<MediaCarousel authenticated={isAuthenticated} />
 		</div>
 		<div class="center">
@@ -166,6 +170,18 @@
 		--padding-base: 20px;
 	}
 
+	@media (max-width: 768px) {
+		.left {
+			display: none !important;
+		}
+		.right {
+			max-width: 45% !important;
+		}
+		.center {
+			max-width: 50% !important;
+		}
+	}
+
 	.app {
 		display: flex;
 		flex-direction: column;
@@ -177,9 +193,9 @@
 	.navbar {
 		background-color: var(--main-bg-color);
 		color: var(--text-color);
-		padding: 1rem 0;
+		padding: 0.3rem 0.1rem 0.6rem 0.1rem;
 		text-align: left;
-		display: block;
+		display: unset;
 	}
 
 	.content {
@@ -190,19 +206,19 @@
 		flex: 1;
 	}
 
-	div#left,
+	.left,
 	.center,
 	.right {
 		display: flex;
 		flex-direction: column;
 	}
 
-	div#left {
-		width: 34%;
+	.left {
+		max-width: 34%;
 	}
 
 	.center {
-		width: 33%;
+		max-width: 33%;
 		justify-content: center;
 	}
 
@@ -211,7 +227,7 @@
 	}
 
 	.right {
-		width: 33%;
+		max-width: 33%;
 	}
 
 	.footer {

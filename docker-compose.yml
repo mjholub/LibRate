@@ -55,6 +55,52 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  prometheus:
+    hostname: "librate-prometheus"
+    restart: always
+    networks:
+      - librate-net
+    image: prom/prometheus:main
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    entrypoint: ["echo", "Manual start enabled"]
+  grafana:
+    hostname: "librate-grafana"
+    restart: always
+    networks:
+      - librate-net
+    image: grafana/grafana:latest
+    depends_on:
+      - prometheus
+    links:
+        - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=CHANGE_ME
+      - GF_SECURITY_ADMIN_USER=librate
+      - GF_USERS_ALLOW_SIGN_UP=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:3000/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    entrypoint: ["echo", "Manual start enabled"]
 networks:
   librate-net:
     name: librate-net

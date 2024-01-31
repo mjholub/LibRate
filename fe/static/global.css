@@ -1,3 +1,15 @@
+:root {
+	--body-bgcolor: #345;
+  --tertiary-text-color: #666;
+  --minor-text-color: #999;
+	--member-card-background-color: #1f1f1f;
+  --member-card-color: #fff;
+	--linkcolor: rgb(48, 123, 188);
+	--body-padding: 0.1%;
+	--button-minor-border-radius: 2px;
+	--icon-color: #ffcbcc;
+}
+
 html, body {
 	position: relative;
 	width: 100%;
@@ -5,17 +17,18 @@ html, body {
 }
 
 body {
-	color: #333;
+	color: var(--body-bgcolor);
 	margin: 0;
-	padding: 8px;
+	padding: var(--body-padding);
 	box-sizing: border-box;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 a {
-	color: rgb(0,100,200);
+	color: var(--linkcolor);
 	text-decoration: none;
 }
+
 
 a:hover {
 	text-decoration: underline;
@@ -38,6 +51,8 @@ input, button, select, textarea {
 	box-sizing: border-box;
 	border: 1px solid #ccc;
 	border-radius: 4px;
+}
+
 button {
   cursor: pointer;
   z-index: 1;

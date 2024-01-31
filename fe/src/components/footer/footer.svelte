@@ -25,8 +25,6 @@
 		text-align: center;
 		padding: 0.5rem;
 		font-size: 0.8rem;
-		color: #fff;
-		background-color: #333;
 	}
 	footer p {
 		margin-bottom: 0.4rem;

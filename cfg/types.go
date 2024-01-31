@@ -56,18 +56,20 @@ type RedisConfig struct {
 
 // refer to https://docs.gofiber.io/api/fiber#config
 type FiberConfig struct {
-	Host           string          `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
-	Domain         string          `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
-	Port           int             `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
-	Prefork        bool            `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
-	ReduceMemUsage bool            `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
-	StaticDir      string          `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
-	PowInterval    int             `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
-	PowDifficulty  int             `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
-	RequestTimeout int             `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
-	TLS            bool            `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
-	MaxUploadSize  int64           `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_SIZE"`
-	Thumbnailing   ThumbnailConfig `yaml:"thumbnailing" default:"{namespaces: [{name: album_cover, size: {Width: 500, Height: 500}}]"`
+	DefaultLanguage string          `yaml:"defaultLanguage" default:"en-US" env:"LIBRATE_DEFAULT_LANGUAGE"`
+	Host            string          `yaml:"host" default:"localhost" env:"LIBRATE_HOST"`
+	Domain          string          `yaml:"domain" default:"lr.localhost" env:"DOMAIN"`
+	Port            int             `yaml:"port" default:"3000" env:"LIBRATE_PORT"`
+	Prefork         bool            `yaml:"prefork" default:"false" env:"LIBRATE_PREFORK"`
+	ReduceMemUsage  bool            `yaml:"reduceMemUsage" default:"false" env:"LIBRATE_REDUCE_MEM"`
+	StaticDir       string          `yaml:"staticDir" default:"./static" env:"LIBRATE_ASSETS"`
+	FrontendDir     string          `yaml:"frontendDir" default:"./fe/build" env:"LIBRATE_FRONTEND"`
+	PowInterval     int             `yaml:"powInterval" default:"300" env:"POW_INTERVAL"`
+	PowDifficulty   int             `yaml:"powDifficulty" default:"30000" env:"POW_DIFFICULTY"`
+	RequestTimeout  int             `yaml:"requestTimeout" default:"10" env:"LIBRATE_REQUEST_TIMEOUT"`
+	TLS             bool            `yaml:"tls" default:"false" env:"LIBRATE_TLS"`
+	MaxUploadSize   int64           `yaml:"maxUploadSize" default:"4194304" env:"LIBRATE_MAX_SIZE"`
+	Thumbnailing    ThumbnailConfig `yaml:"thumbnailing" default:"{namespaces: [{name: album_cover, size: {Width: 500, Height: 500}}]"`
 }
 
 // FIXME: currently this cannot be reliably configured via environment variables

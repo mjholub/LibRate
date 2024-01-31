@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fly, type TransitionConfig } from 'svelte/transition'
+	import { quartOut } from 'svelte/easing';
 	import Settings from '$components/modal/Settings.svelte';
 	import MobileMenu from '$components/modal/MobileMenu.svelte';
 	import { PowerIcon, MenuIcon, SettingsIcon } from 'svelte-feather-icons';
@@ -27,13 +29,20 @@
 		}
 	};
 
+	let mobileMenuAnim: TransitionConfig;
+
 	const toggleMobileMenu = () => {
 		showMobileMenu = !showMobileMenu;
 	};
 </script>
 
 <div class="mobile-menu">
-	<button id="menu" title="Menu" on:click={toggleMobileMenu}>
+	<button id="menu" title="Menu" on:click={toggleMobileMenu} transition:fly={{
+		x: '40%',
+		delay: 50,
+		easing: quartOut,
+		duration: 450
+	}}>
 		<span class="menu-icon"><MenuIcon /></span>
 		<MobileMenu bind:showMobileMenu>
 			<span slot="nick" id="menu-nick"><a href="/profiles/{nickname}">@{nickname}</a></span>
@@ -41,9 +50,7 @@
 				<button class="text-button" title="Settings" on:click={() => (showSettingsModal = true)}>
 					Settings</button
 				>
-				<Settings bind:showSettingsModal>
-					<h2 slot="settings" id="settings-text">Settings</h2>
-				</Settings>
+				<Settings bind:showSettingsModal {nickname} />
 			</span>
 			<span slot="logout">
 				<button class="text-button" on:click={logout}>Log out </button>
@@ -57,9 +64,7 @@
 	</span>
 	<button id="settings" title="Settings" on:click={() => (showSettingsModal = true)}>
 		<span class="settings-icon"><SettingsIcon /></span>
-		<Settings bind:showSettingsModal>
-			<h2 slot="settings" id="settings-text">Settings</h2>
-		</Settings>
+		<Settings bind:showSettingsModal {nickname} />
 		<button id="logout" title="Logout" on:click={logout}>
 			<PowerIcon />
 		</button>
@@ -83,7 +88,7 @@
       display: none;
     }
   }
-
+	
   .mobile-menu:active {
     display: flex;
     position: fixed;
@@ -92,8 +97,6 @@
   }
 
   .profile-controls {
-  display: flex;
-  align-items: center;
   justify-content: center;
   }
 
@@ -112,13 +115,14 @@
 	button#menu {
 		display: block;
     position: fixed;
-    margin-right: 0;
+    margin-right: 0.2em;
     margin-block-start: 0.75em;
     right: 1%;
     top: 1%;
+		z-index: 150 !important;
 	}
 
-	button#settings h2#settings-text {
+	button#settings {
 		margin-left: 1em;
 		padding: 0;
 		display: inline-flex;

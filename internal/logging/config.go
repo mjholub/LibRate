@@ -1,8 +1,9 @@
 package logging
 
 type Config struct {
-	Level     string          `yaml:"level" default:"info" validate:"oneof=trace debug info error fatal panic" env:"LIBRATE_LOG_LEVEL"`
-	Target    string          `yaml:"target" default:"stdout" validate:"required,oneof=stdout stderr" env:"LIBRATE_LOG_TARGET"`
+	Level string `yaml:"level" default:"info" validate:"oneof=trace debug info error fatal panic" env:"LIBRATE_LOG_LEVEL"`
+	// stdout, stderr, file
+	Target    string          `yaml:"target" default:"stdout" validate:"required" env:"LIBRATE_LOG_TARGET" example:"/var/log/librate.log"`
 	Format    string          `yaml:"format" default:"console" validate:"oneof=json console" env:"LIBRATE_LOG_FMT"`
 	Caller    bool            `yaml:"caller" default:"true" env:"LIBRATE_LOG_CALLER"`
 	Timestamp TimestampConfig `yaml:"timestamp" mapstructure:"timestamp"`

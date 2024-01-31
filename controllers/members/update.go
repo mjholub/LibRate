@@ -6,13 +6,27 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/lib/pq"
 	"github.com/samber/lo"
+	"golang.org/x/text/language"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // UpdateMember handles the updating of user information
+// @Summary Update member information
+// @Tags account,metadata,updating
+// @Description Handle updating those member properties that can be exposed publicly, i.e. not settings
+// @Accept multipart/form-data json
+// @Param member_name path string true "The nickname of the member being updated"
+// @Param Authorization header string true "The JWT token"
+// @Param X-CSRF-Token header string true "CSRF token"
+// @Param profile_pic_id query int64 false "ID of the picture that is returned after making a request to /api/upload/image"
+// @Success 200 {object} h.ResponseHTTP{}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /update/{member_name} [patch]
 func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 	mc.log.Info().Msg("Update called")
 	var member *member.Member
@@ -52,6 +66,91 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 		return h.Res(c, fiber.StatusInternalServerError, "Internal Server Error")
 	}
 	return h.Res(c, fiber.StatusOK, "success")
+}
+
+// UpdatePrefs handles the updating of user preferences
+// @Summary Update member preferences
+// @Description Handle updating private member preferences
+// @Tags account,updating,settings
+// @Accept json multipart/form-data
+// @Param member_name path string true "The nickname of the member being updated"
+// @Param Authorization header string true "The JWT token"
+// @Param X-CSRF-Token header string true "CSRF token"
+// @Param locale formData string false "The ISO 639-1 locale to use"
+// @Param rating_scale_lower formData int16 false "The lower bound of the rating scale" minimum(0) maximum(100)
+// @Param rating_scale_upper formData int16 false "The upper bound of the rating scale" minimum(2) maximum(100)
+// @Param message_autohide_words formData []string false "A comma-separated list of words to autohide in messages"
+// @Param muted_instances formData []string false "A comma-separated list of instance domains to mute"
+// @Param auto_accept_follow formData bool false "Whether to automatically accept follow requests"
+// @Param locally_searchable formData bool false "Whether to allow local searches"
+// @Param federated_searchable formData bool false "Whether to allow federated searches"
+// @Param robots_searchable formData bool false "Whether to allow robots to index the profile"
+// @Success 200 {object} h.ResponseHTTP{}
+// @Failure 400 {object} h.ResponseHTTP{}
+// @Failure 500 {object} h.ResponseHTTP{}
+// @Router /update/{member_name}/preferences [patch]
+func (mc *MemberController) UpdatePrefs(c *fiber.Ctx) error {
+	mc.log.Info().Msg("UpdatePrefs called")
+	var prefs *member.Preferences
+	var err error
+	ct := c.Request().Header.Peek("Content-Type")
+	if strings.Contains(string(ct), "multipart/form-data") {
+		prefs, err = parseFormPrefs(c)
+		if err != nil {
+			mc.log.Error().Err(err).Msgf("Error parsing form values: %v", err)
+			return h.Res(c, fiber.StatusBadRequest, "Error parsing form values")
+		}
+		mc.log.Debug().Msgf("prefs: %+v", prefs)
+	} else {
+		err = c.BodyParser(&prefs)
+		if err != nil {
+			mc.log.Error().Err(err).Msgf("Error parsing request body: %v", err)
+			return h.Res(c, fiber.StatusBadRequest, "Error parsing request body")
+		}
+	}
+	return h.Res(c, fiber.StatusNotImplemented, "Preferences updating not implemented yet")
+}
+
+func parseFormPrefs(c *fiber.Ctx) (p *member.Preferences, err error) {
+	var tag language.Tag
+	if c.FormValue("locale") != "" {
+		tag, err = language.Parse(c.FormValue("locale"))
+		if err != nil {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid locale")
+		}
+	} else {
+		tag = language.English
+		// TODO: get the current locale from the database
+		// maybe when the data is sent to the client, automatically include non-modified fields
+		// in the request
+	}
+	lower, err := strconv.ParseInt(c.FormValue("rating_scale_lower", "1"), 10, 16)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid rating scale lower bound")
+	}
+	upper, err := strconv.ParseInt(c.FormValue("rating_scale_upper", "10"), 10, 16)
+	if err != nil {
+		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid rating scale upper bound")
+	}
+
+	autoHideWords := strings.Split(c.FormValue("message_autohide_words"), ",")
+	muteInstances := strings.Split(c.FormValue("muted_instances"), ",")
+
+	return &member.Preferences{
+		UX: member.UXPreferences{
+			Locale:           tag,
+			RatingScaleLower: int16(lower),
+			RatingScaleUpper: int16(upper),
+		},
+		PrivacySecurity: member.PrivacySecurityPreferences{
+			MessageAutohideWords: pq.StringArray(autoHideWords),
+			MutedInstances:       pq.StringArray(muteInstances),
+			AutoAcceptFollow:     c.FormValue("auto_accept_follow", "true") == "true",
+			LocallySearchable:    c.FormValue("locally_searchable", "true") == "true",
+			FederatedSearchable:  c.FormValue("federated_searchable", "true") == "true",
+			RobotsSearchable:     c.FormValue("robots_searchable", "false") == "true",
+		},
+	}, nil
 }
 
 // parseFormValues parses the form values from the request body for which member struct fields are present

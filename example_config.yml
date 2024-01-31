@@ -2,16 +2,18 @@
 fiber:
   host: "localhost"
   domain: "lr.localhost"
-  port: 3000
+  port: 3001
   prefork: true
   reduceMemUsage: false
-  staticDir: "./static"
+  staticDir: "/app/data/static"
+  frontendDir: "/app/data/fe/build"
   # in seconds
   powInterval: 300
   powDifficulty: 30000
   tls: false
   # -1 for graceful shutdown that will wait indefintely
   shutdownTimeout: 10
+  defaultLanguage: "en-US"
   maxUploadSize: 4194304 # 4MB
   thumbnailing:
     namespaces:
@@ -26,7 +28,6 @@ fiber:
 secret: "librate-secret-key"
 database:
   engine: "postgres"
-  pgConfig: "/usr/bin/pg_config"
   host: "localhost"
   port: 5432
   database: "librate"
@@ -34,7 +35,7 @@ database:
   password: "postgres"
   autoMigrate: true
   exitAfterMigration: false
-  retryAttempts: 30
+  SSL: "disable"
 redis:
   host: "localhost"
   port: 6379
@@ -46,7 +47,7 @@ redis:
   powDb: 3
 logging:
   level: "info"
-  output: "stdout"
+  target: "stdout"
   format: "console"
   caller: true
   timestamp:

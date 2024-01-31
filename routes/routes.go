@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -56,19 +57,19 @@ func Setup(
 	}))
 
 	var (
-		mStor     member.MemberStorer
+		mStor     member.Storer
 		mediaStor *models.MediaStorage
 	)
 
 	switch conf.Engine {
 	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(dbConn, logger, conf)
+		mStor = member.NewSQLStorage(dbConn, newDBConn, logger, conf)
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
 	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
 
-	memberSvc := memberCtrl.NewController(mStor, dbConn, logger, conf)
+	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)
 	uploadSvc := static.NewController(conf, dbConn, logger)
 	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
@@ -82,6 +83,16 @@ func Setup(
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
+	members.Patch("/update/:memeber_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
+	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
+	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
+	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
+	members.Delete("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
+	members.Delete("/follow/requests/out/:id", middleware.Protected(sess, logger, conf), memberSvc.CancelFollowRequest)
+	members.Get("/follow/requests/:type", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Get("/follow/status/:followee_webfinger", middleware.Protected(sess, logger, conf), memberSvc.FollowStatus)
+	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
+	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 
 	setupMedia(api, mediaStor, conf)
@@ -109,7 +120,7 @@ func Setup(
 		}
 		return c.SendStatus(fiber.StatusServiceUnavailable)
 	})
-	err := setupStatic(app)
+	err := setupStatic(app, conf.Fiber.StaticDir, conf.Fiber.FrontendDir)
 	if err != nil {
 		return fmt.Errorf("failed to setup static files: %w", err)
 	}
@@ -137,13 +148,13 @@ func setupAuth(
 	sess *session.Store,
 	logger *zerolog.Logger,
 	conf *cfg.Config,
-	mStor member.MemberStorer,
+	mStor member.Storer,
 ) {
 	authSvc := auth.NewService(conf, mStor, logger, sess)
 
 	authAPI := api.Group("/authenticate")
-	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/logout", authSvc.Logout)
 	authAPI.Post("/register", authSvc.Register)
 }
@@ -155,33 +166,45 @@ func setupMedia(
 ) {
 	mediaCon := media.NewController(*mediaStor, conf)
 
-	media := api.Group("/media")
-	media.Get("/random", mediaCon.GetRandom)
-	media.Get("/import-sources", mediaCon.GetImportSources)
-	media.Get("/:media_id/images", mediaCon.GetImagePaths)
-	media.Get("/:id", mediaCon.GetMedia)
-	media.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
-	media.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
-	media.Get("/genres/:kind", timeout.NewWithContext(mediaCon.GetGenres, 30*time.Second))
+	mediaRouter := api.Group("/media")
+	mediaRouter.Get("/random", mediaCon.GetRandom)
+	mediaRouter.Get("/import-sources", mediaCon.GetImportSources)
+	mediaRouter.Get("/:media_id/images", mediaCon.GetImagePaths)
+	mediaRouter.Get("/:id", mediaCon.GetMedia)
+	mediaRouter.Get("/:media_id/cast", timeout.NewWithContext(mediaCon.GetCastByMediaID, 10*time.Second))
+	mediaRouter.Get("/creator", timeout.NewWithContext(mediaCon.GetCreatorByID, 10*time.Second))
+	mediaRouter.Get("/genres/:kind", timeout.NewWithContext(mediaCon.GetGenres, 30*time.Second))
 	// NOTE: singular to get a single genre, plural for more
-	media.Get("/genre/:kind/:genre", timeout.NewWithContext(mediaCon.GetGenre, 30*time.Second))
-	// route to get artists by their names, using multipart form data
-	media.Post("/artists/by-name", timeout.NewWithContext(mediaCon.GetArtistsByName, 30*time.Second))
-	media.Post("/import", timeout.NewWithContext(mediaCon.ImportWeb, 60*time.Second))
+	mediaRouter.Get("/genre/:kind/:genre", timeout.NewWithContext(mediaCon.GetGenre, 30*time.Second))
+	mediaRouter.Post("/artists/by-name", timeout.NewWithContext(mediaCon.GetArtistsByName, 30*time.Second))
+	mediaRouter.Post("/import", timeout.NewWithContext(mediaCon.ImportWeb, 60*time.Second))
 }
 
-func setupStatic(app *fiber.App) error {
+func setupStatic(app *fiber.App, assets, artifacts string) error {
 	var wg sync.WaitGroup
 	errChan := make(chan error, 1)
+
+	// stat both paths in parallel
+	_, err := os.Stat(assets)
+	if err != nil {
+		return fmt.Errorf("failed to stat static assets directory. Ensure it's properly set and has the correct permissions: %v", err)
+	}
+	_, err = os.Stat(artifacts)
+	if err != nil {
+		return fmt.Errorf(
+			`failed to stat frontend build artifacts directory.
+			Ensure that you've run the JS bundler and it's properly set and has the correct permissions: %v`,
+			err)
+	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		staticPath, err := filepath.Abs("./fe/build/")
+		staticPath, err := filepath.Abs(artifacts)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
-		assetPath, err := filepath.Abs("./static")
+		assetPath, err := filepath.Abs(assets)
 		if err != nil {
 			errChan <- fmt.Errorf("failed to get absolute path for static files: %w", err)
 		}
@@ -190,8 +213,9 @@ func setupStatic(app *fiber.App) error {
 
 		mu.Lock()
 		app.Use("/static", filesystem.New(filesystem.Config{
-			Root:   http.Dir(assetPath),
-			Browse: true,
+			Root:         http.Dir(assetPath),
+			Browse:       true,
+			NotFoundFile: "404.html",
 		}))
 		mu.Unlock()
 		app.Use("/", filesystem.New(filesystem.Config{

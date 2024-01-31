@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/rs/zerolog"
 
 	"github.com/stretchr/testify/require"
@@ -169,36 +170,6 @@ func TestGetMember(t *testing.T) {
 	require.NotNil(t, conn)
 	defer conn.Close()
 	logger.Debug().Msgf("connected to database with DSN: %s", db.CreateDsn(&cfg.TestConfig.DBConfig))
-	/*
-		var mu sync.Mutex
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		mu.Lock()
-		err = PrepareTest(ctx, conn)
-		logger.Debug().Msg("test schema prepared")
-		mu.Unlock()
-		require.NoError(t, err)
-		defer require.NoError(t, CleanupTest(conn))
-		// get all schemas and tables in test database
-		var dbContents []struct {
-			TableCatalog              string         `db:"table_catalog"`
-			TableSchema               string         `db:"table_schema"`
-			TableName                 string         `db:"table_name"`
-			TableType                 string         `db:"table_type"`
-			SelfReferencingColumnName sql.NullString `db:"self_referencing_column_name"`
-			ReferenceGeneration       sql.NullString `db:"reference_generation"`
-			UserDefinedTypeCatalog    sql.NullString `db:"user_defined_type_catalog"`
-			UserDefinedTypeSchema     sql.NullString `db:"user_defined_type_schema"`
-			UserDefinedTypeName       sql.NullString `db:"user_defined_type_name"`
-			IsInsertableInto          string         `db:"is_insertable_into"`
-			IsTyped                   string         `db:"is_typed"`
-			CommitAction              sql.NullString `db:"commit_action"`
-		}
-		err = conn.SelectContext(context.Background(), &dbContents, "SELECT * FROM information_schema.tables WHERE table_catalog = 'librate_test' AND table_schema = 'public'")
-		require.NoError(t, err)
-		assert.NotNilf(t, dbContents, "test database is empty")
-		log.Tracef("test database contents: %v", dbContents)
-	*/
 	testUser := &member.Member{
 		UUID:         uuid.Must(uuid.NewV4()),
 		PassHash:     "testhash",
@@ -208,7 +179,11 @@ func TestGetMember(t *testing.T) {
 		Roles:        []string{"member"},
 	}
 
-	storage := member.NewSQLStorage(conn, &logger, &cfg.TestConfig)
+	mock, err := pgxmock.NewPool()
+	require.NoError(t, err)
+	defer mock.Close()
+
+	storage := member.NewSQLStorage(conn, &mock, &logger, &cfg.TestConfig)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

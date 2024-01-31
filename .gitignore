@@ -4,7 +4,6 @@ recommendation/target
 recommendation/go/services
 config.yml
 node_modules
-fe/bun.lockb
 fe/_app
 *.pem
 *.tar
@@ -25,10 +24,14 @@ pnpm-lock.yaml
 librate
 lrctl
 LibRate-*
+# various named binaries, e.g. '-dev, -nightly, -debug'
+./librate-*
+# user-modified templates from examples
+./static/templates/*.md
 LibRate
 ./static/img/profile/*.{jpeg,jpg,png,webp}
 librate-bin
 ./profile*
 static/templates/privacy_en.md
-fe/.vscode
-librate-nightly
+.vscode
+fe/bun.lockb

@@ -17,31 +17,31 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockMemberStorer is a mock of MemberStorer interface.
-type MockMemberStorer struct {
+// MockStorer is a mock of Storer interface.
+type MockStorer struct {
 	ctrl     *gomock.Controller
-	recorder *MockMemberStorerMockRecorder
+	recorder *MockStorerMockRecorder
 }
 
-// MockMemberStorerMockRecorder is the mock recorder for MockMemberStorer.
-type MockMemberStorerMockRecorder struct {
-	mock *MockMemberStorer
+// MockStorerMockRecorder is the mock recorder for MockStorer.
+type MockStorerMockRecorder struct {
+	mock *MockStorer
 }
 
-// NewMockMemberStorer creates a new mock instance.
-func NewMockMemberStorer(ctrl *gomock.Controller) *MockMemberStorer {
-	mock := &MockMemberStorer{ctrl: ctrl}
-	mock.recorder = &MockMemberStorerMockRecorder{mock}
+// NewMockStorer creates a new mock instance.
+func NewMockStorer(ctrl *gomock.Controller) *MockStorer {
+	mock := &MockStorer{ctrl: ctrl}
+	mock.recorder = &MockStorerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMemberStorer) EXPECT() *MockMemberStorerMockRecorder {
+func (m *MockStorer) EXPECT() *MockStorerMockRecorder {
 	return m.recorder
 }
 
 // Check mocks base method.
-func (m *MockMemberStorer) Check(ctx context.Context, email, nickname string) (bool, error) {
+func (m *MockStorer) Check(ctx context.Context, email, nickname string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Check", ctx, email, nickname)
 	ret0, _ := ret[0].(bool)
@@ -50,13 +50,13 @@ func (m *MockMemberStorer) Check(ctx context.Context, email, nickname string) (b
 }
 
 // Check indicates an expected call of Check.
-func (mr *MockMemberStorerMockRecorder) Check(ctx, email, nickname any) *gomock.Call {
+func (mr *MockStorerMockRecorder) Check(ctx, email, nickname any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Check", reflect.TypeOf((*MockMemberStorer)(nil).Check), ctx, email, nickname)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Check", reflect.TypeOf((*MockStorer)(nil).Check), ctx, email, nickname)
 }
 
 // CreateSession mocks base method.
-func (m *MockMemberStorer) CreateSession(ctx context.Context, member *member.Member) (string, error) {
+func (m *MockStorer) CreateSession(ctx context.Context, member *member.Member) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateSession", ctx, member)
 	ret0, _ := ret[0].(string)
@@ -65,13 +65,13 @@ func (m *MockMemberStorer) CreateSession(ctx context.Context, member *member.Mem
 }
 
 // CreateSession indicates an expected call of CreateSession.
-func (mr *MockMemberStorerMockRecorder) CreateSession(ctx, member any) *gomock.Call {
+func (mr *MockStorerMockRecorder) CreateSession(ctx, member any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockMemberStorer)(nil).CreateSession), ctx, member)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockStorer)(nil).CreateSession), ctx, member)
 }
 
 // Delete mocks base method.
-func (m *MockMemberStorer) Delete(ctx context.Context, member *member.Member) error {
+func (m *MockStorer) Delete(ctx context.Context, member *member.Member) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, member)
 	ret0, _ := ret[0].(error)
@@ -79,13 +79,13 @@ func (m *MockMemberStorer) Delete(ctx context.Context, member *member.Member) er
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockMemberStorerMockRecorder) Delete(ctx, member any) *gomock.Call {
+func (mr *MockStorerMockRecorder) Delete(ctx, member any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMemberStorer)(nil).Delete), ctx, member)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorer)(nil).Delete), ctx, member)
 }
 
 // GetID mocks base method.
-func (m *MockMemberStorer) GetID(ctx context.Context, key string) (uint32, error) {
+func (m *MockStorer) GetID(ctx context.Context, key string) (uint32, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetID", ctx, key)
 	ret0, _ := ret[0].(uint32)
@@ -94,13 +94,13 @@ func (m *MockMemberStorer) GetID(ctx context.Context, key string) (uint32, error
 }
 
 // GetID indicates an expected call of GetID.
-func (mr *MockMemberStorerMockRecorder) GetID(ctx, key any) *gomock.Call {
+func (mr *MockStorerMockRecorder) GetID(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockMemberStorer)(nil).GetID), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockStorer)(nil).GetID), ctx, key)
 }
 
 // GetPassHash mocks base method.
-func (m *MockMemberStorer) GetPassHash(email, login string) (string, error) {
+func (m *MockStorer) GetPassHash(email, login string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPassHash", email, login)
 	ret0, _ := ret[0].(string)
@@ -109,13 +109,13 @@ func (m *MockMemberStorer) GetPassHash(email, login string) (string, error) {
 }
 
 // GetPassHash indicates an expected call of GetPassHash.
-func (mr *MockMemberStorerMockRecorder) GetPassHash(email, login any) *gomock.Call {
+func (mr *MockStorerMockRecorder) GetPassHash(email, login any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassHash", reflect.TypeOf((*MockMemberStorer)(nil).GetPassHash), email, login)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassHash", reflect.TypeOf((*MockStorer)(nil).GetPassHash), email, login)
 }
 
 // GetSessionTimeout mocks base method.
-func (m *MockMemberStorer) GetSessionTimeout(ctx context.Context, memberID int, deviceID v5.UUID) (int, error) {
+func (m *MockStorer) GetSessionTimeout(ctx context.Context, memberID int, deviceID v5.UUID) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSessionTimeout", ctx, memberID, deviceID)
 	ret0, _ := ret[0].(int)
@@ -124,13 +124,13 @@ func (m *MockMemberStorer) GetSessionTimeout(ctx context.Context, memberID int, 
 }
 
 // GetSessionTimeout indicates an expected call of GetSessionTimeout.
-func (mr *MockMemberStorerMockRecorder) GetSessionTimeout(ctx, memberID, deviceID any) *gomock.Call {
+func (mr *MockStorerMockRecorder) GetSessionTimeout(ctx, memberID, deviceID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionTimeout", reflect.TypeOf((*MockMemberStorer)(nil).GetSessionTimeout), ctx, memberID, deviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionTimeout", reflect.TypeOf((*MockStorer)(nil).GetSessionTimeout), ctx, memberID, deviceID)
 }
 
 // LookupDevice mocks base method.
-func (m *MockMemberStorer) LookupDevice(ctx context.Context, deviceID v5.UUID) error {
+func (m *MockStorer) LookupDevice(ctx context.Context, deviceID v5.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupDevice", ctx, deviceID)
 	ret0, _ := ret[0].(error)
@@ -138,13 +138,13 @@ func (m *MockMemberStorer) LookupDevice(ctx context.Context, deviceID v5.UUID) e
 }
 
 // LookupDevice indicates an expected call of LookupDevice.
-func (mr *MockMemberStorerMockRecorder) LookupDevice(ctx, deviceID any) *gomock.Call {
+func (mr *MockStorerMockRecorder) LookupDevice(ctx, deviceID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupDevice", reflect.TypeOf((*MockMemberStorer)(nil).LookupDevice), ctx, deviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupDevice", reflect.TypeOf((*MockStorer)(nil).LookupDevice), ctx, deviceID)
 }
 
 // Read mocks base method.
-func (m *MockMemberStorer) Read(ctx context.Context, key string, keyNames ...string) (*member.Member, error) {
+func (m *MockStorer) Read(ctx context.Context, key string, keyNames ...string) (*member.Member, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, key}
 	for _, a := range keyNames {
@@ -157,14 +157,14 @@ func (m *MockMemberStorer) Read(ctx context.Context, key string, keyNames ...str
 }
 
 // Read indicates an expected call of Read.
-func (mr *MockMemberStorerMockRecorder) Read(ctx, key any, keyNames ...any) *gomock.Call {
+func (mr *MockStorerMockRecorder) Read(ctx, key any, keyNames ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, key}, keyNames...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockMemberStorer)(nil).Read), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockStorer)(nil).Read), varargs...)
 }
 
 // RequestFollow mocks base method.
-func (m *MockMemberStorer) RequestFollow(ctx context.Context, fr *member.FollowRequest) error {
+func (m *MockStorer) RequestFollow(ctx context.Context, fr *member.FollowBlockRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequestFollow", ctx, fr)
 	ret0, _ := ret[0].(error)
@@ -172,13 +172,13 @@ func (m *MockMemberStorer) RequestFollow(ctx context.Context, fr *member.FollowR
 }
 
 // RequestFollow indicates an expected call of RequestFollow.
-func (mr *MockMemberStorerMockRecorder) RequestFollow(ctx, fr any) *gomock.Call {
+func (mr *MockStorerMockRecorder) RequestFollow(ctx, fr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestFollow", reflect.TypeOf((*MockMemberStorer)(nil).RequestFollow), ctx, fr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestFollow", reflect.TypeOf((*MockStorer)(nil).RequestFollow), ctx, fr)
 }
 
 // Save mocks base method.
-func (m *MockMemberStorer) Save(ctx context.Context, member *member.Member) error {
+func (m *MockStorer) Save(ctx context.Context, member *member.Member) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Save", ctx, member)
 	ret0, _ := ret[0].(error)
@@ -186,13 +186,13 @@ func (m *MockMemberStorer) Save(ctx context.Context, member *member.Member) erro
 }
 
 // Save indicates an expected call of Save.
-func (mr *MockMemberStorerMockRecorder) Save(ctx, member any) *gomock.Call {
+func (mr *MockStorerMockRecorder) Save(ctx, member any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockMemberStorer)(nil).Save), ctx, member)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStorer)(nil).Save), ctx, member)
 }
 
 // Update mocks base method.
-func (m *MockMemberStorer) Update(ctx context.Context, member *member.Member) error {
+func (m *MockStorer) Update(ctx context.Context, member *member.Member) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, member)
 	ret0, _ := ret[0].(error)
@@ -200,7 +200,7 @@ func (m *MockMemberStorer) Update(ctx context.Context, member *member.Member) er
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockMemberStorerMockRecorder) Update(ctx, member any) *gomock.Call {
+func (mr *MockStorerMockRecorder) Update(ctx, member any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockMemberStorer)(nil).Update), ctx, member)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockStorer)(nil).Update), ctx, member)
 }

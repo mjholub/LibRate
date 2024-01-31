@@ -338,7 +338,7 @@
 	.carousel {
 		display: flex;
 		position: relative;
-		z-index: -2;
+		z-index: 2;
 		overflow-x: scroll;
 	}
 	.media-card-wrapper {

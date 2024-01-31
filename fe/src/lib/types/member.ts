@@ -2,6 +2,7 @@ import type { NullableInt64, NullableString } from './utils';
 
 export type Member = {
   active: boolean,
+  webfinger: string,
   uuid: string,
   memberName: string,
   displayName: NullableString,
