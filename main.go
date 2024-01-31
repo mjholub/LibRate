@@ -18,6 +18,7 @@ import (
 	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
+//	"github.com/k42-software/go-altcha"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -210,6 +211,8 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
+	// makes no sense on reverse proxy
+	setupPOW(conf, app)
 	var wg sync.WaitGroup
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	wg.Add(1)
@@ -222,10 +225,9 @@ func main() {
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
 
-	setupPOW(conf, app)
-	wg.Wait()
 
 	wsConfig := cmd.SetupWS(app, "/search")
+	wg.Wait()
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
@@ -243,6 +245,7 @@ func setupPOW(conf *cfg.Config, app *fiber.App) {
 	if conf.Fiber.PowDifficulty == 0 {
 		conf.Fiber.PowDifficulty = 60000
 	}
+
 	app.Use(fiberpow.New(fiberpow.Config{
 		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
 		Difficulty:  conf.Fiber.PowDifficulty,
