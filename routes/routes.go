@@ -153,8 +153,8 @@ func setupAuth(
 	authSvc := auth.NewService(conf, mStor, logger, sess)
 
 	authAPI := api.Group("/authenticate")
-	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/logout", authSvc.Logout)
 	authAPI.Post("/register", authSvc.Register)
 }

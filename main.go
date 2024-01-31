@@ -210,10 +210,11 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
-	var mu sync.Mutex
-	mu.Lock()
+	var wg sync.WaitGroup
 	middlewares := cmd.SetupMiddlewares(conf, &log)
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for i := range middlewares {
 			app.Use(middlewares[i])
 		}
@@ -222,7 +223,7 @@ func main() {
 	app.Use(fzlog)
 
 	setupPOW(conf, app)
-	mu.Unlock()
+	wg.Wait()
 
 	wsConfig := cmd.SetupWS(app, "/search")
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
