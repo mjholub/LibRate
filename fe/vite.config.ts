@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [sveltekit()],
+  base: './',
   test: {
     include: ['src/**/*.{test,spec}.{js,ts}']
   },
