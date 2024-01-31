@@ -4,6 +4,7 @@
 [![GoDoc](https://godoc.org/codeberg.org/mjh/LibRate?status.svg)](https://pkg.go.dev/codeberg.org/mjh/LibRate)
 ![Matrix](https://img.shields.io/matrix/libratedev:matrix.org)
 ![Depfu](https://img.shields.io/depfu/dependencies/github/mjholub%2FLibRate)
+![LiberaPay](https://img.shields.io/liberapay/receives/TeamLibrate.svg?logo=liberapay)
 
 This project aims to bring a website combining the functionality of such projects as Bookwyrm, RateYourMusic/Sonemic, IMDB and similar to the #fediverse.
 
