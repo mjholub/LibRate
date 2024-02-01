@@ -5,7 +5,11 @@
 	import { _ } from 'svelte-i18n';
 	import type { PrivacySecurityPreferences } from '$stores/members/prefs';
 	import { createEventDispatcher } from 'svelte';
-	import { memberStore, type DataExportFormat, type DataExportRequest } from '$stores/members/getInfo';
+	import {
+		memberStore,
+		type DataExportFormat,
+		type DataExportRequest
+	} from '$stores/members/getInfo';
 	import { authStore, type PasswordUpdateInput } from '$stores/members/auth';
 	import axios from 'axios';
 	import PasswordInput from '$components/form/PasswordInput.svelte';
@@ -87,10 +91,10 @@
 		const input: DataExportRequest = {
 			jwtToken: jwtToken,
 			target: exportFormat
-		}
+		};
 		try {
 			await memberStore.exportData(input);
-		} catch(error: any) {
+		} catch (error: any) {
 			errorMessages.push('Error while exporting data');
 			errorMessages = [...errorMessages];
 		}
@@ -135,10 +139,12 @@
 
 <form id="privacy-settings" on:submit={settingsUpdate}>
 	<h3 class="settings-section-descriptor">{$_('interactions')}</h3>
-	<label class="settings-label" for="auto-accept-follow">{$_('auto_accept_follow')} </label>
-	<input type="checkbox" id="auto-accept-follow" bind:value={settings.auto_accept_follow} />
+	<span class="settings-option">
+		<label class="settings-label" for="auto-accept-follow">{$_('auto_accept_follow')} </label>
+		<input type="checkbox" id="auto-accept-follow" bind:value={settings.auto_accept_follow} />
+	</span>
 	<div class="settings-text-input">
-		<label for="muted-instances">{$_('muted')} {$_('instances')}</label>
+		<h5 id="muted-instances">{$_('muted')} {$_('instances')}</h5>
 		<label for="confirm-muting-instance">{$_('require_instance_mute_confirmation')}</label>
 		<input type="checkbox" bind:value={confirmMutingInstance} />
 		{#if confirmMutingInstance}
@@ -165,32 +171,38 @@
 
 		<h3 class="settings-section-descriptor">{$_('who_can_search_my_profile')}</h3>
 
-		<label class="settings-label" for="federated searchable">
-			{$_('known_network')}
-		</label>
-		<input
-			type="checkbox"
-			id="federated-searchable"
-			bind:value={settings.searchable_to_federated}
-		/>
+		<span class="settings-option">
+			<label class="settings-label" for="federated searchable">
+				{$_('known_network')}
+			</label>
+			<input
+				type="checkbox"
+				id="federated-searchable"
+				bind:value={settings.searchable_to_federated}
+			/>
+		</span>
 
-		<label class="settings-label" for="locally-searchable">
-			{$_('local_accounts')}
-		</label>
-		<input type="checkbox" id="locally-searchable" bind:value={settings.locally_searchable} />
+		<span class="settings-option">
+			<label class="settings-label" for="locally-searchable">
+				{$_('local_accounts')}
+			</label>
+			<input type="checkbox" id="locally-searchable" bind:value={settings.locally_searchable} />
+		</span>
 
-		<label class="settings-label" for="robots-searchable">
-			{$_('searchable_to_robots')}
-		</label>
-		<input type="checkbox" id="robots-searchable" bind:value={settings.robots_searchable} />
+		<span class="settings-option">
+			<label class="settings-label" for="robots-searchable">
+				{$_('searchable_to_robots')}
+			</label>
+			<input type="checkbox" id="robots-searchable" bind:value={settings.robots_searchable} />
+		</span>
 
 		<hr />
 		<div class="data-export">
 			<h3 class="settings-section-descriptor">{$_('data_export')}</h3>
-			<select id="select-export-format" bind:value={exportFormat}
-				>{$_('export_format')}
-				{#each ['json', 'csv', 'sql'] as format}
-					<option value={format}>{format.toUpperCase}</option>
+			<label for="select-export-format">{$_('export_format')} </label>
+			<select id="select-export-format" bind:value={exportFormat}>
+				{#each ['json', 'csv'] as format, i}
+					<option value={format}>{['JSON', 'CSV'][i]}</option>
 				{/each}
 			</select>
 			<button type="submit" class="submit-button" on:click={exportData}>{$_('export')}</button>
@@ -201,9 +213,9 @@
 			<div class="passwd-change">
 				<details class="danger-zone-details">
 					<summary>{$_('change_password')}</summary>
-					<label for="current-password">{$_('current_password')}</label>
+					<label for="current-password" class="text-input-label">{$_('current_password')}</label>
 					<input type="password" id="current-password" bind:value={passwordUpdateData.current} />
-					<label for="new-password">{$_('new_password')}</label>
+					<label for="new-password" class="text-input-label">{$_('new_password')}</label>
 					<PasswordInput
 						bind:value={passwordUpdateData.new}
 						id="new-password"
@@ -213,7 +225,9 @@
 						{showPassword}
 						{toggleObfuscation}
 					/>
-					<label for="confirm-new-password">{$_('confirm_new_password')}</label>
+					<label for="confirm-new-password" class="text-input-label"
+						>{$_('confirm_new_password')}</label
+					>
 					<PasswordInput
 						onInput={async () => {
 							comparePasswords(passwordUpdateData.new, passwordUpdateData.newConfirm);
@@ -242,7 +256,7 @@
 				</details>
 				<details class="danger-zone-details">
 					<summary>{$_('delete_account')}</summary>
-					<label for="password">{$_('password')}</label>
+					<label for="password" class="text-input-label">{$_('password')}</label>
 					<PasswordInput
 						onInput={async () => void 0}
 						bind:value={deletionPassword}
@@ -250,7 +264,7 @@
 						{showPassword}
 						{toggleObfuscation}
 					/>
-					<label for="confirm-password">{$_('confirm_password')}</label>
+					<label for="confirm-password" class="text-input-label">{$_('confirm_password')}</label>
 					<PasswordInput
 						onInput={async () => comparePasswords(deletionPassword, deletionPasswordConfirm)}
 						bind:value={deletionPasswordConfirm}
@@ -258,6 +272,22 @@
 						{showPassword}
 						{toggleObfuscation}
 					/>
+					<div class="submit-cancel-container">
+						<button type="submit" class="submit-button" on:click={updatePassword}
+							>{$_('confirm')}</button
+						>
+						<button
+							type="button"
+							class="cancel-button"
+							on:click={() => {
+								passwordUpdateData = {
+									current: '',
+									new: '',
+									newConfirm: ''
+								};
+							}}>{$_('cancel')}</button
+						>
+					</div>
 				</details>
 			</div>
 		</div>
@@ -265,3 +295,41 @@
 
 	<hr />
 </form>
+
+<style lang="scss">
+	input[type='checkbox'] {
+		float: left;
+	}
+
+	.settings-option {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	#muted-instances {
+		margin-top: 3%;
+	}
+
+	#select-export-format {
+		display: block;
+		margin-bottom: 1%;
+	}
+
+	.submit-cancel-container {
+		display: block;
+		padding: 2% 0;
+	}
+
+	label {
+		margin-left: 1%;
+		padding: 1% 0;
+		display: block;
+	}
+
+	.text-input-label {
+		padding: 1% 0;
+		display: block;
+	}
+</style>

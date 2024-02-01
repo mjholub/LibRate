@@ -9,11 +9,6 @@ export type Member = {
   email: string,
   profile_pic: string | null,
   bio: NullableString,
-  matrix: NullableString,
-  xmpp: NullableString,
-  irc: NullableString,
-  homepage: NullableString,
-  //bookwyrm: "",
   regdate: number | Date,
   roles: MemberRole[],
   // private means federated, but visible only if authenticated
@@ -21,6 +16,7 @@ export type Member = {
   followers_uri: string,
   following_uri: string,
   sessionTimeout: NullableInt64,
+  customFields: Map<string, string>,
 };
 
 export type MemberRole = 'regular' | 'admin' | 'creator' | 'mod' | 'member' | 'banned';

@@ -61,18 +61,19 @@
 		--input-background-color-focus: #fff;
 		--input-text: #000;
 		--border-radius: 4px;
-		--pwd-container-display: inline-block;
 	}
 
 	.password-container {
 		position: relative;
 		overflow: visible;
-		display: var(--pwd-container-display) !important;
-		border: 1px solid var(--input-border-color);
+		display: inline;
+		border: none;
 		border-radius: var(--border-radius);
 		color: var(--input-text);
 		background-color: var(--input-background-color);
-		width: calc(98% - 0.2em);
+		width: calc(
+			98% - 0.2em
+		); /* FIXME: not correct, makes the hide/show button appear outside the input */
 		height: 2rem;
 	}
 
@@ -100,8 +101,8 @@
 		position: absolute;
 		display: inline-block;
 		line-height: 1;
-		right: -0.4rem;
-		bottom: -50%;
+		right: 6%;
+		bottom: 0;
 		text-transform: none;
 		letter-spacing: normal;
 		word-wrap: normal;

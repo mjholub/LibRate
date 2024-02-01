@@ -3,27 +3,6 @@ import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { Member } from '$lib/types/member';
 
-export const memberInfo: Member = {
-  memberName: '',
-  webfinger: '',
-  displayName: { String: '', Valid: false },
-  email: '',
-  profile_pic: '',
-  bio: { String: '', Valid: false },
-  matrix: { String: '', Valid: false },
-  xmpp: { String: '', Valid: false },
-  irc: { String: '', Valid: false },
-  homepage: { String: '', Valid: false },
-  regdate: 0,
-  roles: [],
-  visibility: "private",
-  followers_uri: '',
-  following_uri: '',
-  sessionTimeout: { Int64: 0, Valid: false },
-  active: false,
-  uuid: ''
-};
-
 export type FollowRequestType = 'sent' | 'received' | 'all';
 
 export type FollowRequestOut = {
@@ -69,7 +48,7 @@ interface FollowStore extends Writable<Member> {
 }
 
 function createFollowStore(): FollowStore {
-  const { subscribe, set, update } = writable<Member>(memberInfo);
+  const { subscribe, set, update } = writable<Member>({} as Member);
   return {
     subscribe,
     set,
