@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "email_not_available": "E-Mail Adresse bereits belegt",
     "search_placeholder": "Suchfrage eingeben...",
     "books": "Bücher",
@@ -30,4 +31,19 @@
     "error": "Fehler",
     "error_updating_follow_status": "Fehler bei der Aktualisierung des Verfolgungsstatus",
     "cancel_follow_request": "Folgeanfrage stornieren"
+=======
+  "email_not_available": "E-Mail Adresse bereits belegt",
+  "search_placeholder": "Suchfrage eingeben...",
+  "books": "Bücher",
+  "email_available:": "E-Mail Adresse verfügbar",
+  "authors": "Autorinnen und Autoren",
+  "discover": "Entdecken",
+  "forgot_password": "Passwort vergessen?",
+  "dont_increase_on_shared": "Der Wert dieser Einstellung sollte auf gemeinsam genutzten Computern nicht geändert werden",
+  "confirm": "Bestätigen",
+  "add_media": "Medien-Eintrag hinzufügen",
+  "genres": "Gattungen",
+  "email_or_username": "E-Mail Addresse oder Nickname",
+  "password_strength": "Passwortstärke"
+>>>>>>> 3503f8a (feat, WIP(settings FE): updating password)
 }

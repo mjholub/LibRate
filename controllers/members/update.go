@@ -16,7 +16,7 @@ import (
 
 // UpdateMember handles the updating of user information
 // @Summary Update member information
-// @Tags account,metadata,updating
+// @Tags accounts,metadata,updating
 // @Description Handle updating those member properties that can be exposed publicly, i.e. not settings
 // @Accept multipart/form-data json
 // @Param member_name path string true "The nickname of the member being updated"
@@ -71,7 +71,7 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 // UpdatePrefs handles the updating of user preferences
 // @Summary Update member preferences
 // @Description Handle updating private member preferences
-// @Tags account,updating,settings
+// @Tags accounts,updating,settings
 // @Accept json multipart/form-data
 // @Param member_name path string true "The nickname of the member being updated"
 // @Param Authorization header string true "The JWT token"
