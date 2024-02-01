@@ -135,7 +135,8 @@ type (
 		Ends      time.Time `json:"ends" db:"ends" validate:"required" example:"2038-01-16T00:00:00Z"`
 		CanAppeal bool      `json:"canAppeal" db:"can_appeal" validate:"required" example:"true"`
 		// usage: https://pkg.go.dev/net#ParseCIDR
-		Mask *net.IPNet `json:"mask" db:"mask"`
+		Mask     *net.IPNet `json:"mask" db:"mask"`
+		BannedBy string     `json:"bannedBy" db:"banned_by"`
 	}
 
 	// BanStatus is used to retrieve the ban details
@@ -164,6 +165,11 @@ type (
 		CreateSession(ctx context.Context, member *Member) (string, error)
 		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
 		FollowStorer
+		Exporter
+	}
+
+	Exporter interface {
+		Export(ctx context.Context, memberName, format string) ([]byte, error)
 	}
 
 	FollowStorer interface {

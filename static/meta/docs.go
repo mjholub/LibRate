@@ -548,6 +548,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/members/export/{format}": {
+            "get": {
+                "description": "Exports the data of a member, including profile information as well as other related data such as reviews",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "json text/csv"
+                ],
+                "tags": [
+                    "accounts",
+                    "members",
+                    "metadata"
+                ],
+                "summary": "Export all of the member's data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "json",
+                            "csv"
+                        ],
+                        "type": "string",
+                        "description": "Export format",
+                        "name": "format",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/members/follow": {
             "post": {
                 "description": "Send a follow request to another user. If the user has automatic follow request acceptance\nenabled, the follow request will be accepted immediately.",
@@ -1234,7 +1272,7 @@ const docTemplate = `{
                     "multipart/form-data json"
                 ],
                 "tags": [
-                    "account",
+                    "accounts",
                     "metadata",
                     "updating"
                 ],
@@ -1297,7 +1335,7 @@ const docTemplate = `{
                     "json multipart/form-data"
                 ],
                 "tags": [
-                    "account",
+                    "accounts",
                     "updating",
                     "settings"
                 ],

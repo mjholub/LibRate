@@ -1,18 +1,28 @@
+import axios from 'axios';
 import type { Member } from '$lib/types/member';
+import { writable, type Writable } from 'svelte/store';
 
-export type DataExportFormat = 'json' | 'csv' | 'sql';
+export type DataExportFormat = 'json' | 'csv';
 
 export type DataExportRequest = {
   jwtToken: string;
   target: DataExportFormat;
-}
+};
+
+interface FileResponse extends Blob {
+  name: string;
+};
+
+export type ExportState = 'idle' | 'loading' | 'success' | 'error';
 
 interface MemberStore extends Writable<Member> {
   getMember: (jwtToken: string, email_or_username: string) => Promise<Member>;
-  exportData: (input: DataExportRequest) => Promise<File>;
+  exportData: (input: DataExportRequest) => Promise<FileResponse>;
 }
 
 function createMemberStore(): MemberStore {
+  const exportState = writable<ExportState>('idle');
+
   const { subscribe, set, update } = writable<Member>({} as Member);
   return {
     subscribe,
@@ -32,16 +42,33 @@ function createMemberStore(): MemberStore {
       return member;
     },
     exportData: async (input: DataExportRequest) => {
-      return new Promise<File>(async (resolve, reject) => {
+      return new Promise<FileResponse>(async (resolve, reject) => {
+        exportState.set('loading');
+
         const res = await axios.get(`/api/members/export/${input.target}`, {
           headers: {
             Authorization: `Bearer ${input.jwtToken}`
           },
           responseType: 'blob'
         });
-        res.status === 200 ? resolve(res.data) : reject(res.data);
+        if (res.status === 200) {
+          const fileName = res.headers['content-disposition']
+            ?.split('filename=')[1]
+            ?.replace(/['"]/g, '');
+
+          const fileBlob: FileResponse = new Blob([res.data], {
+            type: res.headers['content-type'],
+          }) as FileResponse;
+
+          exportState.set('success');
+          resolve(fileBlob)
+        } else {
+          exportState.set('error');
+          reject(res.data);
+        }
       });
     },
   }
+}
 
-  export const memberStore: MemberStore = createMemberStore();
+export const memberStore: MemberStore = createMemberStore();
