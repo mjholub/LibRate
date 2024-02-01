@@ -5,6 +5,7 @@
 	import { _ } from 'svelte-i18n';
 	import type { PrivacySecurityPreferences } from '$stores/members/prefs';
 	import { createEventDispatcher } from 'svelte';
+	import { memberStore, type DataExportFormat, type DataExportRequest } from '$stores/members/getInfo';
 	import { authStore, type PasswordUpdateInput } from '$stores/members/auth';
 	import axios from 'axios';
 	import PasswordInput from '$components/form/PasswordInput.svelte';
@@ -82,7 +83,18 @@
 		}
 	};
 
-	const exportData = async;
+	const exportData = async () => {
+		const input: DataExportRequest = {
+			jwtToken: jwtToken,
+			target: exportFormat
+		}
+		try {
+			await memberStore.exportData(input);
+		} catch(error: any) {
+			errorMessages.push('Error while exporting data');
+			errorMessages = [...errorMessages];
+		}
+	};
 
 	const updatePassword = async () => {
 		const input: PasswordUpdateInput = {

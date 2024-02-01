@@ -789,6 +789,34 @@ paths:
       - members
       - accounts
       - administration
+  /members/export/{format}:
+    get:
+      consumes:
+      - application/json
+      description: Exports the data of a member, including profile information as
+        well as other related data such as reviews
+      parameters:
+      - description: JWT access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Export format
+        enum:
+        - json
+        - csv
+        in: path
+        name: format
+        required: true
+        type: string
+      produces:
+      - json text/csv
+      responses: {}
+      summary: Export all of the member's data
+      tags:
+      - accounts
+      - members
+      - metadata
   /members/follow:
     delete:
       consumes:
@@ -1153,7 +1181,7 @@ paths:
             $ref: '#/definitions/handlers.ResponseHTTP'
       summary: Update member information
       tags:
-      - account
+      - accounts
       - metadata
       - updating
   /update/{member_name}/preferences:
@@ -1238,7 +1266,7 @@ paths:
             $ref: '#/definitions/handlers.ResponseHTTP'
       summary: Update member preferences
       tags:
-      - account
+      - accounts
       - updating
       - settings
 swagger: "2.0"
