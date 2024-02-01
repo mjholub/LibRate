@@ -8,8 +8,7 @@
 	import type { NullableString } from '$lib/types/utils';
 	import { browser } from '$app/environment';
 	import { authStore } from '$stores/members/auth';
-	import { memberStore } from '$stores/members/getInfo';
-	import type { FollowRequestOut, FollowResponse } from '$stores/members/getInfo';
+	import { followStore, type FollowRequestOut, type FollowResponse } from '$stores/members/follow';
 	import UpdateBio from '$components/form/UpdateBio.svelte';
 	import { openFilePicker, getMaxFileSize } from '$stores/form/upload';
 	import type { CustomHttpError } from '$lib/types/error';
@@ -26,23 +25,6 @@
 			return input.String.split(separator);
 		}
 		return [];
-	}
-
-	let matrixInstance: string,
-		matrixUser: string,
-		xmppUser: string,
-		xmppInstance: string,
-		ircUser: string,
-		ircInstance: string;
-
-	$: {
-		matrixInstance = splitNullable(member.matrix, ':')[1];
-		matrixUser = splitNullable(member.matrix, ':')[0];
-		xmppUser = splitNullable(member.xmpp, '@')[0];
-		xmppInstance = splitNullable(member.xmpp, '@')[1];
-		ircUser = splitNullable(member.irc, '@')[0];
-		ircInstance = splitNullable(member.irc, '@')[1];
-		regDate = new Date(member.regdate).toLocaleDateString();
 	}
 
 	let regDate: string;
@@ -65,7 +47,7 @@
 		if (!jwtToken) {
 			throw new Error('Not logged in');
 		}
-		followStatus = await memberStore.followStatus(jwtToken, member.webfinger);
+		followStatus = await followStore.followStatus(jwtToken, member.webfinger);
 	};
 
 	onDestroy(() => {
@@ -89,12 +71,12 @@
 				if (!jwtToken) {
 					throw new Error('Not logged in');
 				}
-				followStatus = await memberStore.unfollow(req);
+				followStatus = await followStore.unfollow(req);
 			} else {
 				if (!jwtToken) {
 					throw new Error('Not logged in');
 				}
-				followStatus = await memberStore.follow(req);
+				followStatus = await followStore.follow(req);
 			}
 		} catch (error) {
 			errorMessages.push({
@@ -249,7 +231,7 @@
 			if (!jwtToken || !csrfToken) {
 				throw new Error('Not logged in');
 			}
-			await memberStore.cancelFollowRequest(jwtToken, csrfToken, requestID);
+			await followStore.cancelFollowRequest(jwtToken, csrfToken, requestID);
 		} catch (error) {
 			errorMessages.push({
 				message: 'Error cancelling follow request: ' + error,
@@ -365,35 +347,23 @@
 		{/if}
 	{/if}
 	<div class="member-joined-date">Joined {regDate}</div>
-	Other links and contact info for @{member.memberName}:
-	<!-- TODO: replace with user-defined custom fields, like on e.g. pleroma -->
-	{#if member.matrix.Valid}
-		<p>
-			<b>Matrix:</b>
-			<a href="https://matrix.to/#/{matrixUser}:{matrixInstance}">{matrixUser}:{matrixInstance}</a>
-		</p>
-	{/if}
-	{#if member.xmpp.Valid}
-		<p><b>XMPP:</b> <a href="xmpp:{xmppUser}@{xmppInstance}">{xmppUser}@{xmppInstance}</a></p>
-	{/if}
-	{#if member.irc.Valid}
-		<p><b>IRC:</b> <a href="irc://{ircUser}@{ircInstance}">{ircUser}@{ircInstance}</a></p>
-	{/if}
-	{#if member.homepage.Valid}
-		<p><b>Homepage:</b> <a href={member.homepage.String}>{member.homepage}</a></p>
+
+	{#if member.customFields.size > 0}
+		<div class="additional-info">
+			<table>
+				<th>
+					{$_('additional-info-header')}{member.memberName}:
+				</th>
+				{#each Array.from(member.customFields.entries()) as [key, value]}
+					<tr>
+						<td>{key}</td>
+						<td>{value}</td>
+					</tr>
+				{/each}
+			</table>
+		</div>
 	{/if}
 </div>
-{#if isSelfView}
-	<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
-{/if}
-{#if showModal}
-	<div class="modal">
-		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
-		<div class="close-button">
-			<XIcon />
-		</div>
-	</div>
-{/if}
 
 <style>
 	:root {
@@ -502,7 +472,8 @@
 	}
 
 	.member-name {
-		font-weight: bold;
+		font-weight: 600;
+		color: var(--primary-text-color);
 		margin-bottom: 0.5em;
 	}
 
