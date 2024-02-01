@@ -9,6 +9,9 @@
 </script>
 
 <div class="password-container">
+	<!-- bind the value to the input, then re-emit the input event -->
+	<!-- If we need to then assign an input to a function that accepts some params
+  we need to wrap it in a higher order function -->
 	{#if !showPassword}
 		<input
 			{id}
@@ -30,7 +33,7 @@
 			aria-live="polite"
 			autocomplete="new-password"
 			required
-			aria-label="Password confirmation"
+			aria-label="Password (visible)"
 		/>
 	{/if}
 	<button
