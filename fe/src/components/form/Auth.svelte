@@ -23,7 +23,7 @@
 	let password = '';
 	let showPassword = false;
 	let passwordConfirm = '';
-	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
+	let passwordStrength = '';
 	let errorMessage = '';
 	let strength: number;
 	let email_input: HTMLInputElement;
@@ -104,9 +104,6 @@
 	};
 
 	const checkEntropy = async (password: string) => {
-		// if just logging in, don't check the entropy
-		if (!isRegistration) return;
-
 		if (timeoutId) {
 			window.clearTimeout(timeoutId);
 		}
@@ -116,12 +113,19 @@
 				strength = new PasswordMeter().getResult(password).score;
 				passwordStrength = strength > 135 ? 'Password is strong enough' : `${strength / 2.9} bits`;
 			} catch (error) {
-				process.env.NODE_ENV === 'development'
-					? console.error(error)
-					: console.error('Error checking password entropy');
+				errorMessage = 'Password is not strong enough or error occurred';
 			}
 		}, 300);
 	};
+
+	const comparePasswords = async (password: string, passwordConfirm: string) => {
+		if (password !== passwordConfirm) {
+			errorMessage = 'Passwords do not match';
+		} else {
+			errorMessage = '';
+		}
+	};
+
 	$: {
 		if (isRegistration && password) {
 			checkEntropy(password);
@@ -307,7 +311,7 @@
 					</p>
 				{/if}
 			{/if}
-			<label for="password">Password:</label>
+			<label for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -357,22 +361,21 @@
 			<PasswordInput
 				id="password"
 				bind:value={passwordConfirm}
-				onInput={() => Promise.resolve(void 0)}
+				onInput={() => comparePasswords(password, passwordConfirm)}
 				{showPassword}
 				{toggleObfuscation}
 			/>
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
 				<p>
-					{$_('password')}
-					{$_('strength')}: {passwordStrength} of (<a
-						href="https://www.omnicalculator.com/other/password-entropy">entropy</a
-					>), {$_('required')}: 50
+					<!-- FIXME: declension/changing depending on the trailing digit in e.g. Slavic languages -->
+					{$_('password_strength')}: {passwordStrength} of (<a
+						href="https://www.omnicalculator.com/other/password-entropy"
+					/>), {$_('required')}: 50
 				</p>
 			{:else}
 				<p>
-					{$_('password')}
-					{$_('strength')}: {passwordStrength}
+					{$_('password_strength')}: {passwordStrength}
 				</p>
 			{/if}
 
@@ -477,31 +480,8 @@
 			width: 100%;
 		}
 	}
-
-	.tooltip {
-		position: relative;
-		font-size: 0.9em;
-		cursor: help;
-	}
-
-	.tooltip::before {
-		content: '⚠️ Not recommended on shared computers';
-		position: absolute;
-		top: 110%;
-		left: 50%;
-		transform: translateX(-50%);
-		display: none;
-		background-color: #aaa;
-		color: #000;
-		padding: 0.3em 0.6em;
-		border-radius: 4px;
-		font-size: 1em;
-		white-space: nowrap;
-	}
-
-	.tooltip:hover::before {
-		display: block;
-	}
+	/* removed unused selectors for tooltip, shall it be reimplemented,
+  see the commit from Feb 01 2024 */
 
 	.tos_privacy_ack {
 		display: inline-flex;
