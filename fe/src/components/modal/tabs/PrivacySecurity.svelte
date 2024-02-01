@@ -24,6 +24,9 @@
 
 	let deletionPassword = '';
 	let deletionPasswordConfirm = '';
+	// SQL: DDL
+	let exportFormat: DataExportFormat = 'json';
+
 	// TODO: fetch the current settings
 	let settings: PrivacySecurityPreferences = {
 		auto_accept_follow: true,
