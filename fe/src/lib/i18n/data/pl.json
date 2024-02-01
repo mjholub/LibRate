@@ -70,5 +70,6 @@
     "muted": "Wyciszone",
     "loading": "Wczytywanie",
     "cancel_follow_request": "Cofnij prośbę",
-    "ux": "Doświadczenia użytkownika"
+    "ux": "Doświadczenia użytkownika",
+    "saved": ""
 }
