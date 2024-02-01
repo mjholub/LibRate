@@ -12,9 +12,17 @@ export type authData = {
   memberName: string;
 };
 
+export type PasswordUpdateInput = {
+  csrfToken: string;
+  jwtToken: string;
+  old: string;
+  new: string;
+}
+
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: (jwtToken: string) => Promise<authData>;
   logout: (csrfToken: string) => void;
+  changePassword: (input: PasswordUpdateInput) => Promise<void>;
 }
 
 export const initialAuthState: AuthStoreState = {
@@ -70,6 +78,21 @@ function createAuthStore(): AuthStore {
             }
           }
         );
+        res.status === 200 ? resolve() : reject(Error);
+      });
+    },
+    changePassword: async (input: PasswordUpdateInput) => {
+      return new Promise<void>(async (resolve, reject) => {
+        const res = await axios.patch('/api/authenticate/password', {
+          old: input.old,
+          new: input.new,
+        },
+          {
+            headers: {
+              Authorization: `Bearer ${input.jwtToken}`,
+              'X-CSRF-Token': input.csrfToken
+            }
+          });
         res.status === 200 ? resolve() : reject(Error);
       });
     },

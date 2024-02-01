@@ -11,7 +11,7 @@
   "logout_after": "Wyloguj po",
   "dont_increase_on_shared": "Zmiana tego ustawienia nie jest zalecana na współdzielonych komputerach",
   "forgot_password": "Nie pamiętasz hasła?",
-  "strength": "siła",
+  "password_strength": "siła hasła",
   "boe_trailing_lt_5": "bity entropii",
   "boe_trailing_gt_5": "bitów entropii",
   "required": "wymagane",
