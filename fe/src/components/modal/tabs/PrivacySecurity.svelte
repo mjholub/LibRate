@@ -22,6 +22,8 @@
 	let passwordStrength = '';
 	let timeoutId: number | undefined;
 
+	let deletionPassword = '';
+	let deletionPasswordConfirm = '';
 	// TODO: fetch the current settings
 	let settings: PrivacySecurityPreferences = {
 		auto_accept_follow: true,
@@ -223,4 +225,28 @@
 						>
 					</div>
 				</details>
+				<details class="danger-zone-details">
+					<summary>{$_('delete_account')}</summary>
+					<label for="password">{$_('password')}</label>
+					<PasswordInput
+						onInput={async () => void 0}
+						bind:value={deletionPassword}
+						id="password"
+						{showPassword}
+						{toggleObfuscation}
+					/>
+					<label for="confirm-password">{$_('confirm_password')}</label>
+					<PasswordInput
+						onInput={async () => comparePasswords(deletionPassword, deletionPasswordConfirm)}
+						bind:value={deletionPasswordConfirm}
+						id="confirm-password"
+						{showPassword}
+						{toggleObfuscation}
+					/>
+				</details>
+			</div>
+		</div>
+	</div>
+
+	<hr />
 </form>
