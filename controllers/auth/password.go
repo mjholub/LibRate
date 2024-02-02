@@ -14,7 +14,6 @@ import (
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/lib/redist"
-	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // Argon2i RFC recommends at least time = 3, mem = 32. Time has been increased to 4
