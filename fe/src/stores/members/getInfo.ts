@@ -4,6 +4,23 @@ import { writable, type Writable } from 'svelte/store';
 
 export type DataExportFormat = 'json' | 'csv';
 
+export const memberInfo: Member = {
+  memberName: '',
+  webfinger: '',
+  displayName: '',
+  email: '',
+  profile_pic: '',
+  bio: '',
+  regdate: 0,
+  roles: [],
+  visibility: "private",
+  followers_uri: '',
+  following_uri: '',
+  active: false,
+  uuid: '',
+  customFields: new Map(),
+};
+
 export type DataExportRequest = {
   jwtToken: string;
   target: DataExportFormat;
@@ -23,7 +40,7 @@ interface MemberStore extends Writable<Member> {
 function createMemberStore(): MemberStore {
   const exportState = writable<ExportState>('idle');
 
-  const { subscribe, set, update } = writable<Member>({} as Member);
+  const { subscribe, set, update } = writable<Member>(memberInfo);
   return {
     subscribe,
     set,

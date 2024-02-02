@@ -12,6 +12,8 @@ export type authData = {
   memberName: string;
 };
 
+// to avoid writing another type with almost identical fields
+// in case of account deletion, 'old' is the password and 'new' is the confirmation
 export type PasswordUpdateInput = {
   csrfToken: string;
   jwtToken: string;
@@ -22,6 +24,7 @@ export type PasswordUpdateInput = {
 interface AuthStore extends Writable<AuthStoreState> {
   authenticate: (jwtToken: string) => Promise<authData>;
   logout: (csrfToken: string) => void;
+  deleteAccount: (input: PasswordUpdateInput) => void;
   changePassword: (input: PasswordUpdateInput) => Promise<void>;
 }
 
@@ -79,6 +82,28 @@ function createAuthStore(): AuthStore {
           }
         );
         res.status === 200 ? resolve() : reject(Error);
+      });
+    },
+    deleteAccount: async (input: PasswordUpdateInput) => {
+      return new Promise<void>(async (resolve, reject) => {
+        const res = await axios.post('/api/authenticate/delete-account',
+          {
+            password: input.old,
+            confirmation: input.new
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${input.jwtToken}`,
+              'X-CSRF-Token': input.csrfToken
+            }
+          });
+        if (res.status === 200) {
+          authStore.logout(input.csrfToken);
+          isAuthenticated.set(false);
+          resolve();
+        } else {
+          reject(Error);
+        }
       });
     },
     changePassword: async (input: PasswordUpdateInput) => {

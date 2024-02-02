@@ -69,7 +69,7 @@ interface FollowStore extends Writable<Member> {
 }
 
 function createFollowStore(): FollowStore {
-  const { subscribe, set, update } = writable<Member>(memberInfo);
+  const { subscribe, set, update } = writable<Member>({} as Member);
   return {
     subscribe,
     set,

@@ -83,5 +83,6 @@
   "require_instance_mute_confirmation": "Require confirmation before muting an instance",
   "message_autohide_words": "Auto-hide messages containing the following words",
   "submit": "Submit",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "change_password": "Change password"
 }
