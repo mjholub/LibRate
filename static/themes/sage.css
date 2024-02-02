@@ -1,0 +1,11 @@
+:root {
+  --main-bg-color: #487b63 !important;
+  --body-bgcolor: #487b63 !important;
+  --text-color: #202020 !important;
+  --tertiary-text-color: #111515 !important;
+  --member-card-background-color: #8b5848 !important;
+  --member-card-color: #fgfefc !important;
+  --button-bg: #94c1a6 !important;
+  --button-radius: 16px !important;
+  --icon-color: #d6f2c9 !important;
+}
