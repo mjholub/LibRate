@@ -17,8 +17,9 @@ LibRate software in hopes that it will benefit you and other users. If you use i
 
 ## Limitations
 
-LibRate is currently quite early in it's development. As of now we haven't even added yet the feature to
-delete an account, so if you want to delete yours, please contact {{me/us}} at {{contact info}}.
+LibRate is currently quite early in it's development. Therefore please do note that even though it's 
+developers strive to make it of as good quality as possible, any way you interact with software is your 
+sole responsibility. It is also appreciated if you contribute bug reports, code, money or translations to the project.
 
 LibRate is a free software, licensed under [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.html). By using it you agree to the terms of that license. 
 You can browse LibRate's source code [here](https://codeberg.org/mjh/LibRate/).

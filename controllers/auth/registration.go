@@ -46,6 +46,14 @@ func (a *Service) Register(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusInternalServerError, err.Error())
 	}
 
+	/*
+		if !a.conf.Fiber.ConfirmRegistrations {
+			if err = a.Login(c); err != nil {
+				return h.Res(c, fiber.StatusInternalServerError, err.Error())
+			}
+		}
+	*/
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Registration successful",
 	})

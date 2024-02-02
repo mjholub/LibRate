@@ -126,7 +126,6 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		"email":           member.Email,
 		"bio":             member.Bio,
 		"active":          member.Active,
-		"roles":           pq.StringArray(member.Roles),
 		"visibility":      member.Visibility,
 		"following_uri":   member.FollowingURI,
 		"followers_uri":   member.FollowersURI,
@@ -144,7 +143,32 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 	return nil
 }
 
-func (s *PgMemberStorage) Delete(ctx context.Context, member *Member) error {
+func (s *PgMemberStorage) UpdatePassword(ctx context.Context, nick, pass string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+			AccessMode: pgx.ReadWrite,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %v", err)
+		}
+
+		// nolint:errcheck // In case of failure during commit, "err" from commit will be returned
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, `UPDATE members SET passhash = $1 WHERE nick = $2`, pass, nick)
+
+		if err != nil {
+			return fmt.Errorf("failed to update password: %v", err)
+		}
+
+		return tx.Commit(ctx)
+	}
+}
+
+func (s *PgMemberStorage) Delete(ctx context.Context, memberName string) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -154,7 +178,7 @@ func (s *PgMemberStorage) Delete(ctx context.Context, member *Member) error {
 			return fmt.Errorf("failed to begin transaction: %v", err)
 		}
 		defer tx.Rollback()
-		_, err = s.client.ExecContext(ctx, `DELETE FROM members WHERE id = $1`, member.ID)
+		_, err = s.client.ExecContext(ctx, `DELETE FROM members WHERE nick = $1`, memberName)
 		if err != nil {
 			return fmt.Errorf("failed to delete member: %v", err)
 		}

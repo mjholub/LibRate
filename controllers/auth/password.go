@@ -8,7 +8,13 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/argon2"
+
+	h "codeberg.org/mjh/LibRate/internal/handlers"
+	"codeberg.org/mjh/LibRate/lib/redist"
+	"codeberg.org/mjh/LibRate/models/member"
 )
 
 // Argon2i RFC recommends at least time = 3, mem = 32. Time has been increased to 4
@@ -19,6 +25,51 @@ const (
 	keyLen         = 32
 	saltLen        = 28
 )
+
+// @Summary Change password
+// @Description Change the password for the currently logged in user
+// @Tags auth,accounts,updating,settings
+// @Accept json
+// @Produce json
+// @Param old body string true "The old password"
+// @Param new body string true "The new password"
+// @Param X-CSRF-Token header string true "CSRF protection token"
+// @Param Authorization header string true "JWT token"
+// @Router /authenticate/password [patch]
+func (a *Service) ChangePassword(c *fiber.Ctx) error {
+	a.log.Debug().Msg("Change password request")
+	memberName := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["member_name"].(string)
+	if memberName == "" {
+		return h.Res(c, fiber.StatusUnauthorized, "Not logged in")
+	}
+
+	passHash, err := a.ms.GetPassHash("", memberName)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to retrieve password hash")
+	}
+	oldPass := c.Params("old")
+
+	if !checkArgonPassword(oldPass, passHash) {
+		return h.Res(c, fiber.StatusUnauthorized, "Invalid password")
+	}
+
+	newPass := c.Params("new")
+	_, err = redist.CheckPasswordEntropy(newPass)
+	if err != nil {
+		return h.Res(c, fiber.StatusBadRequest, "Password does not meet complexity requirements")
+	}
+
+	hash, err := hashWithArgon([]byte(newPass))
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to hash password")
+	}
+
+	err = a.ms.UpdatePassword(c.Context(), memberName, hash)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Failed to update password")
+	}
+	return nil
+}
 
 func hashWithArgon(password []byte) (fmtedHash string, err error) {
 	salt, err := byteGen(saltLen)

@@ -23,6 +23,16 @@ No sensitive data, as defined by General Data Protection Regulation is collected
 This website [["is" or "is not"]] hosted in the European Economic Area. Additionally, the federation feature, described further in the "Advertisement and Other Third Parties" section, 
 might result in your data being sent to servers outside the European Economic Area if you decide to enable it for anything you publish to the website.
 
+## Data export, data storage duration
+
+You can download a copy of your data. 
+To do so, go to the settings (the cogwheel button in the upper right corner), then navigate to the tab 
+'Privacy and Security', select the format and click the 'Export' button.
+
+Your data is stored for as long as you keep an account on [[Instance name]]
+or until you delete specific parts of it. Please note that for federated data, we cannot 
+guarantee that it will be actually deleted from the remote server.
+
 ## Cookies
 
 This website uses cookies for the purposes of preventing abuse, session and preference management. No third party or tracking cookies are used.
