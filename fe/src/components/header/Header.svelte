@@ -36,7 +36,7 @@
 		</span>
 		<span class="home-icon">
 			<NavbarBrand href="/">
-			<HomeIcon />
+				<HomeIcon />
 			</NavbarBrand>
 		</span>
 		<Nav class="ms-auto" navbar tabs={true} card={true}>
@@ -82,9 +82,13 @@
 		</span>
 		<span class="add-media-mobile">
 			<!-- svelte-ignore a11y-missing-content -->
-			<PlusCircleIcon><a href="/form/media/add"
-				aria-describedby="{$_('add_media')}"
-				></a></PlusCircleIcon>
+			<PlusCircleIcon
+				><button
+					class="media-add"
+					on:click={() => (window.location.href = '/form/media/add')}
+					aria-describedby={$_('add_media')}
+				/></PlusCircleIcon
+			>
 		</span>
 		<span class="profile-controls">
 			<ProfileControls {nickname} />
@@ -102,7 +106,7 @@
 
 <style lang="scss">
 	$justify-header-content: left;
-	
+
 	@media (max-width: 900px) {
 		.hostname {
 			display: none !important;
@@ -111,15 +115,15 @@
 			align-items: center;
 			padding: 0.5em 0.1em 0 0;
 			display: flex !important;
-		}	
+		}
 	}
-	
+
 	@media (max-width: 600px) {
 		.add-media-mobile {
 			margin-top: 0.5em;
 			display: inline-flex;
 		}
-		
+
 		.media-add {
 			display: none !important;
 		}
@@ -135,14 +139,13 @@
 		}
 	}
 
-
 	@media (min-width: 900px) {
-			.home-icon {
-				display: none !important;
-			}
-			.hostname {
-				display: flex !important;
-			}
+		.home-icon {
+			display: none !important;
+		}
+		.hostname {
+			display: flex !important;
+		}
 	}
 
 	.media-add {
@@ -195,5 +198,12 @@
 		align-self: start;
 		justify-content: space-between;
 		font-weight: 600;
+	}
+
+	button#media-add {
+		border: none;
+		background: none;
+		padding: 0;
+		cursor: pointer;
 	}
 </style>
