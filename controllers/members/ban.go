@@ -24,7 +24,7 @@ import (
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/{uuid}/ban [post]
-func (mc *MemberController) Ban(c *fiber.Ctx) error {
+func (mc *Controller) Ban(c *fiber.Ctx) error {
 	requester := c.Locals("jwtToken").(*jwt.Token)
 	claims := requester.Claims.(jwt.MapClaims)
 	wf := claims["webfinger"].(string)
@@ -75,7 +75,7 @@ func (mc *MemberController) Ban(c *fiber.Ctx) error {
 // @Failure 401 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/{uuid}/ban [delete]
-func (mc *MemberController) Unban(c *fiber.Ctx) error {
+func (mc *Controller) Unban(c *fiber.Ctx) error {
 	requester := c.Locals("jwtToken").(*jwt.Token)
 	claims := requester.Claims.(jwt.MapClaims)
 	name := claims["member_name"].(string)

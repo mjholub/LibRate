@@ -29,7 +29,7 @@ import (
 // @Failure 403 {object} h.ResponseHTTP{} "When at least one party blocks the other"
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow [post]
-func (mc *MemberController) Follow(c *fiber.Ctx) error {
+func (mc *Controller) Follow(c *fiber.Ctx) error {
 	follower := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	mc.log.Debug().Msgf("Follower: %s", follower)
 	var fr member.FollowBlockRequest
@@ -69,7 +69,7 @@ func (mc *MemberController) Follow(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow/requests/in/{id} [put]
-func (mc *MemberController) AcceptFollow(c *fiber.Ctx) error {
+func (mc *Controller) AcceptFollow(c *fiber.Ctx) error {
 	accepter := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	var id int64
 	var err error
@@ -112,7 +112,7 @@ func (mc *MemberController) AcceptFollow(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow/requests/in/{id} [delete]
-func (mc *MemberController) RejectFollow(c *fiber.Ctx) error {
+func (mc *Controller) RejectFollow(c *fiber.Ctx) error {
 	rejecter := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	var id int64
 	var err error
@@ -154,7 +154,7 @@ func (mc *MemberController) RejectFollow(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow/requests [get]
-func (mc *MemberController) GetFollowRequests(c *fiber.Ctx) error {
+func (mc *Controller) GetFollowRequests(c *fiber.Ctx) error {
 	webfinger := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 
 	requestsType := c.Params("type")
@@ -179,7 +179,7 @@ func (mc *MemberController) GetFollowRequests(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow [delete]
-func (mc *MemberController) Unfollow(c *fiber.Ctx) error {
+func (mc *Controller) Unfollow(c *fiber.Ctx) error {
 	follower := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	var fr member.FollowBlockRequest
 	if err := c.BodyParser(&fr); err != nil {
@@ -223,7 +223,7 @@ func (mc *MemberController) Unfollow(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow/status/{followee_webfinger} [get]
-func (mc *MemberController) FollowStatus(c *fiber.Ctx) error {
+func (mc *Controller) FollowStatus(c *fiber.Ctx) error {
 	follower := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	followee := c.Params("followee_webfinger")
 	resp := mc.storage.GetFollowStatus(c.Context(), follower, followee)
@@ -258,7 +258,7 @@ func isLocalRequest(sender, recipient string) bool {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/follow/requests/out/{id} [delete]
-func (mc *MemberController) CancelFollowRequest(c *fiber.Ctx) error {
+func (mc *Controller) CancelFollowRequest(c *fiber.Ctx) error {
 	requester := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["webfinger"].(string)
 	idStr := c.Params("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

@@ -15,13 +15,13 @@ import (
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
-func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
+func (mc *Controller) GetFollowers(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
 // check checks for the existence of a member
 // it requires both nickname and email to be provided
-func (mc *MemberController) Check(c *fiber.Ctx) error {
+func (mc *Controller) Check(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mc.log.Trace().Msgf("Check called with payload: %s", string(c.Request().Body()))
@@ -57,7 +57,7 @@ func (mc *MemberController) Check(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/{email_or_username}/info [get]
-func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
+func (mc *Controller) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	// TODO:
 	// 1. compare the requester's public key with the private key in the database
 	// 2. if the keys match, proceed with parsing the requester's identity as valid
@@ -145,7 +145,7 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberMap)
 }
 
-func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
+func (mc *Controller) GetMemberByWebfinger(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetMemberByWebfinger called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -159,7 +159,7 @@ func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberData)
 }
 
-func (mc *MemberController) GetID(c *fiber.Ctx) error {
+func (mc *Controller) GetID(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetID called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -173,7 +173,7 @@ func (mc *MemberController) GetID(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberData)
 }
 
-func (mc *MemberController) canView(ctx context.Context, authorization *jwt.Token, viewee string) (bool, error) {
+func (mc *Controller) canView(ctx context.Context, authorization *jwt.Token, viewee string) (bool, error) {
 	if viewee == "" {
 		return false, fmt.Errorf("No nickname or email provided")
 	}

@@ -18,7 +18,7 @@ import (
 // @Param Authorization header string true "JWT access token"
 // @Param format path string true "Export format" Enums(json, csv)
 // @Router /members/export/{format} [get]
-func (mc *MemberController) Export(c *fiber.Ctx) error {
+func (mc *Controller) Export(c *fiber.Ctx) error {
 	memberName := c.Locals("jwtToken").(*jwt.Token).Claims.(jwt.MapClaims)["member_name"].(string)
 	if memberName == "" {
 		return h.BadRequest(mc.log, c, "missing name in JWT token", "export request initialized without a token from "+c.IP(), nil)

@@ -43,7 +43,7 @@ func Setup(
 	newDBConn *pgxpool.Pool,
 	app *fiber.App,
 	sess *session.Store,
-	wsConfig websocket.Config,
+	wsConfig *websocket.Config,
 ) error {
 	api := app.Group("/api", fzlog)
 
@@ -80,35 +80,20 @@ func Setup(
 
 	setupAuth(api, sess, logger, conf, mStor)
 
-	members := api.Group("/members")
-	members.Post("/check", memberSvc.Check)
-	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
-	members.Patch("/update/:memeber_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
-	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
-	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
-	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
-	members.Delete("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
-	members.Delete("/follow/requests/out/:id", middleware.Protected(sess, logger, conf), memberSvc.CancelFollowRequest)
-	members.Get("/follow/requests/:type", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
-	members.Get("/follow/status/:followee_webfinger", middleware.Protected(sess, logger, conf), memberSvc.FollowStatus)
-	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
-	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
-	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
+	setupMembers(memberSvc, api, sess, logger, conf)
 
 	setupMedia(api, mediaStor, conf)
 
+	// don't see a point encapsulating 2-3 routes in a separate function
 	formAPI := api.Group("/form")
 	formAPI.Post("/add_media/:type", middleware.Protected(sess, logger, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
 	formAPI.Post("/update_media/:type", middleware.Protected(sess, logger, conf), formCon.UpdateMedia)
 
-	uploadAPI := api.Group("/upload")
-	uploadAPI.Get("/max-file-size", func(c *fiber.Ctx) error { return c.SendString(fmt.Sprintf("%d", conf.Fiber.MaxUploadSize)) })
-	uploadAPI.Post("/image", middleware.Protected(sess, logger, conf), uploadSvc.UploadImage)
-	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
+	setupUpload(uploadSvc, api, sess, logger, conf)
 
 	search := api.Group("/search")
 	search.Get("/ws-address", sc.GetWSAddress)
-	search.Post("/ws", websocket.New(sc.WSHandler, wsConfig))
+	search.Post("/ws", websocket.New(sc.WSHandler, *wsConfig))
 	search.Post("/", sc.Search)
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
@@ -127,6 +112,30 @@ func Setup(
 	logger.Debug().Msg("static files initialized")
 
 	return nil
+}
+
+func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {
+	uploadAPI := api.Group("/upload")
+	uploadAPI.Get("/max-file-size", func(c *fiber.Ctx) error { return c.SendString(fmt.Sprintf("%d", conf.Fiber.MaxUploadSize)) })
+	uploadAPI.Post("/image", middleware.Protected(sess, logger, conf), uploadSvc.UploadImage)
+	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
+}
+
+func setupMembers(memberSvc *memberCtrl.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {
+	members := api.Group("/members")
+	members.Post("/check", memberSvc.Check)
+	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
+	members.Patch("/update/:memeber_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
+	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
+	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
+	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)
+	members.Delete("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.RejectFollow)
+	members.Delete("/follow/requests/out/:id", middleware.Protected(sess, logger, conf), memberSvc.CancelFollowRequest)
+	members.Get("/follow/requests/:type", middleware.Protected(sess, logger, conf), memberSvc.GetFollowRequests)
+	members.Get("/follow/status/:followee_webfinger", middleware.Protected(sess, logger, conf), memberSvc.FollowStatus)
+	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
+	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
+	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 }
 
 func setupReviews(api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB) {
