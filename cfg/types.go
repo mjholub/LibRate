@@ -49,9 +49,12 @@ type RedisConfig struct {
 	Port     int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
 	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
 	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
-	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
-	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
-	PowDB    int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	// in seconds, how often to perform a delta update with searchable data
+	UpdateFrequency int `yaml:"updateFrequency,omitempty" default:"300" env:"LIBRATE_REDIS_UPDATE_FREQUENCY"`
+	CacheDB         int `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
+	SearchDB        int `yaml:"searchDb,omitempty" default:"1" env:"LIBRATE_SEARCH_DB"`
+	CsrfDB          int `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
+	PowDB           int `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config
