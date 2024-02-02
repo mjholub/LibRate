@@ -6,7 +6,8 @@
 		['en-US', 'English (U.S.)'],
 		['pl', 'Polski'],
 		['id', 'Indonesia'],
-		['de', 'Deutsch']
+		['de', 'Deutsch'],
+		['nl', 'Nederlands']
 	]);
 
 	onMount(async () => {
