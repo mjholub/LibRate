@@ -27,7 +27,6 @@
 		return [];
 	}
 
-	let regDate: string;
 	let csrfToken: string | undefined;
 	csrfToken = document.cookie
 		.split('; ')
@@ -222,8 +221,7 @@
 	}
 
 	const reloadBio = (event: CustomEvent) => {
-		member.bio.Valid = true;
-		member.bio.String = event.detail.newBio;
+		member.bio = event.detail.newBio;
 	};
 
 	const cancelFollowReq = async (requestID: number) => {
@@ -327,41 +325,43 @@
 			</Button>
 		{/await}
 	{/if}
-	{#if member.bio.Valid}
-		<div id="member-bio">{member.bio.String}</div>
+	{#if member.bio !== ''}
+		<div id="member-bio">{member.bio}</div>
 		{#if isSelfView}
 			<UpdateBio
 				memberName={member.memberName}
-				isBioPresent={member.bio.Valid}
-				bio={member.bio.String}
+				isBioPresent={member.bio !== ''}
+				bio={member.bio}
 				on:bioUpdated={reloadBio}
 			/>
 		{:else}
 			<UpdateBio
 				memberName={member.memberName}
-				isBioPresent={member.bio.Valid}
+				isBioPresent={member.bio !== ''}
 				bio=""
 				on:bioUpdated={reloadBio}
 			/>
 			/>
 		{/if}
 	{/if}
-	<div class="member-joined-date">Joined {regDate}</div>
+	<div class="member-joined-date">Joined {member.regdate}</div>
 
-	{#if member.customFields.size > 0}
-		<div class="additional-info">
-			<table>
-				<th>
-					{$_('additional-info-header')}{member.memberName}:
-				</th>
-				{#each Array.from(member.customFields.entries()) as [key, value]}
-					<tr>
-						<td>{key}</td>
-						<td>{value}</td>
-					</tr>
-				{/each}
-			</table>
-		</div>
+	{#if member.customFields.length > 0}
+		{#if member.customFields[0].size > 0}
+			<div class="additional-info">
+				<table>
+					<th>
+						{$_('additional-info-header')}{member.memberName}:
+					</th>
+					{#each Array.from(member.customFields.entries()) as [key, value]}
+						<tr>
+							<td>{key}</td>
+							<td>{value}</td>
+						</tr>
+					{/each}
+				</table>
+			</div>
+		{/if}
 	{/if}
 </div>
 

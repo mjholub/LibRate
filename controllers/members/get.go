@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgtype"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/middleware"
@@ -114,10 +115,36 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		}
 	}
 
-	return h.ResData(c, fiber.StatusOK, "success", memberData)
+	// convert all of member data to a fiber.Map since typescript
+	// doesn't handle jsonb with binary data and conversion thereof
+	// to Map<string, string> well
+	memberMap := make(fiber.Map)
+
+	memberMap["active"] = memberData.Active
+	memberMap["webfinger"] = memberData.Webfinger
+	memberMap["uuid"] = memberData.UUID
+	memberMap["memberName"] = memberData.MemberName
+	memberMap["displayName"] = memberData.DisplayName.String
+	memberMap["email"] = memberData.Email
+	memberMap["profile_pic"] = memberData.ProfilePicSource
+	memberMap["bio"] = memberData.Bio.String
+	memberMap["regdate"] = memberData.RegTimestamp
+	memberMap["roles"] = memberData.Roles
+	memberMap["visibility"] = memberData.Visibility
+	memberMap["followers_uri"] = memberData.FollowersURI
+	memberMap["following_uri"] = memberData.FollowingURI
+	customFields, err := jsonbToStringMap(memberData.CustomFields)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Error converting custom fields to map")
+	}
+	memberMap["customFields"] = customFields
+	if customFields == nil {
+		memberMap["customFields"] = make(map[string]string)
+	}
+
+	return h.ResData(c, fiber.StatusOK, "success", memberMap)
 }
 
-// TODO: add webfinger to database
 func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetMemberByWebfinger called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -160,4 +187,13 @@ func (mc *MemberController) canView(ctx context.Context, authorization *jwt.Toke
 		return false, err
 	}
 	return canView, nil
+}
+
+func jsonbToStringMap(jb pgtype.JSONB) (map[string]string, error) {
+	var m map[string]string
+	err := jb.AssignTo(&m)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 }
