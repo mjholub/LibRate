@@ -219,6 +219,20 @@ func main() {
 	}
 }
 
+// Set up a Proof of Work middleware
+// This is an ethical alternative to things like Cloudflare
+// Basically, an attacker would have to run the same computation as the server
+// (granted the difficulty, which is measured in
+// the number of calculations required to find a SHA256 hash with a certain number of leading zeroes,
+// is set high enough, and the check frequency is set low enough)
+// to access a resource or perform an action
+// One thing to keep in mind when setting the difficulty and
+// check frequency is that a too high difficulty with too frequent checks
+// might significantly slow down the page,
+// harm SEO and drain battery on mobile devices
+// A good value for stack where you have additional measures in place
+// like a rate limiter on your reverse proxy
+// lies somewhere between 15-45kH/s difficulty and 5-15 minutes check frequency
 func setupPOW(conf *cfg.Config, app *fiber.App) {
 	if conf.Fiber.PowDifficulty == 0 {
 		conf.Fiber.PowDifficulty = 60000
