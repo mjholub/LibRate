@@ -156,7 +156,8 @@ type (
 		// Check checks if a member with the given email or nickname already exists
 		Check(ctx context.Context, email, nickname string) (bool, error)
 		Update(ctx context.Context, member *Member) error
-		Delete(ctx context.Context, member *Member) error
+		UpdatePassword(ctx context.Context, nick, pass string) error
+		Delete(ctx context.Context, memberName string) error
 		GetID(ctx context.Context, key string) (int, error)
 		GetPassHash(email, login string) (string, error)
 		CreateSession(ctx context.Context, member *Member) (string, error)

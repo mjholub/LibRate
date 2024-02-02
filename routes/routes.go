@@ -154,6 +154,8 @@ func setupAuth(
 
 	authAPI := api.Group("/authenticate")
 	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Post("/delete-account", middleware.Protected(sess, logger, conf), authSvc.DeleteAccount)
+	authAPI.Patch("/password", middleware.Protected(sess, logger, conf), authSvc.ChangePassword)
 	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/logout", authSvc.Logout)
 	authAPI.Post("/register", authSvc.Register)

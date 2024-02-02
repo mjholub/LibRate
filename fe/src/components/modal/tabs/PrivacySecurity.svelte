@@ -1,6 +1,8 @@
 <script defer lang="ts">
 	// @ts-ignore
 	import Tags from 'svelte-tags-input';
+	import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from '@sveltestrap/sveltestrap';
+
 	import { PasswordMeter } from 'password-meter';
 	import { _ } from 'svelte-i18n';
 	import type { PrivacySecurityPreferences } from '$stores/members/prefs';
@@ -15,6 +17,7 @@
 	import PasswordInput from '$components/form/PasswordInput.svelte';
 	let errorMessages: string[] = [];
 	let confirmMutingInstance = false;
+	let confirmDialogOpen = false;
 
 	// TODO: actual logic to fetch and cache the known network as suggestions setting for muted instances
 	const knownInstances = ['bookwyrm.social'];
@@ -51,6 +54,10 @@
 
 	const dispatch = createEventDispatcher();
 
+	const toggleConfirmDialog = () => {
+		confirmDialogOpen = !confirmDialogOpen;
+	};
+
 	const toggleObfuscation = () => {
 		showPassword = !showPassword;
 	};
@@ -75,6 +82,21 @@
 				errorMessages = [...errorMessages];
 			}
 		}, 300);
+	};
+
+	const deleteAccount = async () => {
+		const input: PasswordUpdateInput = {
+			csrfToken: csrfToken || '',
+			jwtToken: jwtToken || '',
+			old: deletionPassword,
+			new: deletionPasswordConfirm
+		};
+		try {
+			await authStore.deleteAccount(input);
+		} catch (error: any) {
+			errorMessages.push(`Error deleting account: ${error.message} (${error.status})`);
+			errorMessages = [...errorMessages];
+		}
 	};
 
 	const comparePasswords = async (password: string, passwordConfirm: string) => {
@@ -199,7 +221,7 @@
 		<hr />
 		<div class="data-export">
 			<h3 class="settings-section-descriptor">{$_('data_export')}</h3>
-			<label for="select-export-format">{$_('export_format')} </label>
+			<label for="select-export-format">{$_('select_format')} </label>
 			<select id="select-export-format" bind:value={exportFormat}>
 				{#each ['json', 'csv'] as format, i}
 					<option value={format}>{['JSON', 'CSV'][i]}</option>
@@ -273,20 +295,27 @@
 						{toggleObfuscation}
 					/>
 					<div class="submit-cancel-container">
-						<button type="submit" class="submit-button" on:click={updatePassword}
+						<button type="submit" class="submit-button" on:click={toggleConfirmDialog}
 							>{$_('confirm')}</button
 						>
 						<button
 							type="button"
 							class="cancel-button"
 							on:click={() => {
-								passwordUpdateData = {
-									current: '',
-									new: '',
-									newConfirm: ''
-								};
+								deletionPassword = '';
+								deletionPasswordConfirm = '';
 							}}>{$_('cancel')}</button
 						>
+						<Modal isOpen={confirmDialogOpen} toggle={toggleConfirmDialog}>
+							<ModalHeader>{$_('confirm')}</ModalHeader>
+							<ModalBody>
+								{$_('delete_account_confirm')}
+							</ModalBody>
+							<ModalFooter>
+								<Button color="danger" onClick={deleteAccount}>{$_('confirm')}</Button>
+								<Button color="secondary" onClick={toggleConfirmDialog}>{$_('cancel')}</Button>
+							</ModalFooter>
+						</Modal>
 					</div>
 				</details>
 			</div>
