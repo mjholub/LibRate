@@ -365,6 +365,18 @@
 	{/if}
 </div>
 
+{#if isSelfView}
+	<button aria-label="Logout" on:click={logout} id="logout-button">Logout</button>
+{/if}
+{#if showModal}
+	<div class="modal">
+		<img src={member.profile_pic} alt="{member.memberName}'s profile picture" />
+		<div class="close-button">
+			<XIcon />
+		</div>
+	</div>
+{/if}
+
 <style>
 	:root {
 		--member-card-border-radius: 0.25em;
