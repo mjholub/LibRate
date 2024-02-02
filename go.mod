@@ -27,13 +27,12 @@ require (
 	github.com/gofiber/storage/redis/v3 v3.1.0
 	github.com/gofiber/template/html/v2 v2.1.0
 	github.com/gofrs/uuid/v5 v5.0.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/golang/mock v1.6.0
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47
-	github.com/jackc/pgconn v1.9.1-0.20210724152538-d89c8390a530
 	github.com/jackc/pgtype v1.14.1
+	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.12.1-0.20210724153913-640aa07df17c
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/jmoiron/sqlx v1.3.5
@@ -41,7 +40,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0
-	github.com/pashagolub/pgxmock/v3 v3.3.0
+	github.com/redis/go-redis/v9 v9.4.0
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/samber/mo v1.11.0
@@ -140,6 +139,8 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/vault/api v1.11.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
+	github.com/jackc/pgconn v1.9.1-0.20210724152538-d89c8390a530 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.1.1 // indirect
@@ -165,7 +166,6 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/redis/go-redis/v9 v9.4.0 // indirect
 	github.com/rivo/uniseg v0.4.6 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
