@@ -263,10 +263,10 @@
 </script>
 
 <!-- Form submission handler -->
-<form on:submit|preventDefault={isRegistration ? register : login}>
+<form class="auth-form" on:submit|preventDefault={isRegistration ? register : login}>
 	<div class="input">
 		{#if isRegistration}
-			<label for="email">Email:</label>
+			<label class="auth-form-label" for="email">Email:</label>
 			<input
 				bind:this={email_input}
 				bind:value={email}
@@ -290,7 +290,7 @@
 					</p>
 				{/if}
 			{/if}
-			<label for="nickname">{$_('nickname')}:</label>
+			<label class="auth-form-label" for="nickname">{$_('nickname')}:</label>
 			<input
 				type="text"
 				bind:this={nickname_input}
@@ -311,7 +311,7 @@
 					</p>
 				{/if}
 			{/if}
-			<label for="password">{$_('password')}:</label>
+			<label class="auth-form-label" for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -322,7 +322,7 @@
 				{toggleObfuscation}
 			/>
 		{:else}
-			<label for="email_or_username">{$_('email_or_username')}:</label>
+			<label class="auth-form-label" for="email_or_username">{$_('email_or_username')}:</label>
 			<input
 				type="text"
 				id="email_or_username"
@@ -331,7 +331,7 @@
 				class="input"
 			/>
 
-			<label for="password">{$_('password')}:</label>
+			<label class="auth-form-label" for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -340,7 +340,7 @@
 				{toggleObfuscation}
 			/>
 			<span class="session-timeout-selector">
-				<label for="logout-after">
+				<label class="auth-form-label" for="logout-after">
 					{$_('logout_after')}
 				</label>
 				<select class="session-time" bind:value={sessionTimeMinutes}>
@@ -357,7 +357,7 @@
 		{/if}
 
 		{#if isRegistration}
-			<label for="password">{$_('confirm')} {$_('password')}:</label>
+			<label class="auth-form-label" for="password">{$_('confirm')} {$_('password')}:</label>
 			<PasswordInput
 				id="password"
 				bind:value={passwordConfirm}
@@ -367,7 +367,7 @@
 			/>
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
-				<p>
+				<p style="padding: 1% 0; display: block;">
 					<!-- FIXME: declension/changing depending on the trailing digit in e.g. Slavic languages -->
 					{$_('password_strength')}: {passwordStrength} of (<a
 						href="https://www.omnicalculator.com/other/password-entropy"
@@ -381,7 +381,7 @@
 
 			<div class="tos_privacy_ack">
 				<input type="checkbox" id="tos_privacy_ack" required />
-				<label for="tos_privacy_ack" id="tos_privacy_ack_label">
+				<label class="auth-form-label" for="tos_privacy_ack" id="tos_privacy_ack_label">
 					{$_('tos_privacy_ack')}
 					<a href={privacy_url} target="_blank">{$_('privacy_policy_instrumental')}</a>
 					{$_('and')} <a href={tos_url} target="_blank">{$_('tos_instrumental')}</a>
@@ -459,8 +459,15 @@
 		width: 100%; /* Ensuring buttons take full width */
 	}
 
-	form {
+	.auth-form {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.auth-form-label {
 		display: block;
+		padding: 1% 0.2%;
 	}
 
 	@media (max-width: 600px) {

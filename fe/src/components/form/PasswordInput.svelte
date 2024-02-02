@@ -66,11 +66,11 @@
 	.password-container {
 		position: relative;
 		overflow: visible;
-		display: inline;
+		display: inline-grid;
 		border: none;
 		border-radius: var(--border-radius);
 		color: var(--input-text);
-		width: calc(98% - 0.2em);
+		width: 97%;
 		height: 2rem;
 	}
 
