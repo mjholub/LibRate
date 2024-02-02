@@ -82,14 +82,14 @@
 		</span>
 		<span class="add-media-mobile">
 			<!-- svelte-ignore a11y-missing-content -->
-			<PlusCircleIcon
-				><button
+
+<button
 					class="media-add"
 					on:click={() => (window.location.href = '/form/media/add')}
 					aria-describedby={$_('add_media')}
-				/></PlusCircleIcon
-			>
-		</span>
+				>			<PlusCircleIcon />
+					</button>
+								</span>
 		<span class="profile-controls">
 			<ProfileControls {nickname} />
 		</span>
