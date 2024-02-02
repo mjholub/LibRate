@@ -44,10 +44,13 @@ type FlagArgs struct {
 	// configFile is a flag to specify the path to the config file
 	ConfigFile string
 	// path is a flag to specify the path to the migrations that should be applied.
-	// TODO: add this feature (currently only batch application of all migrations is supported)
+	// Migration logic is however more well-rounded with the lrctl tool
 	Path string
 	// When exit is true, the program will exit after running migrations
 	Exit bool
+	// Whether to start the profiling/tracing server
+	// Due to security reasons, this is only available in development mode
+	Profile bool
 	// SkipErrors is a comma-separated list of error codes to skip and not panic on.
 	// Particularly useful in development to bypass certain less important blockers
 	SkipErrors string
@@ -88,10 +91,27 @@ func main() {
 		}
 	}
 
-	if conf.LibrateEnv == "development" {
+	if conf.LibrateEnv == "development" && flags.Profile {
 		go func() {
 			log.Info().Msg("Starting pprof server")
-			err = http.ListenAndServe("localhost:6060", nil)
+			// add timeout to prevent hanging
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+
+			handler := http.DefaultServeMux
+
+			http.DefaultServeMux = http.NewServeMux()
+
+			http.HandleFunc("/debug/pprof/", http.DefaultServeMux.ServeHTTP)
+
+			srv := &http.Server{
+				Addr:    "localhost:6060",
+				Handler: handler,
+				BaseContext: func(listener net.Listener) context.Context {
+					return ctx
+				},
+			}
+			err := srv.ListenAndServe()
 			if err != nil {
 				log.Panic().Err(err).Msg("Failed to start pprof server")
 			}
@@ -184,7 +204,6 @@ func main() {
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
 
-
 	wsConfig := cmd.SetupWS(app, "/search")
 	wg.Wait()
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
@@ -257,7 +276,7 @@ func DBRunning(port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, exit                   bool
+		init, exit, profiler         bool
 		configFile, path, skipErrors string
 	)
 
@@ -266,6 +285,8 @@ func parseFlags() FlagArgs {
 		initUse    = "Initialize database"
 		confVal    = "config.yml"
 		confUse    = "Path to config file"
+		pprofVal   = false
+		pprofUse   = "Start tracing/profiling server. LibrateEnv must be set to development"
 		skipErrVal = ""
 		skipErrUse = "Comma-separated list of error codes to skip and not panic on"
 		pathVal    = "db/migrations"
@@ -282,6 +303,8 @@ func parseFlags() FlagArgs {
 	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+short)
 	flag.StringVar(&path, "path", pathVal, pathUse)
 	flag.StringVar(&path, "p", pathVal, pathUse+short)
+	flag.BoolVar(&profiler, "tracing", pprofVal, pprofUse)
+	flag.BoolVar(&profiler, "t", pprofVal, pprofUse+short)
 	flag.BoolVar(&exit, "exit", exitVal, exitUse)
 	flag.BoolVar(&exit, "x", exitVal, exitUse+short)
 
@@ -291,6 +314,7 @@ func parseFlags() FlagArgs {
 		Init:       init,
 		ConfigFile: configFile,
 		Path:       path,
+		Profile:    profiler,
 		Exit:       exit,
 		SkipErrors: skipErrors,
 	}
