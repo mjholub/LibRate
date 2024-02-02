@@ -2,13 +2,15 @@
 [![weblate badge](https://translate.codeberg.org/widget/librate/frontend-messages/svg-badge.svg?native=1
 )](https://translate.codeberg.org/projects/librate/)
 [![GoDoc](https://godoc.org/codeberg.org/mjh/LibRate?status.svg)](https://pkg.go.dev/codeberg.org/mjh/LibRate)
-![Matrix](https://img.shields.io/matrix/libratedev:matrix.org)
 ![Depfu](https://img.shields.io/depfu/dependencies/github/mjholub%2FLibRate)
 ![LiberaPay](https://img.shields.io/liberapay/receives/Librate.svg?logo=liberapay)
 
 LibRate is a project that aims to provide a free, federated service for tracking, reviewing, sharing and discovering films, books, music, games and other culture texts.
 
 This project is currently in early beta stage, bugs are expected and PRs are very welcome.
+
+Element, probably the only Matrix client to support publishing room has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
+[#librate-dev:matrix.org](https://matrix.to/#/#librate-dev:matrix.org)
 
 You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate) Monero or BLIK (contact me on Matrix for the latter two).
 
