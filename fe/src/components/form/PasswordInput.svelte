@@ -70,10 +70,7 @@
 		border: none;
 		border-radius: var(--border-radius);
 		color: var(--input-text);
-		background-color: var(--input-background-color);
-		width: calc(
-			98% - 0.2em
-		); /* FIXME: not correct, makes the hide/show button appear outside the input */
+		width: calc(98% - 0.2em);
 		height: 2rem;
 	}
 
@@ -81,14 +78,9 @@
 	input#passwordText {
 		font-family: inherit;
 		font-size: inherit;
-		-webkit-padding: 0.4em 0;
-		padding: 0.2em 0 0.2em 0;
 		margin: 0.1em 0 0.1em 0;
 		box-sizing: border-box;
-		border: none;
 		border-radius: 4px;
-		width: inherit;
-		display: grid;
 		position: relative;
 	}
 
