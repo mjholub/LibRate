@@ -88,10 +88,6 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		{"email", member.Email},
 		{"bio", member.Bio},
 		{"active", member.Active},
-		{"homepage", member.Homepage},
-		{"irc", member.IRC},
-		{"xmpp", member.XMPP},
-		{"matrix", member.Matrix},
 		{"visibility", member.Visibility},
 		{"following_uri", member.FollowingURI},
 		{"followers_uri", member.FollowersURI},
@@ -99,6 +95,7 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		{"public_key_pem", member.PublicKeyPem},
 		{"profilepic_id", member.ProfilePicID},
 		{"nick", member.MemberName},
+		{"custom_fields", member.CustomFields},
 	} {
 		if db.IsNotNull(field.value) {
 			fieldsToUpdate[field.name] = field.value
@@ -130,10 +127,6 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		"bio":             member.Bio,
 		"active":          member.Active,
 		"roles":           pq.StringArray(member.Roles),
-		"homepage":        member.Homepage,
-		"irc":             member.IRC,
-		"xmpp":            member.XMPP,
-		"matrix":          member.Matrix,
 		"visibility":      member.Visibility,
 		"following_uri":   member.FollowingURI,
 		"followers_uri":   member.FollowersURI,
@@ -141,6 +134,7 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 		"public_key_pem":  member.PublicKeyPem,
 		"nick":            member.MemberName,
 		"profilepic_id":   member.ProfilePicID,
+		"custom_fields":   member.CustomFields,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update member: %v", err)

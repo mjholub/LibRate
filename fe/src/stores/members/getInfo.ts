@@ -7,22 +7,18 @@ export type DataExportFormat = 'json' | 'csv';
 export const memberInfo: Member = {
   memberName: '',
   webfinger: '',
-  displayName: { String: '', Valid: false },
+  displayName: '',
   email: '',
   profile_pic: '',
-  bio: { String: '', Valid: false },
-  matrix: { String: '', Valid: false },
-  xmpp: { String: '', Valid: false },
-  irc: { String: '', Valid: false },
-  homepage: { String: '', Valid: false },
+  bio: '',
   regdate: 0,
   roles: [],
   visibility: "private",
   followers_uri: '',
   following_uri: '',
-  sessionTimeout: { Int64: 0, Valid: false },
   active: false,
-  uuid: ''
+  uuid: '',
+  customFields: new Map(),
 };
 
 export type DataExportRequest = {
