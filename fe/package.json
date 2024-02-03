@@ -22,7 +22,7 @@
     "@sveltejs/adapter-static": "^2.0.2",
     "@sveltejs/kit": "^1.20.4",
     "@types/feather-icons": "^4.29.4",
-    "@types/jest": "^29.5.5",
+    "@types/jest": "^29.5.12",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
