@@ -45,16 +45,17 @@ type External struct {
 }
 
 type RedisConfig struct {
-	Host     string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
-	Port     int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
-	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
-	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
-	// in seconds, how often to perform a delta update with searchable data
-	UpdateFrequency int `yaml:"updateFrequency,omitempty" default:"300" env:"LIBRATE_REDIS_UPDATE_FREQUENCY"`
-	CacheDB         int `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
-	SearchDB        int `yaml:"searchDb,omitempty" default:"1" env:"LIBRATE_SEARCH_DB"`
-	CsrfDB          int `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
-	PowDB           int `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	Host string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
+	Port int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
+	// How often to poll the SQL database for data for delta updates of the cache with searchable basic data
+	UpdateFrequency int64 `yaml:"updateFrequency,omitempty" default:"300" env:"LIBRATE_REDIS_UPDATE_FREQUENCY"`
+	// how many errors can occur during scan of SQL DB into cache before the process is stopped
+	MaxUpdateErrors uint8  `yaml:"maxUpdateErrors,omitempty" default:"10" env:"LIBRATE_REDIS_MAX_UPDATE_ERRORS"`
+	Username        string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
+	Password        string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
+	CacheDB         int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
+	CsrfDB          int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
+	PowDB           int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config
