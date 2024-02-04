@@ -71,6 +71,7 @@ linters-settings:
       - performance
     disabled-checks:
       - sloppyReassign
+      - whyNoLint
   interfacebloat:
     max: 10 # default is 10
   revive:

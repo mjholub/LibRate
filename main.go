@@ -190,7 +190,6 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
-	// makes no sense on reverse proxy
 	setupPOW(conf, app)
 	var wg sync.WaitGroup
 	middlewares := cmd.SetupMiddlewares(conf, &log)

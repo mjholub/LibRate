@@ -29,6 +29,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
+	mediaModels "codeberg.org/mjh/LibRate/models/media"
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
@@ -58,7 +59,7 @@ func Setup(
 
 	var (
 		mStor     member.Storer
-		mediaStor *models.MediaStorage
+		mediaStor *mediaModels.Storage
 	)
 
 	switch conf.Engine {
@@ -67,7 +68,7 @@ func Setup(
 	default:
 		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
 	}
-	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
+	mediaStor = mediaModels.NewStorage(newDBConn, dbConn, logger)
 
 	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
 	formCon := form.NewController(logger, *mediaStor, conf)
@@ -172,7 +173,7 @@ func setupAuth(
 
 func setupMedia(
 	api fiber.Router,
-	mediaStor *models.MediaStorage,
+	mediaStor *mediaModels.Storage,
 	conf *cfg.Config,
 ) {
 	mediaCon := media.NewController(*mediaStor, conf)

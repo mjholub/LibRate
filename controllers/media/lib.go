@@ -14,7 +14,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 )
 
 type (
@@ -30,7 +30,7 @@ type (
 	// Controller is the controller for media endpoints
 	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
 	Controller struct {
-		storage models.MediaStorage
+		storage media.Storage
 		conf    *cfg.Config
 	}
 
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
+func NewController(storage media.Storage, conf *cfg.Config) *Controller {
 	return &Controller{storage: storage, conf: conf}
 }
 
@@ -77,7 +77,7 @@ func (mc *Controller) GetMedia(c *fiber.Ctx) error {
 	}
 
 	detailedMedia, err := mc.storage.
-		GetMediaDetails(ctx, media.Kind, media.ID)
+		GetDetails(ctx, media.Kind, media.ID)
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %v", c.Params("id"), err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
@@ -160,7 +160,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 
 	if namesOnly {
 		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
-		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
+		genreNames, err := media.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
@@ -174,7 +174,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	columns := c.Query("columns", "name")
 
 	mc.storage.Log.Debug().Msgf("Getting following columns for %s: %s", genreKind, columns)
-	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, all, columns)
+	genres, err := media.GetGenres[[]media.Genre](&mc.storage, c.Context(), genreKind, all, columns)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}

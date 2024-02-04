@@ -1,4 +1,4 @@
-package models
+package media
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
+
+	"codeberg.org/mjh/LibRate/models/language"
 )
 
 type (
@@ -39,7 +41,7 @@ var BookKeys = []string{
 	"genres", "edition", "languages",
 }
 
-func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (*Book, error) {
+func (ms *Storage) getBook(ctx context.Context, id uuid.UUID) (*Book, error) {
 	rows, err := ms.newDB.Query(ctx, "SELECT * FROM books WHERE media_id = $1", id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting book with ID %s: %v", id.String(), err)
@@ -58,7 +60,7 @@ func (ms *MediaStorage) getBook(ctx context.Context, id uuid.UUID) (*Book, error
 	return &book, nil
 }
 
-func (ms *MediaStorage) AddBook(
+func (ms *Storage) AddBook(
 	ctx context.Context,
 	book *Book,
 	publisher *Studio,
@@ -109,7 +111,7 @@ func (ms *MediaStorage) AddBook(
 	}
 }
 
-func (ms *MediaStorage) addBookAsMedia(ctx context.Context, book *Book) (mediaID *uuid.UUID, err error) {
+func (ms *Storage) addBookAsMedia(ctx context.Context, book *Book) (mediaID *uuid.UUID, err error) {
 	var created time.Time
 	if book.PublicationDate.Valid {
 		created = book.PublicationDate.Time
@@ -133,7 +135,7 @@ func (ms *MediaStorage) addBookAsMedia(ctx context.Context, book *Book) (mediaID
 	return mediaID, nil
 }
 
-func (ms *MediaStorage) addBookAuthors(ctx context.Context, bookID uuid.UUID, authors []Person) error {
+func (ms *Storage) addBookAuthors(ctx context.Context, bookID uuid.UUID, authors []Person) error {
 	for i := range authors {
 		authorID := authors[i].ID
 		_, err := ms.db.ExecContext(ctx, `
@@ -151,7 +153,7 @@ func (ms *MediaStorage) addBookAuthors(ctx context.Context, bookID uuid.UUID, au
 	return nil
 }
 
-func (ms *MediaStorage) addBookGenres(ctx context.Context, bookID uuid.UUID, genres []Genre) error {
+func (ms *Storage) addBookGenres(ctx context.Context, bookID uuid.UUID, genres []Genre) error {
 	for i := range genres {
 		genreID := genres[i].ID
 		_, err := ms.db.ExecContext(ctx, `
@@ -167,9 +169,9 @@ func (ms *MediaStorage) addBookGenres(ctx context.Context, bookID uuid.UUID, gen
 	return nil
 }
 
-func (ms *MediaStorage) addBookLanguages(ctx context.Context, bookID uuid.UUID, languages []string) error {
+func (ms *Storage) addBookLanguages(ctx context.Context, bookID uuid.UUID, languages []string) error {
 	for i := range languages {
-		langID, err := ReverseLookupLangID(languages[i])
+		langID, err := language.ReverseLookupLangID(languages[i])
 		if err != nil {
 			ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", languages[i], bookID)
 		}

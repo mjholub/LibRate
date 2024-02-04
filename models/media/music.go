@@ -1,4 +1,4 @@
-package models
+package media
 
 import (
 	"context"
@@ -106,7 +106,7 @@ func addTrack(ctx context.Context, db *sqlx.DB, track *Track) error {
 	return nil
 }
 
-func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
+func (ms *Storage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
 	stmt, err := ms.db.PrepareContext(ctx, `SELECT media_id, album_name, release_date, duration
 		FROM media.albums 
 		WHERE media_id = $1`)
@@ -121,8 +121,8 @@ func (ms *MediaStorage) getAlbum(ctx context.Context, id uuid.UUID) (Album, erro
 	if err != nil {
 		return Album{}, fmt.Errorf("error scanning row: %w", err)
 	}
-	// join to get the name of the artist based on the artist ID, by looking up the people.person and people.group tables
-	// In people.person table, we need to select first_name, last_name and nick_names columns
+	// join to get the name of the artist based on the artist ID, by looking up the person and group tables
+	// In person table, we need to select first_name, last_name and nick_names columns
 	// then format that using Sprintf
 	rows, err := ms.db.QueryContext(ctx, `
 SELECT 
@@ -135,8 +135,8 @@ SELECT
 FROM 
     media.album_artists AS a
 JOIN 
-    people.person AS p ON a.artist = p.id
-		people.group AS g ON a.artist = g.id
+    person AS p ON a.artist = p.id
+		group AS g ON a.artist = g.id
 WHERE 
     a.album = $1
 `, id)
@@ -219,7 +219,7 @@ WHERE
 	return album, nil
 }
 
-func (ms *MediaStorage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
+func (ms *Storage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
 	stmt, err := ms.db.PreparexContext(ctx, `SELECT * 
 		FROM media.tracks 
 		WHERE media_id = $1`)
@@ -238,7 +238,7 @@ func (ms *MediaStorage) getTrack(ctx context.Context, id uuid.UUID) (Track, erro
 }
 
 // GetAlbumTracks retrieves the full metadata of given album's tracks based on the album ID
-func (ms *MediaStorage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Track, error) {
+func (ms *Storage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Track, error) {
 	// Query to fetch tracks and their metadata using a JOIN operation
 	query := `
 		SELECT t.* FROM media.tracks AS t
@@ -265,7 +265,7 @@ func (ms *MediaStorage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) (
 	return tracks, nil
 }
 
-func (ms *MediaStorage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) ([]uuid.UUID, error) {
+func (ms *Storage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) ([]uuid.UUID, error) {
 	query := `
 		SELECT track FROM media.album_tracks
 		WHERE album = $1

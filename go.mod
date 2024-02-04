@@ -2,8 +2,6 @@ module codeberg.org/mjh/LibRate
 
 go 1.21
 
-toolchain go1.21.4
-
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db
 	codeberg.org/mjh/lrctl v0.1.11
@@ -29,7 +27,6 @@ require (
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/golang/mock v1.6.0
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47
 	github.com/jackc/pgtype v1.14.1
 	github.com/jackc/pgx v3.6.2+incompatible
@@ -50,7 +47,6 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/witer33/fiberpow v0.0.9
 	github.com/zmb3/spotify/v2 v2.4.1
-	go.uber.org/mock v0.3.0
 	golang.org/x/crypto v0.18.0
 	golang.org/x/image v0.15.0
 	golang.org/x/oauth2 v0.16.0

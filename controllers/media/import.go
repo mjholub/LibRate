@@ -12,7 +12,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 
 	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 
 	"github.com/zmb3/spotify/v2"
 )
@@ -84,7 +84,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 	}
 
 	// NOTE: spotify doesn't differentiate groups and single artists, so we have to rely on our own data
-	var artists []models.AlbumArtist
+	var artists []media.AlbumArtist
 	// ify there's is only one artist returned, we'll include that in the response. If not, we'll send an info to the client,
 	// that would result in spawning a selection dialog to choose the correct artist
 	var isUnambiguousResult bool
@@ -96,7 +96,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		}
 		for j := range individual {
 			fullName := fmt.Sprintf("%s \"%+v\" %s", individual[i].FirstName, individual[i].NickNames, individual[i].LastName)
-			individualArtistEntry := models.AlbumArtist{
+			individualArtistEntry := media.AlbumArtist{
 				ID:         individual[j].ID,
 				Name:       fullName,
 				ArtistType: "individual",
@@ -104,7 +104,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 			artists = append(artists, individualArtistEntry)
 		}
 		for k := range group {
-			groupArtistEntry := models.AlbumArtist{
+			groupArtistEntry := media.AlbumArtist{
 				ID:         group[k].ID,
 				Name:       group[k].Name,
 				ArtistType: "group",
@@ -135,7 +135,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		}
 	}
 
-	genres := make([]models.Genre, len(spotifyAlbumData.Genres))
+	genres := make([]media.Genre, len(spotifyAlbumData.Genres))
 	for i := range spotifyAlbumData.Genres {
 		genre, err := mc.storage.GetGenre(c.Context(), "music", "en", spotifyAlbumData.Genres[i])
 		if err != nil {
@@ -144,13 +144,13 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		genres = append(genres, *genre)
 	}
 
-	tracks := make([]models.Track, len(spotifyAlbumData.Tracks.Tracks))
+	tracks := make([]media.Track, len(spotifyAlbumData.Tracks.Tracks))
 
 	sTracks := spotifyAlbumData.Tracks.Tracks
 
 	for i := range sTracks {
 		duration := time.Now().Add(sTracks[i].TimeDuration())
-		track := models.Track{
+		track := media.Track{
 			Name:     sTracks[i].Name,
 			Duration: duration,
 			Lyrics:   "",
@@ -166,7 +166,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		albumDuration += tracks[i].Duration.Sub(time.Time{})
 	}
 
-	album := models.Album{
+	album := media.Album{
 		Name:        spotifyAlbumData.Name,
 		ReleaseDate: spotifyAlbumData.ReleaseDateTime(),
 		Genres:      genres,

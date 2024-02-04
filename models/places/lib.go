@@ -1,4 +1,4 @@
-package models
+package places
 
 import "github.com/gofrs/uuid/v5"
 

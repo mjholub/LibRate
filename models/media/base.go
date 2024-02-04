@@ -1,4 +1,4 @@
-package models
+package media
 
 import (
 	"context"
@@ -19,11 +19,7 @@ import (
 )
 
 type (
-	MediaService interface {
-		IsMedia() bool // dummy placeholder so that we can have somewhat idiomatic parametric polymorphism
-	}
-
-	MediaStorer[T any] interface {
+	Storer[T any] interface {
 		Get(ctx context.Context, key string) (T, error)
 		GetAll() ([]T, error)
 		Add(ctx context.Context, db *sqlx.DB, props Media) (uuid.UUID, error)
@@ -43,11 +39,12 @@ type (
 		Modified sql.NullTime  `json:"modified,omitempty" db:"modified"`
 	}
 
-	MediaDetails struct {
-		Kind    string      `json:"kind" db:"kind"`
-		Details interface{} `json:"details" db:"details"`
+	Details struct {
+		Kind string      `json:"kind" db:"kind"`
+		Data interface{} `json:"details" db:"details"`
 	}
 
+	//nolint:revive // renaming this to Object would be confusing
 	MediaObject interface {
 		Book | Album | Track | TVShow | Season | Episode
 	}
@@ -56,7 +53,7 @@ type (
 		[]Genre | []string
 	}
 
-	// Genre does not hage a UUID due to parent-child relationships
+	// Genre does not have a UUID due to parent-child relationships
 	Genre struct {
 		ID          int64              `json:"id" db:"id,pk,autoinc"`
 		Kinds       pq.StringArray     `json:"kind" db:"kind" enum:"music,film,tv,book,game" example:"music"`
@@ -80,7 +77,7 @@ type (
 		Description string `json:"description" db:"description" example:"Typified by highly distorted, trebly, tremolo-picked guitars, blast beats, double kick drumming, shrieked vocals, and raw, underproduced sound that often favors atmosphere over technical skills and melody."`
 	}
 
-	MediaStorage struct {
+	Storage struct {
 		newDB *pgxpool.Pool
 		db    *sqlx.DB // legacy
 		Log   *zerolog.Logger
@@ -89,16 +86,16 @@ type (
 	}
 )
 
-func NewMediaStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *MediaStorage {
+func NewStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *Storage {
 	ks := NewKeywordStorage(db, l)
 	Ps := NewPeopleStorage(newDB, db, l)
-	return &MediaStorage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
+	return &Storage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
 // In most cases though, all we need is an intermediate, partial instance with the UUID and Kind fields
-// to be passed to GetMediaDetails
-func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
+// to be passed to GetDetails
+func (ms *Storage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
 	select {
 	case <-ctx.Done():
 		return Media{}, ctx.Err()
@@ -121,7 +118,7 @@ func (ms *MediaStorage) Get(ctx context.Context, id uuid.UUID) (media Media, err
 	}
 }
 
-func (ms *MediaStorage) GetImagePath(ctx context.Context, id uuid.UUID) (path string, err error) {
+func (ms *Storage) GetImagePath(ctx context.Context, id uuid.UUID) (path string, err error) {
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
@@ -141,7 +138,7 @@ func (ms *MediaStorage) GetImagePath(ctx context.Context, id uuid.UUID) (path st
 	}
 }
 
-func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
+func (ms *Storage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
@@ -171,7 +168,7 @@ func (ms *MediaStorage) GetKind(ctx context.Context, id uuid.UUID) (string, erro
 // The name column can also be accessed with `names_only` boolean query parameter.
 // Fetching of all genres is specified by the `all` query parameter (which does not require a value).
 func GetGenres[G GenresOrGenreNames](
-	ms *MediaStorage,
+	ms *Storage,
 	// nolint:revive // hacky generic dependency injection so would-be receiver should be the 1st arg
 	ctx context.Context,
 	kind string,
@@ -217,7 +214,7 @@ func GetGenres[G GenresOrGenreNames](
 	}
 }
 
-func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (genre *Genre, err error) {
+func (ms *Storage) GetGenre(ctx context.Context, kind, lang, name string) (genre *Genre, err error) {
 	title := cases.Title(language.AmericanEnglish)
 	name = title.String(strings.ReplaceAll(name, "_", " "))
 	select {
@@ -273,7 +270,7 @@ func (ms *MediaStorage) GetGenre(ctx context.Context, kind, lang, name string) (
 	}
 }
 
-func (ms *MediaStorage) GetMediaDetails(
+func (ms *Storage) GetDetails(
 	ctx context.Context,
 	mediaKind string,
 	id uuid.UUID,
@@ -295,7 +292,7 @@ func (ms *MediaStorage) GetMediaDetails(
 }
 
 // mwks - media IDs with their corresponding kind
-func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds ...string) (
+func (ms *Storage) GetRandom(ctx context.Context, count int, blacklistKinds ...string) (
 	mwks map[uuid.UUID]string, err error,
 ) {
 	select {
@@ -349,7 +346,7 @@ func (ms *MediaStorage) GetRandom(ctx context.Context, count int, blacklistKinds
 // Add is a generic method that adds an object to the media.media table. It needs to be run
 // BEFORE the object is added to its respective table, since it needs the media ID to be
 // generated first.
-func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UUID, err error) {
+func (ms *Storage) Add(ctx context.Context, props *Media) (mediaID *uuid.UUID, err error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -388,7 +385,7 @@ func (ms *MediaStorage) Add(ctx context.Context, props *Media) (mediaID *uuid.UU
 	}
 }
 
-func (ms *MediaStorage) AddCreators(ctx context.Context, id uuid.UUID, creators []Person) error {
+func (ms *Storage) AddCreators(ctx context.Context, id uuid.UUID, creators []Person) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -421,11 +418,11 @@ func (ms *MediaStorage) AddCreators(ctx context.Context, id uuid.UUID, creators 
 	}
 }
 
-func (ms *MediaStorage) GetAll() ([]*interface{}, error) {
+func (ms *Storage) GetAll() ([]*interface{}, error) {
 	return nil, nil
 }
 
-func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{}, mediaID uuid.UUID) error {
+func (ms *Storage) Update(ctx context.Context, key string, value interface{}, mediaID uuid.UUID) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -450,7 +447,7 @@ func (ms *MediaStorage) Update(ctx context.Context, key string, value interface{
 	}
 }
 
-func (ms *MediaStorage) Delete(ctx context.Context, mediaID uuid.UUID) error {
+func (ms *Storage) Delete(ctx context.Context, mediaID uuid.UUID) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

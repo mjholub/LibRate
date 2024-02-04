@@ -1,4 +1,4 @@
-package models
+package media
 
 import (
 	"context"
@@ -71,7 +71,7 @@ type (
 	}
 )
 
-func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
+func (ms *Storage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
 	var film Film
 	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = $1", id)
 	if err != nil {
@@ -85,7 +85,7 @@ func (ms *MediaStorage) getFilm(ctx context.Context, id uuid.UUID) (Film, error)
 	return film, nil
 }
 
-func (ms *MediaStorage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
+func (ms *Storage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
 	var tvshow TVShow
 	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = $1", id)
 	if err != nil {
@@ -99,7 +99,7 @@ func (f *Film) GetPosterPath(id uuid.UUID) string {
 	return "/media/" + id.String() + "/poster.jpg"
 }
 
-func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
+func (ms *Storage) AddFilm(ctx context.Context, film *Film) error {
 	ms.Log.Info().Msg("Adding film \"" + film.Title + "\"")
 	// if film has no release date provided yet, set it to 31st December 9999
 	// While making the media."media"(created) nullable would seem more intuitive,
@@ -141,7 +141,7 @@ func (ms *MediaStorage) AddFilm(ctx context.Context, film *Film) error {
 	return nil
 }
 
-func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, directors []Person) (castID int64, err error) {
+func (ms *Storage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, directors []Person) (castID int64, err error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
@@ -150,7 +150,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 			return 0, fmt.Errorf("no database connection or nil pointer")
 		}
 		query := `
-		INSERT INTO people.cast VALUES media_id = $1 RETURNING cast_id
+		INSERT INTO cast VALUES media_id = $1 RETURNING cast_id
 		`
 		err = ms.db.GetContext(ctx, &castID, query, mediaID)
 		if err != nil {
@@ -161,7 +161,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 		// TODO: test this
 		lo.ForEach(actors, func(actor Person, _ int) {
 			_, err = ms.db.ExecContext(ctx, `
-			INSERT INTO people.actor_cast (
+			INSERT INTO actor_cast (
 				cast_id, person_id
 			) VALUES (
 				$1, $2
@@ -173,7 +173,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 		// create cast for directors
 		lo.ForEach(directors, func(director Person, _ int) {
 			_, err = ms.db.ExecContext(ctx, `
-			INSERT INTO people.director_cast (
+			INSERT INTO director_cast (
 				cast_id, person_id
 			) VALUES (
 				$1, $2
@@ -186,7 +186,7 @@ func (ms *MediaStorage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, 
 	}
 }
 
-func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, err error) {
+func (ms *Storage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, err error) {
 	select {
 	case <-ctx.Done():
 		return Cast{}, ctx.Err()
@@ -196,15 +196,15 @@ func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Ca
 		}
 		// first get the actors ids
 		actorIDs := []int64{}
-		castQuery := `SELECT id FROM people.cast WHERE media_id = $1`
+		castQuery := `SELECT id FROM cast WHERE media_id = $1`
 		err = ms.db.GetContext(ctx, &cast.ID, castQuery, mediaID)
 		if err != nil {
 			return Cast{}, fmt.Errorf("error getting cast ID for media with ID %s: %w", mediaID.String(), err)
 		}
 		query := `SELECT person_id
-			FROM people.cast
-			JOIN people.actor_cast ON people.actor_cast.cast_id = people.cast.id
-			WHERE people.cast.media_id = $1`
+			FROM cast
+			JOIN actor_cast ON actor_cast.cast_id = cast.id
+			WHERE cast.media_id = $1`
 		err = ms.db.SelectContext(ctx, &actorIDs, query, mediaID)
 		if err != nil {
 			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
@@ -220,9 +220,9 @@ func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Ca
 		// then get the directors ids
 		directorIDs := []int64{}
 		query = `SELECT person_id
-			FROM people.cast
-			JOIN people.director_cast ON people.director_cast.cast_id = people.cast.id
-			WHERE people.cast.media_id = $1
+			FROM cast
+			JOIN director_cast ON director_cast.cast_id = cast.id
+			WHERE cast.media_id = $1
 		`
 		err = ms.db.SelectContext(ctx, &directorIDs, query, mediaID)
 		if err != nil {
@@ -239,7 +239,7 @@ func (ms *MediaStorage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Ca
 	}
 }
 
-func (ms *MediaStorage) UpdateFilm(ctx context.Context, film *Film) error {
+func (ms *Storage) UpdateFilm(ctx context.Context, film *Film) error {
 	_, err := ms.db.NamedExecContext(ctx, `
 		UPDATE media.films SET
 			title = :title,
