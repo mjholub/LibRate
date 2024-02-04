@@ -101,10 +101,7 @@ func Setup(
 	})
 
 	app.Get("/api/health", func(c *fiber.Ctx) error {
-		if dbConn.Ping() == nil {
-			return c.SendStatus(fiber.StatusOK)
-		}
-		return c.SendStatus(fiber.StatusServiceUnavailable)
+		return c.SendString("I'm alive!")
 	})
 	err := setupStatic(app, conf.Fiber.StaticDir, conf.Fiber.FrontendDir)
 	if err != nil {
