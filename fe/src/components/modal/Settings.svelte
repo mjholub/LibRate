@@ -81,7 +81,8 @@
 <svelte:head>
 	<link
 		rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+		type="text/x-scss"
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/scss/_modal.scss"
 	/>
 </svelte:head>
 

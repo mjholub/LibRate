@@ -15,7 +15,6 @@
 
 	let musicOpen = false,
 		filmOpen = false,
-		isOpen = false,
 		booksOpen = false;
 
 	export let authenticated: boolean = false;
@@ -83,13 +82,14 @@
 		<span class="add-media-mobile">
 			<!-- svelte-ignore a11y-missing-content -->
 
-<button
-					class="media-add"
-					on:click={() => (window.location.href = '/form/media/add')}
-					aria-describedby={$_('add_media')}
-				>			<PlusCircleIcon />
-					</button>
-								</span>
+			<button
+				class="media-add"
+				on:click={() => (window.location.href = '/form/media/add')}
+				aria-describedby={$_('add_media')}
+			>
+				<PlusCircleIcon />
+			</button>
+		</span>
 		<span class="profile-controls">
 			<ProfileControls {nickname} />
 		</span>
