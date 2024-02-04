@@ -461,6 +461,7 @@
 
 	.auth-form {
 		display: flex;
+		z-index: 1;
 		flex-direction: column;
 		align-items: center;
 	}
