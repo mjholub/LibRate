@@ -5,9 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
-	"os"
-	"runtime/trace"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -26,7 +24,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
-	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
 	_ "net/http/pprof"
@@ -35,6 +32,8 @@ import (
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/profiling"
+	"codeberg.org/mjh/LibRate/middleware/render"
 	"codeberg.org/mjh/LibRate/middleware/session"
 )
 
@@ -43,11 +42,6 @@ type FlagArgs struct {
 	Init bool
 	// configFile is a flag to specify the path to the config file
 	ConfigFile string
-	// path is a flag to specify the path to the migrations that should be applied.
-	// Migration logic is however more well-rounded with the lrctl tool
-	Path string
-	// When exit is true, the program will exit after running migrations
-	Exit bool
 	// Whether to start the profiling/tracing server
 	// Due to security reasons, this is only available in development mode
 	Profile bool
@@ -93,37 +87,7 @@ func main() {
 
 	if conf.LibrateEnv == "development" && flags.Profile {
 		go func() {
-			log.Info().Msg("Starting pprof server")
-			// add timeout to prevent hanging
-			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancel()
-
-			handler := http.DefaultServeMux
-
-			http.DefaultServeMux = http.NewServeMux()
-
-			http.HandleFunc("/debug/pprof/", http.DefaultServeMux.ServeHTTP)
-
-			srv := &http.Server{
-				Addr:    "localhost:6060",
-				Handler: handler,
-				BaseContext: func(listener net.Listener) context.Context {
-					return ctx
-				},
-			}
-			err := srv.ListenAndServe()
-			if err != nil {
-				log.Panic().Err(err).Msg("Failed to start pprof server")
-			}
-			f, err := os.Create("trace.out")
-			if err != nil {
-				panic(err)
-			}
-			defer f.Close()
-			if err := trace.Start(f); err != nil {
-				log.Panic().Err(err).Msg("Failed to start trace")
-			}
-			defer trace.Stop()
+			profiling.Serve(&log)
 		}()
 	}
 
@@ -169,16 +133,12 @@ func main() {
 	}()
 
 	if flags.Init {
-		if err = initDB(&conf.DBConfig, flags.Init, flags.Exit, &log); err != nil {
+		if err = initDB(&conf.DBConfig, flags.Init, &log); err != nil {
 			log.Panic().Err(err).Msg("Failed to initialize database")
 		}
 	}
 
-	err = handleMigrations(conf, &log, flags.Path)
-	if err != nil {
-		log.Panic().Err(err).Msg(err.Error())
-	}
-
+	// Check password entropy
 	entropy, _ := redist.CheckPasswordEntropy(conf.Secret)
 	if err == nil && entropy < 50 {
 		log.Warn().Msgf("Secret is weak: %2f bits of entropy", entropy)
@@ -190,7 +150,12 @@ func main() {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
 
+	// Setup Proof of Work antispam middleware
 	setupPOW(conf, app)
+
+	// setup other middlewares
+	// By default, the app uses the following:
+	// cache, cors, csrf, helmet, recover, idempotency, etag, compress
 	var wg sync.WaitGroup
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	wg.Add(1)
@@ -200,9 +165,12 @@ func main() {
 			app.Use(middlewares[i])
 		}
 	}()
+
+	// setup logging
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
 
+	// set up websocket
 	wsConfig := cmd.SetupWS(app, "/search")
 	wg.Wait()
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
@@ -253,7 +221,7 @@ func setupPOW(conf *cfg.Config, app *fiber.App) {
 	}))
 }
 
-func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(dbConf *cfg.DBConfig, do bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
@@ -263,7 +231,7 @@ func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) er
 		return nil
 	}
 
-	err := db.InitDB(dbConf, exitAfter, logger)
+	err := db.InitDB(dbConf, logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -289,8 +257,8 @@ func DBRunning(port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, exit, profiler         bool
-		configFile, path, skipErrors string
+		init, profiler         bool
+		configFile, skipErrors string
 	)
 
 	const (
@@ -302,33 +270,24 @@ func parseFlags() FlagArgs {
 		pprofUse   = "Start tracing/profiling server. LibrateEnv must be set to development"
 		skipErrVal = ""
 		skipErrUse = "Comma-separated list of error codes to skip and not panic on"
-		pathVal    = "db/migrations"
-		pathUse    = "Path to migrations to apply"
-		exitVal    = false
-		exitUse    = "Exit after running migrations"
 		short      = " (shorthand)"
 	)
+
 	flag.BoolVar(&init, "init", initVal, initUse)
 	flag.BoolVar(&init, "i", initVal, initUse+short)
 	flag.StringVar(&configFile, "config", confVal, confUse)
 	flag.StringVar(&configFile, "c", confVal, confUse+short)
 	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
 	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+short)
-	flag.StringVar(&path, "path", pathVal, pathUse)
-	flag.StringVar(&path, "p", pathVal, pathUse+short)
 	flag.BoolVar(&profiler, "tracing", pprofVal, pprofUse)
 	flag.BoolVar(&profiler, "t", pprofVal, pprofUse+short)
-	flag.BoolVar(&exit, "exit", exitVal, exitUse)
-	flag.BoolVar(&exit, "x", exitVal, exitUse+short)
 
 	flag.Parse()
 
 	return FlagArgs{
 		Init:       init,
 		ConfigFile: configFile,
-		Path:       path,
 		Profile:    profiler,
-		Exit:       exit,
 		SkipErrors: skipErrors,
 	}
 }
@@ -411,21 +370,9 @@ func setupRoutes(
 	wsConfig websocket.Config,
 ) (err error) {
 	// Setup routes
-	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, wsConfig)
+	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, &wsConfig)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %v", err)
 	}
-	return nil
-}
-
-func handleMigrations(conf *cfg.Config, log *zerolog.Logger, path string) error {
-	if !lo.Contains(os.Args, "migrate") {
-		return nil
-	}
-
-	if err := db.Migrate(log, conf, path); err != nil {
-		return fmt.Errorf("failed to migrate database: %w", err)
-	}
-	log.Info().Msg("Database migrated")
 	return nil
 }
