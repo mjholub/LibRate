@@ -36,6 +36,8 @@ Also, please do not use busy wait. It's highly unidiomatic in Go.
 
   It can be self-documenting but if it's more complex, add some short comment.
 
+In the _controllers_ pacakge you'll find examples of how to write Swagger-compatible comments for APIs and in _models_, in structs tagged with the `example` tag, how to document your models. For more details please see the wiki.
+
 # Dependencies
 
 When introducing a new dependency, consider the following:
