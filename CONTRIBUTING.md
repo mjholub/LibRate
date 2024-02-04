@@ -20,8 +20,13 @@ or (although the data types might not always exactly match), an in-memory sqlite
 # Style, concurrent code
 
 Your editor should have support for _eslint_, svelte LSP and _golangci-lint_ installed and enabled. For _golangci-lint_ though, you can also use it as a CLI tool, although a language server version is more convenient.
+
+As you probably see, LibRate's codebase relies heavily on the dependency injection pattern for anything public. 
+
+This also implies other related pattern which are rather idiomatic in Go, such as constructors and method receivers.
+
 Your code should be [referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency). Channels are not, so if you want to do concurrency, only use them if it's 
-really necessary. See [this blog post](https://www.jtolio.com/2016/03/go-channels-are-bad-and-you-should-feel-bad/). 
+really necessary, like long-running background tasks that actually require inter-procedure communication. See [this blog post](https://www.jtolio.com/2016/03/go-channels-are-bad-and-you-should-feel-bad/). 
 
 Also when it comes to concurrency, before deciding to write anything concurrent, please write two copies of your function, one sequential and the other not, then benchmark them.
 
