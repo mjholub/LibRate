@@ -39,6 +39,13 @@ type (
 		Modified sql.NullTime  `json:"modified,omitempty" db:"modified"`
 	}
 
+	// used in search
+	SimplifiedMedia struct {
+		Title       string `json:"title" db:"title"`
+		Kind        string `json:"kind" db:"kind"`
+		ImageSource string `json:"image_source" db:"source"`
+	}
+
 	Details struct {
 		Kind string      `json:"kind" db:"kind"`
 		Data interface{} `json:"details" db:"details"`

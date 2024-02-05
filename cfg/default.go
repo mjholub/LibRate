@@ -37,7 +37,7 @@ var (
 	TestConfig = Config{
 		DBConfig: DBConfig{
 			Engine:             "postgres",
-			Host:               "localhost",
+			Host:               "0.0.0.0",
 			Port:               uint16(5432),
 			Database:           "librate_test",
 			User:               "postgres",
@@ -57,13 +57,14 @@ var (
 			},
 		},
 		Redis: RedisConfig{
-			Host:     "localhost",
-			Port:     6379,
-			Username: "",
-			Password: "",
-			CacheDB:  8,
-			PowDB:    9,
-			CsrfDB:   11,
+			Host:            "localhost",
+			Port:            6379,
+			Username:        "",
+			Password:        "",
+			UpdateFrequency: 5,
+			CacheDB:         8,
+			PowDB:           9,
+			CsrfDB:          11,
 		},
 		Fiber: FiberConfig{
 			Host:           "0.0.0.0",

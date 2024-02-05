@@ -2,17 +2,26 @@ package cmd
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/models/media"
 )
+
+type person struct {
+	FullName  string         `json:"full_name"`
+	NickNames sql.NullString `json:"nick_names"`
+	Roles     []string       `json:"roles"`
+}
 
 // Populate cache performs a delta update of the redis
 // cache with searchable basic data, like artist names,
@@ -22,6 +31,7 @@ func PopulateCache(
 	db *pgxpool.Pool,
 	log *zerolog.Logger,
 	config *cfg.Config,
+	testMode bool,
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Redis.UpdateFrequency)*time.Second)
 
@@ -51,7 +61,7 @@ func PopulateCache(
 				time.Duration(
 					config.Redis.UpdateFrequency)*time.Second).Unix(), 10)
 	}
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		log.Error().Err(err).Msg("error getting last update time from cache")
 	}
 
@@ -61,50 +71,172 @@ func PopulateCache(
 		log.Error().Err(err).Msg("error parsing last update time from cache")
 	}
 
-	// TODO: refactor the media column so that we can more easily find authors of media
-	query := `
-		SELECT webfinger FROM public.members WHERE modified > $1
-		UNION ALL
-		SELECT m.id, m.title, m.kind 
-		FROM media.media AS m 
-		JOIN media.media_images AS mi 
-		ON m.id = mi.media_id 
-		WHERE m.modified > $1 AND mi.is_main = true
-		UNION ALL
-		SELECT CONCAT(first_name, ' ', last_name), nick_names FROM people.person WHERE modified > $1 
-		UNION ALL
-		SELECT name, kind FROM people.groups WHERE modified > $1 
-		UNION ALL
-		SELECT name, kind FROM people.studio WHERE modified > $1
-	`
-
-	rows, err := tx.Query(ctx, query, lastUpdate-config.Redis.UpdateFrequency)
-	if err != nil {
+	webfingers, err := tx.Query(ctx, `SELECT webfinger FROM public.members WHERE modified > $1`, lastUpdate-config.Redis.UpdateFrequency)
+	if err != nil && err != pgx.ErrNoRows {
 		return fmt.Errorf("error querying for updated data: %v", err)
 	}
 
-	var errorCount uint8
+	if err != pgx.ErrNoRows {
+		var users []string
+		for webfingers.Next() {
+			var wf string
 
-	// NOTE: not parallelizing this because to count the rows we'd
-	// need to loop over rows.Next() twice, giving this operation a quadratic time complexity
-	for rows.Next() {
-		var k, v string
+			if err = webfingers.Scan(&wf); err != nil {
+				return fmt.Errorf("error scanning webfinger row: %v", err)
+			}
 
-		if errorCount > config.Redis.MaxUpdateErrors || errorCount > 254 {
-			return fmt.Errorf("too many errors updating cache, exiting")
+			users = append(users, wf)
+		}
+		webfingers.Close()
+
+		usernames, err := json.Marshal(users)
+		if err != nil {
+			return fmt.Errorf("error marshalling usernames: %v", err)
 		}
 
-		err = rows.Scan(&k, &v)
+		if err = cacheServer.Set(ctx, "users", usernames, 0).Err(); err != nil {
+			return fmt.Errorf("error setting users in cache: %v", err)
+		}
+	}
+
+	mediaRows, err := tx.Query(ctx, `SELECT m.title, m.kind, c.source 
+		FROM media.media AS m 
+		JOIN media.media_images AS mi
+		ON m.id = mi.media_id 
+		JOIN cdn.images AS c ON mi.image_id = c.id
+		WHERE m.modified > $1 AND mi.is_main = true
+`, lastUpdate-config.Redis.UpdateFrequency)
+
+	if err != nil && err != pgx.ErrNoRows {
+		return fmt.Errorf("error querying for updated data in media tables: %v", err)
+	}
+
+	if err != pgx.ErrNoRows {
+		var mediaList []media.SimplifiedMedia
+		for mediaRows.Next() {
+			var sm media.SimplifiedMedia
+
+			if err = mediaRows.Scan(&sm.Title, &sm.Kind, &sm.ImageSource); err != nil {
+				return fmt.Errorf("error scanning media row: %v", err)
+			}
+			mediaList = append(mediaList, sm)
+		}
+		mediaRows.Close()
+
+		mediaData, err := json.Marshal(mediaList)
 		if err != nil {
-			errorCount++
-			log.Error().Err(err).Msg("error scanning row")
-			continue
+			return fmt.Errorf("error marshalling media: %v", err)
 		}
 
-		err = cacheServer.Set(ctx, k, v, 0).Err()
+		if err = cacheServer.Set(ctx, "media", mediaData, 0).Err(); err != nil {
+			return fmt.Errorf("error setting media in cache: %v", err)
+		}
+	}
+
+	people, err := tx.Query(ctx, `SELECT 
+	CONCAT(first_name, ' ', last_name), 
+	nick_names, 
+	roles 
+	FROM people.person WHERE modified > $1`,
+		lastUpdate-config.Redis.UpdateFrequency)
+	if err != nil && err != pgx.ErrNoRows {
+		return fmt.Errorf("error querying for updated data in people table: %v", err)
+	}
+
+	if err != pgx.ErrNoRows {
+		var peopleList []person
+		for people.Next() {
+			var p person
+
+			if err = people.Scan(&p.FullName, &p.NickNames, &p.Roles); err != nil {
+				return fmt.Errorf("error scanning people row: %v", err)
+			}
+
+			peopleList = append(peopleList, p)
+		}
+		people.Close()
+
+		peopleData, err := json.Marshal(peopleList)
 		if err != nil {
-			errorCount++
-			log.Error().Err(err).Msgf("error setting key %s in cache", k)
+			return fmt.Errorf("error marshalling people data: %v", err)
+		}
+
+		if err = cacheServer.Set(ctx, "people", peopleData, 0).Err(); err != nil {
+			return fmt.Errorf("error setting people in cache: %v", err)
+		}
+	}
+
+	groups, err := tx.Query(ctx,
+		`SELECT name, kind FROM people.group WHERE modified > $1`,
+		lastUpdate-config.Redis.UpdateFrequency)
+	if err != nil && err != pgx.ErrNoRows {
+		return fmt.Errorf("error querying for updated data in group tables: %v", err)
+	}
+
+	if err != pgx.ErrNoRows {
+		type group struct {
+			Name string `json:"name"`
+			Kind string `json:"kind"`
+		}
+
+		var groupList []group
+		for groups.Next() {
+			var g group
+
+			if err = groups.Scan(&g.Name, &g.Kind); err != nil {
+				return fmt.Errorf("error scanning group row: %v", err)
+			}
+
+			groupList = append(groupList, g)
+		}
+
+		groups.Close()
+
+		groupData, err := json.Marshal(groupList)
+		if err != nil {
+			return fmt.Errorf("error marshalling groups: %v", err)
+		}
+
+		if err = cacheServer.Set(ctx, "groups", groupData, 0).Err(); err != nil {
+			return fmt.Errorf("error setting groups in cache: %v", err)
+		}
+	}
+
+	studios, err := tx.Query(ctx, `
+	SELECT name, kind 
+	FROM people.studio 
+	WHERE modified > $1`,
+		lastUpdate-config.Redis.UpdateFrequency)
+
+	if err != nil && err != pgx.ErrNoRows {
+		return fmt.Errorf("error querying for updated data: %v", err)
+	}
+
+	if err != pgx.ErrNoRows {
+		type studio struct {
+			Name string `json:"name"`
+			Kind string `json:"kind"`
+		}
+
+		var studioList []studio
+		for studios.Next() {
+			var s studio
+
+			if err = studios.Scan(&s.Name, &s.Kind); err != nil {
+				return fmt.Errorf("error scanning studio row: %v", err)
+			}
+
+			studioList = append(studioList, s)
+		}
+		studios.Close()
+
+		studioData, err := json.Marshal(studioList)
+		if err != nil {
+			return fmt.Errorf("error marshalling studios: %v", err)
+		}
+
+		if err = cacheServer.Set(ctx, "studios", studioData, 0).Err(); err != nil {
+			return fmt.Errorf("error setting studios in cache: %v", err)
 		}
 	}
 
@@ -114,15 +246,17 @@ func PopulateCache(
 	}
 
 	// set the update time to now
-	err = cacheServer.Set(ctx, "last_update", time.Now().Format(time.RFC3339), 0).Err()
+	err = cacheServer.Set(ctx, "last_update", time.Now().Unix(), 0).Err()
 	if err != nil {
 		return fmt.Errorf("error setting last update time in cache: %v", err)
 	}
+	if testMode {
+		return nil
+	}
 
 	time.Sleep(time.Duration(config.Redis.UpdateFrequency) * time.Second)
-	errorCount = 0
 	// nolint: errcheck // if errors occur in the next iteration and exceed the limit, it'll be handled appropriately
-	PopulateCache(cacheServer, db, log, config)
+	PopulateCache(cacheServer, db, log, config, false)
 
 	return nil
 }

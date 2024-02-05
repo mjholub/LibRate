@@ -50,13 +50,12 @@ type RedisConfig struct {
 	// How often to poll the SQL database for data for delta updates of the cache with searchable basic data
 	UpdateFrequency int64 `yaml:"updateFrequency,omitempty" default:"300" env:"LIBRATE_REDIS_UPDATE_FREQUENCY"`
 	// how many errors can occur during scan of SQL DB into cache before the process is stopped
-	MaxUpdateErrors uint8  `yaml:"maxUpdateErrors,omitempty" default:"10" env:"LIBRATE_REDIS_MAX_UPDATE_ERRORS"`
-	Username        string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
-	Password        string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
-	CacheDB         int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
-	CsrfDB          int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
-	PowDB           int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
-	PagesDB         int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
+	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
+	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
+	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
+	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
+	PowDB    int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	PagesDB  int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config
