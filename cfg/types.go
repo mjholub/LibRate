@@ -56,6 +56,7 @@ type RedisConfig struct {
 	CacheDB         int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
 	CsrfDB          int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
 	PowDB           int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	PagesDB         int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config

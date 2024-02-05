@@ -111,10 +111,20 @@ func main() {
 	}
 	go cmd.RunGrpcServer(s)
 
+	staticDirAbs, err := filepath.Abs(conf.Fiber.StaticDir)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get absolute path of static directory %s", conf.Fiber.StaticDir)
+	}
+
 	// Setup templated pages, like privacy policy and TOS
-	// We don't care about synchronization here, as it's not critical here
+	pagesCache := render.SetupCaching(conf)
 	go func() {
-		cmd.SetupTemplatedPages(conf, app)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		if err = render.
+			WatchFiles(ctx, staticDirAbs, &log, pagesCache); err != nil {
+			log.Error().Err(err).Msg("Error watching files")
+		}
 	}()
 
 	// database first-run initialization
@@ -173,6 +183,11 @@ func main() {
 	// set up websocket
 	wsConfig := cmd.SetupWS(app, "/search")
 	wg.Wait()
+
+	render.SetupTemplatedPages(
+		conf.Fiber.DefaultLanguage,
+		app, &log, pagesCache)
+
 	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")

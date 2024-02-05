@@ -45,6 +45,7 @@ redis:
   cacheDb: 0
   csrfDb: 2
   powDb: 3
+  pagesDb: 4
 logging:
   level: "info"
   target: "stdout"

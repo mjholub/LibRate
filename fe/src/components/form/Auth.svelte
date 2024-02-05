@@ -131,8 +131,8 @@
 			checkEntropy(password);
 		}
 	}
-	$: tos_url = `/tos_${$locale}.html`;
-	$: privacy_url = `/privacy_${$locale}.html`;
+	$: tos_url = `/tos/${$locale}`;
+	$: privacy_url = `/privacy/${$locale}`;
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
