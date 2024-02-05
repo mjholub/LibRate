@@ -126,6 +126,21 @@ func insertTestData(ctx context.Context, dbConn *pgxpool.Pool, data *testData) e
 	if err != nil {
 		return fmt.Errorf("error adding data to test tables: %w", err)
 	}
+
+	// get the latest image id and write that to the cdn.images table
+	var imageID int
+	err = dbConn.QueryRow(ctx, `SELECT image_id FROM media.media_images WHERE media_id = $1`, data.mediaID).Scan(&imageID)
+	if err != nil {
+		return fmt.Errorf("error adding data to test tables: %w", err)
+	}
+
+	_, err = dbConn.Exec(ctx, `INSERT INTO cdn.images (source, id) VALUES ($1, $2)`,
+		"http://example.com/image.jpg", imageID)
+
+	if err != nil {
+		return fmt.Errorf("error adding data to test tables: %w", err)
+	}
+
 	return nil
 }
 
@@ -201,6 +216,12 @@ func createTestTables(ctx context.Context, dbConn *pgxpool.Pool) error {
 	_, err = dbConn.Exec(ctx, `CREATE TABLE media.media_images
 	(media_id uuid NOT NULL REFERENCES media.media(id) ON DELETE CASCADE, 
 	image_id bigserial NOT NULL PRIMARY KEY, is_main boolean NOT NULL)`)
+	if err != nil {
+		return fmt.Errorf("error creating table or schema: %w", err)
+	}
+
+	_, err = dbConn.Exec(ctx, `CREATE INDEX media_images_media_id_idx ON media.media_images (media_id)`)
+
 	if err != nil {
 		return fmt.Errorf("error creating table or schema: %w", err)
 	}

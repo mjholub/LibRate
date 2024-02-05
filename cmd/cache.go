@@ -1,18 +1,18 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"sync"
 	"time"
 
-	bin "github.com/gagliardetto/binary"
+	"github.com/goccy/go-json"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/models/media"
@@ -29,8 +29,7 @@ type person struct {
 // for quick search and retrieval.
 // PERF: this is quite slow. For 100 entries in each table, it takes
 // over 7 seconds on a high-end desktop machine
-// Likely culprit is the JSON marshalling, which is quite slow
-// Try using e.g. cap'n'proto or another serialization format
+// Likely not due to serialization
 func PopulateCache(
 	ctx context.Context,
 	cacheServer *redis.Client,
@@ -60,42 +59,65 @@ func PopulateCache(
 
 	updateDelta := lastUpdate - config.Redis.UpdateFrequency
 
+	db, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer db.Close()
 	var wg sync.WaitGroup
 	wg.Add(4)
 	go func(context.Context, string, *redis.Client, int64) {
 		defer wg.Done()
-		if err := cacheUsers(ctx, dsn, cacheServer, updateDelta); err != nil {
+		conn, err := db.Acquire(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error acquiring database connection")
+			return
+		}
+		defer conn.Release()
+		if err := cacheUsers(ctx, conn, cacheServer, updateDelta); err != nil {
 			log.Error().Err(err).Msg("error caching users")
 			return
 		}
 	}(ctx, dsn, cacheServer, updateDelta)
 	go func(context.Context, string, *redis.Client, int64) {
 		defer wg.Done()
-		if err := cacheMedia(ctx, dsn, cacheServer, updateDelta); err != nil {
+		conn, err := db.Acquire(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error acquiring database connection")
+			return
+		}
+		defer conn.Release()
+		if err := cacheMedia(ctx, conn, cacheServer, updateDelta); err != nil {
 			log.Error().Err(err).Msg("error caching media")
 			return
 		}
 	}(ctx, dsn, cacheServer, updateDelta)
 	go func(context.Context, string, *redis.Client, int64) {
 		defer wg.Done()
-		if err := cachePeople(ctx, dsn, cacheServer, updateDelta); err != nil {
+		conn, err := db.Acquire(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error acquiring database connection")
+			return
+		}
+		defer conn.Release()
+		if err := cachePeople(ctx, conn, cacheServer, updateDelta); err != nil {
 			log.Error().Err(err).Msg("error caching artists")
 			return
 		}
 	}(ctx, dsn, cacheServer, updateDelta)
 	go func(context.Context, string, *redis.Client, int64) {
 		defer wg.Done()
-		if err := cacheGroups(ctx, dsn, cacheServer, updateDelta); err != nil {
+		conn, err := db.Acquire(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error acquiring database connection")
+			return
+		}
+		defer conn.Release()
+		if err := cacheGroups(ctx, conn, cacheServer, updateDelta); err != nil {
 			log.Error().Err(err).Msg("error caching groups")
 			return
 		}
 	}(ctx, dsn, cacheServer, updateDelta)
-
-	db, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		return fmt.Errorf("error connecting to database: %v", err)
-	}
-	defer db.Close()
 
 	studios, err := db.Query(ctx, `
 	SELECT name, kind 
@@ -113,7 +135,17 @@ func PopulateCache(
 			Kind string `json:"kind"`
 		}
 
+		currentVal, err := cacheServer.Get(ctx, "studios").Bytes()
+		if err != nil && err != redis.Nil {
+			return fmt.Errorf("error getting studios from cache: %v", err)
+		}
+
 		var studioList []studio
+		if currentVal != nil {
+			if e := json.Unmarshal(currentVal, &studioList); e != nil {
+				return fmt.Errorf("error unmarshalling studios: %v", err)
+			}
+		}
 		for studios.Next() {
 			var s studio
 
@@ -124,16 +156,13 @@ func PopulateCache(
 			studioList = append(studioList, s)
 		}
 		studios.Close()
-		var studioData bytes.Buffer
 
-		enc := bin.NewBorshEncoder(&studioData)
-
-		err = enc.Encode(studioList)
+		studioData, err := json.MarshalNoEscape(lo.Uniq(studioList))
 		if err != nil {
 			return fmt.Errorf("error marshalling studios: %v", err)
 		}
 
-		if err = cacheServer.Set(ctx, "studios", studioData.Bytes(), 0).Err(); err != nil {
+		if err = cacheServer.Set(ctx, "studios", studioData, 0).Err(); err != nil {
 			return fmt.Errorf("error setting studios in cache: %v", err)
 		}
 	}
@@ -158,7 +187,7 @@ func PopulateCache(
 }
 
 func cacheUsers(ctx context.Context,
-	dsn string,
+	dbConn *pgxpool.Conn,
 	cacheServer *redis.Client,
 	updateDelta int64,
 ) error {
@@ -166,11 +195,6 @@ func cacheUsers(ctx context.Context,
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		dbConn, err := pgxpool.New(ctx, dsn)
-		if err != nil {
-			return fmt.Errorf("error connecting to database: %v", err)
-		}
-		defer dbConn.Close()
 
 		webfingers, err := dbConn.Query(ctx,
 			`SELECT webfinger FROM public.members WHERE modified > $1`,
@@ -182,26 +206,29 @@ func cacheUsers(ctx context.Context,
 
 		if err != pgx.ErrNoRows {
 			var users []string
+			currentVal, err := cacheServer.Get(ctx, "users").Bytes()
+			if err != nil && err != redis.Nil {
+				return fmt.Errorf("error getting users from cache: %v", err)
+			}
+
+			if currentVal != nil {
+				if e := json.Unmarshal(currentVal, &users); e != nil {
+					return fmt.Errorf("error unmarshalling users: %v", e)
+				}
+			}
 			for webfingers.Next() {
 				var wf string
 
 				if err = webfingers.Scan(&wf); err != nil {
 					return fmt.Errorf("error scanning webfinger row: %v", err)
 				}
-
 				users = append(users, wf)
 			}
 			webfingers.Close()
-			var usernames bytes.Buffer
 
-			enc := bin.NewBorshEncoder(&usernames)
+			userData, err := json.MarshalNoEscape(lo.Uniq(users))
 
-			err := enc.Encode(users)
-			if err != nil {
-				return fmt.Errorf("error marshalling usernames: %v", err)
-			}
-
-			if err = cacheServer.Set(ctx, "users", usernames.Bytes(), 0).Err(); err != nil {
+			if err := cacheServer.Set(ctx, "users", lo.Uniq(userData), 0).Err(); err != nil {
 				return fmt.Errorf("error setting users in cache: %v", err)
 			}
 		}
@@ -210,7 +237,7 @@ func cacheUsers(ctx context.Context,
 }
 
 func cacheMedia(ctx context.Context,
-	dsn string,
+	conn *pgxpool.Conn,
 	cacheServer *redis.Client,
 	updateDelta int64,
 ) error {
@@ -218,13 +245,8 @@ func cacheMedia(ctx context.Context,
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		db, err := pgxpool.New(ctx, dsn)
-		if err != nil {
-			return fmt.Errorf("error connecting to database: %v", err)
-		}
-		defer db.Close()
 
-		mediaRows, err := db.Query(ctx, `SELECT m.title, m.kind, c.source 
+		mediaRows, err := conn.Query(ctx, `SELECT m.title, m.kind, c.source 
 		FROM media.media AS m 
 		JOIN media.media_images AS mi
 		ON m.id = mi.media_id 
@@ -238,6 +260,16 @@ func cacheMedia(ctx context.Context,
 
 		if err != pgx.ErrNoRows {
 			var mediaList []media.SimplifiedMedia
+			currentVal, err := cacheServer.Get(ctx, "media").Bytes()
+			if err != nil && err != redis.Nil {
+				return fmt.Errorf("error getting media from cache: %v", err)
+			}
+
+			if currentVal != nil {
+				if e := json.Unmarshal(currentVal, &mediaList); e != nil {
+					return fmt.Errorf("error unmarshalling media: %v", e)
+				}
+			}
 			for mediaRows.Next() {
 				var sm media.SimplifiedMedia
 
@@ -247,16 +279,14 @@ func cacheMedia(ctx context.Context,
 				mediaList = append(mediaList, sm)
 			}
 			mediaRows.Close()
-			var mediaData bytes.Buffer
+			var mediaData []byte
 
-			enc := bin.NewBorshEncoder(&mediaData)
-
-			err := enc.Encode(mediaList)
+			mediaData, err = json.MarshalNoEscape(lo.Uniq(mediaList))
 			if err != nil {
 				return fmt.Errorf("error marshalling media: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "media", mediaData.Bytes(), 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "media", mediaData, 0).Err(); err != nil {
 				return fmt.Errorf("error setting media in cache: %v", err)
 			}
 		}
@@ -265,7 +295,7 @@ func cacheMedia(ctx context.Context,
 }
 
 func cachePeople(ctx context.Context,
-	dsn string,
+	conn *pgxpool.Conn,
 	cacheServer *redis.Client,
 	updateDelta int64,
 ) error {
@@ -273,13 +303,8 @@ func cachePeople(ctx context.Context,
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		db, err := pgxpool.New(ctx, dsn)
-		if err != nil {
-			return fmt.Errorf("error connecting to database: %v", err)
-		}
-		defer db.Close()
 
-		people, err := db.Query(ctx, `SELECT 
+		people, err := conn.Query(ctx, `SELECT 
 	CONCAT(first_name, ' ', last_name), 
 	nick_names, 
 	roles 
@@ -291,6 +316,16 @@ func cachePeople(ctx context.Context,
 
 		if err != pgx.ErrNoRows {
 			var peopleList []person
+			currentVal, err := cacheServer.Get(ctx, "people").Bytes()
+			if err != nil && err != redis.Nil {
+				return fmt.Errorf("error getting people from cache: %v", err)
+			}
+
+			if currentVal != nil {
+				if err := json.Unmarshal(currentVal, &peopleList); err != nil {
+					return fmt.Errorf("error unmarshalling people: %v", err)
+				}
+			}
 			for people.Next() {
 				var p person
 
@@ -301,16 +336,14 @@ func cachePeople(ctx context.Context,
 				peopleList = append(peopleList, p)
 			}
 			people.Close()
-			var peopleData bytes.Buffer
 
-			enc := bin.NewBorshEncoder(&peopleData)
-
-			err := enc.Encode(peopleList)
+			// FIXME: nested slices prevent applying lo.Uniq
+			peopleData, err := json.MarshalNoEscape(peopleList)
 			if err != nil {
 				return fmt.Errorf("error marshalling people: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "people", peopleData.Bytes(), 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "people", peopleData, 0).Err(); err != nil {
 				return fmt.Errorf("error setting people in cache: %v", err)
 			}
 		}
@@ -321,7 +354,7 @@ func cachePeople(ctx context.Context,
 
 func cacheGroups(
 	ctx context.Context,
-	dsn string,
+	conn *pgxpool.Conn,
 	cacheServer *redis.Client,
 	updateDelta int64,
 ) error {
@@ -329,13 +362,8 @@ func cacheGroups(
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		db, err := pgxpool.New(ctx, dsn)
-		if err != nil {
-			return fmt.Errorf("error connecting to database: %v", err)
-		}
-		defer db.Close()
 
-		groups, err := db.Query(ctx,
+		groups, err := conn.Query(ctx,
 			`SELECT name, kind FROM people.group WHERE modified > $1`,
 			updateDelta)
 		if err != nil && err != pgx.ErrNoRows {
@@ -349,6 +377,17 @@ func cacheGroups(
 			}
 
 			var groupList []group
+			currentVal, err := cacheServer.Get(ctx, "groups").Bytes()
+			if err != nil && err != redis.Nil {
+				return fmt.Errorf("error getting groups from cache: %v", err)
+			}
+
+			if currentVal != nil {
+				e := json.Unmarshal(currentVal, &groupList)
+				if e != nil {
+					return fmt.Errorf("error unmarshalling groups: %v", e)
+				}
+			}
 			for groups.Next() {
 				var g group
 
@@ -359,16 +398,13 @@ func cacheGroups(
 				groupList = append(groupList, g)
 			}
 			groups.Close()
-			var groupData bytes.Buffer
 
-			enc := bin.NewBorshEncoder(&groupData)
-
-			err := enc.Encode(groupList)
+			groupData, err := json.MarshalNoEscape(lo.Uniq(groupList))
 			if err != nil {
 				return fmt.Errorf("error marshalling groups: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "groups", groupData.Bytes(), 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "groups", groupData, 0).Err(); err != nil {
 				return fmt.Errorf("error setting groups in cache: %v", err)
 			}
 		}
