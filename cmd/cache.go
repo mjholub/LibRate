@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/goccy/go-json"
+	bin "github.com/gagliardetto/binary"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -18,9 +19,9 @@ import (
 )
 
 type person struct {
-	FullName  string         `json:"full_name"`
-	NickNames sql.NullString `json:"nick_names"`
-	Roles     []string       `json:"roles"`
+	FullName  string           `json:"full_name"`
+	NickNames []sql.NullString `json:"nick_names"`
+	Roles     []string         `json:"roles"`
 }
 
 // Populate cache performs a delta update of the redis
@@ -123,13 +124,16 @@ func PopulateCache(
 			studioList = append(studioList, s)
 		}
 		studios.Close()
+		var studioData bytes.Buffer
 
-		studioData, err := json.Marshal(studioList)
+		enc := bin.NewBorshEncoder(&studioData)
+
+		err = enc.Encode(studioList)
 		if err != nil {
 			return fmt.Errorf("error marshalling studios: %v", err)
 		}
 
-		if err = cacheServer.Set(ctx, "studios", studioData, 0).Err(); err != nil {
+		if err = cacheServer.Set(ctx, "studios", studioData.Bytes(), 0).Err(); err != nil {
 			return fmt.Errorf("error setting studios in cache: %v", err)
 		}
 	}
@@ -188,13 +192,16 @@ func cacheUsers(ctx context.Context,
 				users = append(users, wf)
 			}
 			webfingers.Close()
+			var usernames bytes.Buffer
 
-			usernames, err := json.Marshal(users)
+			enc := bin.NewBorshEncoder(&usernames)
+
+			err := enc.Encode(users)
 			if err != nil {
 				return fmt.Errorf("error marshalling usernames: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "users", usernames, 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "users", usernames.Bytes(), 0).Err(); err != nil {
 				return fmt.Errorf("error setting users in cache: %v", err)
 			}
 		}
@@ -240,13 +247,16 @@ func cacheMedia(ctx context.Context,
 				mediaList = append(mediaList, sm)
 			}
 			mediaRows.Close()
+			var mediaData bytes.Buffer
 
-			mediaData, err := json.Marshal(mediaList)
+			enc := bin.NewBorshEncoder(&mediaData)
+
+			err := enc.Encode(mediaList)
 			if err != nil {
 				return fmt.Errorf("error marshalling media: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "media", mediaData, 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "media", mediaData.Bytes(), 0).Err(); err != nil {
 				return fmt.Errorf("error setting media in cache: %v", err)
 			}
 		}
@@ -291,13 +301,16 @@ func cachePeople(ctx context.Context,
 				peopleList = append(peopleList, p)
 			}
 			people.Close()
+			var peopleData bytes.Buffer
 
-			peopleData, err := json.Marshal(peopleList)
+			enc := bin.NewBorshEncoder(&peopleData)
+
+			err := enc.Encode(peopleList)
 			if err != nil {
-				return fmt.Errorf("error marshalling people data: %v", err)
+				return fmt.Errorf("error marshalling people: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "people", peopleData, 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "people", peopleData.Bytes(), 0).Err(); err != nil {
 				return fmt.Errorf("error setting people in cache: %v", err)
 			}
 		}
@@ -345,15 +358,17 @@ func cacheGroups(
 
 				groupList = append(groupList, g)
 			}
-
 			groups.Close()
+			var groupData bytes.Buffer
 
-			groupData, err := json.Marshal(groupList)
+			enc := bin.NewBorshEncoder(&groupData)
+
+			err := enc.Encode(groupList)
 			if err != nil {
 				return fmt.Errorf("error marshalling groups: %v", err)
 			}
 
-			if err = cacheServer.Set(ctx, "groups", groupData, 0).Err(); err != nil {
+			if err = cacheServer.Set(ctx, "groups", groupData.Bytes(), 0).Err(); err != nil {
 				return fmt.Errorf("error setting groups in cache: %v", err)
 			}
 		}
