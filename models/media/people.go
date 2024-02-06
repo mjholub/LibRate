@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 
 	"codeberg.org/mjh/LibRate/models/places"
 )
@@ -29,7 +30,7 @@ type (
 	StudioKind interface {
 		// WARN: flashy background image on linked site
 		// see https://vladimir.varank.in/notes/2023/09/compile-time-safety-for-enumerations-in-go/
-		dummyMethod()
+		valid() bool
 	}
 
 	GroupedArtists struct {
@@ -98,7 +99,18 @@ type (
 )
 
 // see the top of the type block
-func (s studioKind) dummyMethod() {}
+func (s studioKind) valid() bool {
+	return lo.Contains([]studioKind{
+		FilmStudio,
+		Music,
+		Game,
+		TV,
+		Publishing,
+		VisualArtOther,
+		Unknown,
+	}, s,
+	)
+}
 
 func NewPeopleStorage(newConn *pgxpool.Pool, dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
 	return &PeopleStorage{
