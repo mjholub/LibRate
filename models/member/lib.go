@@ -57,7 +57,8 @@ type (
 	UXPreferences struct {
 		Locale language.Tag `json:"locale,omitempty" db:"locale"`
 		// everything is calculated relative to the maximum scale of 0-100
-		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatinScaleUpper",min=0,max=1" default:"1"`
+		// nolint: revive // we'd need to configure validation inside function calls otherwise. That can harm consistency.
+		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatingScaleUpper",min=0,max=1" default:"1"`
 		RatingScaleUpper int16 `json:"rating_scale_upper,omitempty" db:"rating_scale_upper" validate:"min=2,max=100" default:"10"`
 	}
 
