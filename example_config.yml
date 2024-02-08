@@ -46,6 +46,13 @@ redis:
   csrfDb: 2
   powDb: 3
   pagesDb: 4
+search:
+  host: "librate-search"
+  port: 5984
+  user: "admin"
+  password: "CHANGE_ME"
+  database: "librate"
+  syncInterval: 5 # in seconds
 logging:
   level: "info"
   target: "stdout"

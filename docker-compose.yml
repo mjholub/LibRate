@@ -44,6 +44,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  couchdb:
+     # WARN: DO NOT CHANGE THE HOSTNAME. Postgres sync trigger depends on it
+    hostname: "librate-search"
+    restart: always
+    networks:
+      - librate-net
+    volumes:
+      - ./couchdb/data:/opt/couchdb/data
+    image: rapidfort/couchdb-official:3.2.3
+    ports:
+      - "5984:5984"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "GET", "http://localhost:5984/_up"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   redis:
     hostname: "librate-redis"
     restart: always

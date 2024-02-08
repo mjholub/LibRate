@@ -20,5 +20,5 @@ func TestDBRunning(t *testing.T) {
 func TestParseFlags(t *testing.T) {
 	assert := assert.New(t)
 	flags := parseFlags()
-	assert.False(flags.Exit)
+	assert.False(flags.Init)
 }

@@ -37,6 +37,16 @@ type DBConfig struct {
 	MigrationsPath     string `yaml:"migrationsPath,omitempty" default:"/app/data/migrations" env:"LIBRATE_MIGRATIONS"`
 }
 
+// currently only couchdb is supported
+type Search struct {
+	Host         string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port         int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User         string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password     string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+	Database     string `yaml:"database,omitempty" default:"librate" env:"LIBRATE_SEARCH_DB"`
+	SyncInterval int64  `yaml:"syncInterval,omitempty" default:"5" env:"LIBRATE_SEARCH_SYNC_INTERVAL"`
+}
+
 type External struct {
 	// currently supported: json, id3, spotify (requires client ID and secret)
 	ImportSources       []string `yaml:"import_sources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`

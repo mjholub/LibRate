@@ -13,7 +13,8 @@ RUN apk update && \
   clang15-dev \
   llvm15 \
   postgresql-sequential-uuids \
-  postgresql15-contrib
+  postgresql15-contrib \
+  curl-dev
 
 # install the 'sequential-uuids' extension
 WORKDIR /tmp/sequential-uuids
@@ -22,6 +23,13 @@ RUN git clone --depth=1 "https://github.com/tvondra/sequential-uuids/" . && \
   make && \
   make install && \
   if [ "$(mv sequential-uuids/* /usr/share/postgresql/extension/)" ]; then true; fi
+
+WORKDIR /tmp/pg_http
+
+RUN git clone --depth=1 "https://github.com/pramsey/pgsql-http" . && \
+  make && \
+  make install && \
+  if [ "$(mv pg_http/* /usr/share/postgresql/extension/)" ]; then true; fi
 
 WORKDIR /tmp
 
