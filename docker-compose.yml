@@ -52,14 +52,17 @@ services:
      # WARN: DO NOT CHANGE THE HOSTNAME. Postgres sync trigger depends on it
     hostname: "librate-search"
     restart: always
-    networks:
-      - librate-net
     volumes:
       - ./couchdb/data:/opt/couchdb/data
       - ./couchdb/config.ini:/opt/couchdb/etc/local.ini
     image: couchdb:3.3
     ports:
       - "5984:5984"
+    networks:
+      librate-net:
+        aliases:
+          - librate-search
+        ipv4_address: 172.20.0.6
   redis:
     hostname: "librate-redis"
     restart: always
@@ -123,3 +126,7 @@ networks:
   librate-net:
     name: librate-net
     external: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

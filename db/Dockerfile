@@ -2,6 +2,7 @@ FROM postgres:15-alpine
 
 WORKDIR /tmp/
 COPY ./start.sh /usr/bin/start.sh
+COPY ./couchdb_seed.sh /usr/bin/couchdb_seed.sh
 
 RUN apk update && \
   apk add --no-cache \
@@ -14,7 +15,12 @@ RUN apk update && \
   llvm15 \
   postgresql-sequential-uuids \
   postgresql15-contrib \
-  curl-dev
+  curl-dev \
+  curl
+
+# create the databases in couchDB which we'll use for search
+RUN chmod +x /usr/bin/couchdb_seed.sh && \
+  /usr/bin/couchdb_seed.sh
 
 # install the 'sequential-uuids' extension
 WORKDIR /tmp/sequential-uuids
