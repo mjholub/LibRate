@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/go-kivik/kivik/v4"
+	_ "github.com/go-kivik/kivik/v4/couchdb"
 
 	"codeberg.org/mjh/LibRate/cfg"
 )

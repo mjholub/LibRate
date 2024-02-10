@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-kivik/kivik/v4"
 	"github.com/goccy/go-json"
 )
 
@@ -21,12 +22,9 @@ func (s *Storage) ReadAll(ctx context.Context, target TargetDB) (data []byte, er
 	// can't merge []byte directly, so we'll still need to marshal that
 	// to JSON again :(
 	var dataChunks []interface{}
-	for rows.Next() {
-		var doc interface{}
-		if err := rows.ScanDoc(&doc); err != nil {
-			return nil, fmt.Errorf("failed to scan document: %w", err)
-		}
-		dataChunks = append(dataChunks, doc)
+	err = kivik.ScanAllDocs(rows, &dataChunks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan all documents: %w", err)
 	}
 
 	return json.Marshal(dataChunks)

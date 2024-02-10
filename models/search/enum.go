@@ -1,7 +1,5 @@
 package searchdb
 
-import "fmt"
-
 type targetDBName string
 
 const (
@@ -21,5 +19,5 @@ type TargetDB interface {
 }
 
 func (t targetDBName) String() string {
-	return fmt.Sprint(t)
+	return string(t)
 }
