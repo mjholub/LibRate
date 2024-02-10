@@ -1,3 +1,4 @@
+// this file also covers connect.go and enum.go
 package searchdb
 
 import (
