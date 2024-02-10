@@ -9,7 +9,7 @@ LibRate is a project that aims to provide a free, federated service for tracking
 
 This project is currently in early beta stage, bugs are expected and PRs are very welcome.
 
-Element, probably the only Matrix client to support publishing room has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
+Element, probably the only Matrix client to support publishing roomss has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
 [#librate-dev:matrix.org](https://matrix.to/#/#librate-dev:matrix.org)
 
 You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate), Monero or BLIK (contact me via Matrix for the latter two).
@@ -75,7 +75,8 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 - [ ] Scrobbling
 - [ ] Decentralized subtitle repository
 - [ ] DRM-free audio hosting and streaming(?)
-- [ ] Artwork galleries for visual artists(?)
+- [ ] Visual artwork galleries and ability to claim own page as an artist
+- [ ] Arbitrarily defined custom media objects (like board games, anime figures or other collectible)
 
 ### **Reviews**
 
@@ -96,7 +97,7 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 
 - [x] Extended configurability
 - [x] Internationalization
-- [ ] Events, federating with Mobilizon
+- [ ] Events (like concerts or conventions)
 - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
 - [ ] Mobile app
 
