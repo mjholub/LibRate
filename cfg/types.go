@@ -21,6 +21,7 @@ type Config struct {
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 	External   External       `json:"external,omitempty" yaml:"external" mapstructure:"external"`
+	CouchDB    Search         `json:"couchdb,omitempty" yaml:"couchdb" mapstructure:"couchdb"`
 }
 
 // nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
@@ -39,12 +40,10 @@ type DBConfig struct {
 
 // currently only couchdb is supported
 type Search struct {
-	Host         string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
-	Port         int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
-	User         string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
-	Password     string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
-	Database     string `yaml:"database,omitempty" default:"librate" env:"LIBRATE_SEARCH_DB"`
-	SyncInterval int64  `yaml:"syncInterval,omitempty" default:"5" env:"LIBRATE_SEARCH_SYNC_INTERVAL"`
+	Host     string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port     int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User     string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
 }
 
 type External struct {
@@ -57,8 +56,6 @@ type External struct {
 type RedisConfig struct {
 	Host string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
 	Port int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
-	// How often to poll the SQL database for data for delta updates of the cache with searchable basic data
-	UpdateFrequency int64 `yaml:"updateFrequency,omitempty" default:"300" env:"LIBRATE_REDIS_UPDATE_FREQUENCY"`
 	// how many errors can occur during scan of SQL DB into cache before the process is stopped
 	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
 	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
