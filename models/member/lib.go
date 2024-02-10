@@ -146,29 +146,41 @@ type (
 		Started    time.Time `json:"started" db:"started"`
 	}
 
-	// TODO: debload this interface
 	Storer interface {
-		Save(ctx context.Context, member *Member) error
-		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
-		HasRole(ctx context.Context, name, role string, exact bool) bool
-		Ban(ctx context.Context, member *Member, input *BanInput) error
-		Unban(ctx context.Context, member *Member) error
-		VerifyViewability(ctx context.Context, viewer, viewee string) (bool, error)
-		// Check checks if a member with the given email or nickname already exists
-		Check(ctx context.Context, email, nickname string) (bool, error)
-		Update(ctx context.Context, member *Member) error
-		UpdatePassword(ctx context.Context, nick, pass string) error
-		Delete(ctx context.Context, memberName string) error
-		GetID(ctx context.Context, key string) (int, error)
-		GetPassHash(email, login string) (string, error)
-		CreateSession(ctx context.Context, member *Member) (string, error)
-		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
+		Writer
+		Getter
+		Checker
 		FollowStorer
 		Exporter
 	}
 
+	Writer interface {
+		Save(ctx context.Context, member *Member) error
+		Ban(ctx context.Context, member *Member, input *BanInput) error
+		Unban(ctx context.Context, member *Member) error
+		Update(ctx context.Context, member *Member) error
+		UpdatePassword(ctx context.Context, nick, pass string) error
+		Delete(ctx context.Context, memberName string) error
+		CreateSession(ctx context.Context, member *Member) (string, error)
+	}
+
+	Getter interface {
+		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
+		GetID(ctx context.Context, key string) (int, error)
+		GetPassHash(email, login string) (string, error)
+	}
+
+	Checker interface {
+		HasRole(ctx context.Context, name, role string, exact bool) bool
+		// VerifyViewability checks if the viewer can view the viewee's profile (e.g. if some info is visible to followers only)
+		VerifyViewability(ctx context.Context, viewer, viewee string) (bool, error)
+		// Check checks if a member with the given email or nickname already exists
+		Check(ctx context.Context, email, nickname string) (bool, error)
+		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
+	}
+
 	Exporter interface {
-		Export(ctx context.Context, memberName, format string) ([]byte, error)
+		Export(ctx context.Context, memberName, format string) ([]byte, []byte, error)
 	}
 
 	FollowStorer interface {

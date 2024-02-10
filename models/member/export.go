@@ -14,16 +14,16 @@ import (
 	"codeberg.org/mjh/LibRate/db"
 )
 
-func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string) ([]byte, error) {
+func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string) (baseInfo []byte, otherData []byte, err error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, nil, ctx.Err()
 	default:
 		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
 			AccessMode: pgx.ReadOnly,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to begin transaction: %v", err)
+			return nil, nil, fmt.Errorf("failed to begin transaction: %v", err)
 		}
 		// nolint:errcheck // we don't care about the error here
 		defer tx.Rollback(ctx)
@@ -36,11 +36,11 @@ func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string)
 		// PERF: sub-optimal round trip of selecting the member twice, once to get the UUID and webfinger to use in unions and once to get the rest of the data
 		err = s.newClient.QueryRow(ctx, `SELECT uuid, webfinger FROM public.members WHERE nick = $1`, name).Scan(&id, &webfinger)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get member ID: %v", err)
+			return nil, nil, fmt.Errorf("failed to get member ID: %v", err)
 		}
 		memberData, err := s.Read(ctx, webfinger)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get member data: %v", err)
+			return nil, nil, fmt.Errorf("failed to get member data: %v", err)
 		}
 		uuidFuncs := []func(context.Context, pgx.Tx, uuid.UUID) (map[string]interface{}, error){
 			s.exportBanInfo,
@@ -77,7 +77,7 @@ func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string)
 		}(ctx, dataChan, errChan, finalData, format)
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to process exported data: %v", err)
+			return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
 		}
 
 		for _, f := range uuidFuncs {
@@ -109,10 +109,13 @@ func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string)
 		close(errChan)
 		output := <-finalData
 		if err != nil {
-			return nil, fmt.Errorf("failed to process exported data: %v", err)
+			return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
 		}
-
-		return output, nil
+		baseInfo, err := json.Marshal(memberData)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to marshal JSON: %v", err)
+		}
+		return baseInfo, output, nil
 	}
 }
 
