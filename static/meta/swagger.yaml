@@ -17,6 +17,191 @@ definitions:
       status:
         type: integer
     type: object
+  media.Cast:
+    properties:
+      ID:
+        type: integer
+      actors:
+        items:
+          $ref: '#/definitions/media.Person'
+        type: array
+      directors:
+        items:
+          $ref: '#/definitions/media.Person'
+        type: array
+    type: object
+  media.Genre:
+    properties:
+      children:
+        items:
+          type: integer
+        type: array
+      description:
+        items:
+          $ref: '#/definitions/media.GenreDescription'
+        type: array
+      id:
+        type: integer
+      keywords:
+        description: DescLong    string   `json:"desc_long" db:"desc_long"`
+        example:
+        - '[''dark'''
+        - ' ''gloomy'''
+        - ' ''atmospheric'''
+        - ' ''raw'''
+        - ' ''underproduced'']'
+        items:
+          type: string
+        type: array
+      kind:
+        example:
+        - music
+        items:
+          type: string
+        type: array
+      name:
+        example: Black Metal
+        type: string
+      parent_genre:
+        type: integer
+    type: object
+  media.GenreDescription:
+    properties:
+      description:
+        example: Typified by highly distorted, trebly, tremolo-picked guitars, blast
+          beats, double kick drumming, shrieked vocals, and raw, underproduced sound
+          that often favors atmosphere over technical skills and melody.
+        type: string
+      genre_id:
+        example: 2958
+        type: integer
+      language:
+        example: en
+        type: string
+    type: object
+  media.Group:
+    properties:
+      active:
+        type: boolean
+      added:
+        type: string
+      bandcamp:
+        type: string
+      bio:
+        type: string
+      disbanded:
+        type: string
+      formed:
+        type: string
+      genres:
+        items:
+          $ref: '#/definitions/media.Genre'
+        type: array
+      id:
+        type: string
+      kind:
+        description: Orchestra, Choir, Ensemble, Collective, etc.
+        type: string
+      locations:
+        items:
+          $ref: '#/definitions/places.Place'
+        type: array
+      members:
+        items:
+          $ref: '#/definitions/media.Person'
+        type: array
+      modified:
+        type: string
+      name:
+        type: string
+      photos:
+        items:
+          type: string
+        type: array
+      primary_genre:
+        $ref: '#/definitions/media.Genre'
+      soundcloud:
+        type: string
+      website:
+        type: string
+      wikipedia:
+        type: string
+      works:
+        items:
+          type: string
+        type: array
+    type: object
+  media.GroupedArtists:
+    properties:
+      group:
+        items:
+          $ref: '#/definitions/media.Group'
+        type: array
+      individual:
+        items:
+          $ref: '#/definitions/media.Person'
+        type: array
+    type: object
+  media.Person:
+    properties:
+      added:
+        type: string
+      bio:
+        example: wojtyła disco dance
+        type: string
+      birth:
+        description: DOB can also be unknown
+        type: string
+      death:
+        example: "2005-04-02T21:37:00Z"
+        type: string
+      first_name:
+        example: Karol
+        type: string
+      hometown:
+        $ref: '#/definitions/places.Place'
+      id:
+        example: 12345678-90ab-cdef-9876-543210fedcba
+        type: string
+      last_name:
+        example: Wojtyła
+        type: string
+      modified:
+        type: string
+      name:
+        description: helper field for complete name
+        type: string
+      nick_names:
+        example:
+        - '[''pawlacz'''
+        - ' ''jan pawulon'']'
+        items:
+          type: string
+        type: array
+      other_names:
+        example:
+        - '[''Jan Paweł II'']'
+        items:
+          type: string
+        type: array
+      photos:
+        items:
+          type: string
+        type: array
+      residence:
+        $ref: '#/definitions/places.Place'
+      roles:
+        items:
+          type: string
+        type: array
+      website:
+        example: https://www.vatican.va/content/john-paul-ii/en.html
+        type: string
+      works:
+        items:
+          type: string
+        type: array
+    type: object
   member.BanInput:
     type: object
   member.FollowResponse:
@@ -43,6 +228,9 @@ definitions:
       bio:
         example: Wherever you go, everyone is connected.
         type: string
+      customFields:
+        additionalProperties: true
+        type: object
       displayName:
         example: Lain Iwakura
         type: string
@@ -54,14 +242,6 @@ definitions:
         type: string
       following_uri:
         description: URI for getting the following list of this account
-        type: string
-      homepage:
-        example: https://webnavi.neocities.org/
-        type: string
-      irc:
-        description: doomed fields, will be removed by arbitrary user-defined fields
-        type: string
-      matrix:
         type: string
       memberName:
         description: MemberName != webfinger
@@ -93,27 +273,12 @@ definitions:
         description: email like
         example: lain@librate.club
         type: string
-      xmpp:
-        type: string
     required:
     - email
     - memberName
     - webfinger
     type: object
-  models.Cast:
-    properties:
-      ID:
-        type: integer
-      actors:
-        items:
-          $ref: '#/definitions/models.Person'
-        type: array
-      directors:
-        items:
-          $ref: '#/definitions/models.Person'
-        type: array
-    type: object
-  models.Country:
+  places.Country:
     properties:
       code:
         type: string
@@ -122,182 +287,10 @@ definitions:
       name:
         type: string
     type: object
-  models.Genre:
-    properties:
-      children:
-        items:
-          type: integer
-        type: array
-      description:
-        items:
-          $ref: '#/definitions/models.GenreDescription'
-        type: array
-      id:
-        type: integer
-      keywords:
-        description: DescLong    string   `json:"desc_long" db:"desc_long"`
-        example:
-        - '[''dark'''
-        - ' ''gloomy'''
-        - ' ''atmospheric'''
-        - ' ''raw'''
-        - ' ''underproduced'']'
-        items:
-          type: string
-        type: array
-      kind:
-        example:
-        - music
-        items:
-          type: string
-        type: array
-      name:
-        example: Black Metal
-        type: string
-      parent_genre:
-        type: integer
-    type: object
-  models.GenreDescription:
-    properties:
-      description:
-        example: Typified by highly distorted, trebly, tremolo-picked guitars, blast
-          beats, double kick drumming, shrieked vocals, and raw, underproduced sound
-          that often favors atmosphere over technical skills and melody.
-        type: string
-      genre_id:
-        example: 2958
-        type: integer
-      language:
-        example: en
-        type: string
-    type: object
-  models.Group:
-    properties:
-      active:
-        type: boolean
-      added:
-        type: string
-      bandcamp:
-        type: string
-      bio:
-        type: string
-      disbanded:
-        type: string
-      formed:
-        type: string
-      genres:
-        items:
-          $ref: '#/definitions/models.Genre'
-        type: array
-      id:
-        type: string
-      kind:
-        description: Orchestra, Choir, Ensemble, Collective, etc.
-        type: string
-      locations:
-        items:
-          $ref: '#/definitions/models.Place'
-        type: array
-      members:
-        items:
-          $ref: '#/definitions/models.Person'
-        type: array
-      modified:
-        type: string
-      name:
-        type: string
-      photos:
-        items:
-          type: string
-        type: array
-      primary_genre:
-        $ref: '#/definitions/models.Genre'
-      soundcloud:
-        type: string
-      website:
-        type: string
-      wikipedia:
-        type: string
-      works:
-        items:
-          type: string
-        type: array
-    type: object
-  models.GroupedArtists:
-    properties:
-      group:
-        items:
-          $ref: '#/definitions/models.Group'
-        type: array
-      individual:
-        items:
-          $ref: '#/definitions/models.Person'
-        type: array
-    type: object
-  models.Person:
-    properties:
-      added:
-        type: string
-      bio:
-        example: wojtyła disco dance
-        type: string
-      birth:
-        description: DOB can also be unknown
-        type: string
-      death:
-        example: "2005-04-02T21:37:00Z"
-        type: string
-      first_name:
-        example: Karol
-        type: string
-      hometown:
-        $ref: '#/definitions/models.Place'
-      id:
-        example: 12345678-90ab-cdef-9876-543210fedcba
-        type: string
-      last_name:
-        example: Wojtyła
-        type: string
-      modified:
-        type: string
-      name:
-        description: helper field for complete name
-        type: string
-      nick_names:
-        example:
-        - '[''pawlacz'''
-        - ' ''jan pawulon'']'
-        items:
-          type: string
-        type: array
-      other_names:
-        example:
-        - '[''Jan Paweł II'']'
-        items:
-          type: string
-        type: array
-      photos:
-        items:
-          type: string
-        type: array
-      residence:
-        $ref: '#/definitions/models.Place'
-      roles:
-        items:
-          type: string
-        type: array
-      website:
-        example: https://www.vatican.va/content/john-paul-ii/en.html
-        type: string
-      works:
-        items:
-          type: string
-        type: array
-    type: object
-  models.Place:
+  places.Place:
     properties:
       country:
-        $ref: '#/definitions/models.Country'
+        $ref: '#/definitions/places.Country'
       id:
         type: integer
       kind:
@@ -344,7 +337,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseHTTP'
             - properties:
                 data:
-                  $ref: '#/definitions/models.GroupedArtists'
+                  $ref: '#/definitions/media.GroupedArtists'
               type: object
         "400":
           description: Bad Request
@@ -359,6 +352,41 @@ paths:
       - media
       - artists
       - bulk operations
+  /authenticate/delete-account:
+    post:
+      consumes:
+      - application/json
+      description: Delete the account of the currently logged in user
+      parameters:
+      - description: The password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      - description: Confirmation of the password
+        in: body
+        name: confirmation
+        required: true
+        schema:
+          type: string
+      - description: CSRF protection token
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      - description: JWT token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses: {}
+      summary: Delete account
+      tags:
+      - auth
+      - accounts
+      - deleting
+      - settings
   /authenticate/login:
     post:
       consumes:
@@ -422,6 +450,43 @@ paths:
       tags:
       - auth
       - accounts
+  /authenticate/password:
+    patch:
+      consumes:
+      - application/json
+      description: Change the password for the currently logged in user
+      parameters:
+      - description: The old password
+        in: body
+        name: old
+        required: true
+        schema:
+          type: string
+      - description: The new password
+        in: body
+        name: new
+        required: true
+        schema:
+          type: string
+      - description: CSRF protection token
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      - description: JWT token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Change password
+      tags:
+      - auth
+      - accounts
+      - updating
+      - settings
   /genre/{kind}/{genre}:
     get:
       consumes:
@@ -461,7 +526,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseHTTP'
             - properties:
                 data:
-                  $ref: '#/definitions/models.Genre'
+                  $ref: '#/definitions/media.Genre'
               type: object
         "400":
           description: Bad Request
@@ -533,7 +598,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/models.Genre'
+                    $ref: '#/definitions/media.Genre'
                   type: array
               type: object
         "400":
@@ -606,7 +671,7 @@ paths:
             - $ref: '#/definitions/handlers.ResponseHTTP'
             - properties:
                 data:
-                  $ref: '#/definitions/models.Cast'
+                  $ref: '#/definitions/media.Cast'
               type: object
         "400":
           description: Bad Request
@@ -1139,6 +1204,139 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseHTTP'
       summary: Check if a member is followed
+  /search:
+    get:
+      consumes:
+      - application/json
+      description: Search for media, users, posts, artists, etc.
+      parameters:
+      - description: CSRF token. Required when using POST.
+        in: header
+        name: X-CSRF-Token
+        type: string
+      - description: The search query. Falls back to a wildcard query if not provided.
+        in: query
+        name: q
+        type: string
+      - description: The category to search in
+        enum:
+        - union
+        - users
+        - groups
+        - artists
+        - media
+        - posts
+        - reviews
+        - tags
+        - genres
+        in: query
+        name: category
+        type: string
+      - description: The aggregations to perform on the search results
+        in: query
+        name: aggregations
+        type: string
+      - description: Whether to perform a fuzzy search
+        in: query
+        name: fuzzy
+        type: boolean
+      - description: The field to sort the results by
+        enum:
+        - score
+        - added
+        - modified
+        - weighed_score
+        - review_count
+        in: query
+        name: sort
+        type: string
+      - description: Whether to sort the results in descending order
+        in: query
+        name: desc
+        type: boolean
+      - description: The page to return
+        in: query
+        name: page
+        type: integer
+      - description: The number of results to return per page
+        in: query
+        name: pageSize
+        type: integer
+      responses: {}
+      summary: Perform a search for the given query and options
+      tags:
+      - search
+      - media
+      - metadata
+      - users
+      - posts
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Search for media, users, posts, artists, etc.
+      parameters:
+      - description: CSRF token. Required when using POST.
+        in: header
+        name: X-CSRF-Token
+        type: string
+      - description: The search query. Falls back to a wildcard query if not provided.
+        in: query
+        name: q
+        type: string
+      - description: The category to search in
+        enum:
+        - union
+        - users
+        - groups
+        - artists
+        - media
+        - posts
+        - reviews
+        - tags
+        - genres
+        in: query
+        name: category
+        type: string
+      - description: The aggregations to perform on the search results
+        in: query
+        name: aggregations
+        type: string
+      - description: Whether to perform a fuzzy search
+        in: query
+        name: fuzzy
+        type: boolean
+      - description: The field to sort the results by
+        enum:
+        - score
+        - added
+        - modified
+        - weighed_score
+        - review_count
+        in: query
+        name: sort
+        type: string
+      - description: Whether to sort the results in descending order
+        in: query
+        name: desc
+        type: boolean
+      - description: The page to return
+        in: query
+        name: page
+        type: integer
+      - description: The number of results to return per page
+        in: query
+        name: pageSize
+        type: integer
+      responses: {}
+      summary: Perform a search for the given query and options
+      tags:
+      - search
+      - media
+      - metadata
+      - users
+      - posts
+      - reviews
   /update/{member_name}:
     patch:
       consumes:

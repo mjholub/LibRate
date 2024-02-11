@@ -139,7 +139,7 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Success 200 {object} h.ResponseHTTP{data=[]string} "If names_only or as_links=true"
-// @Success 200 {object} h.ResponseHTTP{data=[]models.Genre} "If names_only=false and as_links=false"
+// @Success 200 {object} h.ResponseHTTP{data=[]media.Genre} "If names_only=false and as_links=false"
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /genres/{kind} [get]
@@ -190,7 +190,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 // @Param lang query string false "ISO-639-1 language code" Enums(en, de)
 // @Accept json
 // @Produce json
-// @Success 200 {object} h.ResponseHTTP{data=models.Genre}
+// @Success 200 {object} h.ResponseHTTP{data=media.Genre}
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
@@ -222,7 +222,7 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 // @Param names formData []string true "Artist names"
 // @Accept multipart/form-data
 // @Produce json
-// @Success 200 {object} h.ResponseHTTP{data=models.GroupedArtists}
+// @Success 200 {object} h.ResponseHTTP{data=media.GroupedArtists}
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /artists/by-name [post]

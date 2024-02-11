@@ -11,6 +11,7 @@ import (
 func (s *Service) RunQuery(ctx context.Context, opts *Options) (res *bleve.SearchResult, err error) {
 	queryVal := buildUniversalQuery(opts.Query, opts.Fuzzy)
 	req := buildSearchRequest(opts, queryVal)
+	s.log.Debug().Msgf("request: %+v", &req)
 	return s.i.SearchInContext(ctx, req)
 }
 

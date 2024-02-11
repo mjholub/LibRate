@@ -126,7 +126,8 @@ func setupSearch(v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, a
 	}
 
 	searchAPI := api.Group("/search")
-	searchAPI.Post("/", timeout.NewWithContext(svc.HandleSearch, 30*time.Second))
+	searchAPI.Post("/", svc.HandleSearch)
+	searchAPI.Get("/", svc.HandleSearch)
 }
 
 func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {

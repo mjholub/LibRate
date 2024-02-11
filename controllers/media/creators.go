@@ -58,7 +58,7 @@ func (mc *Controller) GetCreatorByID(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param media_id path string true "The UUID of the media to get the cast of"
-// @Success 200 {object} h.ResponseHTTP{data=models.Cast}
+// @Success 200 {object} h.ResponseHTTP{data=media.Cast}
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /media/{media_id}/cast [get]

@@ -6,7 +6,9 @@
 package searchdb
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-kivik/kivik/v4"
 	_ "github.com/go-kivik/kivik/v4/couchdb"
@@ -31,6 +33,11 @@ func Connect(config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
 	client, err := kivik.New("couch", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to couchdb: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if ok, err := client.Ping(ctx); !ok {
+		return nil, fmt.Errorf("error establishing connection to the search database: %v", err)
 	}
 
 	return &Storage{

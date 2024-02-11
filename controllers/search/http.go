@@ -13,28 +13,41 @@ import (
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
+// TODO: add aggregations documentation
+// TODO: make better use of POST support
 // @Summary Perform a search for the given query and options
 // @Description Search for media, users, posts, artists, etc.
 // @Tags search,media,metadata,users,posts,reviews
-// @Param term query string true "The search term"
+// @Param X-CSRF-Token header string false "CSRF token. Required when using POST."
+// @Param q query string false "The search query. Falls back to a wildcard query if not provided."
+// @Param category query string false "The category to search in" Enums(union,users,groups,artists,media,posts,reviews,tags,genres)
+// @Param aggregations query string false "The aggregations to perform on the search results"
+// @Param fuzzy query boolean false "Whether to perform a fuzzy search"
+// @Param sort query string false "The field to sort the results by" Enums(score,added,modified,weighed_score,review_count)
+// @Param desc query boolean false "Whether to sort the results in descending order"
+// @Param page query integer false "The page to return"
+// @Param pageSize query integer false "The number of results to return per page"
 // @Accept json
-// Router /search [post]
+// @Router /search [post]
+// @Router /search [get]
 func (s *Service) HandleSearch(c *fiber.Ctx) error {
 	opts, err := parseQueries(c, s.validation)
 	if err != nil {
 		clientErr := strings.TrimSuffix(err.Error(), ":")
 		return h.BadRequest(s.log, c, clientErr, "invalid input for "+c.Query("term"), err)
 	}
+	s.log.Debug().Msg("parsed queries")
 	results, err := s.RunQuery(c.Context(), opts)
 	if err != nil {
 		return h.InternalError(s.log, c, "search failed", err)
 	}
+
 	return c.JSON(results)
 }
 
 func parseQueries(c *fiber.Ctx, v *validator.Validate) (opts *Options, err error) {
 	// if no search term is provided, we'll create a "*" wildcard query
-	searchTerm := c.Query("term")
+	searchTerm := c.Query("q", "")
 	opts.Query = searchTerm
 
 	category := c.Query("category", "union")
@@ -48,12 +61,14 @@ func parseQueries(c *fiber.Ctx, v *validator.Validate) (opts *Options, err error
 	opts.Categories = categories
 
 	aggregations := c.Query("aggregations", "")
-	aggregationsList := strings.Split(aggregations, ",")
-	if err := validateAggregations(target.FromStr(category), aggregationsList); err != nil {
-		return nil, err
+	if aggregations != "" {
+		aggregationsList := strings.Split(aggregations, ",")
+		if err := validateAggregations(target.FromStr(category), aggregationsList); err != nil {
+			return nil, err
+		}
+		aggs := aggregation.FromStringSlice(aggregationsList)
+		opts.Aggregations = aggs
 	}
-	aggs := aggregation.FromStringSlice(aggregationsList)
-	opts.Aggregations = aggs
 
 	fuzzy := c.QueryBool("fuzzy", false)
 	opts.Fuzzy = fuzzy
