@@ -118,6 +118,7 @@ func setupSearch(v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, a
 		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
 		return
 	}
+
 	// FIXME: index here should be passed from main
 	svc, err := search.NewService(
 		context.Background(), v, ss, conf.MainIndexPath, log).Get()

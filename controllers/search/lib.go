@@ -28,42 +28,38 @@ type (
 	// Options defines a set of optional search parameters.
 	Options struct {
 		// Query is the search query used for a text search.
-		Query string `json:"query"`
+		Query string `json:"query" query:"q" default:""`
 
 		// Sort is the field, that should be sorted by.
 		// When left empty, the default sorting is used.
-		Sort string `json:"sort" validate:"oneof=score added modified weighed_score review_count"`
+		Sort string `json:"sort" query:"sort" validate:"oneof=score added modified weighed_score review_count"`
 
 		// LocalFirst determines whether the results from the current instance should be
 		// preferred over remote results.
-		LocalFirst bool `json:"localFirst" default:"true"`
+		LocalFirst bool `json:"localFirst,omitempty" query:"local_first" default:"true"`
 
 		// SortDescending defines the sort order.
-		SortDescending bool `json:"SortDescending" default:"true"`
+		SortDescending bool `json:"SortDescending" query:"desc" default:"true"`
 
 		// Fuzzy defines whether to use fuzzy or wildcard search.
-		Fuzzy bool `json:"fuzzy" default:"false"`
+		Fuzzy bool `json:"fuzzy,omitempty" query:"fuzzy" default:"false"`
 
 		// Page is current page.
-		Page uint `json:"page" default:"0"`
+		Page uint `json:"page" query:"page" default:"0"`
 
 		// PageSize defines the number of hits returned per page.
 		//
 		// PageSize is infinite when set to 0 (i.e. infinite scroll).
-		PageSize uint `json:"pageSize" default:"10" validate:"gte=0,lte=180"`
+		PageSize uint `json:"pageSize" query:"pageSize" default:"10" validate:"gte=0,lte=180"`
 
 		// Categories are the categories to search in. By default,
 		// a Union category is performed to search in all categories.
-		Categories []target.Category `json:"categories" validate:"unique,dive"`
-
-		// Filters is a list of filters, that reduce the search result. All filters
-		// are combined with AND logic in addition with the search query.
-		Filters []interface{} `json:"filter" validate:"unique,dive"`
+		Categories []target.Category `json:"categories" query:"category" validate:"unique,dive" default:"union"`
 
 		// Aggregations is a map of aggregations, to perform aggregations on fields.
 		// The provided map key can be used to identify the corresponding bucket in
 		// the result.
-		Aggregations []interface{} `json:"aggregations"`
+		Aggregations *[]interface{} `json:"aggregations,omitempty" query:"aggregations,omitempty"`
 	}
 )
 

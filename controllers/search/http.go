@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
 
@@ -31,7 +30,7 @@ import (
 // @Router /search [post]
 // @Router /search [get]
 func (s *Service) HandleSearch(c *fiber.Ctx) error {
-	opts, err := parseQueries(c, s.validation)
+	opts, err := s.parseQueries(c)
 	if err != nil {
 		clientErr := strings.TrimSuffix(err.Error(), ":")
 		return h.BadRequest(s.log, c, clientErr, "invalid input for "+c.Query("term"), err)
@@ -45,51 +44,56 @@ func (s *Service) HandleSearch(c *fiber.Ctx) error {
 	return c.JSON(results)
 }
 
-func parseQueries(c *fiber.Ctx, v *validator.Validate) (opts *Options, err error) {
+func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
+	opts = &Options{}
 	// if no search term is provided, we'll create a "*" wildcard query
-	searchTerm := c.Query("q", "")
-	opts.Query = searchTerm
+	err = c.QueryParser(opts)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing queries: %v", err)
+	}
 
 	category := c.Query("category", "union")
 	if !target.ValidateCategory(category) {
 		return nil, fmt.Errorf("invalid category: %q", category)
 	}
+	s.log.Trace().Msgf("parsed category: %s", category)
 	categoriesList := strings.Split(category, ",")
 	categories := lo.Map(categoriesList, func(c string, _ int) target.Category {
 		return target.FromStr(c)
 	})
 	opts.Categories = categories
+	s.log.Trace().Msgf("parsed categories: %v", categories)
 
 	aggregations := c.Query("aggregations", "")
 	if aggregations != "" {
+		s.log.Trace().Msg("aggregation list not empty")
 		aggregationsList := strings.Split(aggregations, ",")
 		if err := validateAggregations(target.FromStr(category), aggregationsList); err != nil {
 			return nil, err
 		}
 		aggs := aggregation.FromStringSlice(aggregationsList)
-		opts.Aggregations = aggs
+		opts.Aggregations = &aggs
+		s.log.Trace().Msgf("parsed aggregations: %v", aggs)
 	}
-
-	fuzzy := c.QueryBool("fuzzy", false)
-	opts.Fuzzy = fuzzy
 
 	sort := c.Query("sort", "added")
 	opts.Sort = sort
-	if err := v.StructPartialCtx(c.Context(), opts, "sort"); err != nil {
+	s.log.Trace().Msgf("parsed sort order: %s", sort)
+	if s.validation == nil {
+		return nil, fmt.Errorf("validator is nil")
+	}
+	if err := s.validation.StructPartialCtx(c.Context(), opts, "sort"); err != nil {
 		return nil, fmt.Errorf("invalid sort: %v", err)
 	}
 
-	sortDescending := c.QueryBool("desc", true)
-	opts.SortDescending = sortDescending
-
-	page := uint(c.QueryInt("page", 0))
-	opts.Page = page
+	s.log.Debug().Msgf("validated sort order %s", sort)
 
 	pageSize := uint(c.QueryInt("pageSize", 0))
 	opts.PageSize = pageSize
-	if err := v.StructPartialCtx(c.Context(), opts, "pageSize"); err != nil {
+	if err := s.validation.StructPartialCtx(c.Context(), opts, "pageSize"); err != nil {
 		return nil, fmt.Errorf("invalid page size: %v", err)
 	}
+	s.log.Trace().Msgf("parsed query parameters into options: %+v", opts)
 
 	return opts, nil
 }
