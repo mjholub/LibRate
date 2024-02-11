@@ -1,16 +1,21 @@
 package search
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
+	"github.com/rs/zerolog"
+
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
-func (s *Service) CreateIndex(path string) error {
+func CreateIndex(ctx context.Context, path string, storage *searchdb.Storage, log *zerolog.Logger) error {
 	idx, _ := buildIndexMapping()
 
 	fullIndex, err := bleve.New(path, idx)
@@ -24,7 +29,7 @@ func (s *Service) CreateIndex(path string) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := indexSite(fullIndex)
+		err := indexSite(ctx, fullIndex, storage, log)
 		if err != nil {
 			errorCh <- fmt.Errorf("error indexing site: %v", err)
 			return
@@ -40,8 +45,54 @@ func (s *Service) CreateIndex(path string) error {
 	return nil
 }
 
-func indexSite(idx bleve.Index) error {
-	return fmt.Errorf("not implemented")
+// TODO: implement
+func (s *Service) PartialIndex(ctx context.Context, path string) error {
+	/*
+			indexMapping := bleve.NewIndexMapping()
+		textFieldMapping := bleve.NewTextFieldMapping()
+			textFieldMapping.Analyzer = en.AnalyzerName
+
+			keywordMapping := bleve.NewTextFieldMapping()
+			keywordMapping.Analyzer = keyword.Name
+	*/
+	return nil
+}
+
+func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, log *zerolog.Logger) error {
+	batch := idx.NewBatch()
+
+	var docCount, batchCount int
+	start := time.Now()
+
+	for i := range searchdb.AllTargets {
+		storage.ReadAll(ctx, searchdb.AllTargets[i])
+		batch.Index(searchdb.AllTargets[i].String(), searchdb.AllTargets[i])
+		batchCount++
+
+		if batchCount >= 100 {
+			if err := idx.Batch(batch); err != nil {
+				return fmt.Errorf("error indexing batch: %v", err)
+			}
+
+			batch = idx.NewBatch()
+			batchCount = 0
+		}
+	}
+	// flush the last batch
+	if batchCount > 0 {
+		if err := idx.Batch(batch); err != nil {
+			return fmt.Errorf("error indexing last batch: %v", err)
+		}
+	}
+
+	docCount++
+	indexTime := time.Since(start)
+	indexDuration := float64(indexTime) / float64(time.Second)
+	perDoc := float64(indexTime) / float64(docCount)
+	log.Info().Msgf("Indexed %d documents in %v (%.2f docs/sec, %.2f ms/doc)",
+		docCount, indexTime, float64(docCount)/indexDuration, float64(perDoc)/float64(time.Millisecond))
+
+	return nil
 }
 
 func buildIndexMapping() (mapping.IndexMapping, error) {
@@ -59,7 +110,7 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 	mediaMapping := buildMediaMapping(textFieldMapping, keywordMapping, artistsMapping, genresMapping)
 	indexMapping.AddDocumentMapping("media", mediaMapping)
 	indexMapping.AddDocumentMapping("artists", artistsMapping)
-	usersMapping := buildUsersMapping(textFieldMapping, keywordMapping)
+	usersMapping := buildUsersMapping(textFieldMapping)
 	reviewsMapping := buildReviewsMapping(textFieldMapping, mediaMapping, usersMapping)
 	indexMapping.AddDocumentMapping("reviews", reviewsMapping)
 	indexMapping.AddDocumentMapping("users", usersMapping)
@@ -90,6 +141,7 @@ func buildReviewsMapping(textFieldMapping *mapping.FieldMapping, mediaMapping, u
 	mapping := bleve.NewDocumentMapping()
 
 	mapping.AddSubDocumentMapping("media", mediaMapping)
+	mapping.AddSubDocumentMapping("user", userMapping)
 	mapping.AddFieldMappingsAt("topic", textFieldMapping)
 	mapping.AddFieldMappingsAt("comment", textFieldMapping)
 	date := bleve.NewDateTimeFieldMapping()
@@ -120,7 +172,7 @@ func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping, a
 	return mapping
 }
 
-func buildUsersMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) (res *mapping.DocumentMapping) {
+func buildUsersMapping(textFieldMapping *mapping.FieldMapping) (res *mapping.DocumentMapping) {
 	mapping := bleve.NewDocumentMapping()
 
 	mapping.AddFieldMappingsAt("webfinger", textFieldMapping)
@@ -137,7 +189,7 @@ func buildUsersMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) (
 func buildArtistsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
 
-	mapping.AddFieldMappingsAt("name", textFieldMapping)
+	mapping.AddFieldMappingsAt("artist_name", textFieldMapping)
 	mapping.AddFieldMappingsAt("roles", keywordMapping)
 	mapping.AddFieldMappingsAt("country", keywordMapping)
 	mapping.AddFieldMappingsAt("bio", textFieldMapping)

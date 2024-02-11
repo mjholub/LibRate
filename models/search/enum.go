@@ -14,6 +14,12 @@ const (
 	Studios              targetDBName = "studio"
 )
 
+// nolint:gochecknoglobals
+var AllTargets = []TargetDB{
+	Members, ArtistsGroup, ArtistsIndividual, Ratings, Genres,
+	GenreDescriptions, GenreCharacteristics, Studios,
+}
+
 type TargetDB interface {
 	String() string
 }

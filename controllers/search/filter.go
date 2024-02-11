@@ -1,25 +1,69 @@
 package search
 
-import "github.com/blevesearch/bleve/v2/search/query"
+import (
+	"slices"
 
-type Filter interface {
-	filterQuery(params ...any) query.Query
-}
+	"codeberg.org/mjh/LibRate/controllers/search/target"
+)
 
-func (f *TermsFilter) filterQuery(params ...map[string]interface{}) query.Query {
-	if len(params) == 0 {
-		return nil
+func filterByCategories(category target.Category) []string {
+	reviewFields := []string{
+		"media",
+		"topic",
+		"comment",
+		"date",
+		"favoriteCount",
+		"reblogCount",
+	}
+	artistsFields := []string{
+		"artist_name",
+		"roles",
+		"country",
+		"bio",
+		"added",
+		"modified",
+		"active",
+		"associatedArtists",
+	}
+	usersFields := []string{
+		"webfinger",
+		"instance",
+		"local",
+		"displayName",
+		"bio",
 	}
 
-	for i := range params {
-		if _, ok := params[i]["language"]; ok {
-			return filterByLanguage(params[i]["language"].(string))
-		}
+	mediaFields := []string{
+		"kind",
+		"title",
+		"artists",
+		"genres",
+		"language",
+		"released",
+		"added",
+		"modified",
 	}
 
-	return nil
-}
+	genreFields := []string{
+		"name",
+		"kinds",
+		"description",
+		"language",
+		"characteristics",
+	}
 
-func filterByLanguage(language string) query.Query {
-	return nil
+	switch category {
+	case target.Artists:
+		return artistsFields
+	case target.Media:
+		return mediaFields
+	case target.Users:
+		return usersFields
+	case target.Reviews, target.Posts:
+		return reviewFields
+	case target.Genres:
+		return genreFields
+	default:
+		return slices.Concat(reviewFields, artistsFields, mediaFields, usersFields)
+	}
 }

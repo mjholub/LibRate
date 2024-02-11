@@ -17,7 +17,15 @@ const (
 )
 
 type Category interface {
-	dummyMethod()
+	String() string
 }
 
-func (s category) dummyMethod() {}
+func (s category) String() string {
+	return string(s)
+}
+
+// we already have a ValidateCategory method,
+// no need to return error here
+func FromStr(s string) category {
+	return category(s)
+}

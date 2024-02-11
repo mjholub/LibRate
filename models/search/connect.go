@@ -10,16 +10,18 @@ import (
 
 	"github.com/go-kivik/kivik/v4"
 	_ "github.com/go-kivik/kivik/v4/couchdb"
+	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
 )
 
 type Storage struct {
+	log    *zerolog.Logger
 	config *cfg.Search
 	client *kivik.Client
 }
 
-func Connect(config *cfg.Search) (*Storage, error) {
+func Connect(config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
 	dsn := fmt.Sprintf("http://%s:%s@%s:%d",
 		config.User,
 		config.Password,
@@ -34,5 +36,6 @@ func Connect(config *cfg.Search) (*Storage, error) {
 	return &Storage{
 		config: config,
 		client: client,
+		log:    log,
 	}, nil
 }

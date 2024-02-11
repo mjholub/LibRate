@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,7 +16,8 @@ import (
 func TestReadAll(t *testing.T) {
 	conf := cfg.TestConfig
 
-	storage, err := Connect(&conf.CouchDB)
+	log := zerolog.Nop()
+	storage, err := Connect(&conf.CouchDB, &log)
 	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
