@@ -12,6 +12,7 @@ import (
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 )
 
 type (
@@ -29,7 +30,7 @@ type (
 	// ReviewController is the controller for review endpoints
 	ReviewController struct {
 		rs *models.RatingStorage
-		ms *models.MediaStorage
+		ms *media.Storage
 	}
 )
 

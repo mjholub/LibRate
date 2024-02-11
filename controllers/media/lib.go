@@ -14,7 +14,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 )
 
 type (
@@ -30,7 +30,7 @@ type (
 	// Controller is the controller for media endpoints
 	// The methods which are the receivers of this struct are a bridge between the fiber layer and the storage layer
 	Controller struct {
-		storage models.MediaStorage
+		storage media.Storage
 		conf    *cfg.Config
 	}
 
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-func NewController(storage models.MediaStorage, conf *cfg.Config) *Controller {
+func NewController(storage media.Storage, conf *cfg.Config) *Controller {
 	return &Controller{storage: storage, conf: conf}
 }
 
@@ -77,7 +77,7 @@ func (mc *Controller) GetMedia(c *fiber.Ctx) error {
 	}
 
 	detailedMedia, err := mc.storage.
-		GetMediaDetails(ctx, media.Kind, media.ID)
+		GetDetails(ctx, media.Kind, media.ID)
 	if err != nil {
 		mc.storage.Log.Error().Err(err).Msgf("Failed to get media details for media with ID %s: %v", c.Params("id"), err)
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to get media details")
@@ -139,7 +139,7 @@ func (mc *Controller) GetImagePaths(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Success 200 {object} h.ResponseHTTP{data=[]string} "If names_only or as_links=true"
-// @Success 200 {object} h.ResponseHTTP{data=[]models.Genre} "If names_only=false and as_links=false"
+// @Success 200 {object} h.ResponseHTTP{data=[]media.Genre} "If names_only=false and as_links=false"
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /genres/{kind} [get]
@@ -160,7 +160,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 
 	if namesOnly {
 		mc.storage.Log.Debug().Msgf("Getting genre names for %s", genreKind)
-		genreNames, err := models.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
+		genreNames, err := media.GetGenres[[]string](&mc.storage, c.Context(), genreKind, all, "name")
 		if err != nil {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
@@ -174,7 +174,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 	columns := c.Query("columns", "name")
 
 	mc.storage.Log.Debug().Msgf("Getting following columns for %s: %s", genreKind, columns)
-	genres, err := models.GetGenres[[]models.Genre](&mc.storage, c.Context(), genreKind, all, columns)
+	genres, err := media.GetGenres[[]media.Genre](&mc.storage, c.Context(), genreKind, all, columns)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "Failed to get genres", err)
 	}
@@ -190,7 +190,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 // @Param lang query string false "ISO-639-1 language code" Enums(en, de)
 // @Accept json
 // @Produce json
-// @Success 200 {object} h.ResponseHTTP{data=models.Genre}
+// @Success 200 {object} h.ResponseHTTP{data=media.Genre}
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
@@ -222,7 +222,7 @@ func (mc *Controller) GetGenre(c *fiber.Ctx) error {
 // @Param names formData []string true "Artist names"
 // @Accept multipart/form-data
 // @Produce json
-// @Success 200 {object} h.ResponseHTTP{data=models.GroupedArtists}
+// @Success 200 {object} h.ResponseHTTP{data=media.GroupedArtists}
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /artists/by-name [post]

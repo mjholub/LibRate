@@ -21,6 +21,7 @@ type Config struct {
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 	External   External       `json:"external,omitempty" yaml:"external" mapstructure:"external"`
+	CouchDB    Search         `json:"couchdb,omitempty" yaml:"couchdb" mapstructure:"couchdb"`
 }
 
 // nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
@@ -37,6 +38,15 @@ type DBConfig struct {
 	MigrationsPath     string `yaml:"migrationsPath,omitempty" default:"/app/data/migrations" env:"LIBRATE_MIGRATIONS"`
 }
 
+// currently only couchdb is supported
+type Search struct {
+	Host          string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port          int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User          string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password      string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+	MainIndexPath string `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
+}
+
 type External struct {
 	// currently supported: json, id3, spotify (requires client ID and secret)
 	ImportSources       []string `yaml:"import_sources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`
@@ -45,13 +55,15 @@ type External struct {
 }
 
 type RedisConfig struct {
-	Host     string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
-	Port     int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
+	Host string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
+	Port int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
+	// how many errors can occur during scan of SQL DB into cache before the process is stopped
 	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
 	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
 	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
 	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
 	PowDB    int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	PagesDB  int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config

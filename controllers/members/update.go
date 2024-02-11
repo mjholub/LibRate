@@ -30,7 +30,7 @@ import (
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /update/{member_name} [patch]
-func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
+func (mc *Controller) Update(c *fiber.Ctx) (err error) {
 	mc.log.Info().Msg("Update called")
 	var member *member.Member
 	ct := c.Request().Header.Peek("Content-Type")
@@ -95,7 +95,7 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /update/{member_name}/preferences [patch]
-func (mc *MemberController) UpdatePrefs(c *fiber.Ctx) error {
+func (mc *Controller) UpdatePrefs(c *fiber.Ctx) error {
 	mc.log.Info().Msg("UpdatePrefs called")
 	var prefs *member.Preferences
 	var err error

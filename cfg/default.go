@@ -37,7 +37,7 @@ var (
 	TestConfig = Config{
 		DBConfig: DBConfig{
 			Engine:             "postgres",
-			Host:               "localhost",
+			Host:               "0.0.0.0",
 			Port:               uint16(5432),
 			Database:           "librate_test",
 			User:               "postgres",
@@ -64,6 +64,12 @@ var (
 			CacheDB:  8,
 			PowDB:    9,
 			CsrfDB:   11,
+		},
+		CouchDB: Search{
+			Host:     "0.0.0.0",
+			Port:     5984,
+			User:     "librate",
+			Password: "librate",
 		},
 		Fiber: FiberConfig{
 			Host:           "0.0.0.0",

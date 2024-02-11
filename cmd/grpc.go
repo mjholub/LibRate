@@ -107,7 +107,7 @@ func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*proto
 
 	s.Log.Debug().Msgf("Initialization request parameters: %+v", req)
 
-	if err := db.InitDB(&dsn, false, s.Log); err != nil {
+	if err := db.InitDB(&dsn, s.Log); err != nil {
 		s.Log.Error().Err(err).Msg("failed to initialize database")
 		return &protodb.InitResponse{Success: false}, err
 	}

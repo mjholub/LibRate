@@ -2,7 +2,7 @@ package form
 
 import (
 	h "codeberg.org/mjh/LibRate/internal/handlers"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -48,7 +48,7 @@ func (fc *Controller) UpdateMedia(c *fiber.Ctx) error {
 }
 
 func (fc *Controller) addFilm(c *fiber.Ctx) (err error) {
-	var film *models.Film
+	var film *media.Film
 	if err = c.BodyParser(&film); err != nil {
 		fc.log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 		return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
@@ -64,7 +64,7 @@ func (fc *Controller) addFilm(c *fiber.Ctx) (err error) {
 }
 
 func (fc *Controller) addBook(c *fiber.Ctx) (err error) {
-	var book *models.Book
+	var book *media.Book
 	if err = c.BodyParser(&book); err != nil {
 		fc.log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 		return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")
@@ -80,7 +80,7 @@ func (fc *Controller) addBook(c *fiber.Ctx) (err error) {
 }
 
 func (fc *Controller) updateFilm(c *fiber.Ctx) (err error) {
-	var film *models.Film
+	var film *media.Film
 	if err = c.BodyParser(&film); err != nil {
 		fc.log.Error().Err(err).Msgf("Failed to parse JSON: %s", err.Error())
 		return h.Res(c, fiber.StatusBadRequest, "Cannot parse JSON")

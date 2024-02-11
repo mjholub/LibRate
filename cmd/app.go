@@ -36,14 +36,14 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 	_ = tag
 
 	app := fiber.New(fiber.Config{
-		AppName:           "LibRate v0.8.17", // TODO: add some shell script to generate this on go build
-		Prefork:           conf.Fiber.Prefork,
-		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
+		AppName:                 "LibRate v0.8.17", // TODO: add some shell script to generate this on go build
+		Prefork:                 conf.Fiber.Prefork,
+		ReduceMemoryUsage:       conf.Fiber.ReduceMemUsage,
 		EnableTrustedProxyCheck: true,
-		TrustedProxies: []string{"127.0.0.1", "::1"},
-		Views:             renderEngine,
-		JSONEncoder:       json.Marshal,
-		JSONDecoder:       json.Unmarshal,
+		TrustedProxies:          []string{"127.0.0.1", "::1"},
+		Views:                   renderEngine,
+		JSONEncoder:             json.Marshal,
+		JSONDecoder:             json.Unmarshal,
 	},
 	)
 
@@ -93,7 +93,6 @@ func SetupMiddlewares(conf *cfg.Config,
 				return strings.Contains(c.Route().Path, "/ws")
 			},
 		}),
-		// earlydata.New(),
 		etag.New(),
 		cache.New(cache.Config{
 			Expiration: 15 * time.Minute,
@@ -105,7 +104,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
-				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Route().Path, "favicon") 
+				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Route().Path, "favicon")
 			},
 		}),
 		compress.New(compress.Config{

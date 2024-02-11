@@ -12,19 +12,19 @@ import (
 	"codeberg.org/mjh/LibRate/models/static"
 )
 
-// MemberController allows for the retrieval of user information
+// Controller allows for the retrieval of user information
 type (
-	// IMemberController is the interface for the member controller
+	// IController is the interface for the member controller
 	// It defines the methods that the member controller must implement
 	// This is useful for mocking the member controller in unit tests
-	IMemberController interface {
+	IController interface {
 		GetMember(c *fiber.Ctx) error
 		UpdateMember(c *fiber.Ctx) error
 		DeleteMember(c *fiber.Ctx) error
 	}
 
-	// MemberController is the controller for member endpoints
-	MemberController struct {
+	// Controller is the controller for member endpoints
+	Controller struct {
 		fedCon       federation.FedHandler
 		storage      member.Storer
 		sessionStore *session.Store
@@ -40,9 +40,9 @@ func NewController(
 	sess *session.Store,
 	logger *zerolog.Logger,
 	conf *cfg.Config,
-) *MemberController {
+) *Controller {
 	imagesStorage := static.NewStorage(db, logger)
-	return &MemberController{
+	return &Controller{
 		storage:      storage,
 		fedCon:       federation.NewController(logger, db, storage),
 		sessionStore: sess,
