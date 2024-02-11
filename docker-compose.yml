@@ -30,7 +30,7 @@ services:
   db:
     hostname: "librate-db"
     volumes:
-      - ./db/data:/var/lib/postgresql/data
+      - ../librate-data/:/var/lib/postgresql/data
     networks:
       - librate-net
     restart: always

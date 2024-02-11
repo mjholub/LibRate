@@ -33,22 +33,24 @@ import (
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
+type RouterProps struct {
+	Conf            *cfg.Config
+	Log             *zerolog.Logger
+	LogHandler      fiber.Handler
+	LegacyDB        *sqlx.DB
+	DB              *pgxpool.Pool
+	App             *fiber.App
+	SessionHandler  *session.Store
+	WebsocketConfig *websocket.Config
+}
+
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(
-	logger *zerolog.Logger,
-	fzlog fiber.Handler,
-	conf *cfg.Config,
-	dbConn *sqlx.DB,
-	newDBConn *pgxpool.Pool,
-	app *fiber.App,
-	sess *session.Store,
-	wsConfig *websocket.Config,
-) error {
-	api := app.Group("/api", fzlog)
+func Setup(r *RouterProps) error {
+	api := r.App.Group("/api", r.LogHandler)
 
-	app.Get("/docs/*", swagger.New(swagger.Config{
+	r.App.Get("/docs/*", swagger.New(swagger.Config{
 		URL: "/static/meta/swagger.json",
 		// TODO: figure out how to use https://github.com/svmk/swagger-i18n-extension#readme
 		// with this middleware
@@ -62,52 +64,52 @@ func Setup(
 		mediaStor *mediaModels.Storage
 	)
 
-	switch conf.Engine {
+	switch r.Conf.Engine {
 	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(dbConn, newDBConn, logger, conf)
+		mStor = member.NewSQLStorage(r.LegacyDB, r.DB, r.Log, r.Conf)
 	default:
-		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
+		return fmt.Errorf("unsupported database engine \"%q\" or error reading r.Config", r.Conf.Engine)
 	}
-	mediaStor = mediaModels.NewStorage(newDBConn, dbConn, logger)
+	mediaStor = mediaModels.NewStorage(r.DB, r.LegacyDB, r.Log)
 
-	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
-	formCon := form.NewController(logger, *mediaStor, conf)
-	uploadSvc := static.NewController(conf, dbConn, logger)
-	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
+	memberSvc := memberCtrl.NewController(mStor, r.LegacyDB, r.SessionHandler, r.Log, r.Conf)
+	formCon := form.NewController(r.Log, *mediaStor, r.Conf)
+	uploadSvc := static.NewController(r.Conf, r.LegacyDB, r.Log)
+	sc := controllers.NewSearchController(r.LegacyDB, r.Log, fmt.Sprintf("%s/api/search/ws", r.Conf.Fiber.Host))
 
-	app.Get("/api/version", version.Get)
+	r.App.Get("/api/version", version.Get)
 
-	setupReviews(api, sess, logger, conf, dbConn)
+	setupReviews(api, r.SessionHandler, r.Log, r.Conf, r.LegacyDB)
 
-	setupAuth(api, sess, logger, conf, mStor)
+	setupAuth(api, r.SessionHandler, r.Log, r.Conf, mStor)
 
-	setupMembers(memberSvc, api, sess, logger, conf)
+	setupMembers(memberSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	setupMedia(api, mediaStor, conf)
+	setupMedia(api, mediaStor, r.Conf)
 
 	// don't see a point encapsulating 2-3 routes in a separate function
 	formAPI := api.Group("/form")
-	formAPI.Post("/add_media/:type", middleware.Protected(sess, logger, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formAPI.Post("/update_media/:type", middleware.Protected(sess, logger, conf), formCon.UpdateMedia)
+	formAPI.Post("/add_media/:type", middleware.Protected(r.SessionHandler, r.Log, r.Conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formAPI.Post("/update_media/:type", middleware.Protected(r.SessionHandler, r.Log, r.Conf), formCon.UpdateMedia)
 
-	setupUpload(uploadSvc, api, sess, logger, conf)
+	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
 	search := api.Group("/search")
 	search.Get("/ws-address", sc.GetWSAddress)
-	search.Post("/ws", websocket.New(sc.WSHandler, *wsConfig))
+	search.Post("/ws", websocket.New(sc.WSHandler, *r.WebsocketConfig))
 	search.Post("/", sc.Search)
 	search.Options("/", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Get("/api/health", func(c *fiber.Ctx) error {
+	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
 	})
-	err := setupStatic(app, conf.Fiber.StaticDir, conf.Fiber.FrontendDir)
+	err := setupStatic(r.App, r.Conf.Fiber.StaticDir, r.Conf.Fiber.FrontendDir)
 	if err != nil {
 		return fmt.Errorf("failed to setup static files: %w", err)
 	}
-	logger.Debug().Msg("static files initialized")
+	r.Log.Debug().Msg("static files initialized")
 
 	return nil
 }

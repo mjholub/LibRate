@@ -1,6 +1,6 @@
 module codeberg.org/mjh/LibRate
 
-go 1.21
+go 1.22
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db
@@ -39,7 +39,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
-	github.com/redis/go-redis/v9 v9.4.0
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/samber/mo v1.11.0
@@ -180,6 +179,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/redis/go-redis/v9 v9.4.0 // indirect
 	github.com/rivo/uniseg v0.4.6 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect

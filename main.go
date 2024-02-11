@@ -202,7 +202,18 @@ func main() {
 		conf.Fiber.DefaultLanguage,
 		app, &log, pagesCache)
 
-	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
+	r := routes.RouterProps{
+		Conf:            conf,
+		Log:             &log,
+		LogHandler:      fzlog,
+		LegacyDB:        dbConn,
+		DB:              pgConn,
+		App:             app,
+		SessionHandler:  sess,
+		WebsocketConfig: &wsConfig,
+	}
+
+	err = setupRoutes(&r)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
@@ -388,18 +399,9 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 	return nil
 }
 
-func setupRoutes(
-	conf *cfg.Config,
-	log *zerolog.Logger,
-	fzlog fiber.Handler,
-	pgConn *pgxpool.Pool,
-	dbConn *sqlx.DB,
-	app *fiber.App,
-	sess *fiberSession.Store,
-	wsConfig websocket.Config,
-) (err error) {
+func setupRoutes(r *routes.RouterProps) (err error) {
 	// Setup routes
-	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, &wsConfig)
+	err = routes.Setup(r)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %v", err)
 	}
