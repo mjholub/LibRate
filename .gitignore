@@ -1,5 +1,6 @@
 recommendations/target
 pgdata
+db/data
 recommendation/target
 recommendation/go/services
 config.yml

@@ -1,7 +1,10 @@
 package members
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -34,17 +37,49 @@ func (mc *Controller) Export(c *fiber.Ctx) error {
 	}
 	mc.log.Info().Msgf("%s initialized a data export request using %s format", memberName, format)
 
-	data, err := mc.storage.Export(c.Context(), memberName, format)
+	baseData, extraData, err := mc.storage.Export(c.Context(), memberName, format)
 	if err != nil {
 		return h.InternalError(mc.log, c, fmt.Sprintf("failed to export data for %s using %s", memberName, format), err)
 	}
 
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", memberName, format))
-	switch format {
-	case "json":
-		c.Set("Content-Type", "application/json")
-	case "csv":
-		c.Set("Content-Type", "text/csv")
+	buf := new(bytes.Buffer)
+	w := zip.NewWriter(buf)
+	const ExportError = "error while creating the exported data file"
+	baseDataFile, err := w.Create("basicinfo." + format)
+	if err != nil {
+		return h.InternalError(mc.log, c, ExportError, err)
 	}
-	return c.Send(data)
+	_, err = baseDataFile.Write(baseData)
+	if err != nil {
+		return h.InternalError(mc.log, c, ExportError, err)
+	}
+	additionalDataFile, err := w.Create("extra" + format)
+	if err != nil {
+		return h.InternalError(mc.log, c, ExportError, err)
+	}
+	_, err = additionalDataFile.Write(extraData)
+	if err != nil {
+		return h.InternalError(mc.log, c, ExportError, err)
+	}
+	if err = w.Close(); err != nil {
+		return h.InternalError(mc.log, c, ExportError, fmt.Errorf("critical error: failed to close writer: %w", err))
+	}
+
+	date := c.Request().Header.Peek("Date")
+	if date == nil {
+		// equivalent to Date().toISOString() in JS
+		date = []byte(time.Now().UTC().Format(time.RFC3339))
+	}
+	_, err = time.Parse(time.RFC3339, string(date))
+
+	if err != nil {
+		// request header manipulation here usually indicates a bad actor, so we'll log their info
+		serverMessage := fmt.Sprintf("bad Date header was sent by %s, headers: %v, body: %s", c.IP(), c.GetReqHeaders(), string(c.Body()))
+		return h.BadRequest(mc.log, c, "Bad export request", serverMessage, err)
+	}
+
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s.zip", memberName, string(date)))
+
+	c.Set("Content-Type", "archive/zip")
+	return c.Send(buf.Bytes())
 }
