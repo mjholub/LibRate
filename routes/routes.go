@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	swagger "github.com/arsmn/fiber-swagger/v2"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -25,12 +27,14 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/form"
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
+	"codeberg.org/mjh/LibRate/controllers/search"
 	"codeberg.org/mjh/LibRate/controllers/static"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
 	mediaModels "codeberg.org/mjh/LibRate/models/media"
 	"codeberg.org/mjh/LibRate/models/member"
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
 type RouterProps struct {
@@ -42,6 +46,7 @@ type RouterProps struct {
 	App             *fiber.App
 	SessionHandler  *session.Store
 	WebsocketConfig *websocket.Config
+	Validation      *validator.Validate
 }
 
 // Setup handles all the routes for the application
@@ -75,7 +80,6 @@ func Setup(r *RouterProps) error {
 	memberSvc := memberCtrl.NewController(mStor, r.LegacyDB, r.SessionHandler, r.Log, r.Conf)
 	formCon := form.NewController(r.Log, *mediaStor, r.Conf)
 	uploadSvc := static.NewController(r.Conf, r.LegacyDB, r.Log)
-	sc := controllers.NewSearchController(r.LegacyDB, r.Log, fmt.Sprintf("%s/api/search/ws", r.Conf.Fiber.Host))
 
 	r.App.Get("/api/version", version.Get)
 
@@ -94,13 +98,7 @@ func Setup(r *RouterProps) error {
 
 	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	search := api.Group("/search")
-	search.Get("/ws-address", sc.GetWSAddress)
-	search.Post("/ws", websocket.New(sc.WSHandler, *r.WebsocketConfig))
-	search.Post("/", sc.Search)
-	search.Options("/", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	setupSearch(r.Validation, &r.Conf.CouchDB, r.Log, api)
 
 	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
@@ -112,6 +110,23 @@ func Setup(r *RouterProps) error {
 	r.Log.Debug().Msg("static files initialized")
 
 	return nil
+}
+
+func setupSearch(v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, api fiber.Router) {
+	ss, err := searchdb.Connect(conf, log)
+	if err != nil {
+		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
+		return
+	}
+	// FIXME: index here should be passed from main
+	svc, err := search.NewService(
+		context.Background(), v, ss, conf.MainIndexPath, log).Get()
+	if err != nil {
+		log.Err(err).Msgf("error setting up the http layer for search handler")
+	}
+
+	searchAPI := api.Group("/search")
+	searchAPI.Post("/", timeout.NewWithContext(svc.HandleSearch, 30*time.Second))
 }
 
 func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {

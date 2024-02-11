@@ -40,10 +40,11 @@ type DBConfig struct {
 
 // currently only couchdb is supported
 type Search struct {
-	Host     string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
-	Port     int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
-	User     string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
-	Password string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+	Host          string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port          int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User          string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password      string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+	MainIndexPath string `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
 }
 
 type External struct {

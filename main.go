@@ -31,9 +31,8 @@ import (
 
 	//	"github.com/k42-software/go-altcha"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/contrib/websocket"
+
 	"github.com/gofiber/fiber/v2"
-	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
@@ -211,6 +210,7 @@ func main() {
 		App:             app,
 		SessionHandler:  sess,
 		WebsocketConfig: &wsConfig,
+		Validation:      validator,
 	}
 
 	err = setupRoutes(&r)

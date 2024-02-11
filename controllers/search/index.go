@@ -15,10 +15,10 @@ import (
 	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
-func CreateIndex(ctx context.Context, path string, storage *searchdb.Storage, log *zerolog.Logger) error {
-	idx, _ := buildIndexMapping()
+func CreateIndex(ctx context.Context, path string,
+	storage *searchdb.Storage, log *zerolog.Logger) error {
+	idx, err := buildIndex(path)
 
-	fullIndex, err := bleve.New(path, idx)
 	if err != nil {
 		return fmt.Errorf("error creating index '%q': %v", path, err)
 	}
@@ -29,7 +29,7 @@ func CreateIndex(ctx context.Context, path string, storage *searchdb.Storage, lo
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := indexSite(ctx, fullIndex, storage, log)
+		err := indexSite(ctx, idx, storage, log)
 		if err != nil {
 			errorCh <- fmt.Errorf("error indexing site: %v", err)
 			return
@@ -95,7 +95,7 @@ func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, 
 	return nil
 }
 
-func buildIndexMapping() (mapping.IndexMapping, error) {
+func buildIndex(path string) (bleve.Index, error) {
 	textFieldMapping := bleve.NewTextFieldMapping()
 	textFieldMapping.Analyzer = en.AnalyzerName
 
@@ -103,6 +103,7 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 	keywordMapping.Analyzer = keyword.Name
 
 	indexMapping := bleve.NewIndexMapping()
+	indexMapping.DefaultType = "media"
 
 	genresMapping := buildGenresMapping(textFieldMapping, keywordMapping)
 	indexMapping.AddDocumentMapping("genres", genresMapping)
@@ -115,7 +116,7 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 	indexMapping.AddDocumentMapping("reviews", reviewsMapping)
 	indexMapping.AddDocumentMapping("users", usersMapping)
 
-	return indexMapping, nil
+	return bleve.New(path, indexMapping)
 }
 
 func buildGenresMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
@@ -199,7 +200,6 @@ func buildArtistsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping)
 	mapping.AddFieldMappingsAt("modified", modified)
 	active := bleve.NewBooleanFieldMapping()
 	mapping.AddFieldMappingsAt("active", active)
-	mapping.AddSubDocumentMapping("associatedArtists", mapping)
 
 	return mapping
 }
