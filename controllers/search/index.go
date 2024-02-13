@@ -51,26 +51,25 @@ func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, 
 	var docCount, batchCount int
 	start := time.Now()
 
-	for i := range searchdb.AllTargets {
-		data, err := storage.ReadAll(ctx, searchdb.AllTargets[i])
-		if err != nil {
-			return err
-		}
-		err = batch.Index(searchdb.AllTargets[i].String(), data)
-		if err != nil {
-			return err
-		}
-		batchCount++
-
-		if batchCount >= 100 {
-			if err := idx.Batch(batch); err != nil {
-				return fmt.Errorf("error indexing batch: %v", err)
-			}
-
-			batch = idx.NewBatch()
-			batchCount = 0
-		}
+	data, err := storage.ReadAll(ctx)
+	if err != nil {
+		return err
 	}
+	err = batch.Index("main", data)
+	if err != nil {
+		return err
+	}
+	batchCount++
+
+	if batchCount >= 100 {
+		if err := idx.Batch(batch); err != nil {
+			return fmt.Errorf("error indexing batch: %v", err)
+		}
+
+		batch = idx.NewBatch()
+		batchCount = 0
+	}
+
 	// flush the last batch
 	if batchCount > 0 {
 		if err := idx.Batch(batch); err != nil {
@@ -87,6 +86,8 @@ func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, 
 
 	return nil
 }
+
+// TODO: add building partial indices
 
 func buildIndex(path string) (bleve.Index, error) {
 	textFieldMapping := bleve.NewTextFieldMapping()

@@ -123,7 +123,7 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, l
 	svc, err := search.NewService(
 		ctx, v, ss, conf.MainIndexPath, log).Get()
 	if err != nil {
-		log.Warn().Err(err)
+		log.Warn().Err(err).Msg("failed to set up routes for search API")
 		searchAPI.Post("/", sendNotImpl)
 		searchAPI.Get("/", sendNotImpl)
 	} else {

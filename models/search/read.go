@@ -8,12 +8,12 @@ import (
 
 	_ "github.com/go-kivik/couchdb/v3"
 	"github.com/go-kivik/kivik/v3"
+	"github.com/goccy/go-json"
 )
 
 type (
 	// Those types are simplified representations of what is
-	// stored in postgres that are written on insert/update
-	// to couchdb
+	// stored in postgres that are written to couchdb on insert/update
 	Genre struct {
 		ID           string               `json:"_id"`
 		Rev          string               `json:"_rev"`
@@ -77,36 +77,116 @@ type (
 		Added    time.Time `json:"added"`
 		Modified time.Time `json:"modified"`
 	}
+
+	CombinedData struct {
+		Genres  []Genre  `json:"genres"`
+		Members []Member `json:"users"`
+		Studios []Studio `json:"studios"`
+		Ratings []Rating `json:"ratings"`
+		Artists []Artist `json:"artists"`
+		Media   []Media  `json:"media"`
+	}
 )
 
 // we only care about scanning the data into it's raw JSON representation
 // so that we can then use it for indexing
-func (s *Storage) ReadAll(ctx context.Context, target TargetDB) (data []interface{}, err error) {
-	if ok, err := s.client.DBExists(ctx, target.String()); !ok {
-		return nil, fmt.Errorf("failed to check if database exists: %w", err)
-	}
-	db := s.client.DB(ctx, target.String())
+func (s *Storage) ReadAll(ctx context.Context) (data []byte, err error) {
+	var wg sync.WaitGroup
 
-	options := map[string]interface{}{
-		"include_docs": true,
-	}
-
-	rows, err := db.AllDocs(ctx, options)
-	if err != nil {
-		return nil, fmt.Errorf("error accessing rows: %v", err)
-	}
-	defer rows.Close()
-
-	// can't merge []byte directly, so we'll still need to marshal that
-	// to JSON again :(
-	for rows.Next() {
-		err = rows.ScanDoc(&data)
+	wg.Add(1)
+	genresCh := make(chan []Genre, 1)
+	errorCh := make(chan error, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadGenres(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan all documents: %w", err)
+			errorCh <- err
+			return
 		}
-	}
+		genresCh <- data
+	}(ctx)
 
-	return data, nil
+	wg.Add(1)
+	membersCh := make(chan []Member, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadMembers(ctx)
+		if err != nil {
+			errorCh <- err
+			return
+		}
+		membersCh <- data
+	}(ctx)
+
+	wg.Add(1)
+	studioCh := make(chan []Studio, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadStudios(ctx)
+		if err != nil {
+			errorCh <- err
+			return
+		}
+		studioCh <- data
+	}(ctx)
+
+	wg.Add(1)
+	reviewsCh := make(chan []Rating, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadRatings(ctx)
+		if err != nil {
+			errorCh <- err
+			return
+		}
+		reviewsCh <- data
+	}(ctx)
+
+	wg.Add(1)
+	artistsCh := make(chan []Artist, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadArtists(ctx)
+		if err != nil {
+			errorCh <- err
+			return
+		}
+		artistsCh <- data
+	}(ctx)
+
+	wg.Add(1)
+	mediaCh := make(chan []Media, 1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+		data, err := s.ReadMedia(ctx)
+		if err != nil {
+			errorCh <- err
+			return
+		}
+		mediaCh <- data
+	}(ctx)
+
+	wg.Wait()
+	select {
+	case err = <-errorCh:
+		return nil, err
+	default:
+		close(genresCh)
+		close(membersCh)
+		close(studioCh)
+		close(reviewsCh)
+		close(artistsCh)
+		close(mediaCh)
+		combinedData := CombinedData{
+			Genres:  <-genresCh,
+			Members: <-membersCh,
+			Studios: <-studioCh,
+			Ratings: <-reviewsCh,
+			Artists: <-artistsCh,
+			Media:   <-mediaCh,
+		}
+		return json.Marshal(combinedData)
+	}
 }
 
 func (s *Storage) ReadGenres(ctx context.Context) (data []Genre, err error) {

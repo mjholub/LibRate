@@ -95,7 +95,7 @@ func SetupMiddlewares(conf *cfg.Config,
 		}),
 		etag.New(),
 		cache.New(cache.Config{
-			Expiration: 15 * time.Minute,
+			Expiration: 30 * time.Second,
 			Storage: redis.New(redis.Config{
 				Host:     conf.Redis.Host,
 				Port:     conf.Redis.Port,
