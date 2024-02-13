@@ -54,10 +54,11 @@ func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, 
 	start := time.Now()
 
 	for i := range searchdb.AllTargets {
-		if err := storage.ReadAll(ctx, searchdb.AllTargets[i]); err != nil {
+		data, err := storage.ReadAll(ctx, searchdb.AllTargets[i])
+		if err != nil {
 			return err
 		}
-		err = batch.Index(searchdb.AllTargets[i].String(), searchdb.AllTargets[i])
+		err = batch.Index(searchdb.AllTargets[i].String(), data)
 		if err != nil {
 			return err
 		}
@@ -102,7 +103,7 @@ func buildIndex(path string) (bleve.Index, error) {
 	genresMapping := buildGenresMapping(textFieldMapping, keywordMapping)
 	indexMapping.AddDocumentMapping("genres", genresMapping)
 	artistsMapping := buildArtistsMapping(textFieldMapping, keywordMapping)
-	mediaMapping := buildMediaMapping(textFieldMapping, keywordMapping, artistsMapping, genresMapping)
+	mediaMapping := buildMediaMapping(textFieldMapping, keywordMapping)
 	indexMapping.AddDocumentMapping("media", mediaMapping)
 	indexMapping.AddDocumentMapping("artists", artistsMapping)
 	usersMapping := buildUsersMapping(textFieldMapping)
@@ -115,52 +116,55 @@ func buildIndex(path string) (bleve.Index, error) {
 
 func buildGenresMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
+	mapping.StructTagKey = "genres"
+
 	mapping.AddFieldMappingsAt("name", textFieldMapping)
 	mapping.AddFieldMappingsAt("kinds", keywordMapping)
-	childGenresMapping := bleve.NewDocumentMapping()
 
-	mapping.AddSubDocumentMapping("children", childGenresMapping)
-
-	description := bleve.NewTextFieldMapping()
-	mapping.AddFieldMappingsAt("description", description)
-	mapping.AddFieldMappingsAt("language", description)
-
-	characteristics := bleve.NewTextFieldMapping()
-
-	mapping.AddFieldMappingsAt("characteristics", characteristics)
+	descriptions := bleve.NewDocumentMapping()
+	descriptions.StructTagKey = "descriptions"
+	descriptions.AddFieldMappingsAt("description", textFieldMapping)
+	descriptions.AddFieldMappingsAt("language", keywordMapping)
+	mapping.AddSubDocumentMapping("descriptions", descriptions)
 
 	return mapping
 }
 
 func buildReviewsMapping(textFieldMapping *mapping.FieldMapping, mediaMapping, userMapping *mapping.DocumentMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
+	mapping.StructTagKey = "reviews"
 
 	mapping.AddSubDocumentMapping("media", mediaMapping)
 	mapping.AddSubDocumentMapping("user", userMapping)
 	mapping.AddFieldMappingsAt("topic", textFieldMapping)
-	mapping.AddFieldMappingsAt("comment", textFieldMapping)
-	date := bleve.NewDateTimeFieldMapping()
-	mapping.AddFieldMappingsAt("date", date)
-	favoriteCount := bleve.NewNumericFieldMapping()
-	mapping.AddFieldMappingsAt("favoriteCount", favoriteCount)
-	reblogCount := bleve.NewNumericFieldMapping()
-	mapping.AddFieldMappingsAt("reblogCount", reblogCount)
+	mapping.AddFieldMappingsAt("body", textFieldMapping)
+	added := bleve.NewDateTimeFieldMapping()
+	mapping.AddFieldMappingsAt("added", added)
+	mapping.AddFieldMappingsAt("modified", bleve.NewDateTimeFieldMapping())
+	// TODO: uncomment when post/review interactions are added
+	/*
+		favoriteCount := bleve.NewNumericFieldMapping()
+		mapping.AddFieldMappingsAt("favoriteCount", favoriteCount)
+		reblogCount := bleve.NewNumericFieldMapping()
+		mapping.AddFieldMappingsAt("reblogCount", reblogCount)
+	*/
 
 	return mapping
 }
 
-func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping, artists, genres *mapping.DocumentMapping) *mapping.DocumentMapping {
+func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
+	mapping.StructTagKey = "media"
 
 	mapping.AddFieldMappingsAt("kind", keywordMapping)
 	mapping.AddFieldMappingsAt("title", textFieldMapping)
-	mapping.AddSubDocumentMapping("artists", artists)
-	mapping.AddSubDocumentMapping("genres", genres)
-	mapping.AddFieldMappingsAt("language", keywordMapping)
-	released := bleve.NewDateTimeFieldMapping()
+	//mapping.AddSubDocumentMapping("artists", artists)
+	//mapping.AddSubDocumentMapping("genres", genres)
+	//mapping.AddFieldMappingsAt("language", keywordMapping)
+	created := bleve.NewDateTimeFieldMapping()
 	added := bleve.NewDateTimeFieldMapping()
 	modified := bleve.NewDateTimeFieldMapping()
-	mapping.AddFieldMappingsAt("released", released)
+	mapping.AddFieldMappingsAt("created", created)
 	mapping.AddFieldMappingsAt("added", added)
 	mapping.AddFieldMappingsAt("modified", modified)
 
@@ -169,13 +173,14 @@ func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping, a
 
 func buildUsersMapping(textFieldMapping *mapping.FieldMapping) (res *mapping.DocumentMapping) {
 	mapping := bleve.NewDocumentMapping()
+	mapping.StructTagKey = "members"
 
 	mapping.AddFieldMappingsAt("webfinger", textFieldMapping)
-	mapping.AddFieldMappingsAt("instance", textFieldMapping)
-	localAccounts := bleve.NewBooleanFieldMapping()
-	mapping.AddFieldMappingsAt("local", localAccounts)
+	//mapping.AddFieldMappingsAt("instance", textFieldMapping)
+	//localAccounts := bleve.NewBooleanFieldMapping()
+	//mapping.AddFieldMappingsAt("local", localAccounts)
 
-	mapping.AddFieldMappingsAt("displayName", textFieldMapping)
+	mapping.AddFieldMappingsAt("display_name", textFieldMapping)
 	mapping.AddFieldMappingsAt("bio", textFieldMapping)
 
 	return mapping
@@ -184,16 +189,17 @@ func buildUsersMapping(textFieldMapping *mapping.FieldMapping) (res *mapping.Doc
 func buildArtistsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
 
-	mapping.AddFieldMappingsAt("artist_name", textFieldMapping)
-	mapping.AddFieldMappingsAt("roles", keywordMapping)
-	mapping.AddFieldMappingsAt("country", keywordMapping)
+	mapping.AddFieldMappingsAt("name", textFieldMapping)
+	mapping.AddFieldMappingsAt("nicknames", keywordMapping)
+	//mapping.AddFieldMappingsAt("roles", keywordMapping)
+	//mapping.AddFieldMappingsAt("country", keywordMapping)
 	mapping.AddFieldMappingsAt("bio", textFieldMapping)
 	added := bleve.NewDateTimeFieldMapping()
 	mapping.AddFieldMappingsAt("added", added)
 	modified := bleve.NewDateTimeFieldMapping()
 	mapping.AddFieldMappingsAt("modified", modified)
-	active := bleve.NewBooleanFieldMapping()
-	mapping.AddFieldMappingsAt("active", active)
+	//active := bleve.NewBooleanFieldMapping()
+	//mapping.AddFieldMappingsAt("active", active)
 
 	return mapping
 }

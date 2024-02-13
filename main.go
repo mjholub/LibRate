@@ -172,6 +172,7 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
+	log.Info().Msg("Session handler ready")
 
 	// Setup Proof of Work antispam middleware
 	setupPOW(conf, app)
@@ -186,20 +187,27 @@ func main() {
 		defer wg.Done()
 		for i := range middlewares {
 			app.Use(middlewares[i])
+			if i == len(middlewares)-1 {
+				log.Info().Msg("Middlewares set up")
+			}
 		}
 	}()
 
 	// setup logging
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
+	log.Info().Msg("Logger set up")
 
 	// set up websocket
 	wsConfig := cmd.SetupWS(app, "/search")
+	log.Info().Msg("Websocket set up")
 	wg.Wait()
 
 	render.SetupTemplatedPages(
 		conf.Fiber.DefaultLanguage,
 		app, &log, pagesCache)
+
+	log.Info().Msg("Templated pages set up")
 
 	r := routes.RouterProps{
 		Conf:            conf,
@@ -213,10 +221,14 @@ func main() {
 		Validation:      validator,
 	}
 
-	err = setupRoutes(&r)
+	log.Info().Msg("Setting up routes")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	err = setupRoutes(ctx, &r)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
+	log.Info().Msg("Routes set up")
 
 	// Listen on chosen port, host and protocol
 	// (disabling HTTPS still works if you use reverse proxy)
@@ -399,7 +411,7 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 	return nil
 }
 
-func setupRoutes(r *routes.RouterProps) (err error) {
+func setupRoutes(ctx context.Context, r *routes.RouterProps) (err error) {
 	// Setup routes
 	err = routes.Setup(r)
 	if err != nil {

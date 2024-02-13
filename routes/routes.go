@@ -52,7 +52,7 @@ type RouterProps struct {
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(r *RouterProps) error {
+func Setup(ctx context.Context, r *RouterProps) error {
 	api := r.App.Group("/api", r.LogHandler)
 
 	r.App.Get("/docs/*", swagger.New(swagger.Config{
@@ -98,7 +98,7 @@ func Setup(r *RouterProps) error {
 
 	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	setupSearch(r.Validation, &r.Conf.CouchDB, r.Log, api)
+	setupSearch(ctx, r.Validation, &r.Conf.CouchDB, r.Log, api)
 
 	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
@@ -112,19 +112,15 @@ func Setup(r *RouterProps) error {
 	return nil
 }
 
-func setupSearch(v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, api fiber.Router) {
+func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, api fiber.Router) {
 	ss, err := searchdb.Connect(conf, log)
 	if err != nil {
 		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
 		return
 	}
 
-	// FIXME: index here should be passed from main
-	svc, err := search.NewService(
-		context.Background(), v, ss, conf.MainIndexPath, log).Get()
-	if err != nil {
-		log.Err(err).Msgf("error setting up the http layer for search handler")
-	}
+	svc := search.NewService(
+		ctx, v, ss, conf.MainIndexPath, log).MustGet()
 
 	searchAPI := api.Group("/search")
 	searchAPI.Post("/", svc.HandleSearch)

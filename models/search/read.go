@@ -40,7 +40,7 @@ type (
 		Rev      string    `json:"_rev"`
 		Name     string    `json:"name"`
 		Kind     string    `json:"kind"`
-		CityUUID string    `json:"city_uuid"`
+		CityUUID string    `json:"city"`
 		Added    time.Time `json:"added"`
 		Modified time.Time `json:"modified"`
 	}
