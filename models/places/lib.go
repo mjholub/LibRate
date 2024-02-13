@@ -12,6 +12,12 @@ type (
 		Country *Country `json:"country" db:"country"`
 	}
 
+	CityName struct {
+		ID       uuid.UUID `json:"id" db:"id"`
+		Name     string    `json:"name" db:"name"`
+		Language string    `json:"language" db:"lang"`
+	}
+
 	Country struct {
 		ID   int16  `json:"id" db:"id,pk"`
 		Name string `json:"name" db:"name"`

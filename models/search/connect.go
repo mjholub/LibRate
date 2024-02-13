@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-kivik/kivik/v4"
-	_ "github.com/go-kivik/kivik/v4/couchdb"
+	_ "github.com/go-kivik/couchdb/v3"
+	"github.com/go-kivik/kivik/v3"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"

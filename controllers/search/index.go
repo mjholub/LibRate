@@ -16,9 +16,9 @@ import (
 )
 
 func CreateIndex(ctx context.Context, path string,
-	storage *searchdb.Storage, log *zerolog.Logger) error {
+	storage *searchdb.Storage, log *zerolog.Logger,
+) error {
 	idx, err := buildIndex(path)
-
 	if err != nil {
 		return fmt.Errorf("error creating index '%q': %v", path, err)
 	}
@@ -45,18 +45,7 @@ func CreateIndex(ctx context.Context, path string,
 	return nil
 }
 
-// TODO: implement
-func (s *Service) PartialIndex(ctx context.Context, path string) error {
-	/*
-			indexMapping := bleve.NewIndexMapping()
-		textFieldMapping := bleve.NewTextFieldMapping()
-			textFieldMapping.Analyzer = en.AnalyzerName
-
-			keywordMapping := bleve.NewTextFieldMapping()
-			keywordMapping.Analyzer = keyword.Name
-	*/
-	return nil
-}
+// TODO: implement building partial index
 
 func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, log *zerolog.Logger) error {
 	batch := idx.NewBatch()
@@ -65,8 +54,13 @@ func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, 
 	start := time.Now()
 
 	for i := range searchdb.AllTargets {
-		storage.ReadAll(ctx, searchdb.AllTargets[i])
-		batch.Index(searchdb.AllTargets[i].String(), searchdb.AllTargets[i])
+		if err := storage.ReadAll(ctx, searchdb.AllTargets[i]); err != nil {
+			return err
+		}
+		err = batch.Index(searchdb.AllTargets[i].String(), searchdb.AllTargets[i])
+		if err != nil {
+			return err
+		}
 		batchCount++
 
 		if batchCount >= 100 {
