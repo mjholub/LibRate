@@ -26,6 +26,7 @@ import (
 type GrpcServer struct {
 	shutdown.UnimplementedShutdownServiceServer
 	protodb.UnimplementedDBServer
+	protosearch.UnimplementedSearchServer
 	App    *fiber.App
 	Log    *zerolog.Logger
 	Config *cfg.GrpcConfig
@@ -44,6 +45,7 @@ func registerGRPC(srv *GrpcServer) {
 
 	shutdown.RegisterShutdownServiceServer(s, srv)
 	protodb.RegisterDBServer(s, srv)
+	protosearch.RegisterSearchServer(s, srv)
 
 	reflection.Register(s)
 

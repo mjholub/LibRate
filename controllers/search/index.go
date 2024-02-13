@@ -23,7 +23,7 @@ func CreateIndex(ctx context.Context, path string,
 		return fmt.Errorf("error creating index '%q': %v", path, err)
 	}
 
-	errorCh := make(chan error)
+	errorCh := make(chan error, 1)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -44,8 +44,6 @@ func CreateIndex(ctx context.Context, path string,
 
 	return nil
 }
-
-// TODO: implement building partial index
 
 func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, log *zerolog.Logger) error {
 	batch := idx.NewBatch()
