@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	protodb "codeberg.org/mjh/lrctl/grpc/db"
+	protosearch "codeberg.org/mjh/lrctl/grpc/search"
 	"codeberg.org/mjh/lrctl/grpc/shutdown"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -17,7 +18,9 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/controllers/search"
 	"codeberg.org/mjh/LibRate/db"
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
 type GrpcServer struct {
@@ -185,4 +188,30 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 
 	s.Log.Info().Msg("database migrated")
 	return &protodb.MigrateResponse{Success: true}, nil
+}
+
+func (s *GrpcServer) BuildIndex(
+	ctx context.Context,
+	req *protosearch.BuildRequest,
+) (res *protosearch.BuildResponse, err error) {
+	conf := cfg.Search{
+		Host:          req.Config.Host,
+		Port:          int(req.Config.Port),
+		User:          req.Config.User,
+		Password:      req.Config.Password,
+		MainIndexPath: req.Config.IndexPath,
+	}
+	storage, err := searchdb.Connect(&conf, s.Log)
+	if err != nil {
+		return nil, err
+	}
+	err = search.CreateIndex(ctx, req.Config.IndexPath, storage, s.Log)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: implement proper tracing here
+	return &protosearch.BuildResponse{
+		DocumentCount:   1,
+		TimePerDocument: 0.1,
+	}, nil
 }

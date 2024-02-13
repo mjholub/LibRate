@@ -73,9 +73,13 @@ func NewService(
 	return mo.Try(func() (*Service, error) {
 		idx, err := bleve.Open(indexPath)
 		if err != nil {
-			if retry := CreateIndex(ctx, indexPath, storage, log); retry != nil {
-				return nil, fmt.Errorf("tried to create the missing index, but failed: %v", retry)
-			}
+			return nil, fmt.
+				Errorf(
+					`Missing search index.
+				 Create one with lrctl search build.
+				(available at https://codeberg.org/mjh/lrctl).
+				Any request to /api/search/ will return 501 Not Implemented!
+				`)
 		}
 
 		return &Service{validation, storage, idx, log}, nil

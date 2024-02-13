@@ -119,12 +119,21 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, l
 		return
 	}
 
-	svc := search.NewService(
-		ctx, v, ss, conf.MainIndexPath, log).MustGet()
-
 	searchAPI := api.Group("/search")
-	searchAPI.Post("/", svc.HandleSearch)
-	searchAPI.Get("/", svc.HandleSearch)
+	svc, err := search.NewService(
+		ctx, v, ss, conf.MainIndexPath, log).Get()
+	if err != nil {
+		log.Warn().Err(err)
+		searchAPI.Post("/", sendNotImpl)
+		searchAPI.Get("/", sendNotImpl)
+	} else {
+		searchAPI.Post("/", svc.HandleSearch)
+		searchAPI.Get("/", svc.HandleSearch)
+	}
+}
+
+func sendNotImpl(c *fiber.Ctx) error {
+	return c.Redirect("https://http.cat/images/501.jpg", 303)
 }
 
 func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {

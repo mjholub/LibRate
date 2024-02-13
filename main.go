@@ -413,7 +413,7 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 
 func setupRoutes(ctx context.Context, r *routes.RouterProps) (err error) {
 	// Setup routes
-	err = routes.Setup(r)
+	err = routes.Setup(ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %v", err)
 	}
