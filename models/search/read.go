@@ -3,94 +3,117 @@ package searchdb
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
 	_ "github.com/go-kivik/couchdb/v3"
 	"github.com/go-kivik/kivik/v3"
-	"github.com/goccy/go-json"
+	"github.com/mitchellh/mapstructure"
+	"github.com/samber/mo"
 )
 
 type (
 	// Those types are simplified representations of what is
 	// stored in postgres that are written to couchdb on insert/update
 	Genre struct {
-		ID           string               `json:"_id"`
-		Rev          string               `json:"_rev"`
-		Name         string               `json:"name"`
-		Kinds        []string             `json:"kinds"`
-		Descriptions [][]GenreDescription `json:"descriptions"`
+		ID           string               `json:"_id" mapstructure:"-"`
+		Rev          string               `json:"_rev" mapstructure:"-"`
+		Name         string               `json:"name" mapstructure:"name"`
+		Kinds        []string             `json:"kinds" mapstructure:"kinds"`
+		Descriptions [][]GenreDescription `json:"descriptions" mapstructure:"descriptions"`
 	}
 
 	GenreDescription struct {
-		Description string `json:"description"`
-		Language    string `json:"language"`
+		Description string `json:"description" mapstructure:"description"`
+		Language    string `json:"language" mapstructure:"language"`
 	}
 
 	Member struct {
-		ID          string `json:"_id"`
-		Rev         string `json:"_rev"`
-		Bio         string `json:"bio,omitempty"`
-		Webfinger   string `json:"webfinger,omitempty"`
-		DisplayName string `json:"display_name,omitempty"`
+		ID          string `json:"_id" mapstructure:"-"`
+		Rev         string `json:"_rev" mapstructure:"-"`
+		Bio         string `json:"bio,omitempty" mapstructure:"bio,omitempty"`
+		Webfinger   string `json:"webfinger,omitempty" mapstructure:"webfinger,omitempty"`
+		DisplayName string `json:"display_name,omitempty" mapstructure:"display_name,omitempty"`
 	}
 
 	Studio struct {
-		ID       string    `json:"_id"`
-		Rev      string    `json:"_rev"`
-		Name     string    `json:"name"`
-		Kind     string    `json:"kind"`
-		CityUUID string    `json:"city"`
-		Added    time.Time `json:"added"`
-		Modified time.Time `json:"modified"`
+		ID       string    `json:"_id" mapstructure:"-"`
+		Rev      string    `json:"_rev" mapstructure:"-"`
+		Name     string    `json:"name" mapstructure:"name"`
+		Kind     string    `json:"kind" mapstructure:"kind"`
+		CityUUID string    `json:"city" mapstructure:"city"`
+		Added    time.Time `json:"added" mapstructure:"added"`
+		Modified time.Time `json:"modified" mapstructure:"modified"`
 	}
 
 	Rating struct {
-		ID         string `json:"_id"`
-		Rev        string `json:"_rev"`
-		Topic      string `json:"topic"`
-		Body       string `json:"body"`
-		User       string `json:"user"`
-		MediaTitle string `json:"media_title"`
+		ID         string `json:"_id" mapstructure:"-"`
+		Rev        string `json:"_rev" mapstructure:"-"`
+		Topic      string `json:"topic" mapstructure:"topic"`
+		Body       string `json:"body" mapstructure:"body"`
+		User       string `json:"user" mapstructure:"user"`
+		MediaTitle string `json:"media_title" mapstructure:"media_title"`
 		// not sure whether this shouldn't actually be a string as well
-		Added    time.Time `json:"added"`
-		Modified time.Time `json:"modified"`
+		Added    time.Time `json:"added" mapstructure:"added"`
+		Modified time.Time `json:"modified" mapstructure:"modified"`
 	}
 
 	Artist struct {
-		ID        string    `json:"_id"`
-		Rev       string    `json:"_rev"`
-		Name      string    `json:"name"`
-		Nicknames string    `json:"nick_names"`
-		Bio       string    `json:"bio"`
-		Added     time.Time `json:"added"`
-		Modified  time.Time `json:"modified"`
+		ID        string    `json:"_id" mapstructure:"-"`
+		Rev       string    `json:"_rev" mapstructure:"-"`
+		Name      string    `json:"name" mapstructure:"name"`
+		Nicknames []string  `json:"nick_names" mapstructure:"nick_names"`
+		Bio       string    `json:"bio" mapstructure:"bio"`
+		Added     time.Time `json:"added" mapstructure:"added"`
+		Modified  time.Time `json:"modified" mapstructure:"modified"`
 	}
 
 	Media struct {
-		ID    string `json:"_id"`
-		Rev   string `json:"_rev"`
-		Title string `json:"title"`
-		Kind  string `json:"kind"`
+		ID    string `json:"_id" mapstructure:"-"`
+		Rev   string `json:"_rev" mapstructure:"-"`
+		Title string `json:"title" mapstructure:"title"`
+		Kind  string `json:"kind" mapstructure:"kind"`
 		// Created refers to the release date
-		Created  time.Time `json:"created"`
-		Added    time.Time `json:"added"`
-		Modified time.Time `json:"modified"`
+		Created  time.Time `json:"created" mapstructure:"created"`
+		Added    time.Time `json:"added" mapstructure:"added"`
+		Modified time.Time `json:"modified" mapstructure:"modified"`
 	}
 
 	CombinedData struct {
-		Genres  []Genre  `json:"genres"`
-		Members []Member `json:"users"`
-		Studios []Studio `json:"studios"`
-		Ratings []Rating `json:"ratings"`
-		Artists []Artist `json:"artists"`
-		Media   []Media  `json:"media"`
+		Genres  []Genre  `json:"genres" mapstructure:"genres"`
+		Members []Member `json:"members" mapstructure:"members"`
+		Studios []Studio `json:"studio" mapstructure:"studio"`
+		Ratings []Rating `json:"ratings" mapstructure:"ratings"`
+		Artists []Artist `json:"artists" mapstructure:"artists"`
+		Media   []Media  `json:"media" mapstructure:"media"`
+	}
+
+	BleveDocument struct {
+		// ID is the couchdb id of the document
+		ID string `json:"id"`
+		// Type is a field that allows us to distinguish between different types of documents
+		Type string `json:"type"`
+		// Query is a field allowing text queries
+		Query string `json:"query"`
+		// Fields is the list of additional fields that we can aggregate on
+		Fields []interface{} `json:"fields"`
+		// Data is the raw representation of the document
+		Data map[string]interface{} `json:"data"`
+	}
+
+	// AnonymousDocument is same as Ble
+	AnonymousDocument struct {
+		Type   string                 `json:"type"`
+		Query  string                 `json:"query"`
+		Fields []interface{}          `json:"fields"`
+		Data   map[string]interface{} `json:"data"`
 	}
 )
 
 // we only care about scanning the data into it's raw JSON representation
 // so that we can then use it for indexing
-func (s *Storage) ReadAll(ctx context.Context) (data []byte, err error) {
+func (s *Storage) ReadAll(ctx context.Context) (data *CombinedData, err error) {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -185,7 +208,176 @@ func (s *Storage) ReadAll(ctx context.Context) (data []byte, err error) {
 			Artists: <-artistsCh,
 			Media:   <-mediaCh,
 		}
-		return json.Marshal(combinedData)
+		s.log.Debug().Msg("Finished reading from couchDB")
+		return &combinedData, nil
+	}
+}
+
+func buildQueryString(data interface{}) mo.Result[string] {
+	return mo.Try(func() (string, error) {
+		switch d := data.(type) {
+		case Genre:
+			return fmt.Sprintf("%s %s %+v", d.Name, d.Kinds, d.Descriptions), nil
+		case Member:
+			return fmt.Sprintf("%s %s %s", d.Bio, d.Webfinger, d.DisplayName), nil
+		case Studio:
+			return fmt.Sprintf("%s %s %v", d.Name, d.Kind, d.Added), nil
+		case Rating:
+			return fmt.Sprintf("%s %s %s %s %v", d.Topic, d.Body, d.User, d.MediaTitle, d.Added), nil
+		case Artist:
+			return fmt.Sprintf("%s %s %s %v", d.Name, d.Nicknames, d.Bio, d.Added), nil
+		case Media:
+			return fmt.Sprintf("%s %s %v %v", d.Title, d.Kind, d.Created, d.Added), nil
+		default:
+			return "", fmt.Errorf("unsupported type: %T", d)
+		}
+	})
+}
+
+func ToBleveDocument(combinedData *CombinedData) (docs []BleveDocument, err error) {
+	errorCh := make(chan error, 1)
+	var wg sync.WaitGroup
+	genreDocCh := make(chan []BleveDocument, 1)
+	wg.Add(1)
+	go func() {
+		var genres []BleveDocument
+		defer wg.Done()
+		for i := range combinedData.Genres {
+			var doc BleveDocument
+			doc.ID = combinedData.Genres[i].ID
+			doc.Type = "genres"
+			doc.Query = buildQueryString(combinedData.Genres[i]).OrElse(combinedData.Genres[i].Name)
+			doc.Fields = []interface{}{combinedData.Genres[i].Name, combinedData.Genres[i].Kinds, combinedData.Genres[i].Descriptions}
+			err := mapstructure.Decode(combinedData.Genres[i], &doc.Data)
+			if err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+			genres = append(genres, doc)
+		}
+		genreDocCh <- genres
+	}()
+
+	wg.Add(1)
+	memberDocCh := make(chan []BleveDocument, 1)
+	go func() {
+		defer wg.Done()
+		var members []BleveDocument
+		for i := range combinedData.Members {
+			var doc BleveDocument
+			doc.ID = combinedData.Members[i].ID
+			doc.Type = "members"
+			doc.Query = buildQueryString(combinedData.Members[i]).OrElse(combinedData.Members[i].Webfinger)
+			doc.Fields = []interface{}{combinedData.Members[i].Bio, combinedData.Members[i].Webfinger, combinedData.Members[i].DisplayName}
+			if err := mapstructure.Decode(combinedData.Members[i], &doc.Data); err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+			members = append(members, doc)
+		}
+		memberDocCh <- members
+	}()
+
+	wg.Add(1)
+	studioDocCh := make(chan []BleveDocument, 1)
+	go func() {
+		defer wg.Done()
+		var studios []BleveDocument
+		for i := range combinedData.Studios {
+			var doc BleveDocument
+			doc.ID = combinedData.Studios[i].ID
+			doc.Type = "studios"
+			doc.Query = buildQueryString(combinedData.Studios[i]).OrElse(combinedData.Studios[i].Name)
+			doc.Fields = []interface{}{combinedData.Studios[i].Name, combinedData.Studios[i].Kind, combinedData.Studios[i].Added}
+			if err := mapstructure.Decode(combinedData.Studios[i], &doc.Data); err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+			studios = append(studios, doc)
+		}
+		studioDocCh <- studios
+	}()
+
+	wg.Add(1)
+	reviewDocCh := make(chan []BleveDocument, 1)
+	go func() {
+		defer wg.Done()
+		var ratings []BleveDocument
+		for i := range combinedData.Ratings {
+			var doc BleveDocument
+			doc.ID = combinedData.Ratings[i].ID
+			doc.Type = "ratings"
+			doc.Query = buildQueryString(combinedData.Ratings[i]).OrElse(combinedData.Ratings[i].Body)
+			doc.Fields = []interface{}{combinedData.Ratings[i].Topic, combinedData.Ratings[i].Body, combinedData.Ratings[i].User, combinedData.Ratings[i].MediaTitle, combinedData.Ratings[i].Added}
+			if err := mapstructure.Decode(combinedData.Ratings[i], &doc.Data); err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+
+			ratings = append(ratings, doc)
+		}
+		reviewDocCh <- ratings
+	}()
+
+	wg.Add(1)
+	artistsDocCh := make(chan []BleveDocument, 1)
+	go func() {
+		defer wg.Done()
+		var artists []BleveDocument
+		for i := range combinedData.Artists {
+			var doc BleveDocument
+			doc.ID = combinedData.Artists[i].ID
+			doc.Type = "artists"
+			doc.Query = buildQueryString(combinedData.Artists[i]).OrElse(combinedData.Artists[i].Name)
+			doc.Fields = []interface{}{combinedData.Artists[i].Name, combinedData.Artists[i].Nicknames, combinedData.Artists[i].Bio, combinedData.Artists[i].Added}
+			if err := mapstructure.Decode(combinedData.Artists[i], &doc.Data); err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+			artists = append(artists, doc)
+		}
+		artistsDocCh <- artists
+	}()
+
+	wg.Add(1)
+	mediaDocCh := make(chan []BleveDocument, 1)
+	go func() {
+		defer wg.Done()
+		var mediaDocs []BleveDocument
+		for i := range combinedData.Media {
+			var doc BleveDocument
+			doc.ID = combinedData.Media[i].ID
+			doc.Type = "media"
+			doc.Query = buildQueryString(combinedData.Media[i]).OrElse(combinedData.Media[i].Title)
+			doc.Fields = []interface{}{combinedData.Media[i].Title, combinedData.Media[i].Kind, combinedData.Media[i].Created, combinedData.Media[i].Added}
+			if err := mapstructure.Decode(combinedData.Media[i], &doc.Data); err != nil {
+				errorCh <- fmt.Errorf("error converting struct into map: %w", err)
+				break
+			}
+			mediaDocs = append(mediaDocs, doc)
+		}
+		mediaDocCh <- mediaDocs
+	}()
+
+	wg.Wait()
+	close(errorCh)
+
+	// NOTE: we declare separate channels since we're using slices,
+	// Therefore we need to collect slices for each DB first,
+	// then merge them using slices.Concat
+	close(mediaDocCh)
+	close(artistsDocCh)
+	close(memberDocCh)
+	close(genreDocCh)
+	close(studioDocCh)
+	close(reviewDocCh)
+
+	select {
+	case err = <-errorCh:
+		return nil, err
+	default:
+		docs = slices.Concat(<-mediaDocCh, <-artistsDocCh, <-memberDocCh, <-genreDocCh, <-studioDocCh, <-reviewDocCh)
+		return docs, nil
 	}
 }
 

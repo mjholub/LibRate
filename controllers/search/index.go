@@ -83,19 +83,31 @@ func indexSite(
 	if err != nil {
 		return err
 	}
-	err = batch.Index("main", data)
+	docs, err := searchdb.ToBleveDocument(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("error converting data to bleve documents: %v", err)
 	}
-	batchCount++
-
-	if batchCount >= 100 {
-		if err := idx.Batch(batch); err != nil {
-			return fmt.Errorf("error indexing batch: %v", err)
+	for i := range docs {
+		err = batch.Index(fmt.Sprintf("%s-%s", docs[i].Type, docs[i].ID),
+			searchdb.AnonymousDocument{
+				Type:   docs[i].Type,
+				Query:  docs[i].Query,
+				Fields: docs[i].Fields,
+				Data:   docs[i].Data,
+			})
+		if err != nil {
+			return err
 		}
+		batchCount++
 
-		batch = idx.NewBatch()
-		batchCount = 0
+		if batchCount >= 100 {
+			if err := idx.Batch(batch); err != nil {
+				return fmt.Errorf("error indexing batch: %v", err)
+			}
+
+			batch = idx.NewBatch()
+			batchCount = 0
+		}
 	}
 
 	// flush the last batch
