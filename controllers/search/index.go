@@ -83,7 +83,7 @@ func indexSite(
 	if err != nil {
 		return err
 	}
-	docs, err := searchdb.ToBleveDocument(data)
+	docs, err := searchdb.ToBleveDocument(data, log)
 	if err != nil {
 		return fmt.Errorf("error converting data to bleve documents: %v", err)
 	}
@@ -91,7 +91,6 @@ func indexSite(
 		err = batch.Index(fmt.Sprintf("%s-%s", docs[i].Type, docs[i].ID),
 			searchdb.AnonymousDocument{
 				Type:   docs[i].Type,
-				Query:  docs[i].Query,
 				Fields: docs[i].Fields,
 				Data:   docs[i].Data,
 			})

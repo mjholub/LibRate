@@ -4,6 +4,7 @@ package searchdb
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -98,9 +99,11 @@ func TestToBleveDocument(t *testing.T) {
 			},
 		},
 	}
+	log := zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	docs, err := ToBleveDocument(&testData)
+	docs, err := ToBleveDocument(&testData, &log)
 	require.NoError(t, err)
 	assert.Equal(t, 3, len(docs))
-	assert.Contains(t, docs, "genre_1")
+	assert.Contains(t, docs[0].ID, "_1")
 }
