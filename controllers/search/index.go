@@ -3,6 +3,8 @@ package search
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime/pprof"
 	"sync"
 	"time"
 
@@ -15,12 +17,34 @@ import (
 	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
-func CreateIndex(ctx context.Context, path string,
-	storage *searchdb.Storage, log *zerolog.Logger,
+func CreateIndex(
+	ctx context.Context,
+	runtimeStats bool,
+	path string,
+	storage *searchdb.Storage,
+	log *zerolog.Logger,
 ) error {
 	idx, err := buildIndex(path)
 	if err != nil {
 		return fmt.Errorf("error creating index '%q': %v", path, err)
+	}
+
+	if runtimeStats {
+		f, err := os.Create("cpu-search.out")
+		if err != nil {
+			return fmt.Errorf("error creating CPU profile file: %w", err)
+		}
+		defer f.Close()
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+		ff, err := os.Create("mem-search.out")
+		if err != nil {
+			return fmt.Errorf("error creating memory profile file: %w", err)
+		}
+		defer func() {
+			pprof.WriteHeapProfile(ff)
+			ff.Close()
+		}()
 	}
 
 	errorCh := make(chan error, 1)
@@ -45,7 +69,11 @@ func CreateIndex(ctx context.Context, path string,
 	return nil
 }
 
-func indexSite(ctx context.Context, idx bleve.Index, storage *searchdb.Storage, log *zerolog.Logger) error {
+func indexSite(
+	ctx context.Context,
+	idx bleve.Index,
+	storage *searchdb.Storage,
+	log *zerolog.Logger) error {
 	batch := idx.NewBatch()
 
 	var docCount, batchCount int

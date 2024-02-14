@@ -207,7 +207,7 @@ func (s *GrpcServer) BuildIndex(
 	if err != nil {
 		return nil, err
 	}
-	err = search.CreateIndex(ctx, req.Config.IndexPath, storage, s.Log)
+	err = search.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath, storage, s.Log)
 	if err != nil {
 		return nil, err
 	}
