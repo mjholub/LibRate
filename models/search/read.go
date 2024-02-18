@@ -357,7 +357,6 @@ func ToBleveDocument(combinedData *CombinedData, log *zerolog.Logger) (docs []Bl
 	artistDocs := <-artistsDocCh
 	memberDocs := <-memberDocCh
 	genreDocs := <-genreDocCh
-	log.Debug().Msgf("genreDocs: %+v", genreDocs)
 	studioDocs := <-studioDocCh
 	reviewDocs := <-reviewDocCh
 	docs = slices.Concat(mediaDocs, artistDocs, memberDocs, genreDocs, studioDocs, reviewDocs)

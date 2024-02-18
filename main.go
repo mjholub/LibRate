@@ -115,12 +115,21 @@ func main() {
 	}
 	log.Debug().Msgf("Config: %+v", conf)
 
+	searchCache := redis.New(redis.Config{
+		Host:     conf.Redis.Host,
+		Port:     conf.Redis.Port,
+		Username: conf.Redis.Username,
+		Password: conf.Redis.Password,
+		Database: conf.Redis.SearchDB,
+	})
+
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)
 	s := &cmd.GrpcServer{
 		App:    app,
 		Log:    &log,
 		Config: &conf.GRPC,
+		Cache:  searchCache,
 	}
 	go cmd.RunGrpcServer(s)
 
@@ -219,6 +228,7 @@ func main() {
 		SessionHandler:  sess,
 		WebsocketConfig: &wsConfig,
 		Validation:      validator,
+		Cache:           searchCache,
 	}
 
 	log.Info().Msg("Setting up routes")

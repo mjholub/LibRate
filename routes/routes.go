@@ -17,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -47,6 +48,7 @@ type RouterProps struct {
 	SessionHandler  *session.Store
 	WebsocketConfig *websocket.Config
 	Validation      *validator.Validate
+	Cache           *redis.Storage
 }
 
 // Setup handles all the routes for the application
@@ -98,7 +100,7 @@ func Setup(ctx context.Context, r *RouterProps) error {
 
 	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	setupSearch(ctx, r.Validation, &r.Conf.CouchDB, r.Log, api)
+	setupSearch(ctx, r.Validation, &r.Conf.CouchDB, r.Cache, r.Log, api)
 
 	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
@@ -112,7 +114,7 @@ func Setup(ctx context.Context, r *RouterProps) error {
 	return nil
 }
 
-func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, api fiber.Router) {
+func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
 	ss, err := searchdb.Connect(conf, log)
 	if err != nil {
 		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
@@ -121,7 +123,7 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, l
 
 	searchAPI := api.Group("/search")
 	svc, err := search.NewService(
-		ctx, v, ss, conf.MainIndexPath, log).Get()
+		ctx, v, ss, conf.MainIndexPath, cache, log).Get()
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to set up routes for search API")
 		searchAPI.Post("/", sendNotImpl)

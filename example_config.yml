@@ -46,6 +46,7 @@ redis:
   csrfDb: 2
   powDb: 3
   pagesDb: 4
+  searchDb: 5
 search:
   host: "librate-search"
   port: 5984

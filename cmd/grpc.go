@@ -12,6 +12,7 @@ import (
 	protosearch "codeberg.org/mjh/lrctl/grpc/search"
 	"codeberg.org/mjh/lrctl/grpc/shutdown"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -27,6 +28,7 @@ type GrpcServer struct {
 	shutdown.UnimplementedShutdownServiceServer
 	protodb.UnimplementedDBServer
 	protosearch.UnimplementedSearchServer
+	Cache  *redis.Storage
 	App    *fiber.App
 	Log    *zerolog.Logger
 	Config *cfg.GrpcConfig
@@ -207,7 +209,12 @@ func (s *GrpcServer) BuildIndex(
 	if err != nil {
 		return nil, err
 	}
-	err = search.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath, storage, s.Log)
+
+	svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
+		search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
+	)
+
+	err = svc.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath)
 	if err != nil {
 		return nil, err
 	}

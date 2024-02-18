@@ -6,6 +6,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/rs/zerolog"
 	"github.com/samber/mo"
 
@@ -18,6 +19,7 @@ type (
 		validation *validator.Validate
 		storage    *searchdb.Storage
 		i          bleve.Index
+		cache      *redis.Storage
 		log        *zerolog.Logger
 	}
 
@@ -32,7 +34,7 @@ type (
 
 		// Sort is the field, that should be sorted by.
 		// When left empty, the default sorting is used.
-		Sort string `json:"sort" query:"sort" validate:"oneof=score added modified weighed_score review_count"`
+		Sort string `json:"sort,omitempty" query:"sort,omitempty" validate:"oneof=score added modified name"`
 
 		// LocalFirst determines whether the results from the current instance should be
 		// preferred over remote results.
@@ -68,6 +70,7 @@ func NewService(
 	validation *validator.Validate,
 	storage *searchdb.Storage,
 	indexPath string,
+	cache *redis.Storage,
 	log *zerolog.Logger,
 ) mo.Result[*Service] {
 	return mo.Try(func() (*Service, error) {
@@ -82,6 +85,15 @@ func NewService(
 				`)
 		}
 
-		return &Service{validation, storage, idx, log}, nil
+		return &Service{validation, storage, idx, cache, log}, nil
 	})
+}
+
+func ServiceNoIndex(
+	validation *validator.Validate,
+	storage *searchdb.Storage,
+	cache *redis.Storage,
+	log *zerolog.Logger,
+) *Service {
+	return &Service{validation, storage, nil, cache, log}
 }
