@@ -153,9 +153,13 @@ func buildIndex(path string) (bleve.Index, error) {
 func buildGenresMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
 	mapping := bleve.NewDocumentMapping()
 	mapping.StructTagKey = "genres"
+	name := bleve.NewTextFieldMapping()
+	name.Analyzer = en.AnalyzerName
+	name.IncludeInAll = true
 
-	mapping.AddFieldMappingsAt("name", textFieldMapping)
-	mapping.AddFieldMappingsAt("kinds", keywordMapping)
+	mapping.AddFieldMappingsAt("name", name)
+	kinds := bleve.NewKeywordFieldMapping()
+	mapping.AddFieldMappingsAt("kinds", kinds)
 
 	descriptions := bleve.NewDocumentMapping()
 	descriptions.StructTagKey = "descriptions"
