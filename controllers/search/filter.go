@@ -12,8 +12,6 @@ func filterByCategories(category target.Category) []string {
 		"topic",
 		"comment",
 		"date",
-		"favoriteCount",
-		"reblogCount",
 	}
 	artistsFields := []string{
 		"artist_name",
@@ -23,13 +21,10 @@ func filterByCategories(category target.Category) []string {
 		"added",
 		"modified",
 		"active",
-		"associatedArtists",
 	}
 	usersFields := []string{
 		"webfinger",
-		"instance",
-		"local",
-		"displayName",
+		"display_name",
 		"bio",
 	}
 
@@ -47,9 +42,8 @@ func filterByCategories(category target.Category) []string {
 	genreFields := []string{
 		"name",
 		"kinds",
-		"description",
+		"descriptions",
 		"language",
-		"characteristics",
 	}
 
 	switch category {

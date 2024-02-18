@@ -2,10 +2,14 @@
 package search
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"codeberg.org/mjh/LibRate/controllers/search/target"
 )
@@ -34,4 +38,35 @@ func TestBuildSearchRequest(t *testing.T) {
 		"characteristics",
 	}
 	assert.Equal(t, req.Fields, genreFields)
+}
+
+// The goal is to perform a search operation that will return
+// a result more or less equal to that of running
+// bleve query page-index.bleve "Neofolk"
+// as we know that the index should contain the word "Neofolk"
+func TestRunQuery(t *testing.T) {
+	opts := Options{
+		Query:          "Neofolk",
+		Sort:           "score",
+		SortDescending: true,
+		Fuzzy:          false,
+		Page:           uint(0),
+		PageSize:       uint(10),
+		Categories:     []target.Category{target.Genres},
+	}
+	idx, err := bleve.Open("../../page-index.bleve")
+	require.NoErrorf(t, err, "error opening index: %v", err)
+	logger := zerolog.Nop()
+
+	s := &Service{
+		i:   idx,
+		log: &logger,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	res, err := s.RunQuery(ctx, &opts)
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	assert.GreaterOrEqual(t, uint64(1), res.Total)
+	assert.NotEmpty(t, res.Hits)
 }
