@@ -57,11 +57,6 @@ type (
 		// Categories are the categories to search in. By default,
 		// a Union category is performed to search in all categories.
 		Categories []target.Category `json:"categories" query:"category" validate:"unique,dive" default:"union"`
-
-		// Aggregations is a map of aggregations, to perform aggregations on fields.
-		// The provided map key can be used to identify the corresponding bucket in
-		// the result.
-		Aggregations *[]interface{} `json:"aggregations,omitempty" query:"agg,omitempty"`
 	}
 )
 

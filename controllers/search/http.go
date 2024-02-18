@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
 
-	"codeberg.org/mjh/LibRate/controllers/search/aggregation"
 	"codeberg.org/mjh/LibRate/controllers/search/target"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
@@ -19,8 +18,7 @@ import (
 // @Tags search,media,metadata,users,posts,reviews
 // @Param X-CSRF-Token header string false "CSRF token. Required when using POST."
 // @Param q query string false "The search query. Falls back to a wildcard query if not provided."
-// @Param category query string false "The category to search in" Enums(union,users,groups,artists,media,posts,reviews,tags,genres)
-// @Param agg query string false "The aggregations to perform on the search results"
+// @Param category query string false "The category to search in" Enums(union,members,artists,media,ratings,genres)
 // @Param fuzzy query boolean false "Whether to perform a fuzzy search"
 // @Param sort query string false "The field to sort the results by" Enums(score,added,modified,name)
 // @Param desc query boolean false "Whether to sort the results in descending order"
@@ -64,18 +62,6 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 	opts.Categories = categories
 	s.log.Trace().Msgf("parsed categories: %v", categories)
 
-	aggregations := c.Query("agg", "")
-	if aggregations != "" {
-		s.log.Trace().Msg("aggregation list not empty")
-		aggregationsList := strings.Split(aggregations, ",")
-		if err := validateAggregations(target.FromStr(category), aggregationsList); err != nil {
-			return nil, err
-		}
-		aggs := aggregation.FromStringSlice(aggregationsList)
-		opts.Aggregations = &aggs
-		s.log.Trace().Msgf("parsed aggregations: %v", aggs)
-	}
-
 	pageSize := uint(c.QueryInt("pageSize", 0))
 	opts.PageSize = pageSize
 	if err := s.validation.StructPartialCtx(c.Context(), opts, "pageSize"); err != nil {
@@ -84,50 +70,4 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 	s.log.Trace().Msgf("parsed query parameters into options: %+v", opts)
 
 	return opts, nil
-}
-
-// check if an aggregation is possible for the given category
-func validateAggregations(category target.Category, agg []string) error {
-	switch category {
-	case target.Union:
-		return nil
-	case target.Users, target.Groups:
-		userAggregations := lo.Map(aggregation.UserAggregations, func(a aggregation.UserAggregation, _ int) string {
-			return a.String()
-		})
-		if lo.Every(userAggregations, agg) {
-			return nil
-		}
-		return fmt.Errorf("invalid aggregation for category %q: %v", category, agg)
-	case target.Artists:
-		artistAggregations := lo.Map(aggregation.ArtistAggregations, func(a aggregation.ArtistAggregation, _ int) string {
-			return a.String()
-		})
-		if lo.Every(artistAggregations, agg) {
-			return nil
-		}
-		return aggErr(category, agg)
-	case target.Media:
-		mediaAggregations := lo.Map(aggregation.MediaAggregations, func(a aggregation.MediaAggregation, _ int) string {
-			return a.String()
-		})
-		if lo.Every(mediaAggregations, agg) {
-			return nil
-		}
-		return aggErr(category, agg)
-	case target.Posts, target.Reviews, target.Tags:
-		postAggregations := lo.Map(aggregation.PostAggregations, func(a aggregation.PostAggregation, _ int) string {
-			return a.String()
-		})
-		if lo.Every(postAggregations, agg) {
-			return nil
-		}
-		return aggErr(category, agg)
-	default:
-		return fmt.Errorf("aggregations not supported for category %q", category)
-	}
-}
-
-func aggErr(category target.Category, agg []string) error {
-	return fmt.Errorf("invalid aggregation for category %q: %v", category, agg)
 }

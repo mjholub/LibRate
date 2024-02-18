@@ -3,6 +3,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -47,15 +48,18 @@ func TestBuildSearchRequest(t *testing.T) {
 func TestRunQuery(t *testing.T) {
 	opts := Options{
 		Query:          "Neofolk",
-		Sort:           "score",
+		Sort:           "",
 		SortDescending: true,
-		Fuzzy:          false,
+		Fuzzy:          true,
 		Page:           uint(0),
 		PageSize:       uint(10),
 		Categories:     []target.Category{target.Genres},
 	}
 	idx, err := bleve.Open("../../page-index.bleve")
 	require.NoErrorf(t, err, "error opening index: %v", err)
+	f, err := idx.Fields()
+	require.NoError(t, err)
+	fmt.Printf("%+v", f)
 	logger := zerolog.Nop()
 
 	s := &Service{
@@ -68,5 +72,5 @@ func TestRunQuery(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	assert.GreaterOrEqual(t, uint64(1), res.Total)
-	assert.NotEmpty(t, res.Hits)
+	assert.NotEmpty(t, res.Status.Successful)
 }

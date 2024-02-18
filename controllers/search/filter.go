@@ -1,63 +1,22 @@
 package search
 
 import (
-	"slices"
-
 	"codeberg.org/mjh/LibRate/controllers/search/target"
+	"github.com/blevesearch/bleve/v2"
+	"github.com/samber/lo"
 )
 
-func filterByCategories(category target.Category) []string {
-	reviewFields := []string{
-		"media",
-		"topic",
-		"comment",
-		"date",
+func filterByCategories(categories []target.Category) []bleve.FacetRequest {
+	categoriesNames := lo.Map(categories, func(c target.Category, _ int) string {
+		return c.String()
+	})
+	if lo.Contains(categoriesNames, target.Union.String()) {
+		return nil
 	}
-	artistsFields := []string{
-		"artist_name",
-		"roles",
-		"country",
-		"bio",
-		"added",
-		"modified",
-		"active",
+	facets := make([]bleve.FacetRequest, len(categories))
+	for i := range categories {
+		fr := bleve.NewFacetRequest(categories[i].String(), 1)
+		facets = append(facets, *fr)
 	}
-	usersFields := []string{
-		"webfinger",
-		"display_name",
-		"bio",
-	}
-
-	mediaFields := []string{
-		"kind",
-		"title",
-		"artists",
-		"genres",
-		"language",
-		"released",
-		"added",
-		"modified",
-	}
-
-	genreFields := []string{
-		"name",
-		"kinds",
-		"descriptions",
-		"language",
-	}
-
-	switch category {
-	case target.Artists:
-		return artistsFields
-	case target.Media:
-		return mediaFields
-	case target.Users:
-		return usersFields
-	case target.Reviews, target.Posts:
-		return reviewFields
-	case target.Genres:
-		return genreFields
-	default:
-		return slices.Concat(reviewFields, artistsFields, mediaFields, usersFields)
-	}
+	return facets
 }

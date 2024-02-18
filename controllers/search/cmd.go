@@ -2,6 +2,8 @@ package search
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -36,15 +38,22 @@ func buildUniversalQuery(queryVal string, fuzzy bool) query.Query {
 
 func buildSearchRequest(opts *Options, queryVal query.Query) *bleve.SearchRequest {
 	req := bleve.NewSearchRequest(queryVal)
-	req.SortBy([]string{opts.Sort})
+	if opts.Sort != "" && strings.Contains(opts.Sort, ",") {
+		req.SortBy(strings.Split(opts.Sort, ","))
+	} else if opts.Sort != "" {
+		req.SortBy([]string{opts.Sort})
+	}
 	req.Size = int(opts.PageSize)
 	req.From = int(opts.Page * opts.PageSize)
-	var fields []string
-	for _, category := range opts.Categories {
-		fields = append(fields, filterByCategories(category)...)
+
+	if facets := filterByCategories(opts.Categories); facets != nil {
+		fmt.Printf("facets: %+v", facets)
+		for _, facet := range facets {
+			req.AddFacet(facet.Field, &facet)
+		}
 	}
 
-	req.Fields = fields
+	req.Fields = []string{"Fields", "Data", "Type"}
 
 	return req
 }

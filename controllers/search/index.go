@@ -88,9 +88,12 @@ func indexSite(
 	for i := range docs {
 		err = batch.Index(fmt.Sprintf("%s-%s", docs[i].Type, docs[i].ID),
 			searchdb.AnonymousDocument{
+				// i.e. the category. Use to build bleve.FacetRequest
 				Type:   docs[i].Type,
 				Fields: docs[i].Fields,
-				Data:   docs[i].Data,
+				// Note that if we actually want to filter by what is
+				// a document key in CouchDB, we need to use request.Fields = Data.<field name>
+				Data: docs[i].Data,
 			})
 		if err != nil {
 			return err
