@@ -17,12 +17,10 @@ import (
 	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
-func CreateIndex(
+func (s *Service) CreateIndex(
 	ctx context.Context,
 	runtimeStats bool,
 	path string,
-	storage *searchdb.Storage,
-	log *zerolog.Logger,
 ) error {
 	idx, err := buildIndex(path)
 	if err != nil {
@@ -53,7 +51,7 @@ func CreateIndex(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := indexSite(ctx, idx, storage, log)
+		err := indexSite(ctx, idx, s.storage, s.log)
 		if err != nil {
 			errorCh <- fmt.Errorf("error indexing site: %v", err)
 			return
