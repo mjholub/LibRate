@@ -61,7 +61,7 @@ type (
 		// Aggregations is a map of aggregations, to perform aggregations on fields.
 		// The provided map key can be used to identify the corresponding bucket in
 		// the result.
-		Aggregations *[]interface{} `json:"aggregations,omitempty" query:"aggregations,omitempty"`
+		Aggregations *[]interface{} `json:"aggregations,omitempty" query:"agg,omitempty"`
 	}
 )
 

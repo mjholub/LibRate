@@ -20,9 +20,9 @@ import (
 // @Param X-CSRF-Token header string false "CSRF token. Required when using POST."
 // @Param q query string false "The search query. Falls back to a wildcard query if not provided."
 // @Param category query string false "The category to search in" Enums(union,users,groups,artists,media,posts,reviews,tags,genres)
-// @Param aggregations query string false "The aggregations to perform on the search results"
+// @Param agg query string false "The aggregations to perform on the search results"
 // @Param fuzzy query boolean false "Whether to perform a fuzzy search"
-// @Param sort query string false "The field to sort the results by" Enums(score,added,modified,weighed_score,review_count)
+// @Param sort query string false "The field to sort the results by" Enums(score,added,modified,name)
 // @Param desc query boolean false "Whether to sort the results in descending order"
 // @Param page query integer false "The page to return"
 // @Param pageSize query integer false "The number of results to return per page"
@@ -64,7 +64,7 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 	opts.Categories = categories
 	s.log.Trace().Msgf("parsed categories: %v", categories)
 
-	aggregations := c.Query("aggregations", "")
+	aggregations := c.Query("agg", "")
 	if aggregations != "" {
 		s.log.Trace().Msg("aggregation list not empty")
 		aggregationsList := strings.Split(aggregations, ",")
@@ -75,18 +75,6 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 		opts.Aggregations = &aggs
 		s.log.Trace().Msgf("parsed aggregations: %v", aggs)
 	}
-
-	sort := c.Query("sort", "added")
-	opts.Sort = sort
-	s.log.Trace().Msgf("parsed sort order: %s", sort)
-	if s.validation == nil {
-		return nil, fmt.Errorf("validator is nil")
-	}
-	if err := s.validation.StructPartialCtx(c.Context(), opts, "sort"); err != nil {
-		return nil, fmt.Errorf("invalid sort: %v", err)
-	}
-
-	s.log.Debug().Msgf("validated sort order %s", sort)
 
 	pageSize := uint(c.QueryInt("pageSize", 0))
 	opts.PageSize = pageSize
