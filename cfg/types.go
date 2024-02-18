@@ -40,6 +40,10 @@ type DBConfig struct {
 
 // currently only couchdb is supported
 type Search struct {
+	Provider string `yaml:"provider,omitempty" default:"meilisearch" validate:"oneof='meilisearch bleve'"`
+	// MeiliKey is the master key you've set for your instance
+	MeiliKey      string `yaml:"meiliKey,omitempty" env:"MEILI_MASTER_KEY"`
+	MeiliHost     string `yaml:"meiliHost,omitempty" default:"http://localhost:7700" env:"MEILI_HOST"`
 	Host          string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
 	Port          int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
 	User          string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`

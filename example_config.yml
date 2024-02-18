@@ -48,6 +48,7 @@ redis:
   pagesDb: 4
   searchDb: 5
 search:
+  provider: "meilisearch"
   host: "librate-search"
   port: 5984
   user: "librate"
