@@ -23,13 +23,14 @@ func buildUniversalQuery(queryVal string, fuzzy bool) query.Query {
 	}
 	if fuzzy {
 		fuzzyQ := bleve.NewFuzzyQuery(queryVal)
+		fuzzyQ.Term = queryVal
 		fuzzyQ.SetField("query")
-		// TODO: fine-tune fuzziness if necessary
 		return fuzzyQ
 	} else {
-		matchQ := bleve.NewMatchQuery(queryVal)
-		matchQ.SetField("query")
-		return matchQ
+		termQ := bleve.NewTermQuery(queryVal)
+		termQ.Term = queryVal
+		termQ.SetField("query")
+		return termQ
 	}
 }
 
