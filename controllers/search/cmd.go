@@ -12,7 +12,7 @@ func (s *Service) RunQuery(ctx context.Context, opts *Options) (res *bleve.Searc
 	queryVal := buildUniversalQuery(opts.Query, opts.Fuzzy)
 	req := buildSearchRequest(opts, queryVal)
 	s.log.Debug().Msgf("request: %+v", &req)
-	return s.i.SearchInContext(ctx, req)
+	return s.i.Search(req)
 }
 
 func buildUniversalQuery(queryVal string, fuzzy bool) query.Query {
