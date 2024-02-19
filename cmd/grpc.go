@@ -9,20 +9,27 @@ import (
 	"sync"
 
 	protodb "codeberg.org/mjh/lrctl/grpc/db"
+	protosearch "codeberg.org/mjh/lrctl/grpc/search"
 	"codeberg.org/mjh/lrctl/grpc/shutdown"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/db"
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
 type GrpcServer struct {
 	shutdown.UnimplementedShutdownServiceServer
 	protodb.UnimplementedDBServer
+	protosearch.UnimplementedSearchServer
+	Cache  *redis.Storage
 	App    *fiber.App
 	Log    *zerolog.Logger
 	Config *cfg.GrpcConfig
@@ -41,6 +48,7 @@ func registerGRPC(srv *GrpcServer) {
 
 	shutdown.RegisterShutdownServiceServer(s, srv)
 	protodb.RegisterDBServer(s, srv)
+	protosearch.RegisterSearchServer(s, srv)
 
 	reflection.Register(s)
 
@@ -185,4 +193,56 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 
 	s.Log.Info().Msg("database migrated")
 	return &protodb.MigrateResponse{Success: true}, nil
+}
+
+func (s *GrpcServer) BuildIndex(
+	ctx context.Context,
+	req *protosearch.BuildRequest,
+) (res *protosearch.BuildResponse, err error) {
+	conf := cfg.SearchConfig{
+		Provider:      req.Config.Provider,
+		MeiliHost:     *req.Config.MeiliHost,
+		MeiliPort:     int(*req.Config.MeiliPort),
+		CouchDBHost:   req.Config.Host,
+		Port:          int(req.Config.Port),
+		User:          req.Config.User,
+		Password:      req.Config.Password,
+		MainIndexPath: req.Config.IndexPath,
+	}
+	storage, err := searchdb.Connect(ctx, &conf, s.Log)
+	if err != nil {
+		return nil, err
+	}
+
+	switch req.Config.Provider {
+	case "bleve":
+		svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
+			search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
+		)
+
+		err = svc.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath)
+		if err != nil {
+			return nil, err
+		}
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	case "meilisearch", "meili":
+		svc, err := meili.Connect(&conf, s.Log, nil, storage)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = svc.CreateAllIndexes(ctx); err != nil {
+			return nil, err
+		}
+
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported search provider: %s", req.Config.Provider)
+	}
 }
