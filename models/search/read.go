@@ -187,16 +187,17 @@ func (s *Storage) ReadAll(ctx context.Context) (data *CombinedData, err error) {
 	}(ctx)
 
 	wg.Wait()
+
+	close(genresCh)
+	close(membersCh)
+	close(studioCh)
+	close(reviewsCh)
+	close(artistsCh)
+	close(mediaCh)
 	select {
 	case err = <-errorCh:
 		return nil, err
 	default:
-		close(genresCh)
-		close(membersCh)
-		close(studioCh)
-		close(reviewsCh)
-		close(artistsCh)
-		close(mediaCh)
 		combinedData := CombinedData{
 			Genres:  <-genresCh,
 			Members: <-membersCh,
@@ -516,6 +517,9 @@ func (s *Storage) ReadMedia(ctx context.Context) (data []Media, err error) {
 		"include_docs": true,
 	}
 	rows, err := db.AllDocs(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("error accessing database rows: %v", err)
+	}
 	defer rows.Close()
 
 	for rows.Next() {
