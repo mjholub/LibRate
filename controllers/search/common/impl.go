@@ -1,3 +1,7 @@
-package commmon
+package common
 
-// TODO : create a Searcher interface, then use it for double dispatch in router
+import "github.com/gofiber/fiber/v2"
+
+type Searcher interface {
+	HandleSearch(c *fiber.Ctx) error
+}

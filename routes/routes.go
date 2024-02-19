@@ -29,6 +29,7 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/common"
 	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/controllers/static"
 	"codeberg.org/mjh/LibRate/controllers/version"
@@ -123,20 +124,21 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, c
 	}
 
 	searchAPI := api.Group("/search")
+	var svc common.Searcher
 	switch conf.Provider {
 	case "bleve":
-		svc, err := search.NewService(
+		svc, err = search.NewService(
 			ctx, v, ss, conf.MainIndexPath, cache, log).Get()
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to set up routes for search API")
-			searchAPI.Post("/", sendNotImpl)
-			searchAPI.Get("/", sendNotImpl)
-		} else {
-			searchAPI.Post("/", svc.HandleSearch)
-			searchAPI.Get("/", svc.HandleSearch)
-		}
 	default:
-		svc, err := meili.Connect(conf, log)
+		svc, err = meili.Connect(conf, log)
+	}
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to set up routes for search API")
+		searchAPI.Post("/", sendNotImpl)
+		searchAPI.Get("/", sendNotImpl)
+	} else {
+		searchAPI.Post("/", svc.HandleSearch)
+		searchAPI.Get("/", svc.HandleSearch)
 	}
 
 }
