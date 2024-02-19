@@ -60,7 +60,7 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 	opts.Categories = categories
 	s.log.Trace().Msgf("parsed categories: %v", categories)
 
-	pageSize := uint(c.QueryInt("pageSize", 0))
+	pageSize := int64(c.QueryInt("pageSize", 0))
 	opts.PageSize = pageSize
 	if err := s.validation.StructPartialCtx(c.Context(), opts, "pageSize"); err != nil {
 		return nil, fmt.Errorf("invalid page size: %v", err)

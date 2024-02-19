@@ -19,7 +19,7 @@ func TestReadAll(t *testing.T) {
 	conf := cfg.TestConfig
 
 	log := zerolog.Nop()
-	storage, err := Connect(&conf.CouchDB, &log)
+	storage, err := Connect(&conf.Search, &log)
 	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -36,7 +36,7 @@ func TestReadGenres(t *testing.T) {
 	conf := cfg.TestConfig
 
 	log := zerolog.Nop()
-	storage, err := Connect(&conf.CouchDB, &log)
+	storage, err := Connect(&conf.Search, &log)
 	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

@@ -2,8 +2,11 @@ package meili
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/meilisearch/meilisearch-go"
+	"github.com/samber/lo"
 )
 
 func (s *Service) CreateAllIndexes(ctx context.Context) error {
@@ -11,18 +14,46 @@ func (s *Service) CreateAllIndexes(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	docData := map[string]any{
-		"genres":  docs.Genres,
-		"members": docs.Members,
-		"studios": docs.Studios,
-		"ratings": docs.Ratings,
-		"artists": docs.Artists,
-		"media":   docs.Media,
+	docData := map[string][]any{
+		"genres":  lo.ToAnySlice(docs.Genres),
+		"members": lo.ToAnySlice(docs.Members),
+		"studios": lo.ToAnySlice(docs.Studios),
+		"ratings": lo.ToAnySlice(docs.Ratings),
+		"artists": lo.ToAnySlice(docs.Artists),
+		"media":   lo.ToAnySlice(docs.Media),
 	}
 
+	errorCh := make(chan error, len(docData))
+	var wg sync.WaitGroup
+
+	wg.Add(len(docData))
 	for name, data := range docData {
-		if _, err := s.client.Index(name).AddDocuments(data); err != nil {
-			return err
+		go func(name string, data []any) {
+			if _, err := s.client.Index(name).AddDocuments(data); err != nil {
+				errorCh <- fmt.Errorf("error building index %s: %w", name, err)
+			}
+		}(name, data)
+	}
+	wg.Wait()
+
+	close(errorCh)
+	errorSlice := make([]error, 0, len(docData))
+
+	// build the summary (aka "union") index
+	if _, err = s.client.Index("union").AddDocuments(docs); err != nil {
+		return fmt.Errorf("error building index union: %w", err)
+	}
+
+	for e := range errorCh {
+		errorSlice = append(errorSlice, e)
+		// combine all errors into one
+		switch len(errorSlice) {
+		case 0:
+			return nil
+		case 1:
+			return errorSlice[0]
+		default:
+			return fmt.Errorf("errors building indexes: %v", errorSlice)
 		}
 	}
 

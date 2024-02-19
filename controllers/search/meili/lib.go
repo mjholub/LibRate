@@ -1,6 +1,9 @@
 package meili
 
 import (
+	"fmt"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/rs/zerolog"
 
@@ -11,9 +14,10 @@ import (
 
 type (
 	Service struct {
-		searchdb *searchdb.Storage
-		client   *meilisearch.Client
-		log      *zerolog.Logger
+		searchdb   *searchdb.Storage
+		client     *meilisearch.Client
+		log        *zerolog.Logger
+		validation *validator.Validate
 	}
 
 	// Options defines a set of optional search parameters.
@@ -45,11 +49,15 @@ type (
 	}
 )
 
-func Connect(conf *cfg.Search, log *zerolog.Logger) (*Service, error) {
+func Connect(conf *cfg.SearchConfig, log *zerolog.Logger, v *validator.Validate) (*Service, error) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
 		Host:   conf.MeiliHost,
-		APIKey: conf.MeiliKey,
+		APIKey: fmt.Sprintf("http://%s:%d/", conf.MeiliHost, conf.MeiliPort),
 	})
 
-	return &Service{client: client, log: log}, nil
+	return &Service{
+		client:     client,
+		log:        log,
+		validation: v,
+	}, nil
 }

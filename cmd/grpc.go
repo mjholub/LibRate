@@ -199,9 +199,9 @@ func (s *GrpcServer) BuildIndex(
 	ctx context.Context,
 	req *protosearch.BuildRequest,
 ) (res *protosearch.BuildResponse, err error) {
-	conf := cfg.Search{
+	conf := cfg.SearchConfig{
 		Provider:      req.Config.Provider,
-		Host:          req.Config.Host,
+		CouchDBHost:   req.Config.Host,
 		Port:          int(req.Config.Port),
 		User:          req.Config.User,
 		Password:      req.Config.Password,
@@ -226,8 +226,8 @@ func (s *GrpcServer) BuildIndex(
 			DocumentCount:   1,
 			TimePerDocument: 0.1,
 		}, nil
-	case "meili":
-		svc, err := meili.Connect(&conf, s.Log)
+	case "meilisearch", "meili":
+		svc, err := meili.Connect(&conf, s.Log, nil)
 		if err != nil {
 			return nil, err
 		}

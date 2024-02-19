@@ -102,7 +102,7 @@ func Setup(ctx context.Context, r *RouterProps) error {
 
 	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	setupSearch(ctx, r.Validation, &r.Conf.CouchDB, r.Cache, r.Log, api)
+	setupSearch(ctx, r.Validation, &r.Conf.Search, r.Cache, r.Log, api)
 
 	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
@@ -116,7 +116,7 @@ func Setup(ctx context.Context, r *RouterProps) error {
 	return nil
 }
 
-func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
+func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.SearchConfig, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
 	ss, err := searchdb.Connect(ctx, conf, log)
 	if err != nil {
 		log.Err(err).Msgf("an error occurred while setting up search handler. Search won't work!")
@@ -130,7 +130,7 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, c
 		svc, err = search.NewService(
 			ctx, v, ss, conf.MainIndexPath, cache, log).Get()
 	default:
-		svc, err = meili.Connect(conf, log)
+		svc, err = meili.Connect(conf, log, v)
 	}
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to set up routes for search API")

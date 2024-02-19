@@ -8,7 +8,6 @@ package searchdb
 import (
 	"context"
 	"fmt"
-	"time"
 
 	_ "github.com/go-kivik/couchdb/v3"
 	"github.com/go-kivik/kivik/v3"
@@ -19,15 +18,15 @@ import (
 
 type Storage struct {
 	log    *zerolog.Logger
-	config *cfg.Search
+	config *cfg.SearchConfig
 	client *kivik.Client
 }
 
-func Connect(ctx context.Context, config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
+func Connect(ctx context.Context, config *cfg.SearchConfig, log *zerolog.Logger) (*Storage, error) {
 	dsn := fmt.Sprintf("http://%s:%s@%s:%d",
 		config.User,
 		config.Password,
-		config.Host,
+		config.CouchDBHost,
 		config.Port)
 
 	client, err := kivik.New("couch", dsn)

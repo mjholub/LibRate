@@ -65,11 +65,11 @@ var (
 			PowDB:    9,
 			CsrfDB:   11,
 		},
-		CouchDB: Search{
-			Host:     "0.0.0.0",
-			Port:     5984,
-			User:     "librate",
-			Password: "librate",
+		Search: SearchConfig{
+			CouchDBHost: "0.0.0.0",
+			Port:        5984,
+			User:        "librate",
+			Password:    "librate",
 		},
 		Fiber: FiberConfig{
 			Host:           "0.0.0.0",
