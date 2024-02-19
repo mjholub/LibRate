@@ -201,6 +201,8 @@ func (s *GrpcServer) BuildIndex(
 ) (res *protosearch.BuildResponse, err error) {
 	conf := cfg.SearchConfig{
 		Provider:      req.Config.Provider,
+		MeiliHost:     *req.Config.MeiliHost,
+		MeiliPort:     int(*req.Config.MeiliPort),
 		CouchDBHost:   req.Config.Host,
 		Port:          int(req.Config.Port),
 		User:          req.Config.User,
