@@ -1,10 +1,10 @@
 module codeberg.org/mjh/LibRate
 
-go 1.22
+go 1.21
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db
-	codeberg.org/mjh/lrctl v0.2.1
+	codeberg.org/mjh/lrctl v0.2.2
 	dario.cat/mergo v1.0.0
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
