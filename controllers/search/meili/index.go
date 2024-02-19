@@ -26,9 +26,11 @@ func (s *Service) CreateAllIndexes(ctx context.Context) error {
 	errorCh := make(chan error, len(docData))
 	var wg sync.WaitGroup
 
+	s.log.Info().Msgf("creating %d indexes", len(docData))
 	wg.Add(len(docData))
 	for name, data := range docData {
 		go func(name string, data []any) {
+			defer wg.Done()
 			if _, err := s.client.Index(name).AddDocuments(data); err != nil {
 				errorCh <- fmt.Errorf("error building index %s: %w", name, err)
 			}
@@ -39,11 +41,13 @@ func (s *Service) CreateAllIndexes(ctx context.Context) error {
 	close(errorCh)
 	errorSlice := make([]error, 0, len(docData))
 
+	s.log.Info().Msg("creating union index")
 	// build the summary (aka "union") index
 	if _, err = s.client.Index("union").AddDocuments(docs); err != nil {
 		return fmt.Errorf("error building index union: %w", err)
 	}
 
+	s.log.Debug().Msg("performing final error check")
 	for e := range errorCh {
 		errorSlice = append(errorSlice, e)
 		// combine all errors into one

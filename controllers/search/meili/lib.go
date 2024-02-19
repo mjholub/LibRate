@@ -2,7 +2,9 @@ package meili
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/go-playground/validator/v10"
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/rs/zerolog"
@@ -59,6 +61,23 @@ func Connect(
 		Host:   conf.MeiliHost,
 		APIKey: fmt.Sprintf("http://%s:%d/", conf.MeiliHost, conf.MeiliPort),
 	})
+
+	err := retry.Do(
+		func() error {
+			if client.IsHealthy() {
+				return nil
+			}
+			return fmt.Errorf("meilisearch client healthcheck failed")
+		},
+		retry.Attempts(5),
+		retry.Delay(500*time.Millisecond),
+		retry.OnRetry(func(n uint, _ error) {
+			log.Warn().Msgf("retrying meilisearch client healthcheck, attempt %d", n)
+		},
+		))
+	if err != nil {
+		return nil, fmt.Errorf("meilisearch client healthcheck failed (too many attempts)")
+	}
 
 	return &Service{
 		searchdb:   searchStorage,
