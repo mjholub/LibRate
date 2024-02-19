@@ -17,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -28,6 +29,8 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
 	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/common"
+	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/controllers/static"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
@@ -47,12 +50,13 @@ type RouterProps struct {
 	SessionHandler  *session.Store
 	WebsocketConfig *websocket.Config
 	Validation      *validator.Validate
+	Cache           *redis.Storage
 }
 
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(r *RouterProps) error {
+func Setup(ctx context.Context, r *RouterProps) error {
 	api := r.App.Group("/api", r.LogHandler)
 
 	r.App.Get("/docs/*", swagger.New(swagger.Config{
@@ -98,7 +102,7 @@ func Setup(r *RouterProps) error {
 
 	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
 
-	setupSearch(r.Validation, &r.Conf.CouchDB, r.Log, api)
+	setupSearch(ctx, r.Validation, &r.Conf.Search, r.Cache, r.Log, api)
 
 	r.App.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendString("I'm alive!")
@@ -112,23 +116,35 @@ func Setup(r *RouterProps) error {
 	return nil
 }
 
-func setupSearch(v *validator.Validate, conf *cfg.Search, log *zerolog.Logger, api fiber.Router) {
-	ss, err := searchdb.Connect(conf, log)
+func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.SearchConfig, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
+	ss, err := searchdb.Connect(ctx, conf, log)
 	if err != nil {
-		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
+		log.Err(err).Msgf("an error occurred while setting up search handler. Search won't work!")
 		return
 	}
 
-	// FIXME: index here should be passed from main
-	svc, err := search.NewService(
-		context.Background(), v, ss, conf.MainIndexPath, log).Get()
+	searchAPI := api.Group("/search")
+	var svc common.Searcher
+	switch conf.Provider {
+	case "bleve":
+		svc, err = search.NewService(
+			ctx, v, ss, conf.MainIndexPath, cache, log).Get()
+	default:
+		svc, err = meili.Connect(conf, log, v, ss)
+	}
 	if err != nil {
-		log.Err(err).Msgf("error setting up the http layer for search handler")
+		log.Warn().Err(err).Msg("failed to set up routes for search API")
+		searchAPI.Post("/", sendNotImpl)
+		searchAPI.Get("/", sendNotImpl)
+	} else {
+		searchAPI.Post("/", svc.HandleSearch)
+		searchAPI.Get("/", svc.HandleSearch)
 	}
 
-	searchAPI := api.Group("/search")
-	searchAPI.Post("/", svc.HandleSearch)
-	searchAPI.Get("/", svc.HandleSearch)
+}
+
+func sendNotImpl(c *fiber.Ctx) error {
+	return c.Redirect("https://http.cat/images/501.jpg", 303)
 }
 
 func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {

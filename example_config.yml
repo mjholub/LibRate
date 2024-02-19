@@ -46,11 +46,16 @@ redis:
   csrfDb: 2
   powDb: 3
   pagesDb: 4
+  searchDb: 5
 search:
-  host: "librate-search"
-  port: 5984
-  user: "librate"
-  password: "CHANGE_ME"
+  provider: "meilisearch"
+  meiliKey: "SuperSecretKey"
+  meiliHost: "http://localhost:7700"
+  couchDBHost: "0.0.0.0"
+  couchDBPort: 5984
+  couchDBUser: "librate"
+  couchDBPassword: "librate"
+  mainIndexPath: "page-index.bleve"
 logging:
   level: "info"
   target: "stdout"

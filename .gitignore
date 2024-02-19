@@ -42,3 +42,4 @@ static/templates/privacy_en-US.md
 couchdb/data/shards
 couchdb/data
 *.bleve
+data.ms

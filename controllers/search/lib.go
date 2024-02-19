@@ -6,6 +6,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/rs/zerolog"
 	"github.com/samber/mo"
 
@@ -18,6 +19,7 @@ type (
 		validation *validator.Validate
 		storage    *searchdb.Storage
 		i          bleve.Index
+		cache      *redis.Storage
 		log        *zerolog.Logger
 	}
 
@@ -32,7 +34,7 @@ type (
 
 		// Sort is the field, that should be sorted by.
 		// When left empty, the default sorting is used.
-		Sort string `json:"sort" query:"sort" validate:"oneof=score added modified weighed_score review_count"`
+		Sort string `json:"sort,omitempty" query:"sort,omitempty" validate:"oneof=score added modified name"`
 
 		// LocalFirst determines whether the results from the current instance should be
 		// preferred over remote results.
@@ -55,11 +57,6 @@ type (
 		// Categories are the categories to search in. By default,
 		// a Union category is performed to search in all categories.
 		Categories []target.Category `json:"categories" query:"category" validate:"unique,dive" default:"union"`
-
-		// Aggregations is a map of aggregations, to perform aggregations on fields.
-		// The provided map key can be used to identify the corresponding bucket in
-		// the result.
-		Aggregations *[]interface{} `json:"aggregations,omitempty" query:"aggregations,omitempty"`
 	}
 )
 
@@ -68,16 +65,30 @@ func NewService(
 	validation *validator.Validate,
 	storage *searchdb.Storage,
 	indexPath string,
+	cache *redis.Storage,
 	log *zerolog.Logger,
 ) mo.Result[*Service] {
 	return mo.Try(func() (*Service, error) {
 		idx, err := bleve.Open(indexPath)
 		if err != nil {
-			if retry := CreateIndex(ctx, indexPath, storage, log); retry != nil {
-				return nil, fmt.Errorf("tried to create the missing index, but failed: %v", retry)
-			}
+			return nil, fmt.
+				Errorf(
+					`Missing search index.
+				 Create one with lrctl search build.
+				(available at https://codeberg.org/mjh/lrctl).
+				Any request to /api/search/ will return 501 Not Implemented!
+				`)
 		}
 
-		return &Service{validation, storage, idx, log}, nil
+		return &Service{validation, storage, idx, cache, log}, nil
 	})
+}
+
+func ServiceNoIndex(
+	validation *validator.Validate,
+	storage *searchdb.Storage,
+	cache *redis.Storage,
+	log *zerolog.Logger,
+) *Service {
+	return &Service{validation, storage, nil, cache, log}
 }

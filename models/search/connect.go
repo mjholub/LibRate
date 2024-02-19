@@ -8,10 +8,9 @@ package searchdb
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/go-kivik/kivik/v4"
-	_ "github.com/go-kivik/kivik/v4/couchdb"
+	_ "github.com/go-kivik/couchdb/v3"
+	"github.com/go-kivik/kivik/v3"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -19,23 +18,21 @@ import (
 
 type Storage struct {
 	log    *zerolog.Logger
-	config *cfg.Search
+	config *cfg.SearchConfig
 	client *kivik.Client
 }
 
-func Connect(config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
+func Connect(ctx context.Context, config *cfg.SearchConfig, log *zerolog.Logger) (*Storage, error) {
 	dsn := fmt.Sprintf("http://%s:%s@%s:%d",
 		config.User,
 		config.Password,
-		config.Host,
+		config.CouchDBHost,
 		config.Port)
 
 	client, err := kivik.New("couch", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to couchdb: %w", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	if ok, err := client.Ping(ctx); !ok {
 		return nil, fmt.Errorf("error establishing connection to the search database: %v", err)
 	}

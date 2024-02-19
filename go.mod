@@ -1,10 +1,10 @@
 module codeberg.org/mjh/LibRate
 
-go 1.22
+go 1.21
 
 require (
 	codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db
-	codeberg.org/mjh/lrctl v0.1.11
+	codeberg.org/mjh/lrctl v0.2.4
 	dario.cat/mergo v1.0.0
 	filippo.io/age v1.1.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -16,7 +16,8 @@ require (
 	github.com/georgysavva/scany/v2 v2.1.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
-	github.com/go-kivik/kivik/v4 v4.2.1
+	github.com/go-kivik/couchdb/v3 v3.4.1
+	github.com/go-kivik/kivik/v3 v3.2.4
 	github.com/go-playground/validator/v10 v10.17.0
 	github.com/goccy/go-json v0.10.2
 	github.com/goccy/go-yaml v1.11.3
@@ -36,7 +37,9 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/meilisearch/meilisearch-go v0.26.1
 	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
 	github.com/rs/zerolog v1.31.0
@@ -141,6 +144,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -159,7 +163,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/json-iterator/go v0.0.0-20171115153421-f7279a603ede // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -172,8 +176,9 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -191,6 +196,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	gitlab.com/flimzy/testy v0.14.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.47.0 // indirect

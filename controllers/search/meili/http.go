@@ -1,4 +1,4 @@
-package search
+package meili
 
 import (
 	"fmt"
@@ -11,8 +11,6 @@ import (
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 )
 
-// TODO: add aggregations documentation
-// TODO: make better use of POST support
 // @Summary Perform a search for the given query and options
 // @Description Search for media, users, posts, artists, etc.
 // @Tags search,media,metadata,users,posts,reviews
@@ -34,7 +32,7 @@ func (s *Service) HandleSearch(c *fiber.Ctx) error {
 		return h.BadRequest(s.log, c, clientErr, "invalid input for "+c.Query("term"), err)
 	}
 	s.log.Debug().Msg("parsed queries")
-	results, err := s.RunQuery(c.Context(), opts)
+	results, err := s.RunQuery(opts)
 	if err != nil {
 		return h.InternalError(s.log, c, "search failed", err)
 	}
@@ -62,7 +60,7 @@ func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
 	opts.Categories = categories
 	s.log.Trace().Msgf("parsed categories: %v", categories)
 
-	pageSize := uint(c.QueryInt("pageSize", 0))
+	pageSize := int64(c.QueryInt("pageSize", 0))
 	opts.PageSize = pageSize
 	if err := s.validation.StructPartialCtx(c.Context(), opts, "pageSize"); err != nil {
 		return nil, fmt.Errorf("invalid page size: %v", err)

@@ -21,7 +21,7 @@ type Config struct {
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 	External   External       `json:"external,omitempty" yaml:"external" mapstructure:"external"`
-	CouchDB    Search         `json:"couchdb,omitempty" yaml:"couchdb" mapstructure:"couchdb"`
+	Search     SearchConfig   `json:"search,omitempty" yaml:"search" mapstructure:"search"`
 }
 
 // nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
@@ -39,11 +39,16 @@ type DBConfig struct {
 }
 
 // currently only couchdb is supported
-type Search struct {
-	Host          string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
-	Port          int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
-	User          string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
-	Password      string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+type SearchConfig struct {
+	Provider string `yaml:"provider,omitempty" default:"meilisearch" validate:"oneof='meilisearch' 'bleve'"`
+	// MeiliKey is the master key you've set for your instance
+	MeiliKey      string `yaml:"meiliKey,omitempty" env:"MEILI_MASTER_KEY"`
+	MeiliHost     string `yaml:"meiliHost,omitempty" default:"0.0.0.0" env:"MEILI_HOST"`
+	MeiliPort     int    `yaml:"meiliPort,omitempty" default:"7700" env:"MEILI_PORT"`
+	CouchDBHost   string `yaml:"couchDBHost,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port          int    `yaml:"couchDBPort,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User          string `yaml:"couchDBUser,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password      string `yaml:"couchDBPassword,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
 	MainIndexPath string `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
 }
 
@@ -64,6 +69,7 @@ type RedisConfig struct {
 	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
 	PowDB    int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
 	PagesDB  int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
+	SearchDB int    `yaml:"searchDb,omitempty" default:"5" env:"LIBRATE_SEARCH_CACHE"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config

@@ -53,7 +53,7 @@ func TestBuildReviewsMapping(t *testing.T) {
 	assert.NotNil(t, usersMapping)
 	err = usersMapping.Validate(cache)
 	require.Nilf(t, err, "error validating document mapping for users: %v", err)
-	mediaMapping := buildMediaMapping(textMapping, keywordMapping, artistsMapping, genresMapping)
+	mediaMapping := buildMediaMapping(textMapping, keywordMapping)
 	assert.NotNil(t, mediaMapping)
 	err = mediaMapping.Validate(cache)
 	require.Nilf(t, err, "error validating media cache: %v", err)
@@ -84,16 +84,9 @@ func TestBuildMediaMapping(t *testing.T) {
 	keywordMapping := bleve.NewKeywordFieldMapping()
 	keywordMapping.Analyzer = keyword.Name
 
-	artistsMapping := buildArtistsMapping(textMapping, keywordMapping)
-	assert.NotNil(t, artistsMapping)
-	err := artistsMapping.Validate(cache)
-	require.Nilf(t, err, "error validating document mapping for artists: %v", err)
-	genresMapping := buildGenresMapping(textMapping, keywordMapping)
-	assert.NotNil(t, genresMapping)
-
-	mediaMapping := buildMediaMapping(textMapping, keywordMapping, artistsMapping, genresMapping)
+	mediaMapping := buildMediaMapping(textMapping, keywordMapping)
 	assert.NotNil(t, mediaMapping)
-	err = mediaMapping.Validate(cache)
+	err := mediaMapping.Validate(cache)
 	require.Nilf(t, err, "error validating media cache: %v", err)
 }
 

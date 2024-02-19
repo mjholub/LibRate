@@ -4,20 +4,19 @@ type targetDBName string
 
 const (
 	Members           targetDBName = "members"
-	ArtistsIndividual targetDBName = "person"
-	ArtistsGroup      targetDBName = "group"
+	Artists           targetDBName = "artists"
 	Ratings           targetDBName = "ratings"
 	Genres            targetDBName = "genres"
 	GenreDescriptions targetDBName = "genre_descriptions"
 	// aka keywords
-	GenreCharacteristics targetDBName = "genre_characteristics"
-	Studios              targetDBName = "studio"
+	Studios targetDBName = "studio"
+	MediaDB targetDBName = "media"
 )
 
 // nolint:gochecknoglobals
 var AllTargets = []TargetDB{
-	Members, ArtistsGroup, ArtistsIndividual, Ratings, Genres,
-	GenreDescriptions, GenreCharacteristics, Studios,
+	Members, Artists, Ratings, Genres,
+	GenreDescriptions, Studios, MediaDB,
 }
 
 type TargetDB interface {
