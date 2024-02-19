@@ -43,10 +43,10 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db h1:IVg1avayPuy4wcvgzpwEJzdQD7T0ExIPV+YJ+naB/sU=
 codeberg.org/mjh/LibRate/recommendation/go v0.0.0-20240131090236-172db9f487db/go.mod h1:Dl+SpPnw4GJh35UAumdcxXRpsZ3KIG6bAuWBp6Z47nk=
-codeberg.org/mjh/lrctl v0.2.1 h1:bqG46NNJuT8P31seV2pSETamOd3K4TaURf4QRXJvUHk=
-codeberg.org/mjh/lrctl v0.2.1/go.mod h1:nMjyV2jdOnd+LHR4L9Zjb4RSw+LRstRbAwC5sYnLDFI=
 codeberg.org/mjh/lrctl v0.2.2 h1:gUBz59eu3Mms3Iv3RiifvIvNwYwA04L/2PQGuYVVefg=
 codeberg.org/mjh/lrctl v0.2.2/go.mod h1:xK3NVWspcSH4V5zNAwrD0vIM/8wqj6yZ6ERZcJYKaWU=
+codeberg.org/mjh/lrctl v0.2.3 h1:9Mc4ANrzx/9XpSx3D6r+SbLBNPj2Ezt0bR1xUsoCPMg=
+codeberg.org/mjh/lrctl v0.2.3/go.mod h1:MIKDWBss+a3bugeu90CZyZRDYuSqFWwTnmgwPxMoRco=
 dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=

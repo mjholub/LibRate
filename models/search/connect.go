@@ -23,7 +23,7 @@ type Storage struct {
 	client *kivik.Client
 }
 
-func Connect(config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
+func Connect(ctx context.Context, config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
 	dsn := fmt.Sprintf("http://%s:%s@%s:%d",
 		config.User,
 		config.Password,
@@ -34,8 +34,6 @@ func Connect(config *cfg.Search, log *zerolog.Logger) (*Storage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to couchdb: %w", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	if ok, err := client.Ping(ctx); !ok {
 		return nil, fmt.Errorf("error establishing connection to the search database: %v", err)
 	}

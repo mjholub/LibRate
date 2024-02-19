@@ -116,9 +116,9 @@ func Setup(ctx context.Context, r *RouterProps) error {
 }
 
 func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.Search, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
-	ss, err := searchdb.Connect(conf, log)
+	ss, err := searchdb.Connect(ctx, conf, log)
 	if err != nil {
-		log.Err(err).Msgf("an error occured while setting up search handler. Search won't work!")
+		log.Err(err).Msgf("an error occurred while setting up search handler. Search won't work!")
 		return
 	}
 

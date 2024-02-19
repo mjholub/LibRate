@@ -20,6 +20,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/cfg"
 	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/db"
 	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
@@ -199,28 +200,47 @@ func (s *GrpcServer) BuildIndex(
 	req *protosearch.BuildRequest,
 ) (res *protosearch.BuildResponse, err error) {
 	conf := cfg.Search{
+		Provider:      req.Config.Provider,
 		Host:          req.Config.Host,
 		Port:          int(req.Config.Port),
 		User:          req.Config.User,
 		Password:      req.Config.Password,
 		MainIndexPath: req.Config.IndexPath,
 	}
-	storage, err := searchdb.Connect(&conf, s.Log)
+	storage, err := searchdb.Connect(ctx, &conf, s.Log)
 	if err != nil {
 		return nil, err
 	}
 
-	svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
-		search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
-	)
+	switch req.Config.Provider {
+	case "bleve":
+		svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
+			search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
+		)
 
-	err = svc.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath)
-	if err != nil {
-		return nil, err
+		err = svc.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath)
+		if err != nil {
+			return nil, err
+		}
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	case "meili":
+		svc, err := meili.Connect(&conf, s.Log)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = svc.CreateAllIndexes(ctx); err != nil {
+			return nil, err
+		}
+
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported search provider: %s", req.Config.Provider)
 	}
-	// TODO: implement proper tracing here
-	return &protosearch.BuildResponse{
-		DocumentCount:   1,
-		TimePerDocument: 0.1,
-	}, nil
 }

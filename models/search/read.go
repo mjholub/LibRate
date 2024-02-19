@@ -3,7 +3,6 @@ package searchdb
 import (
 	"context"
 	"fmt"
-	"slices"
 	"sync"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/go-kivik/kivik/v3"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 )
 
 type (
@@ -359,7 +359,8 @@ func ToBleveDocument(combinedData *CombinedData, log *zerolog.Logger) (docs []Bl
 	genreDocs := <-genreDocCh
 	studioDocs := <-studioDocCh
 	reviewDocs := <-reviewDocCh
-	docs = slices.Concat(mediaDocs, artistDocs, memberDocs, genreDocs, studioDocs, reviewDocs)
+	allDocs := [][]BleveDocument{mediaDocs, artistDocs, memberDocs, genreDocs, studioDocs, reviewDocs}
+	docs = lo.Flatten(allDocs)
 	return docs, nil
 }
 
