@@ -49,13 +49,19 @@ type (
 	}
 )
 
-func Connect(conf *cfg.SearchConfig, log *zerolog.Logger, v *validator.Validate) (*Service, error) {
+func Connect(
+	conf *cfg.SearchConfig,
+	log *zerolog.Logger,
+	v *validator.Validate,
+	searchStorage *searchdb.Storage,
+) (*Service, error) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
 		Host:   conf.MeiliHost,
 		APIKey: fmt.Sprintf("http://%s:%d/", conf.MeiliHost, conf.MeiliPort),
 	})
 
 	return &Service{
+		searchdb:   searchStorage,
 		client:     client,
 		log:        log,
 		validation: v,

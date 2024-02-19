@@ -229,7 +229,7 @@ func (s *GrpcServer) BuildIndex(
 			TimePerDocument: 0.1,
 		}, nil
 	case "meilisearch", "meili":
-		svc, err := meili.Connect(&conf, s.Log, nil)
+		svc, err := meili.Connect(&conf, s.Log, nil, storage)
 		if err != nil {
 			return nil, err
 		}
