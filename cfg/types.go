@@ -41,15 +41,28 @@ type DBConfig struct {
 // currently only couchdb is supported
 type SearchConfig struct {
 	Provider string `yaml:"provider,omitempty" default:"meilisearch" validate:"oneof='meilisearch' 'bleve'"`
-	// MeiliKey is the master key you've set for your instance
-	MeiliKey      string `yaml:"meiliKey,omitempty" env:"MEILI_MASTER_KEY"`
-	MeiliHost     string `yaml:"meiliHost,omitempty" default:"0.0.0.0" env:"MEILI_HOST"`
-	MeiliPort     int    `yaml:"meiliPort,omitempty" default:"7700" env:"MEILI_PORT"`
-	CouchDBHost   string `yaml:"couchDBHost,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
-	Port          int    `yaml:"couchDBPort,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
-	User          string `yaml:"couchDBUser,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
-	Password      string `yaml:"couchDBPassword,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
-	MainIndexPath string `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
+	// For bleve no special config is needed.
+	// The only field it needs is the main index path. You can
+	// set it to whatever value when using meilisearch and
+	// the app will just ignore it.
+	Meili *MeiliConfig `yaml:"meili,omitempty"`
+	// CouchDB config must be set
+	CouchDB       CouchDBConfig `yaml:"couchdb"`
+	MainIndexPath string        `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
+}
+
+type CouchDBConfig struct {
+	Host     string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port     int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User     string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+}
+
+type MeiliConfig struct {
+	Host string `yaml:"host,omitempty" default:"127.0.0.1" env:"MEILI_HOST"`
+	// protobufs don't support smaller int sizes
+	Port      uint32 `yaml:"port,omitempty" default:"7700" env:"MEILI_PORT"`
+	MasterKey string `yaml:"masterKey,omitempty" env:"MEILI_MASTER_KEY"`
 }
 
 type External struct {

@@ -24,10 +24,10 @@ type Storage struct {
 
 func Connect(ctx context.Context, config *cfg.SearchConfig, log *zerolog.Logger) (*Storage, error) {
 	dsn := fmt.Sprintf("http://%s:%s@%s:%d",
-		config.User,
-		config.Password,
-		config.CouchDBHost,
-		config.Port)
+		config.CouchDB.User,
+		config.CouchDB.Password,
+		config.CouchDB.Host,
+		config.CouchDB.Port)
 
 	client, err := kivik.New("couch", dsn)
 	if err != nil {

@@ -58,8 +58,8 @@ func Connect(
 	searchStorage *searchdb.Storage,
 ) (*Service, error) {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
-		Host:   conf.MeiliHost,
-		APIKey: fmt.Sprintf("http://%s:%d/", conf.MeiliHost, conf.MeiliPort),
+		Host:   fmt.Sprintf("http://%s:%d/", conf.Meili.Host, conf.Meili.Port),
+		APIKey: conf.Meili.MasterKey,
 	})
 
 	err := retry.Do(

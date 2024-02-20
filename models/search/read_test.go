@@ -19,11 +19,11 @@ func TestReadAll(t *testing.T) {
 	conf := cfg.TestConfig
 
 	log := zerolog.Nop()
-	storage, err := Connect(&conf.Search, &log)
-	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
+
+	storage, err := Connect(ctx, &conf.Search, &log)
+	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
 
 	data, err := storage.ReadAll(ctx)
 	fmt.Printf("data: %v\n", data)
@@ -36,11 +36,11 @@ func TestReadGenres(t *testing.T) {
 	conf := cfg.TestConfig
 
 	log := zerolog.Nop()
-	storage, err := Connect(&conf.Search, &log)
-	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
+
+	storage, err := Connect(ctx, &conf.Search, &log)
+	require.NoErrorf(t, err, "failed to connect to search database: %s", err)
 
 	data, err := storage.ReadGenres(ctx)
 	require.NoError(t, err)

@@ -82,11 +82,11 @@ func main() {
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		dbConn    *sqlx.DB
-		pgConn    *pgxpool.Pool
-		err       error
-		conf      *cfg.Config
-		validator = validator.New()
+		dbConn             *sqlx.DB
+		pgConn             *pgxpool.Pool
+		err                error
+		conf               *cfg.Config
+		validationProvider = validator.New()
 	)
 
 	if flags.ConfigFile == "" {
@@ -106,7 +106,7 @@ func main() {
 
 	log = initLogging(&conf.Logging)
 	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
-	validationErrors := cfg.Validate(conf, validator)
+	validationErrors := cfg.Validate(conf, validationProvider)
 	if len(validationErrors) > 0 {
 		for i := range validationErrors {
 			log.Warn().Msgf("Validation error: %+v", validationErrors[i])
@@ -129,7 +129,6 @@ func main() {
 		App:    app,
 		Log:    &log,
 		Config: &conf.GRPC,
-		Cache:  searchCache,
 	}
 	go cmd.RunGrpcServer(s)
 
@@ -227,7 +226,7 @@ func main() {
 		App:             app,
 		SessionHandler:  sess,
 		WebsocketConfig: &wsConfig,
-		Validation:      validator,
+		Validation:      validationProvider,
 		Cache:           searchCache,
 	}
 
