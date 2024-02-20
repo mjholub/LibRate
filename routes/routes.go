@@ -130,7 +130,7 @@ func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.SearchCon
 		svc, err = search.NewService(
 			ctx, v, ss, conf.MainIndexPath, cache, log).Get()
 	default:
-		svc, err = meili.Connect(conf, log, v, ss)
+		svc, err = meili.Connect(ctx, conf, log, v, ss)
 	}
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to set up routes for search API")

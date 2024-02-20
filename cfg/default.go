@@ -67,7 +67,7 @@ var (
 		},
 		Search: SearchConfig{
 			Provider: "meilisearch",
-			Meili: &MeiliConfig{
+			Meili: MeiliConfig{
 				Host:      "127.0.0.1",
 				Port:      uint32(7700),
 				MasterKey: "",

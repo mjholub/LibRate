@@ -1,6 +1,7 @@
 package meili
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -52,6 +53,7 @@ type (
 )
 
 func Connect(
+	ctx context.Context,
 	conf *cfg.SearchConfig,
 	log *zerolog.Logger,
 	v *validator.Validate,
@@ -79,10 +81,18 @@ func Connect(
 		return nil, fmt.Errorf("meilisearch client healthcheck failed (too many attempts)")
 	}
 
-	return &Service{
+	// Create the indexes
+	svc := &Service{
 		searchdb:   searchStorage,
 		client:     client,
 		log:        log,
 		validation: v,
-	}, nil
+	}
+	start := time.Now()
+	if err := svc.CreateAllIndexes(ctx); err != nil {
+		return nil, fmt.Errorf("error creating indexes: %w", err)
+	}
+	svc.log.Info().Msgf("indexes created in %s", time.Since(start))
+
+	return svc, nil
 }

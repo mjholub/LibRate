@@ -45,7 +45,7 @@ type SearchConfig struct {
 	// The only field it needs is the main index path. You can
 	// set it to whatever value when using meilisearch and
 	// the app will just ignore it.
-	Meili *MeiliConfig `yaml:"meili,omitempty"`
+	Meili MeiliConfig `yaml:"meili,omitempty"`
 	// CouchDB config must be set
 	CouchDB       CouchDBConfig `yaml:"couchdb"`
 	MainIndexPath string        `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`

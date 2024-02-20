@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 
 	protodb "codeberg.org/mjh/lrctl/grpc/db"
@@ -200,13 +201,19 @@ func (s *GrpcServer) BuildIndex(
 	req *protosearch.BuildRequest,
 ) (res *protosearch.BuildResponse, err error) {
 	conf := cfg.SearchConfig{
-		Provider:      req.Config.Provider,
-		MeiliHost:     *req.Config.MeiliHost,
-		MeiliPort:     int(*req.Config.MeiliPort),
-		CouchDBHost:   req.Config.Host,
-		Port:          int(req.Config.Port),
-		User:          req.Config.User,
-		Password:      req.Config.Password,
+		// need to normalize the possibly uppercase enum value
+		Provider: strings.ToLower(req.Config.Provider.String()),
+		Meili: cfg.MeiliConfig{
+			Host:      req.Config.Meili.Host,
+			Port:      req.Config.Meili.Port,
+			MasterKey: req.Config.Meili.MasterKey,
+		},
+		CouchDB: cfg.CouchDBConfig{
+			Host:     req.Config.CouchDb.Host,
+			Port:     int(req.Config.CouchDb.Port),
+			User:     req.Config.CouchDb.User,
+			Password: req.Config.CouchDb.Password,
+		},
 		MainIndexPath: req.Config.IndexPath,
 	}
 	storage, err := searchdb.Connect(ctx, &conf, s.Log)
@@ -214,7 +221,7 @@ func (s *GrpcServer) BuildIndex(
 		return nil, err
 	}
 
-	switch req.Config.Provider {
+	switch conf.Provider {
 	case "bleve":
 		svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
 			search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
@@ -229,7 +236,7 @@ func (s *GrpcServer) BuildIndex(
 			TimePerDocument: 0.1,
 		}, nil
 	case "meilisearch", "meili":
-		svc, err := meili.Connect(&conf, s.Log, nil, storage)
+		svc, err := meili.Connect(ctx, &conf, s.Log, nil, storage)
 		if err != nil {
 			return nil, err
 		}
