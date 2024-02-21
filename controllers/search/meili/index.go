@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	"codeberg.org/mjh/LibRate/controllers/search/target"
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/samber/lo"
+	lop "github.com/samber/lo/parallel"
 )
 
 func (s *Service) CreateAllIndexes(ctx context.Context) error {
@@ -41,12 +43,6 @@ func (s *Service) CreateAllIndexes(ctx context.Context) error {
 	close(errorCh)
 	errorSlice := make([]error, 0, len(docData))
 
-	s.log.Info().Msg("creating union index")
-	// build the summary (aka "union") index
-	if _, err = s.client.Index("union").AddDocuments(docs); err != nil {
-		return fmt.Errorf("error building index union: %w", err)
-	}
-
 	s.log.Debug().Msg("performing final error check")
 	for e := range errorCh {
 		errorSlice = append(errorSlice, e)
@@ -64,10 +60,49 @@ func (s *Service) CreateAllIndexes(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) RunQuery(opts *Options) (res *meilisearch.SearchResponse, err error) {
-	req := meilisearch.SearchRequest{
-		HitsPerPage: opts.PageSize,
+func (s *Service) RunQuery(opts *Options) (
+	categorisedResult map[string][]meilisearch.SearchResponse, err error) {
+	attributesToCrop := []string{"_rev", "_id"}
+	categoriesList := lo.Map(opts.Categories, func(c target.Category, _ int) string {
+		return c.String()
+	})
+
+	var indexes []string
+	// run a query through all indexes
+	if lo.Contains(categoriesList, "union") {
+		indexes = []string{"genres", "members", "studios", "ratings", "artists", "media"}
+	} else {
+		indexes = categoriesList
 	}
 
-	return s.client.Index(opts.Categories[0].String()).Search(opts.Query, &req)
+	requests := make([]meilisearch.SearchRequest, len(indexes))
+	for i, index := range indexes {
+		request := meilisearch.SearchRequest{
+			HitsPerPage:      opts.PageSize,
+			Query:            opts.Query,
+			AttributesToCrop: attributesToCrop,
+			IndexUID:         index,
+		}
+		requests[i] = request
+	}
+
+	multiReq := &meilisearch.MultiSearchRequest{Queries: requests}
+
+	multiRes, err := s.client.MultiSearch(multiReq)
+	if err != nil {
+		return nil, fmt.Errorf("error running multi search: %w", err)
+	}
+
+	categorisedResult = lop.GroupBy(multiRes.Results, func(result meilisearch.SearchResponse) string {
+		return result.IndexUID
+	})
+
+	cleanedResult := lo.OmitBy(categorisedResult, func(k string, v []meilisearch.SearchResponse) bool {
+		nonEmpty := lo.Filter(v, func(r meilisearch.SearchResponse, _ int) bool {
+			return r.Hits != nil && len(r.Hits) > 0
+		})
+		return len(nonEmpty) == 0
+	})
+
+	return cleanedResult, nil
 }
