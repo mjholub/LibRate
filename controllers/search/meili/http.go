@@ -37,7 +37,9 @@ func (s *Service) HandleSearch(c *fiber.Ctx) error {
 		return h.InternalError(s.log, c, "search failed", err)
 	}
 
-	return c.JSON(results)
+	processed := processResults(opts.PageSize, results)
+
+	return c.JSON(processed)
 }
 
 func (s *Service) parseQueries(c *fiber.Ctx) (opts *Options, err error) {
