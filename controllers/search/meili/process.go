@@ -15,7 +15,7 @@ type SearchResponse struct {
 	Data           []map[string]interface{} `json:"data"`
 }
 
-func processResults(
+func (s *Service) processResults(
 	hitsPerPage int64,
 	results map[string][]meilisearch.SearchResponse,
 ) (processed SearchResponse) {
@@ -37,6 +37,7 @@ func processResults(
 
 	for i, category := range processed.Categories {
 		for _, hit := range results[category][i].Hits {
+			s.log.Debug().Msgf("hit: %v", hit)
 			for k, v := range hit.(map[string]interface{}) {
 				results := make(map[string]interface{})
 				results[k] = v
@@ -45,7 +46,9 @@ func processResults(
 			}
 		}
 	}
-	processed.Data = cleanHitsData(rawResults)
+	s.log.Debug().Msgf("rawResults: %v", rawResults)
+
+	processed.Data = s.cleanHitsData(rawResults)
 
 	return processed
 }
@@ -55,10 +58,8 @@ func processResults(
 // Example:
 // genreA: (it's proper description)
 // genreB, genreC, genreD: description of genreB
-func cleanHitsData(data []map[string]interface{}) []map[string]interface{} {
+func (s *Service) cleanHitsData(data []map[string]interface{}) []map[string]interface{} {
 	cleanedData := make([]map[string]interface{}, 0)
-	seen := make(map[string]bool)
-
 	for _, item := range data {
 		if formatted, ok := item["_formatted"].(map[string]interface{}); ok {
 			// Unnest the value of the _formatted key
@@ -68,22 +69,78 @@ func cleanHitsData(data []map[string]interface{}) []map[string]interface{} {
 			delete(item, "_formatted")
 		}
 
-		// Remove _id and _rev keys
-		delete(item, "_id")
+		// Remove _rev keys
 		delete(item, "_rev")
 
-		// Deduplicate
-		id, ok := item["name"].(string)
-		if !ok {
-			continue
-		}
-		if seen[id] {
-			continue
-		}
-		seen[id] = true
+		s.log.Debug().Msgf("item (after deleting _rev): %v", item)
 
 		cleanedData = append(cleanedData, item)
 	}
 
-	return cleanedData
+	s.log.Debug().Msgf("cleanedData: %v", cleanedData)
+
+	/* the following code is a bit off. We need to do
+		* something similar to this Clojure code:
+		(defn clean-data [data]
+	  (->> data
+	       (filter #(and (not (empty? %))
+	                     (every? #(contains? % %2) [:_id :name :kinds :descriptions])))
+	       (group-by :_id)
+	       (map (fn [[_id maps]]
+	              (apply merge maps)))
+	       (map #(dissoc % :_id))))
+	*/
+	cleanedData = lo.Map(cleanedData, func(item map[string]interface{}, _ int) map[string]interface{} {
+		return lo.OmitByValues(item, []any{nil, ""})
+	})
+	s.log.Debug().Msgf("cleanedData (after omitting nil and empty strings): %v", cleanedData)
+
+	// Group by _id
+	groupedData := lo.GroupBy(cleanedData, func(item map[string]interface{}) interface{} {
+		return item["_id"]
+	})
+
+	s.log.Debug().Msgf("groupedData: %v", groupedData)
+	mergedData := lo.Map(lo.Values(groupedData), func(items []map[string]interface{}, _ int) map[string]interface{} {
+		return lo.Assign(items...)
+	})
+	s.log.Debug().Msgf("mergedData: %v", mergedData)
+
+	// Remove _id keys
+	final := lo.Map(mergedData, func(item map[string]interface{}, _ int) map[string]interface{} {
+		return lo.OmitByKeys(item, []string{"_id"})
+	})
+
+	return final
+}
+
+func cleanGenresData(data []map[string]interface{}) []map[string]interface{} {
+	filtered := lo.Filter(data, func(item map[string]interface{}, _ int) bool {
+		return lo.Every(lo.Keys(item), []string{"_id", "name", "kinds", "descriptions"})
+	})
+	return filtered
+}
+
+func cleanMembersData(data []map[string]interface{}) []map[string]interface{} {
+	return lo.Filter(data, func(item map[string]interface{}, _ int) bool {
+		return lo.Every(lo.Keys(item), []string{"_id", "webfinger"})
+	})
+}
+
+func cleanStudiosArtistsData(data []map[string]interface{}) []map[string]interface{} {
+	return lo.Filter(data, func(item map[string]interface{}, _ int) bool {
+		return lo.Every(lo.Keys(item), []string{"_id", "name"})
+	})
+}
+
+func cleanMediaData(data []map[string]interface{}) []map[string]interface{} {
+	return lo.Filter(data, func(item map[string]interface{}, _ int) bool {
+		return lo.Every(lo.Keys(item), []string{"_id", "title", "kind"})
+	})
+}
+
+func cleanRatingData(data []map[string]interface{}) []map[string]interface{} {
+	return lo.Filter(data, func(item map[string]interface{}, _ int) bool {
+		return lo.Every(lo.Keys(item), []string{"_id", "user", "media_title"})
+	})
 }

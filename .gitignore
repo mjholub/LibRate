@@ -43,3 +43,5 @@ couchdb/data/shards
 couchdb/data
 *.bleve
 data.ms
+Librate
+src/static/templates/*.md
