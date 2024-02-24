@@ -1,7 +1,9 @@
 import type { Media } from './media';
 
-export type SearchItem = {
+type resultCategory = "genres" | "members" | "studios" | "ratings" | "artists" | "media" 
+
+export type SearchResult = {
   id: number;
-  name: string;
-  media: Media;
+  category: resultCategory;
+  data: Map<string, any>;
 };
