@@ -87,5 +87,8 @@
   "change_password": "Change password",
   "results": "results",
   "no_results_found": "No results found.",
-  "processing_time": "Processing time"
+  "processing_time": "Processing time",
+  "categories": "categories",
+  "options": "Options",
+  "page_size": "Results per page"
 }

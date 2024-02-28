@@ -1,4 +1,4 @@
-type resultCategory = "genres" | "members" | "studios" | "ratings" | "artists" | "media" 
+export type resultCategory = "genres" | "members" | "studios" | "ratings" | "artists" | "media" 
 
 export type SearchResponse = {
   categories: resultCategory[];
