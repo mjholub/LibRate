@@ -84,5 +84,8 @@
   "message_autohide_words": "Auto-hide messages containing the following words",
   "submit": "Submit",
   "cancel": "Cancel",
-  "change_password": "Change password"
+  "change_password": "Change password",
+  "results": "results",
+  "no_results_found": "No results found.",
+  "processing_time": "Processing time"
 }
