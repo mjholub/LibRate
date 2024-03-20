@@ -79,33 +79,11 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 	var artists []media.AlbumArtist
 	// ify there's is only one artist returned, we'll include that in the response. If not, we'll send an info to the client,
 	// that would result in spawning a selection dialog to choose the correct artist
-	var isUnambiguousResult bool
-	var remoteArtistNames []string
+	remoteArtistNames, isUnambiguousResult := listRemoteArtists(artists, spotifyAlbumData.Artists)
 
 	artists, err = mc.lookupSpotifyArtists(c, spotifyAlbumData.Artists)
 	if err != nil {
 		return handleInternalError(mc.storage.Log, c, "failed to get artist from database", err)
-	}
-
-	if len(artists) > 1 {
-		isUnambiguousResult = true
-	}
-
-	if len(artists) == 0 || len(spotifyAlbumData.Artists) > len(artists) {
-		switch len(artists) {
-		case 0:
-			for i := range spotifyAlbumData.Artists {
-				remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[i].Name)
-			}
-		default:
-			for j := range artists {
-				for k := range spotifyAlbumData.Artists {
-					if artists[j].Name != spotifyAlbumData.Artists[k].Name {
-						remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[k].Name)
-					}
-				}
-			}
-		}
 	}
 
 	genres := make([]media.Genre, len(spotifyAlbumData.Genres))
@@ -164,6 +142,34 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 			"artists": artists,
 		})
 	}
+}
+
+// listRemoteArtists enumerates artists present in the import source
+// but not locally
+// TODO: modify remoteArtists to accept map[string]string
+func listRemoteArtists(localArtists []media.AlbumArtist, remoteArtists []spotify.SimpleArtist) (remoteArtistNames []string, unambiguous bool) {
+	if len(localArtists) == 1 {
+		return nil, true
+	}
+
+	if len(localArtists) == 0 || len(remoteArtists) > len(localArtists) {
+		switch len(localArtists) {
+		case 0:
+			for i := range remoteArtists {
+				remoteArtistNames = append(remoteArtistNames, remoteArtists[i].Name)
+			}
+		default:
+			for j := range localArtists {
+				for k := range remoteArtists {
+					if localArtists[j].Name != remoteArtists[k].Name {
+						remoteArtistNames = append(remoteArtistNames, remoteArtists[k].Name)
+					}
+				}
+			}
+		}
+	}
+
+	return remoteArtistNames, false
 }
 
 func (mc *Controller) authenticateSpotify(ctx context.Context) (*spotify.Client, error) {
