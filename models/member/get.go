@@ -41,7 +41,7 @@ func (s *PgMemberStorage) GetID(ctx context.Context, credential string) (id int,
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
-		query := `SELECT id FROM members WHERE email = $1 OR nick = $2`
+		query := `SELECT id_numeric FROM members WHERE email = $1 OR nick = $2`
 		err = s.client.Get(&id, query, credential, credential)
 		if err != nil {
 			return 0, fmt.Errorf("failed to get member id: %v", err)

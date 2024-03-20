@@ -37,6 +37,14 @@ RUN git clone --depth=1 "https://github.com/pramsey/pgsql-http" . && \
   make install && \
   if [ "$(mv pg_http/* /usr/share/postgresql/extension/)" ]; then true; fi
 
+WORKDIR /tmp/pg_uint
+RUN apk add --no-cache \ 
+  python3 && \
+  git clone --depth=1 "https://github.com/petere/pguint" . && \
+  make && \
+  make install && \
+  if [ "$(mv pg_uint/* /usr/share/postgresql/extension/)" ]; then true; fi
+
 WORKDIR /tmp
 
 RUN apk del \

@@ -22,8 +22,8 @@ import (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID       int       `json:"-" db:"id"`
-		UUID     uuid.UUID `json:"uuid,omitempty" db:"uuid"`
+		ID       int       `json:"-" db:"id_numeric"`
+		UUID     uuid.UUID `json:"uuid,omitempty" db:"id"`
 		PassHash string    `json:"-" db:"passhash"`
 		// MemberName != webfinger
 		MemberName string `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
@@ -43,6 +43,10 @@ type (
 		SessionTimeout   sql.NullInt64  `json:"-" db:"session_timeout"`
 		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem" db:"public_key_pem"`
 		CustomFields     pgtype.JSONB   `json:"customFields,omitempty" db:"custom_fields"`
+		Modified         sql.NullInt64  `json:"modified,omitempty" db:"modified"`
+		Added            sql.NullInt64  `json:"added,omitempty" db:"added"`
+		Doc              pgtype.JSONB   `json:"-,omitempty" db:"doc"`
+		DocID            sql.NullString `json:"-,omitempty" db:"doc_id"`
 	}
 
 	// TODO: move the password here
