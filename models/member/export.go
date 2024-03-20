@@ -15,108 +15,105 @@ import (
 )
 
 func (s *PgMemberStorage) Export(ctx context.Context, memberName, format string) (baseInfo []byte, otherData []byte, err error) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return nil, nil, ctx.Err()
-	default:
-		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
-			AccessMode: pgx.ReadOnly,
-		})
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to begin transaction: %v", err)
-		}
-		// nolint:errcheck // we don't care about the error here
-		defer tx.Rollback(ctx)
-
-		name := db.Sanitize([]string{memberName})[0]
-
-		var id uuid.UUID
-		var webfinger string
-
-		// PERF: sub-optimal round trip of selecting the member twice, once to get the UUID and webfinger to use in unions and once to get the rest of the data
-		err = s.newClient.QueryRow(ctx, `SELECT uuid, webfinger FROM public.members WHERE nick = $1`, name).Scan(&id, &webfinger)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get member ID: %v", err)
-		}
-		memberData, err := s.Read(ctx, webfinger)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get member data: %v", err)
-		}
-		uuidFuncs := []func(context.Context, pgx.Tx, uuid.UUID) (map[string]interface{}, error){
-			s.exportBanInfo,
-			s.exportPrefs,
-			s.exportTrackRatings,
-			s.exportBaseRatings,
-			s.exportImages,
-		}
-
-		webfingerFuncs := []func(context.Context, pgx.Tx, string) (map[string]interface{}, error){
-			s.exportBlocks,
-			s.exportFollowRelationshipsOut,
-			s.exportFollowRelationshipsIn,
-			s.exportMediaContributions,
-			s.exportArtistContributions,
-		}
-
-		// channel to collect the JSON output from the export functions
-		dataChan := make(chan map[string]interface{}, len(uuidFuncs)+len(webfingerFuncs))
-		finalData := make(chan []byte, 1)
-		errChan := make(chan error, len(uuidFuncs)+len(webfingerFuncs))
-
-		var wg sync.WaitGroup
-
-		go func(
-			context.Context,
-			<-chan map[string]interface{},
-			<-chan error,
-			chan []byte,
-			string,
-		) {
-			defer close(finalData)
-			err = consumeData(ctx, dataChan, errChan, finalData, format)
-		}(ctx, dataChan, errChan, finalData, format)
-
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
-		}
-
-		for _, f := range uuidFuncs {
-			wg.Add(1)
-			go func(ctx context.Context, tx pgx.Tx, id uuid.UUID) {
-				defer wg.Done()
-				data, err := f(ctx, tx, id)
-				if err != nil {
-					errChan <- err
-				}
-				dataChan <- data
-			}(ctx, tx, id)
-		}
-
-		for _, f := range webfingerFuncs {
-			wg.Add(1)
-			go func(ctx context.Context, tx pgx.Tx, webfinger string) {
-				defer wg.Done()
-				data, err := f(ctx, tx, webfinger)
-				if err != nil {
-					errChan <- err
-				}
-				dataChan <- data
-			}(ctx, tx, webfinger)
-		}
-
-		wg.Wait()
-		close(dataChan)
-		close(errChan)
-		output := <-finalData
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
-		}
-		baseInfo, err := json.Marshal(memberData)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to marshal JSON: %v", err)
-		}
-		return baseInfo, output, nil
 	}
+	tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+		AccessMode: pgx.ReadOnly,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	// nolint:errcheck // we don't care about the error here
+	defer tx.Rollback(ctx)
+
+	name := db.Sanitize([]string{memberName})[0]
+
+	var id uuid.UUID
+	var webfinger string
+
+	err = s.newClient.QueryRow(ctx,
+		`SELECT uuid, webfinger FROM public.members WHERE nick = $1`, name).
+		Scan(&id, &webfinger)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get member ID: %v", err)
+	}
+
+	memberData, err := s.Read(ctx, webfinger)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get member data: %v", err)
+	}
+
+	uuidFuncs := []func(context.Context, pgx.Tx, uuid.UUID) (map[string]interface{}, error){
+		s.exportBanInfo,
+		s.exportPrefs,
+		s.exportTrackRatings,
+		s.exportBaseRatings,
+		s.exportImages,
+	}
+
+	webfingerFuncs := []func(context.Context, pgx.Tx, string) (map[string]interface{}, error){
+		s.exportBlocks,
+		s.exportFollowRelationshipsOut,
+		s.exportFollowRelationshipsIn,
+		s.exportMediaContributions,
+		s.exportArtistContributions,
+	}
+
+	// channel to collect the JSON output from the export functions
+	dataChan := make(chan map[string]interface{}, len(uuidFuncs)+len(webfingerFuncs))
+	finalData := make(chan []byte, 1)
+	errChan := make(chan error, len(uuidFuncs)+len(webfingerFuncs))
+
+	var wg sync.WaitGroup
+
+	go func() {
+		defer close(finalData)
+		if err := consumeData(ctx, dataChan, errChan, finalData, format); err != nil {
+			errChan <- err
+		}
+	}()
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
+	}
+
+	for _, f := range uuidFuncs {
+		wg.Add(1)
+		go func(f func(ctx context.Context, tx pgx.Tx, id uuid.UUID) (map[string]interface{}, error)) {
+			defer wg.Done()
+			data, err := f(ctx, tx, id)
+			if err != nil {
+				errChan <- err
+			}
+			dataChan <- data
+		}(f)
+	}
+
+	for _, f := range webfingerFuncs {
+		wg.Add(1)
+		go func(f func(ctx context.Context, tx pgx.Tx, webfinger string) (map[string]interface{}, error)) {
+			defer wg.Done()
+			data, err := f(ctx, tx, webfinger)
+			if err != nil {
+				errChan <- err
+			}
+			dataChan <- data
+		}(f)
+	}
+
+	wg.Wait()
+	close(dataChan)
+	close(errChan)
+	output := <-finalData
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to process exported data: %v", err)
+	}
+	baseInfo, err = json.Marshal(memberData)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+	return baseInfo, output, nil
 }
 
 func consumeData(ctx context.Context, dataChan <-chan map[string]interface{}, errChan <-chan error, output chan []byte, format string) error {
