@@ -6,23 +6,31 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 
 	protodb "codeberg.org/mjh/lrctl/grpc/db"
+	protosearch "codeberg.org/mjh/lrctl/grpc/search"
 	"codeberg.org/mjh/lrctl/grpc/shutdown"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 
 	"codeberg.org/mjh/LibRate/cfg"
+	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/db"
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
 
 type GrpcServer struct {
 	shutdown.UnimplementedShutdownServiceServer
 	protodb.UnimplementedDBServer
+	protosearch.UnimplementedSearchServer
+	Cache  *redis.Storage
 	App    *fiber.App
 	Log    *zerolog.Logger
 	Config *cfg.GrpcConfig
@@ -41,6 +49,7 @@ func registerGRPC(srv *GrpcServer) {
 
 	shutdown.RegisterShutdownServiceServer(s, srv)
 	protodb.RegisterDBServer(s, srv)
+	protosearch.RegisterSearchServer(s, srv)
 
 	reflection.Register(s)
 
@@ -107,7 +116,7 @@ func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*proto
 
 	s.Log.Debug().Msgf("Initialization request parameters: %+v", req)
 
-	if err := db.InitDB(&dsn, false, s.Log); err != nil {
+	if err := db.InitDB(&dsn, s.Log); err != nil {
 		s.Log.Error().Err(err).Msg("failed to initialize database")
 		return &protodb.InitResponse{Success: false}, err
 	}
@@ -185,4 +194,62 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 
 	s.Log.Info().Msg("database migrated")
 	return &protodb.MigrateResponse{Success: true}, nil
+}
+
+func (s *GrpcServer) BuildIndex(
+	ctx context.Context,
+	req *protosearch.BuildRequest,
+) (res *protosearch.BuildResponse, err error) {
+	conf := cfg.SearchConfig{
+		// need to normalize the possibly uppercase enum value
+		Provider: strings.ToLower(req.Config.Provider.String()),
+		Meili: cfg.MeiliConfig{
+			Host:      req.Config.Meili.Host,
+			Port:      req.Config.Meili.Port,
+			MasterKey: req.Config.Meili.MasterKey,
+		},
+		CouchDB: cfg.CouchDBConfig{
+			Host:     req.Config.CouchDb.Host,
+			Port:     int(req.Config.CouchDb.Port),
+			User:     req.Config.CouchDb.User,
+			Password: req.Config.CouchDb.Password,
+		},
+		MainIndexPath: req.Config.IndexPath,
+	}
+	storage, err := searchdb.Connect(ctx, &conf, s.Log)
+	if err != nil {
+		return nil, err
+	}
+
+	switch conf.Provider {
+	case "bleve":
+		svc := search.NewService(ctx, nil, storage, req.Config.IndexPath, s.Cache, s.Log).OrElse(
+			search.ServiceNoIndex(nil, storage, s.Cache, s.Log),
+		)
+
+		err = svc.CreateIndex(ctx, req.RuntimeStats, req.Config.IndexPath)
+		if err != nil {
+			return nil, err
+		}
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	case "meilisearch", "meili":
+		svc, err := meili.Connect(ctx, &conf, s.Log, nil, storage)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = svc.CreateAllIndexes(ctx); err != nil {
+			return nil, err
+		}
+
+		return &protosearch.BuildResponse{
+			DocumentCount:   1,
+			TimePerDocument: 0.1,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported search provider: %s", req.Config.Provider)
+	}
 }

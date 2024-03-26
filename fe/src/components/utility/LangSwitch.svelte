@@ -6,25 +6,31 @@
 		['en-US', 'English (U.S.)'],
 		['pl', 'Polski'],
 		['id', 'Indonesia'],
-		['de', 'Deutsch']
+		['de', 'Deutsch'],
+		['nl', 'Nederlands']
 	]);
 
-	onMount(async () => {
-		let count = 0;
-		while (isLoading) {
-			if (count > 25) {
-				console.error('locales failed to load');
-				break;
+	onMount(() => async () => {
+		const unsubscribe = isLoading.subscribe(async (loading) => {
+			if (loading) {
+				let count = 0;
+				while (loading && count < 25) {
+					await new Promise((resolve) => setTimeout(resolve, 100));
+					count++;
+				}
+				if (loading) {
+					console.error('locales failed to load');
+				} else {
+					console.debug('locales loaded: ', $locales);
+					const storedLocale = localStorage.getItem('locale');
+					if (storedLocale) {
+						console.debug('setting locale to: ', storedLocale);
+						locale.set(storedLocale);
+					}
+				}
 			}
-			count++;
-			await new Promise((resolve) => setTimeout(resolve, 100));
-		}
-		console.debug('locales loaded: ', locales);
-		const storedLocale = localStorage.getItem('locale');
-		if (storedLocale) {
-			console.debug('setting locale to: ', storedLocale);
-			locale.set(storedLocale);
-		}
+		});
+		return unsubscribe; // Unsubscribe when the component is destroyed
 	});
 
 	const handleLocaleChange = (e: Event) => {

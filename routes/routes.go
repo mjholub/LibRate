@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,11 +11,13 @@ import (
 	"time"
 
 	swagger "github.com/arsmn/fiber-swagger/v2"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/fiber/v2/middleware/timeout"
+	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -25,29 +28,38 @@ import (
 	"codeberg.org/mjh/LibRate/controllers/form"
 	"codeberg.org/mjh/LibRate/controllers/media"
 	memberCtrl "codeberg.org/mjh/LibRate/controllers/members"
+	"codeberg.org/mjh/LibRate/controllers/search"
+	"codeberg.org/mjh/LibRate/controllers/search/common"
+	"codeberg.org/mjh/LibRate/controllers/search/meili"
 	"codeberg.org/mjh/LibRate/controllers/static"
 	"codeberg.org/mjh/LibRate/controllers/version"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models"
+	mediaModels "codeberg.org/mjh/LibRate/models/media"
 	"codeberg.org/mjh/LibRate/models/member"
+	searchdb "codeberg.org/mjh/LibRate/models/search"
 )
+
+type RouterProps struct {
+	Conf            *cfg.Config
+	Log             *zerolog.Logger
+	LogHandler      fiber.Handler
+	LegacyDB        *sqlx.DB
+	DB              *pgxpool.Pool
+	App             *fiber.App
+	SessionHandler  *session.Store
+	WebsocketConfig *websocket.Config
+	Validation      *validator.Validate
+	Cache           *redis.Storage
+}
 
 // Setup handles all the routes for the application
 // It receives the configuration, logger and db connection from main
 // and then passes them to the controllers
-func Setup(
-	logger *zerolog.Logger,
-	fzlog fiber.Handler,
-	conf *cfg.Config,
-	dbConn *sqlx.DB,
-	newDBConn *pgxpool.Pool,
-	app *fiber.App,
-	sess *session.Store,
-	wsConfig websocket.Config,
-) error {
-	api := app.Group("/api", fzlog)
+func Setup(ctx context.Context, r *RouterProps) error {
+	api := r.App.Group("/api", r.LogHandler)
 
-	app.Get("/docs/*", swagger.New(swagger.Config{
+	r.App.Get("/docs/*", swagger.New(swagger.Config{
 		URL: "/static/meta/swagger.json",
 		// TODO: figure out how to use https://github.com/svmk/swagger-i18n-extension#readme
 		// with this middleware
@@ -58,28 +70,91 @@ func Setup(
 
 	var (
 		mStor     member.Storer
-		mediaStor *models.MediaStorage
+		mediaStor *mediaModels.Storage
 	)
 
-	switch conf.Engine {
+	switch r.Conf.Engine {
 	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(dbConn, newDBConn, logger, conf)
+		mStor = member.NewSQLStorage(r.LegacyDB, r.DB, r.Log, r.Conf)
 	default:
-		return fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
+		return fmt.Errorf("unsupported database engine \"%q\" or error reading r.Config", r.Conf.Engine)
 	}
-	mediaStor = models.NewMediaStorage(newDBConn, dbConn, logger)
+	mediaStor = mediaModels.NewStorage(r.DB, r.LegacyDB, r.Log)
 
-	memberSvc := memberCtrl.NewController(mStor, dbConn, sess, logger, conf)
-	formCon := form.NewController(logger, *mediaStor, conf)
-	uploadSvc := static.NewController(conf, dbConn, logger)
-	sc := controllers.NewSearchController(dbConn, logger, fmt.Sprintf("%s/api/search/ws", conf.Fiber.Host))
+	memberSvc := memberCtrl.NewController(mStor, r.LegacyDB, r.SessionHandler, r.Log, r.Conf)
+	formCon := form.NewController(r.Log, *mediaStor, r.Conf)
+	uploadSvc := static.NewController(r.Conf, r.LegacyDB, r.Log)
 
-	app.Get("/api/version", version.Get)
+	r.App.Get("/api/version", version.Get)
 
-	setupReviews(api, sess, logger, conf, dbConn)
+	setupReviews(api, r.SessionHandler, r.Log, r.Conf, r.LegacyDB)
 
-	setupAuth(api, sess, logger, conf, mStor)
+	setupAuth(api, r.SessionHandler, r.Log, r.Conf, mStor)
 
+	setupMembers(memberSvc, api, r.SessionHandler, r.Log, r.Conf)
+
+	setupMedia(api, mediaStor, r.Conf)
+
+	// don't see a point encapsulating 2-3 routes in a separate function
+	formAPI := api.Group("/form")
+	formAPI.Post("/add_media/:type", middleware.Protected(r.SessionHandler, r.Log, r.Conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
+	formAPI.Post("/update_media/:type", middleware.Protected(r.SessionHandler, r.Log, r.Conf), formCon.UpdateMedia)
+
+	setupUpload(uploadSvc, api, r.SessionHandler, r.Log, r.Conf)
+
+	setupSearch(ctx, r.Validation, &r.Conf.Search, r.Cache, r.Log, api)
+
+	r.App.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.SendString("I'm alive!")
+	})
+	err := setupStatic(r.App, r.Conf.Fiber.StaticDir, r.Conf.Fiber.FrontendDir)
+	if err != nil {
+		return fmt.Errorf("failed to setup static files: %w", err)
+	}
+	r.Log.Debug().Msg("static files initialized")
+
+	return nil
+}
+
+func setupSearch(ctx context.Context, v *validator.Validate, conf *cfg.SearchConfig, cache *redis.Storage, log *zerolog.Logger, api fiber.Router) {
+	ss, err := searchdb.Connect(ctx, conf, log)
+	if err != nil {
+		log.Err(err).Msgf("an error occurred while setting up search handler. Search won't work!")
+		return
+	}
+
+	searchAPI := api.Group("/search")
+	var svc common.Searcher
+	switch conf.Provider {
+	case "bleve":
+		svc, err = search.NewService(
+			ctx, v, ss, conf.MainIndexPath, cache, log).Get()
+	default:
+		svc, err = meili.Connect(ctx, conf, log, v, ss)
+	}
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to set up routes for search API")
+		searchAPI.Post("/", sendNotImpl)
+		searchAPI.Get("/", sendNotImpl)
+	} else {
+		searchAPI.Post("/", svc.HandleSearch)
+		searchAPI.Get("/", svc.HandleSearch)
+	}
+
+}
+
+func sendNotImpl(c *fiber.Ctx) error {
+	return c.Redirect("https://http.cat/images/501.jpg", 303)
+}
+
+func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {
+	uploadAPI := api.Group("/upload")
+	uploadAPI.Get("/max-file-size", func(c *fiber.Ctx) error { return c.SendString(fmt.Sprintf("%d", conf.Fiber.MaxUploadSize)) })
+	uploadAPI.Post("/image", middleware.Protected(sess, logger, conf), uploadSvc.UploadImage)
+	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
+}
+
+func setupMembers(memberSvc *memberCtrl.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {
 	members := api.Group("/members")
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
@@ -94,39 +169,6 @@ func Setup(
 	members.Delete("/follow", middleware.Protected(sess, logger, conf), memberSvc.Unfollow)
 	members.Delete("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Unban)
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
-
-	setupMedia(api, mediaStor, conf)
-
-	formAPI := api.Group("/form")
-	formAPI.Post("/add_media/:type", middleware.Protected(sess, logger, conf), timeout.NewWithContext(formCon.AddMedia, 10*time.Second))
-	formAPI.Post("/update_media/:type", middleware.Protected(sess, logger, conf), formCon.UpdateMedia)
-
-	uploadAPI := api.Group("/upload")
-	uploadAPI.Get("/max-file-size", func(c *fiber.Ctx) error { return c.SendString(fmt.Sprintf("%d", conf.Fiber.MaxUploadSize)) })
-	uploadAPI.Post("/image", middleware.Protected(sess, logger, conf), uploadSvc.UploadImage)
-	uploadAPI.Delete("/image/:id", middleware.Protected(sess, logger, conf), uploadSvc.DeleteImage)
-
-	search := api.Group("/search")
-	search.Get("/ws-address", sc.GetWSAddress)
-	search.Post("/ws", websocket.New(sc.WSHandler, wsConfig))
-	search.Post("/", sc.Search)
-	search.Options("/", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
-
-	app.Get("/api/health", func(c *fiber.Ctx) error {
-		if dbConn.Ping() == nil {
-			return c.SendStatus(fiber.StatusOK)
-		}
-		return c.SendStatus(fiber.StatusServiceUnavailable)
-	})
-	err := setupStatic(app, conf.Fiber.StaticDir, conf.Fiber.FrontendDir)
-	if err != nil {
-		return fmt.Errorf("failed to setup static files: %w", err)
-	}
-	logger.Debug().Msg("static files initialized")
-
-	return nil
 }
 
 func setupReviews(api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB) {
@@ -154,6 +196,8 @@ func setupAuth(
 
 	authAPI := api.Group("/authenticate")
 	authAPI.Post("/login", timeout.NewWithContext(authSvc.Login, 10*time.Second))
+	authAPI.Post("/delete-account", middleware.Protected(sess, logger, conf), authSvc.DeleteAccount)
+	authAPI.Patch("/password", middleware.Protected(sess, logger, conf), authSvc.ChangePassword)
 	authAPI.Get("/status", authSvc.GetAuthStatus)
 	authAPI.Post("/logout", authSvc.Logout)
 	authAPI.Post("/register", authSvc.Register)
@@ -161,7 +205,7 @@ func setupAuth(
 
 func setupMedia(
 	api fiber.Router,
-	mediaStor *models.MediaStorage,
+	mediaStor *mediaModels.Storage,
 	conf *cfg.Config,
 ) {
 	mediaCon := media.NewController(*mediaStor, conf)

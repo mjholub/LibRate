@@ -29,6 +29,8 @@ services:
       retries: 3
   db:
     hostname: "librate-db"
+    volumes:
+      - ../librate-data/:/var/lib/postgresql/data
     networks:
       - librate-net
     restart: always
@@ -37,11 +39,30 @@ services:
     ports:
       - "5432:5432"
     shm_size: 4gb
+    depends_on:
+      - couchdb
+    links:
+        - couchdb
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+  couchdb:
+     # WARN: DO NOT CHANGE THE HOSTNAME. Postgres sync trigger depends on it
+    hostname: "librate-search"
+    restart: always
+    volumes:
+      - ./couchdb/data:/opt/couchdb/data
+      - ./couchdb/config.ini:/opt/couchdb/etc/local.ini
+    image: couchdb:3.3
+    ports:
+      - "5984:5984"
+    networks:
+      librate-net:
+        aliases:
+          - librate-search
+        ipv4_address: 172.20.0.6
   redis:
     hostname: "librate-redis"
     restart: always
@@ -105,3 +126,7 @@ networks:
   librate-net:
     name: librate-net
     external: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -9,6 +9,9 @@
 </script>
 
 <div class="password-container">
+	<!-- bind the value to the input, then re-emit the input event -->
+	<!-- If we need to then assign an input to a function that accepts some params
+  we need to wrap it in a higher order function -->
 	{#if !showPassword}
 		<input
 			{id}
@@ -30,7 +33,7 @@
 			aria-live="polite"
 			autocomplete="new-password"
 			required
-			aria-label="Password confirmation"
+			aria-label="Password (visible)"
 		/>
 	{/if}
 	<button
@@ -58,18 +61,16 @@
 		--input-background-color-focus: #fff;
 		--input-text: #000;
 		--border-radius: 4px;
-		--pwd-container-display: inline-block;
 	}
 
 	.password-container {
 		position: relative;
 		overflow: visible;
-		display: var(--pwd-container-display) !important;
-		border: 1px solid var(--input-border-color);
+		display: inline-grid;
+		border: none;
 		border-radius: var(--border-radius);
 		color: var(--input-text);
-		background-color: var(--input-background-color);
-		width: calc(98% - 0.2em);
+		width: 97%;
 		height: 2rem;
 	}
 
@@ -77,14 +78,9 @@
 	input#passwordText {
 		font-family: inherit;
 		font-size: inherit;
-		-webkit-padding: 0.4em 0;
-		padding: 0.2em 0 0.2em 0;
 		margin: 0.1em 0 0.1em 0;
 		box-sizing: border-box;
-		border: none;
 		border-radius: 4px;
-		width: inherit;
-		display: grid;
 		position: relative;
 	}
 
@@ -97,8 +93,8 @@
 		position: absolute;
 		display: inline-block;
 		line-height: 1;
-		right: -0.4rem;
-		bottom: -50%;
+		right: 6%;
+		bottom: 0;
 		text-transform: none;
 		letter-spacing: normal;
 		word-wrap: normal;

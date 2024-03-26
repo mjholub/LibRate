@@ -36,12 +36,14 @@ func CreateApp(conf *cfg.Config) *fiber.App {
 	_ = tag
 
 	app := fiber.New(fiber.Config{
-		AppName:           "LibRate v0.8.17", // TODO: add some shell script to generate this on go build
-		Prefork:           conf.Fiber.Prefork,
-		ReduceMemoryUsage: conf.Fiber.ReduceMemUsage,
-		Views:             renderEngine,
-		JSONEncoder:       json.Marshal,
-		JSONDecoder:       json.Unmarshal,
+		AppName:                 "LibRate v0.8.17", // TODO: add some shell script to generate this on go build
+		Prefork:                 conf.Fiber.Prefork,
+		ReduceMemoryUsage:       conf.Fiber.ReduceMemUsage,
+		EnableTrustedProxyCheck: true,
+		TrustedProxies:          []string{"127.0.0.1", "::1"},
+		Views:                   renderEngine,
+		JSONEncoder:             json.Marshal,
+		JSONDecoder:             json.Unmarshal,
 	},
 	)
 
@@ -91,10 +93,9 @@ func SetupMiddlewares(conf *cfg.Config,
 				return strings.Contains(c.Route().Path, "/ws")
 			},
 		}),
-		// earlydata.New(),
 		etag.New(),
 		cache.New(cache.Config{
-			Expiration: 15 * time.Minute,
+			Expiration: 30 * time.Second,
 			Storage: redis.New(redis.Config{
 				Host:     conf.Redis.Host,
 				Port:     conf.Redis.Port,
@@ -103,7 +104,7 @@ func SetupMiddlewares(conf *cfg.Config,
 				Database: conf.Redis.CacheDB,
 			}),
 			Next: func(c *fiber.Ctx) bool {
-				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Path(), "sha256.min.js")
+				return c.Query("cache") == "false" || c.Path() == "/api/authenticate/status" || strings.Contains(c.Route().Path, "/ws") || strings.Contains(c.Route().Path, "favicon")
 			},
 		}),
 		compress.New(compress.Config{
@@ -115,6 +116,7 @@ func SetupMiddlewares(conf *cfg.Config,
 func SetupLogger(conf *cfg.Config, logger *zerolog.Logger) fiber.Handler {
 	fiberlog := fiberzerolog.New(fiberzerolog.Config{
 		Logger: logger,
+		Fields: []string{"latency", "status", "method", "url", "error", "ips", "route"},
 		// skip logging for static files, there's too many of them
 		Next: func(c *fiber.Ctx) bool {
 			if conf.Logging.Level != "trace" {

@@ -40,6 +40,7 @@ func SetupCSRF(conf *cfg.Config, logger *zerolog.Logger) fiber.Handler {
 		KeyLookup:         "header:X-CSRF-Token",
 		CookieName:        "csrf_",
 		CookieSessionOnly: true,
+		CookieSecure:      true,
 		CookieSameSite:    "Lax",
 		Expiration:        2 * time.Hour,
 		KeyGenerator:      uuid.Must(uuid.NewV4()).String,

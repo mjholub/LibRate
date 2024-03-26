@@ -109,7 +109,7 @@ func TestInitDB(t *testing.T) {
 		require.NoError(t, err)
 	}(&config)
 	log := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	err := InitDB(&config.DBConfig, true, &log)
+	err := InitDB(&config.DBConfig, &log)
 	require.NoError(t, err)
 }
 

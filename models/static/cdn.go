@@ -13,6 +13,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
+	"github.com/samber/mo"
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/lib/thumbnailer"
@@ -55,48 +56,47 @@ func NewStorage(db *sqlx.DB, log *zerolog.Logger) *Storage {
 	}
 }
 
-func generateThumbnail(source string) (string, error) {
-	file, err := os.Open(source)
-	if err != nil {
-		return "", fmt.Errorf("error generating thumbnail: %w", err)
-	}
-	defer file.Close()
+func generateThumbnail(source string) mo.Result[string] {
+	return mo.Try(func() (string, error) {
+		file, err := os.Open(source)
+		if err != nil {
+			return "", fmt.Errorf("error generating thumbnail: %w", err)
+		}
+		defer file.Close()
 
-	thumbProps, err := thumbnailer.Thumbnail(thumbnailer.Dims{Width: 400, Height: 400}, source)
-	if err != nil {
-		return "", fmt.Errorf("error generating thumbnail: %w", err)
-	}
+		thumbProps, err := thumbnailer.Thumbnail(thumbnailer.Dims{Width: 400, Height: 400}, source)
+		if err != nil {
+			return "", fmt.Errorf("error generating thumbnail: %w", err)
+		}
 
-	thumb, err := saveThumbToFile(&thumbProps, source)
-	if err != nil {
-		return "", fmt.Errorf("error generating thumbnail: %w", err)
-	}
-	return thumb, nil
+		return saveThumbToFile(&thumbProps, source).Get()
+	})
 }
 
 // saveThumbToFile encodes the thumbnail image properties obtained using the thumbnailer
-// TODO: use mo.Result to simplify error handling when this func is called?
-func saveThumbToFile(thumb *image.Image, outPath string) (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("error saving thumbnail: %w", err)
-	}
-	thumbFile, err := os.Create(filepath.Join(cwd, "static", outPath, "thumbnail.jpg"))
-	if err != nil {
-		return "", fmt.Errorf("error saving thumbnail: %w", err)
-	}
-	defer thumbFile.Close()
+func saveThumbToFile(thumb *image.Image, outPath string) mo.Result[string] {
+	return mo.Try(func() (string, error) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("error saving thumbnail: %w", err)
+		}
+		thumbFile, err := os.Create(filepath.Join(cwd, "static", outPath, "thumbnail.jpg"))
+		if err != nil {
+			return "", fmt.Errorf("error saving thumbnail: %w", err)
+		}
+		defer thumbFile.Close()
 
-	err = jpeg.Encode(thumbFile, *thumb, nil)
-	if err != nil {
-		return "", fmt.Errorf("error saving thumbnail: %w", err)
-	}
+		err = jpeg.Encode(thumbFile, *thumb, nil)
+		if err != nil {
+			return "", fmt.Errorf("error saving thumbnail: %w", err)
+		}
 
-	return outPath, nil
+		return outPath, nil
+	})
 }
 
 func (s *Storage) AddVideo(v *Video) error {
-	thumb, err := generateThumbnail(v.Source)
+	thumb, err := generateThumbnail(v.Source).Get()
 	if err != nil {
 		return fmt.Errorf("error adding video: %w", err)
 	}

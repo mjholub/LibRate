@@ -8,19 +8,20 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgtype"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/middleware"
 	"codeberg.org/mjh/LibRate/models/member"
 )
 
-func (mc *MemberController) GetFollowers(c *fiber.Ctx) error {
+func (mc *Controller) GetFollowers(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
 // check checks for the existence of a member
 // it requires both nickname and email to be provided
-func (mc *MemberController) Check(c *fiber.Ctx) error {
+func (mc *Controller) Check(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mc.log.Trace().Msgf("Check called with payload: %s", string(c.Request().Body()))
@@ -56,7 +57,7 @@ func (mc *MemberController) Check(c *fiber.Ctx) error {
 // @Failure 404 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /members/{email_or_username}/info [get]
-func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
+func (mc *Controller) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 	// TODO:
 	// 1. compare the requester's public key with the private key in the database
 	// 2. if the keys match, proceed with parsing the requester's identity as valid
@@ -114,11 +115,37 @@ func (mc *MemberController) GetMemberByNickOrEmail(c *fiber.Ctx) error {
 		}
 	}
 
-	return h.ResData(c, fiber.StatusOK, "success", memberData)
+	// convert all of member data to a fiber.Map since typescript
+	// doesn't handle jsonb with binary data and conversion thereof
+	// to Map<string, string> well
+	memberMap := make(fiber.Map)
+
+	memberMap["active"] = memberData.Active
+	memberMap["webfinger"] = memberData.Webfinger
+	memberMap["uuid"] = memberData.UUID
+	memberMap["memberName"] = memberData.MemberName
+	memberMap["displayName"] = memberData.DisplayName.String
+	memberMap["email"] = memberData.Email
+	memberMap["profile_pic"] = memberData.ProfilePicSource
+	memberMap["bio"] = memberData.Bio.String
+	memberMap["regdate"] = memberData.RegTimestamp
+	memberMap["roles"] = memberData.Roles
+	memberMap["visibility"] = memberData.Visibility
+	memberMap["followers_uri"] = memberData.FollowersURI
+	memberMap["following_uri"] = memberData.FollowingURI
+	customFields, err := jsonbToStringMap(memberData.CustomFields)
+	if err != nil {
+		return h.Res(c, fiber.StatusInternalServerError, "Error converting custom fields to map")
+	}
+	memberMap["customFields"] = customFields
+	if customFields == nil {
+		memberMap["customFields"] = make(map[string]string)
+	}
+
+	return h.ResData(c, fiber.StatusOK, "success", memberMap)
 }
 
-// TODO: add webfinger to database
-func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
+func (mc *Controller) GetMemberByWebfinger(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetMemberByWebfinger called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -132,7 +159,7 @@ func (mc *MemberController) GetMemberByWebfinger(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberData)
 }
 
-func (mc *MemberController) GetID(c *fiber.Ctx) error {
+func (mc *Controller) GetID(c *fiber.Ctx) error {
 	mc.log.Info().Msg("GetID called")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -146,7 +173,7 @@ func (mc *MemberController) GetID(c *fiber.Ctx) error {
 	return h.ResData(c, fiber.StatusOK, "success", memberData)
 }
 
-func (mc *MemberController) canView(ctx context.Context, authorization *jwt.Token, viewee string) (bool, error) {
+func (mc *Controller) canView(ctx context.Context, authorization *jwt.Token, viewee string) (bool, error) {
 	if viewee == "" {
 		return false, fmt.Errorf("No nickname or email provided")
 	}
@@ -160,4 +187,13 @@ func (mc *MemberController) canView(ctx context.Context, authorization *jwt.Toke
 		return false, err
 	}
 	return canView, nil
+}
+
+func jsonbToStringMap(jb pgtype.JSONB) (map[string]string, error) {
+	var m map[string]string
+	err := jb.AssignTo(&m)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 }

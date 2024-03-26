@@ -21,6 +21,7 @@ type Config struct {
 	JWTSecret  string         `json:"jwtSecret,omitempty" yaml:"jwtSecret" mapstructure:"jwtSecret" env:"LIBRATE_JWT_SECRET"`
 	GRPC       GrpcConfig     `json:"grpc,omitempty" yaml:"grpc" mapstructure:"grpc"`
 	External   External       `json:"external,omitempty" yaml:"external" mapstructure:"external"`
+	Search     SearchConfig   `json:"search,omitempty" yaml:"search" mapstructure:"search"`
 }
 
 // nolint: musttag,revive // tagged in the struct above, can't break tags into multiline
@@ -37,6 +38,33 @@ type DBConfig struct {
 	MigrationsPath     string `yaml:"migrationsPath,omitempty" default:"/app/data/migrations" env:"LIBRATE_MIGRATIONS"`
 }
 
+// currently only couchdb is supported
+type SearchConfig struct {
+	Provider string `yaml:"provider,omitempty" default:"meilisearch" validate:"oneof='meilisearch' 'bleve'"`
+	// For bleve no special config is needed.
+	// The only field it needs is the main index path. You can
+	// set it to whatever value when using meilisearch and
+	// the app will just ignore it.
+	Meili MeiliConfig `yaml:"meili,omitempty"`
+	// CouchDB config must be set
+	CouchDB       CouchDBConfig `yaml:"couchdb"`
+	MainIndexPath string        `yaml:"mainIndexPath,omitempty" default:"site-index.bleve" env:"LIBRATE_SEARCH_INDEX_PATH"`
+}
+
+type CouchDBConfig struct {
+	Host     string `yaml:"host,omitempty" default:"librate-search" env:"LIBRATE_SEARCH_HOST"`
+	Port     int    `yaml:"port,omitempty" default:"5984" env:"LIBRATE_SEARCH_PORT"`
+	User     string `yaml:"user,omitempty" default:"admin" env:"LIBRATE_SEARCH_USER"`
+	Password string `yaml:"password,omitempty" default:"admin" env:"LIBRATE_SEARCH_PASSWORD"`
+}
+
+type MeiliConfig struct {
+	Host string `yaml:"host,omitempty" default:"127.0.0.1" env:"MEILI_HOST"`
+	// protobufs don't support smaller int sizes
+	Port      uint32 `yaml:"port,omitempty" default:"7700" env:"MEILI_PORT"`
+	MasterKey string `yaml:"masterKey,omitempty" env:"MEILI_MASTER_KEY"`
+}
+
 type External struct {
 	// currently supported: json, id3, spotify (requires client ID and secret)
 	ImportSources       []string `yaml:"import_sources,omitempty" default:"json,id3" env:"LIBRATE_IMPORT_SOURCES"`
@@ -45,13 +73,16 @@ type External struct {
 }
 
 type RedisConfig struct {
-	Host     string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
-	Port     int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
+	Host string `yaml:"host,omitempty" default:"localhost" env:"LIBRATE_REDIS_HOST"`
+	Port int    `yaml:"port,omitempty" default:"6379" env:"LIBRATE_REDIS_PORT"`
+	// how many errors can occur during scan of SQL DB into cache before the process is stopped
 	Username string `yaml:"username,omitempty" default:"" env:"LIBRATE_REDIS_USERNAME"`
 	Password string `yaml:"password,omitempty" default:"" env:"LIBRATE_REDIS_PASSWORD"`
 	CacheDB  int    `yaml:"cacheDb,omitempty" default:"0" env:"LIBRATE_CACHE_DB"`
 	CsrfDB   int    `yaml:"csrfDb,omitempty" default:"2" env:"LIBRATE_CSRF_DB"`
 	PowDB    int    `yaml:"powDb,omitempty" default:"3" env:"LIBRATE_POW_DB"`
+	PagesDB  int    `yaml:"pagesDb,omitempty" default:"4" env:"LIBRATE_PAGES_DB"`
+	SearchDB int    `yaml:"searchDb,omitempty" default:"5" env:"LIBRATE_SEARCH_CACHE"`
 }
 
 // refer to https://docs.gofiber.io/api/fiber#config

@@ -3,13 +3,13 @@ package auth
 import (
 	"io"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofrs/uuid/v5"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -100,8 +100,10 @@ func BenchmarkSetSessionKeys(b *testing.B) {
 	}
 	ip := "42.13.21.37"
 	ua := "Mozilla/5.0 (Windows NT 10.0; rv:121.0) Gecko/20100101 Firefox/121.0"
+	u, _ := uuid.NewV4()
+	hash := u.String()
 
 	for i := 0; i < b.N; i++ {
-		setSessionKeysSequential(ip, ua, sess, memberData)
+		setSessionKeys(ip, ua, hash, sess, memberData)
 	}
 }

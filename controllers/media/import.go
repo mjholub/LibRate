@@ -1,6 +1,7 @@
 package media
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 
 	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/models"
+	"codeberg.org/mjh/LibRate/models/media"
 
 	"github.com/zmb3/spotify/v2"
 )
@@ -64,19 +65,10 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		return handleBadRequest(mc.storage.Log, c, "Invalid Spotify album ID "+spotifyAlbumID)
 	}
 
-	spotifyConf := &clientcredentials.Config{
-		ClientID:     mc.conf.External.SpotifyClientID,
-		ClientSecret: mc.conf.External.SpotifyClientSecret,
-		TokenURL:     spotifyauth.TokenURL,
-	}
-
-	token, err := spotifyConf.Token(c.Context())
+	client, err := mc.authenticateSpotify(c.Context())
 	if err != nil {
-		return handleInternalError(mc.storage.Log, c, "failed to get Spotify API token", err)
+		return handleInternalError(mc.storage.Log, c, "failed to authenticate with Spotify", err)
 	}
-
-	httpClient := spotifyauth.New().Client(c.Context(), token)
-	client := spotify.New(httpClient)
 
 	spotifyAlbumData, err := client.GetAlbum(c.Context(), spotify.ID(spotifyAlbumID))
 	if err != nil {
@@ -84,58 +76,17 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 	}
 
 	// NOTE: spotify doesn't differentiate groups and single artists, so we have to rely on our own data
-	var artists []models.AlbumArtist
+	var artists []media.AlbumArtist
 	// ify there's is only one artist returned, we'll include that in the response. If not, we'll send an info to the client,
 	// that would result in spawning a selection dialog to choose the correct artist
-	var isUnambiguousResult bool
-	for i := range spotifyAlbumData.Artists {
-		// PERF: reduce the number of fields retrieved from the database to only the ones needed
-		individual, group, err := mc.storage.Ps.GetArtistsByName(c.Context(), spotifyAlbumData.Artists[i].Name)
-		if err != nil {
-			return handleInternalError(mc.storage.Log, c, "failed to get artist from database", err)
-		}
-		for j := range individual {
-			fullName := fmt.Sprintf("%s \"%+v\" %s", individual[i].FirstName, individual[i].NickNames, individual[i].LastName)
-			individualArtistEntry := models.AlbumArtist{
-				ID:         individual[j].ID,
-				Name:       fullName,
-				ArtistType: "individual",
-			}
-			artists = append(artists, individualArtistEntry)
-		}
-		for k := range group {
-			groupArtistEntry := models.AlbumArtist{
-				ID:         group[k].ID,
-				Name:       group[k].Name,
-				ArtistType: "group",
-			}
-			artists = append(artists, groupArtistEntry)
-		}
-	}
-	var remoteArtistNames []string
+	remoteArtistNames, isUnambiguousResult := listRemoteArtists(artists, spotifyAlbumData.Artists)
 
-	if len(artists) > 1 {
-		isUnambiguousResult = true
+	artists, err = mc.lookupSpotifyArtists(c, spotifyAlbumData.Artists)
+	if err != nil {
+		return handleInternalError(mc.storage.Log, c, "failed to get artist from database", err)
 	}
 
-	if len(artists) == 0 || len(spotifyAlbumData.Artists) > len(artists) {
-		switch len(artists) {
-		case 0:
-			for i := range spotifyAlbumData.Artists {
-				remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[i].Name)
-			}
-		default:
-			for j := range artists {
-				for k := range spotifyAlbumData.Artists {
-					if artists[j].Name != spotifyAlbumData.Artists[k].Name {
-						remoteArtistNames = append(remoteArtistNames, spotifyAlbumData.Artists[k].Name)
-					}
-				}
-			}
-		}
-	}
-
-	genres := make([]models.Genre, len(spotifyAlbumData.Genres))
+	genres := make([]media.Genre, len(spotifyAlbumData.Genres))
 	for i := range spotifyAlbumData.Genres {
 		genre, err := mc.storage.GetGenre(c.Context(), "music", "en", spotifyAlbumData.Genres[i])
 		if err != nil {
@@ -144,13 +95,13 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		genres = append(genres, *genre)
 	}
 
-	tracks := make([]models.Track, len(spotifyAlbumData.Tracks.Tracks))
+	tracks := make([]media.Track, len(spotifyAlbumData.Tracks.Tracks))
 
 	sTracks := spotifyAlbumData.Tracks.Tracks
 
 	for i := range sTracks {
 		duration := time.Now().Add(sTracks[i].TimeDuration())
-		track := models.Track{
+		track := media.Track{
 			Name:     sTracks[i].Name,
 			Duration: duration,
 			Lyrics:   "",
@@ -166,7 +117,7 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 		albumDuration += tracks[i].Duration.Sub(time.Time{})
 	}
 
-	album := models.Album{
+	album := media.Album{
 		Name:        spotifyAlbumData.Name,
 		ReleaseDate: spotifyAlbumData.ReleaseDateTime(),
 		Genres:      genres,
@@ -191,6 +142,83 @@ func (mc *Controller) importSpotify(c *fiber.Ctx, uri string) error {
 			"artists": artists,
 		})
 	}
+}
+
+// listRemoteArtists enumerates artists present in the import source
+// but not locally
+// TODO: modify remoteArtists to accept map[string]string
+func listRemoteArtists(localArtists []media.AlbumArtist, remoteArtists []spotify.SimpleArtist) (remoteArtistNames []string, unambiguous bool) {
+	if len(localArtists) == 1 {
+		return nil, true
+	}
+
+	if len(localArtists) == 0 || len(remoteArtists) > len(localArtists) {
+		switch len(localArtists) {
+		case 0:
+			for i := range remoteArtists {
+				remoteArtistNames = append(remoteArtistNames, remoteArtists[i].Name)
+			}
+		default:
+			for j := range localArtists {
+				for k := range remoteArtists {
+					if localArtists[j].Name != remoteArtists[k].Name {
+						remoteArtistNames = append(remoteArtistNames, remoteArtists[k].Name)
+					}
+				}
+			}
+		}
+	}
+
+	return remoteArtistNames, false
+}
+
+func (mc *Controller) authenticateSpotify(ctx context.Context) (*spotify.Client, error) {
+	spotifyConf := &clientcredentials.Config{
+		ClientID:     mc.conf.External.SpotifyClientID,
+		ClientSecret: mc.conf.External.SpotifyClientSecret,
+		TokenURL:     spotifyauth.TokenURL,
+	}
+
+	token, err := spotifyConf.Token(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient := spotifyauth.New().Client(ctx, token)
+	return spotify.New(httpClient), nil
+}
+
+// lookupSpotifyArtists checks if the artists imported from Spotify are already in the database
+func (mc *Controller) lookupSpotifyArtists(c *fiber.Ctx, artists []spotify.SimpleArtist) (dbArtists []media.AlbumArtist, err error) {
+	for i := range artists {
+
+		// PERF: reduce the number of fields retrieved from the database to only the ones needed
+		individual, group, err := mc.storage.Ps.GetArtistsByName(c.Context(), artists[i].Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get artist from database: %w", err)
+		}
+
+		for j := range individual {
+			fullName := fmt.Sprintf("%s \"%+v\" %s", individual[i].FirstName, individual[i].NickNames, individual[i].LastName)
+			individualArtistEntry := media.AlbumArtist{
+				ID:         individual[j].ID,
+				Name:       fullName,
+				ArtistType: "individual",
+			}
+			dbArtists = append(dbArtists, individualArtistEntry)
+		}
+
+		for k := range group {
+			groupArtistEntry := media.AlbumArtist{
+				ID:         group[k].ID,
+				Name:       group[k].Name,
+				ArtistType: "group",
+			}
+			dbArtists = append(dbArtists, groupArtistEntry)
+		}
+	}
+
+	return dbArtists, nil
 }
 
 func (mc *Controller) importDiscogs(c *fiber.Ctx, source ImportSource) error {

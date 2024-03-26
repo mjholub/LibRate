@@ -23,7 +23,7 @@
 	let password = '';
 	let showPassword = false;
 	let passwordConfirm = '';
-	let passwordStrength = '' as string; // it is based on the message from the backend, not the entropy score
+	let passwordStrength = '';
 	let errorMessage = '';
 	let strength: number;
 	let email_input: HTMLInputElement;
@@ -104,9 +104,6 @@
 	};
 
 	const checkEntropy = async (password: string) => {
-		// if just logging in, don't check the entropy
-		if (!isRegistration) return;
-
 		if (timeoutId) {
 			window.clearTimeout(timeoutId);
 		}
@@ -116,19 +113,26 @@
 				strength = new PasswordMeter().getResult(password).score;
 				passwordStrength = strength > 135 ? 'Password is strong enough' : `${strength / 2.9} bits`;
 			} catch (error) {
-				process.env.NODE_ENV === 'development'
-					? console.error(error)
-					: console.error('Error checking password entropy');
+				errorMessage = 'Password is not strong enough or error occurred';
 			}
 		}, 300);
 	};
+
+	const comparePasswords = async (password: string, passwordConfirm: string) => {
+		if (password !== passwordConfirm) {
+			errorMessage = 'Passwords do not match';
+		} else {
+			errorMessage = '';
+		}
+	};
+
 	$: {
 		if (isRegistration && password) {
 			checkEntropy(password);
 		}
 	}
-	$: tos_url = `/tos_${$locale}.html`;
-	$: privacy_url = `/privacy_${$locale}.html`;
+	$: tos_url = `/tos/${$locale}`;
+	$: privacy_url = `/privacy/${$locale}`;
 
 	// helper function to trigger moving either email or nickname to a dedicated field
 	const startRegistration = () => {
@@ -259,10 +263,10 @@
 </script>
 
 <!-- Form submission handler -->
-<form on:submit|preventDefault={isRegistration ? register : login}>
+<form class="auth-form" on:submit|preventDefault={isRegistration ? register : login}>
 	<div class="input">
 		{#if isRegistration}
-			<label for="email">Email:</label>
+			<label class="auth-form-label" for="email">Email:</label>
 			<input
 				bind:this={email_input}
 				bind:value={email}
@@ -286,7 +290,7 @@
 					</p>
 				{/if}
 			{/if}
-			<label for="nickname">{$_('nickname')}:</label>
+			<label class="auth-form-label" for="nickname">{$_('nickname')}:</label>
 			<input
 				type="text"
 				bind:this={nickname_input}
@@ -307,7 +311,7 @@
 					</p>
 				{/if}
 			{/if}
-			<label for="password">Password:</label>
+			<label class="auth-form-label" for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -318,7 +322,7 @@
 				{toggleObfuscation}
 			/>
 		{:else}
-			<label for="email_or_username">{$_('email_or_username')}:</label>
+			<label class="auth-form-label" for="email_or_username">{$_('email_or_username')}:</label>
 			<input
 				type="text"
 				id="email_or_username"
@@ -327,7 +331,7 @@
 				class="input"
 			/>
 
-			<label for="password">{$_('password')}:</label>
+			<label class="auth-form-label" for="password">{$_('password')}:</label>
 			<PasswordInput
 				bind:value={password}
 				id="password"
@@ -336,7 +340,7 @@
 				{toggleObfuscation}
 			/>
 			<span class="session-timeout-selector">
-				<label for="logout-after">
+				<label class="auth-form-label" for="logout-after">
 					{$_('logout_after')}
 				</label>
 				<select class="session-time" bind:value={sessionTimeMinutes}>
@@ -353,32 +357,31 @@
 		{/if}
 
 		{#if isRegistration}
-			<label for="password">{$_('confirm')} {$_('password')}:</label>
+			<label class="auth-form-label" for="password">{$_('confirm')} {$_('password')}:</label>
 			<PasswordInput
 				id="password"
 				bind:value={passwordConfirm}
-				onInput={() => Promise.resolve(void 0)}
+				onInput={() => comparePasswords(password, passwordConfirm)}
 				{showPassword}
 				{toggleObfuscation}
 			/>
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
-				<p>
-					{$_('password')}
-					{$_('strength')}: {passwordStrength} of (<a
-						href="https://www.omnicalculator.com/other/password-entropy">entropy</a
-					>), {$_('required')}: 50
+				<p style="padding: 1% 0; display: block;">
+					<!-- FIXME: declension/changing depending on the trailing digit in e.g. Slavic languages -->
+					{$_('password_strength')}: {passwordStrength} of (<a
+						href="https://www.omnicalculator.com/other/password-entropy"
+					/>), {$_('required')}: 50
 				</p>
 			{:else}
 				<p>
-					{$_('password')}
-					{$_('strength')}: {passwordStrength}
+					{$_('password_strength')}: {passwordStrength}
 				</p>
 			{/if}
 
 			<div class="tos_privacy_ack">
 				<input type="checkbox" id="tos_privacy_ack" required />
-				<label for="tos_privacy_ack" id="tos_privacy_ack_label">
+				<label class="auth-form-label" for="tos_privacy_ack" id="tos_privacy_ack_label">
 					{$_('tos_privacy_ack')}
 					<a href={privacy_url} target="_blank">{$_('privacy_policy_instrumental')}</a>
 					{$_('and')} <a href={tos_url} target="_blank">{$_('tos_instrumental')}</a>
@@ -456,8 +459,16 @@
 		width: 100%; /* Ensuring buttons take full width */
 	}
 
-	form {
+	.auth-form {
+		display: flex;
+		z-index: 1;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.auth-form-label {
 		display: block;
+		padding: 1% 0.2%;
 	}
 
 	@media (max-width: 600px) {
@@ -477,31 +488,8 @@
 			width: 100%;
 		}
 	}
-
-	.tooltip {
-		position: relative;
-		font-size: 0.9em;
-		cursor: help;
-	}
-
-	.tooltip::before {
-		content: '⚠️ Not recommended on shared computers';
-		position: absolute;
-		top: 110%;
-		left: 50%;
-		transform: translateX(-50%);
-		display: none;
-		background-color: #aaa;
-		color: #000;
-		padding: 0.3em 0.6em;
-		border-radius: 4px;
-		font-size: 1em;
-		white-space: nowrap;
-	}
-
-	.tooltip:hover::before {
-		display: block;
-	}
+	/* removed unused selectors for tooltip, shall it be reimplemented,
+  see the commit from Feb 01 2024 */
 
 	.tos_privacy_ack {
 		display: inline-flex;

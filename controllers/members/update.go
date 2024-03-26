@@ -2,10 +2,13 @@ package members
 
 import (
 	"database/sql"
+	"fmt"
+	"net/mail"
 	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgtype"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
 	"golang.org/x/text/language"
@@ -16,7 +19,7 @@ import (
 
 // UpdateMember handles the updating of user information
 // @Summary Update member information
-// @Tags account,metadata,updating
+// @Tags accounts,metadata,updating
 // @Description Handle updating those member properties that can be exposed publicly, i.e. not settings
 // @Accept multipart/form-data json
 // @Param member_name path string true "The nickname of the member being updated"
@@ -27,12 +30,15 @@ import (
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /update/{member_name} [patch]
-func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
+func (mc *Controller) Update(c *fiber.Ctx) (err error) {
 	mc.log.Info().Msg("Update called")
 	var member *member.Member
 	ct := c.Request().Header.Peek("Content-Type")
 	if strings.Contains(string(ct), "multipart/form-data") {
-		member = parseFormValues(c)
+		member, err = parseFormValues(c)
+		if err != nil {
+			return h.BadRequest(mc.log, c, "Invalid update request", err.Error(), err)
+		}
 	} else {
 		err = c.BodyParser(&member)
 		if err != nil {
@@ -71,7 +77,7 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 // UpdatePrefs handles the updating of user preferences
 // @Summary Update member preferences
 // @Description Handle updating private member preferences
-// @Tags account,updating,settings
+// @Tags accounts,updating,settings
 // @Accept json multipart/form-data
 // @Param member_name path string true "The nickname of the member being updated"
 // @Param Authorization header string true "The JWT token"
@@ -89,7 +95,7 @@ func (mc *MemberController) Update(c *fiber.Ctx) (err error) {
 // @Failure 400 {object} h.ResponseHTTP{}
 // @Failure 500 {object} h.ResponseHTTP{}
 // @Router /update/{member_name}/preferences [patch]
-func (mc *MemberController) UpdatePrefs(c *fiber.Ctx) error {
+func (mc *Controller) UpdatePrefs(c *fiber.Ctx) error {
 	mc.log.Info().Msg("UpdatePrefs called")
 	var prefs *member.Preferences
 	var err error
@@ -154,23 +160,47 @@ func parseFormPrefs(c *fiber.Ctx) (p *member.Preferences, err error) {
 }
 
 // parseFormValues parses the form values from the request body for which member struct fields are present
-func parseFormValues(c *fiber.Ctx) (m *member.Member) {
+func parseFormValues(c *fiber.Ctx) (m *member.Member, err error) {
+	var mm member.Member
 	displayName := c.FormValue("display_name")
-	var dn, bioValue, hp sql.NullString
+	var dn, bioValue sql.NullString
 	dn = lo.Ternary(displayName != "", sql.NullString{String: displayName, Valid: true}, sql.NullString{Valid: false})
+	if dn.Valid {
+		mm.DisplayName = dn
+	}
 	email := c.FormValue("email")
+	if email != "" {
+		_, err = mail.ParseAddress(email)
+		if err != nil {
+			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email")
+		}
+		mm.Email = email
+	}
 	bio := c.FormValue("bio")
 	bioValue = lo.Ternary(bio != "", sql.NullString{String: bio, Valid: true}, sql.NullString{Valid: false})
-	homepage := c.FormValue("homepage")
-	hp = lo.Ternary(homepage != "", sql.NullString{String: homepage, Valid: true}, sql.NullString{Valid: false})
-	visibility := c.FormValue("visibility")
-
-	return &member.Member{
-		DisplayName: dn,
-		Email:       email,
-		Bio:         bioValue,
-		Homepage:    hp,
-		Visibility:  visibility,
-		Active:      true,
+	if bioValue.Valid {
+		mm.Bio = bioValue
 	}
+
+	visibility := c.FormValue("visibility")
+	if visibility != "" {
+		visibility = strings.ToLower(visibility)
+		if visibility != "public" && visibility != "followers_only" && visibility != "private" && visibility != "local" {
+			return nil, fmt.Errorf(
+				"invalid visibility: %v (was expecting public, followers_only, local, or private)",
+				visibility)
+		}
+		mm.Visibility = visibility
+	}
+	customFieldsData := c.FormValue("custom_fields")
+	if customFieldsData != "" {
+		var customFields pgtype.JSONB
+		err := customFields.UnmarshalJSON([]byte(customFieldsData))
+		if err != nil {
+			return nil, fmt.Errorf("error parsing custom fields '%s': %v", customFieldsData, err)
+		}
+		mm.CustomFields = customFields
+	}
+
+	return &mm, nil
 }

@@ -45,6 +45,20 @@ redis:
   cacheDb: 0
   csrfDb: 2
   powDb: 3
+  pagesDb: 4
+  searchDb: 5
+search:
+  provider: "meilisearch"
+  meili:
+    host: "127.0.0.1"
+    port: 7700
+    masterKey: ""
+  couchdb:
+    host: "0.0.0.0"
+    port: 5984
+    user: "librate"
+    password: "librate"
+  mainIndexPath: "page-index.bleve"
 logging:
   level: "info"
   target: "stdout"

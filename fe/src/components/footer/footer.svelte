@@ -2,8 +2,8 @@
 	import { locale, _ } from 'svelte-i18n';
 
 	const currentYear = new Date().getFullYear();
-	$: tos_url = `/tos_${$locale}.html`;
-	$: privacy_url = `/privacy_${$locale}.html`;
+	$: tos_url = `/tos/${$locale}`;
+	$: privacy_url = `/privacy/${$locale}`;
 </script>
 
 <footer>

@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -98,15 +97,7 @@ func createExtension(db *sqlx.DB, extName string) error {
 	return nil
 }
 
-func InitDB(conf *cfg.DBConfig, exitAfter bool, log *zerolog.Logger) error {
-	if exitAfter {
-		// nolint:revive
-		defer func() {
-			fmt.Println("Database initialized. Exiting...")
-			os.Exit(0)
-		}()
-	}
-
+func InitDB(conf *cfg.DBConfig, log *zerolog.Logger) error {
 	dsn := CreateDsn(conf)
 
 	db, err := Connect(conf.Engine, dsn, conf.RetryAttempts)

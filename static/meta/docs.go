@@ -62,7 +62,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.GroupedArtists"
+                                            "$ref": "#/definitions/media.GroupedArtists"
                                         }
                                     }
                                 }
@@ -82,6 +82,56 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/authenticate/delete-account": {
+            "post": {
+                "description": "Delete the account of the currently logged in user",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth",
+                    "accounts",
+                    "deleting",
+                    "settings"
+                ],
+                "summary": "Delete account",
+                "parameters": [
+                    {
+                        "description": "The password",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Confirmation of the password",
+                        "name": "confirmation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF protection token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/authenticate/login": {
@@ -181,6 +231,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/authenticate/password": {
+            "patch": {
+                "description": "Change the password for the currently logged in user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth",
+                    "accounts",
+                    "updating",
+                    "settings"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "The old password",
+                        "name": "old",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "The new password",
+                        "name": "new",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF protection token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/genre/{kind}/{genre}": {
             "get": {
                 "description": "Retrieve the genre with the given name and type",
@@ -240,7 +343,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.Genre"
+                                            "$ref": "#/definitions/media.Genre"
                                         }
                                     }
                                 }
@@ -348,7 +451,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/models.Genre"
+                                                "$ref": "#/definitions/media.Genre"
                                             }
                                         }
                                     }
@@ -467,7 +570,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.Cast"
+                                            "$ref": "#/definitions/media.Cast"
                                         }
                                     }
                                 }
@@ -546,6 +649,44 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/members/export/{format}": {
+            "get": {
+                "description": "Exports the data of a member, including profile information as well as other related data such as reviews",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "json text/csv"
+                ],
+                "tags": [
+                    "accounts",
+                    "members",
+                    "metadata"
+                ],
+                "summary": "Export all of the member's data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "json",
+                            "csv"
+                        ],
+                        "type": "string",
+                        "description": "Export format",
+                        "name": "format",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/members/follow": {
@@ -1227,6 +1368,188 @@ const docTemplate = `{
                 }
             }
         },
+        "/search": {
+            "get": {
+                "description": "Search for media, users, posts, artists, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "media",
+                    "metadata",
+                    "users",
+                    "posts",
+                    "reviews"
+                ],
+                "summary": "Perform a search for the given query and options",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF token. Required when using POST.",
+                        "name": "X-CSRF-Token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The search query. Falls back to a wildcard query if not provided.",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "union",
+                            "users",
+                            "groups",
+                            "artists",
+                            "media",
+                            "posts",
+                            "reviews",
+                            "tags",
+                            "genres"
+                        ],
+                        "type": "string",
+                        "description": "The category to search in",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The aggregations to perform on the search results",
+                        "name": "aggregations",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to perform a fuzzy search",
+                        "name": "fuzzy",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "score",
+                            "added",
+                            "modified",
+                            "weighed_score",
+                            "review_count"
+                        ],
+                        "type": "string",
+                        "description": "The field to sort the results by",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to sort the results in descending order",
+                        "name": "desc",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The page to return",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of results to return per page",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "description": "Search for media, users, posts, artists, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search",
+                    "media",
+                    "metadata",
+                    "users",
+                    "posts",
+                    "reviews"
+                ],
+                "summary": "Perform a search for the given query and options",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF token. Required when using POST.",
+                        "name": "X-CSRF-Token",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The search query. Falls back to a wildcard query if not provided.",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "union",
+                            "users",
+                            "groups",
+                            "artists",
+                            "media",
+                            "posts",
+                            "reviews",
+                            "tags",
+                            "genres"
+                        ],
+                        "type": "string",
+                        "description": "The category to search in",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The aggregations to perform on the search results",
+                        "name": "aggregations",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to perform a fuzzy search",
+                        "name": "fuzzy",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "score",
+                            "added",
+                            "modified",
+                            "weighed_score",
+                            "review_count"
+                        ],
+                        "type": "string",
+                        "description": "The field to sort the results by",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether to sort the results in descending order",
+                        "name": "desc",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The page to return",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of results to return per page",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/update/{member_name}": {
             "patch": {
                 "description": "Handle updating those member properties that can be exposed publicly, i.e. not settings",
@@ -1234,7 +1557,7 @@ const docTemplate = `{
                     "multipart/form-data json"
                 ],
                 "tags": [
-                    "account",
+                    "accounts",
                     "metadata",
                     "updating"
                 ],
@@ -1297,7 +1620,7 @@ const docTemplate = `{
                     "json multipart/form-data"
                 ],
                 "tags": [
-                    "account",
+                    "accounts",
                     "updating",
                     "settings"
                 ],
@@ -1440,119 +1763,7 @@ const docTemplate = `{
                 }
             }
         },
-        "member.BanInput": {
-            "type": "object"
-        },
-        "member.FollowResponse": {
-            "type": "object",
-            "properties": {
-                "acceptTime": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "notify": {
-                    "type": "boolean"
-                },
-                "reblogs": {
-                    "type": "boolean"
-                },
-                "status": {
-                    "description": "when checking status, we treat not_found as not following\nbut when creating a request, we treat not_found as target account not existing",
-                    "type": "string"
-                }
-            }
-        },
-        "member.Member": {
-            "type": "object",
-            "required": [
-                "email",
-                "memberName",
-                "webfinger"
-            ],
-            "properties": {
-                "active": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "Wherever you go, everyone is connected."
-                },
-                "displayName": {
-                    "type": "string",
-                    "example": "Lain Iwakura"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "lain@wired.jp"
-                },
-                "followers_uri": {
-                    "description": "URI for getting the followers list of this account",
-                    "type": "string"
-                },
-                "following_uri": {
-                    "description": "URI for getting the following list of this account",
-                    "type": "string"
-                },
-                "homepage": {
-                    "type": "string",
-                    "example": "https://webnavi.neocities.org/"
-                },
-                "irc": {
-                    "description": "doomed fields, will be removed by arbitrary user-defined fields",
-                    "type": "string"
-                },
-                "matrix": {
-                    "type": "string"
-                },
-                "memberName": {
-                    "description": "MemberName != webfinger",
-                    "type": "string",
-                    "maxLength": 30,
-                    "minLength": 3,
-                    "example": "lain"
-                },
-                "profile_pic": {
-                    "type": "string",
-                    "example": "/static/img/profile/lain.jpg"
-                },
-                "publicKeyPem": {
-                    "type": "string"
-                },
-                "regdate": {
-                    "type": "string",
-                    "example": "2020-01-01T00:00:00Z"
-                },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "[\"admin\"",
-                        " \"moderator\"]"
-                    ]
-                },
-                "uuid": {
-                    "type": "string"
-                },
-                "visibility": {
-                    "type": "string",
-                    "example": "followers_only"
-                },
-                "webfinger": {
-                    "description": "email like",
-                    "type": "string",
-                    "example": "lain@librate.club"
-                },
-                "xmpp": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Cast": {
+        "media.Cast": {
             "type": "object",
             "properties": {
                 "ID": {
@@ -1561,32 +1772,18 @@ const docTemplate = `{
                 "actors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Person"
+                        "$ref": "#/definitions/media.Person"
                     }
                 },
                 "directors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Person"
+                        "$ref": "#/definitions/media.Person"
                     }
                 }
             }
         },
-        "models.Country": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Genre": {
+        "media.Genre": {
             "type": "object",
             "properties": {
                 "children": {
@@ -1598,7 +1795,7 @@ const docTemplate = `{
                 "description": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.GenreDescription"
+                        "$ref": "#/definitions/media.GenreDescription"
                     }
                 },
                 "id": {
@@ -1636,7 +1833,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GenreDescription": {
+        "media.GenreDescription": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1653,7 +1850,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Group": {
+        "media.Group": {
             "type": "object",
             "properties": {
                 "active": {
@@ -1677,7 +1874,7 @@ const docTemplate = `{
                 "genres": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Genre"
+                        "$ref": "#/definitions/media.Genre"
                     }
                 },
                 "id": {
@@ -1690,13 +1887,13 @@ const docTemplate = `{
                 "locations": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Place"
+                        "$ref": "#/definitions/places.Place"
                     }
                 },
                 "members": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Person"
+                        "$ref": "#/definitions/media.Person"
                     }
                 },
                 "modified": {
@@ -1712,7 +1909,7 @@ const docTemplate = `{
                     }
                 },
                 "primary_genre": {
-                    "$ref": "#/definitions/models.Genre"
+                    "$ref": "#/definitions/media.Genre"
                 },
                 "soundcloud": {
                     "type": "string"
@@ -1731,24 +1928,24 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GroupedArtists": {
+        "media.GroupedArtists": {
             "type": "object",
             "properties": {
                 "group": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Group"
+                        "$ref": "#/definitions/media.Group"
                     }
                 },
                 "individual": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Person"
+                        "$ref": "#/definitions/media.Person"
                     }
                 }
             }
         },
-        "models.Person": {
+        "media.Person": {
             "type": "object",
             "properties": {
                 "added": {
@@ -1771,7 +1968,7 @@ const docTemplate = `{
                     "example": "Karol"
                 },
                 "hometown": {
-                    "$ref": "#/definitions/models.Place"
+                    "$ref": "#/definitions/places.Place"
                 },
                 "id": {
                     "type": "string",
@@ -1814,7 +2011,7 @@ const docTemplate = `{
                     }
                 },
                 "residence": {
-                    "$ref": "#/definitions/models.Place"
+                    "$ref": "#/definitions/places.Place"
                 },
                 "roles": {
                     "type": "array",
@@ -1834,11 +2031,127 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Place": {
+        "member.BanInput": {
+            "type": "object"
+        },
+        "member.FollowResponse": {
+            "type": "object",
+            "properties": {
+                "acceptTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notify": {
+                    "type": "boolean"
+                },
+                "reblogs": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "when checking status, we treat not_found as not following\nbut when creating a request, we treat not_found as target account not existing",
+                    "type": "string"
+                }
+            }
+        },
+        "member.Member": {
+            "type": "object",
+            "required": [
+                "email",
+                "memberName",
+                "webfinger"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Wherever you go, everyone is connected."
+                },
+                "customFields": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "Lain Iwakura"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "lain@wired.jp"
+                },
+                "followers_uri": {
+                    "description": "URI for getting the followers list of this account",
+                    "type": "string"
+                },
+                "following_uri": {
+                    "description": "URI for getting the following list of this account",
+                    "type": "string"
+                },
+                "memberName": {
+                    "description": "MemberName != webfinger",
+                    "type": "string",
+                    "maxLength": 30,
+                    "minLength": 3,
+                    "example": "lain"
+                },
+                "profile_pic": {
+                    "type": "string",
+                    "example": "/static/img/profile/lain.jpg"
+                },
+                "publicKeyPem": {
+                    "type": "string"
+                },
+                "regdate": {
+                    "type": "string",
+                    "example": "2020-01-01T00:00:00Z"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"admin\"",
+                        " \"moderator\"]"
+                    ]
+                },
+                "uuid": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string",
+                    "example": "followers_only"
+                },
+                "webfinger": {
+                    "description": "email like",
+                    "type": "string",
+                    "example": "lain@librate.club"
+                }
+            }
+        },
+        "places.Country": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "places.Place": {
             "type": "object",
             "properties": {
                 "country": {
-                    "$ref": "#/definitions/models.Country"
+                    "$ref": "#/definitions/places.Country"
                 },
                 "id": {
                     "type": "integer"

@@ -28,7 +28,7 @@ type (
 		ID               int64              `json:"_key" db:"id,pk"`
 		CreatedAt        time.Time          `json:"created_at" db:"created_at"`
 		NumStars         int8               `json:"numstars" binding:"required" validate:"min=0,max=10" error:"numstars must be between 1 and 10" db:"stars" `
-		Comment          string             `json:"comment,omitempty" db:"comment"`
+		Body             string             `json:"comment,omitempty" db:"body"`
 		Topic            string             `json:"topic,omitempty" db:"topic"`
 		Attribution      string             `json:"attribution,omitempty" db:"attribution"`
 		UserID           uint32             `json:"userid" db:"user_id"`

@@ -1,3 +1,17 @@
+// Copyright (C) 2023-2024 LibRate contributors
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
@@ -5,11 +19,8 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
-	"os"
-	"runtime/trace"
+	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,15 +29,14 @@ import (
 	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
+	//	"github.com/k42-software/go-altcha"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/contrib/websocket"
+
 	"github.com/gofiber/fiber/v2"
-	fiberSession "github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
-	"github.com/samber/lo"
 	"github.com/witer33/fiberpow"
 
 	_ "net/http/pprof"
@@ -35,6 +45,7 @@ import (
 
 	"codeberg.org/mjh/LibRate/db"
 	"codeberg.org/mjh/LibRate/internal/logging"
+	"codeberg.org/mjh/LibRate/middleware/profiling"
 	"codeberg.org/mjh/LibRate/middleware/render"
 	"codeberg.org/mjh/LibRate/middleware/session"
 )
@@ -44,11 +55,9 @@ type FlagArgs struct {
 	Init bool
 	// configFile is a flag to specify the path to the config file
 	ConfigFile string
-	// path is a flag to specify the path to the migrations that should be applied.
-	// TODO: add this feature (currently only batch application of all migrations is supported)
-	Path string
-	// When exit is true, the program will exit after running migrations
-	Exit bool
+	// Whether to start the profiling/tracing server
+	// Due to security reasons, this is only available in development mode
+	Profile bool
 	// SkipErrors is a comma-separated list of error codes to skip and not panic on.
 	// Particularly useful in development to bypass certain less important blockers
 	SkipErrors string
@@ -73,11 +82,11 @@ func main() {
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		dbConn    *sqlx.DB
-		pgConn    *pgxpool.Pool
-		err       error
-		conf      *cfg.Config
-		validator = validator.New()
+		dbConn             *sqlx.DB
+		pgConn             *pgxpool.Pool
+		err                error
+		conf               *cfg.Config
+		validationProvider = validator.New()
 	)
 
 	if flags.ConfigFile == "" {
@@ -89,28 +98,15 @@ func main() {
 		}
 	}
 
-	if conf.LibrateEnv == "development" {
+	if conf.LibrateEnv == "development" && flags.Profile {
 		go func() {
-			log.Info().Msg("Starting pprof server")
-			err = http.ListenAndServe("localhost:6060", nil)
-			if err != nil {
-				log.Panic().Err(err).Msg("Failed to start pprof server")
-			}
-			f, err := os.Create("trace.out")
-			if err != nil {
-				panic(err)
-			}
-			defer f.Close()
-			if err := trace.Start(f); err != nil {
-				log.Panic().Err(err).Msg("Failed to start trace")
-			}
-			defer trace.Stop()
+			profiling.Serve(&log)
 		}()
 	}
 
 	log = initLogging(&conf.Logging)
 	log.Info().Msgf("Reloaded logger with the custom config: %+v", conf.Logging)
-	validationErrors := cfg.Validate(conf, validator)
+	validationErrors := cfg.Validate(conf, validationProvider)
 	if len(validationErrors) > 0 {
 		for i := range validationErrors {
 			log.Warn().Msgf("Validation error: %+v", validationErrors[i])
@@ -118,6 +114,14 @@ func main() {
 		log.Fatal().Msg("errors were encountered while validating the config. Exiting.")
 	}
 	log.Debug().Msgf("Config: %+v", conf)
+
+	searchCache := redis.New(redis.Config{
+		Host:     conf.Redis.Host,
+		Port:     conf.Redis.Port,
+		Username: conf.Redis.Username,
+		Password: conf.Redis.Password,
+		Database: conf.Redis.SearchDB,
+	})
 
 	// Create a new Fiber instance
 	app := cmd.CreateApp(conf)
@@ -128,48 +132,19 @@ func main() {
 	}
 	go cmd.RunGrpcServer(s)
 
+	staticDirAbs, err := filepath.Abs(conf.Fiber.StaticDir)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get absolute path of static directory %s", conf.Fiber.StaticDir)
+	}
+
 	// Setup templated pages, like privacy policy and TOS
+	pagesCache := render.SetupCaching(conf)
 	go func() {
-		pages, err := render.MarkdownToHTML(conf.Fiber.StaticDir)
-		if err != nil {
-			log.Panic().Err(err).Msg("Failed to render pages from markdown")
-		}
-
-		languages := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
-			return strings.Split(strings.Split(entry.Name, "_")[1], ".")[0]
-		}))
-		log.Debug().Msgf("Languages: %+v", languages)
-		fileNames := lo.Uniq(lo.Map(pages, func(entry render.HTMLPage, index int) string {
-			return strings.Split(entry.Name, "_")[0]
-		}))
-		log.Debug().Msgf("File names: %+v", fileNames)
-
-		for i := range fileNames {
-			currentFileName := fileNames[i]
-			app.Get("/"+currentFileName+"*", func(c *fiber.Ctx) error {
-				path := strings.Split(c.Path(), "/")
-				requestedDoc := path[len(path)-1]
-				langName := strings.Split(strings.Split(requestedDoc, "_")[1], ".")[0]
-				if !lo.Contains(languages, langName) {
-					// redirect to default language
-					c.Set("Content-Type", "text/html")
-					page, ok := lo.Find(pages, func(entry render.HTMLPage) bool {
-						return strings.Contains(entry.Name, currentFileName+"_"+conf.Fiber.DefaultLanguage)
-					})
-					if !ok {
-						return c.Send(pages[0].Data)
-					}
-					return c.Send(page.Data)
-				}
-				for j := range pages {
-					currentPage := pages[j]
-					if strings.HasPrefix(currentPage.Name, currentFileName+"_") {
-						c.Set("Content-Type", "text/html")
-						return c.Send(currentPage.Data)
-					}
-				}
-				return c.SendStatus(404)
-			})
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		if err = render.
+			WatchFiles(ctx, staticDirAbs, &log, pagesCache); err != nil {
+			log.Error().Err(err).Msg("Error watching files")
 		}
 	}()
 
@@ -189,16 +164,12 @@ func main() {
 	}()
 
 	if flags.Init {
-		if err = initDB(&conf.DBConfig, flags.Init, flags.Exit, &log); err != nil {
+		if err = initDB(&conf.DBConfig, flags.Init, &log); err != nil {
 			log.Panic().Err(err).Msg("Failed to initialize database")
 		}
 	}
 
-	err = handleMigrations(conf, &log, flags.Path)
-	if err != nil {
-		log.Panic().Err(err).Msg(err.Error())
-	}
-
+	// Check password entropy
 	entropy, _ := redist.CheckPasswordEntropy(conf.Secret)
 	if err == nil && entropy < 50 {
 		log.Warn().Msgf("Secret is weak: %2f bits of entropy", entropy)
@@ -209,7 +180,14 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup session")
 	}
+	log.Info().Msg("Session handler ready")
 
+	// Setup Proof of Work antispam middleware
+	setupPOW(conf, app)
+
+	// setup other middlewares
+	// By default, the app uses the following:
+	// cache, cors, csrf, helmet, recover, idempotency, etag, compress
 	var wg sync.WaitGroup
 	middlewares := cmd.SetupMiddlewares(conf, &log)
 	wg.Add(1)
@@ -217,19 +195,49 @@ func main() {
 		defer wg.Done()
 		for i := range middlewares {
 			app.Use(middlewares[i])
+			if i == len(middlewares)-1 {
+				log.Info().Msg("Middlewares set up")
+			}
 		}
 	}()
+
+	// setup logging
 	fzlog := cmd.SetupLogger(conf, &log)
 	app.Use(fzlog)
+	log.Info().Msg("Logger set up")
 
-	setupPOW(conf, app)
+	// set up websocket
+	wsConfig := cmd.SetupWS(app, "/search")
+	log.Info().Msg("Websocket set up")
 	wg.Wait()
 
-	wsConfig := cmd.SetupWS(app, "/search")
-	err = setupRoutes(conf, &log, fzlog, pgConn, dbConn, app, sess, wsConfig)
+	render.SetupTemplatedPages(
+		conf.Fiber.DefaultLanguage,
+		app, &log, pagesCache)
+
+	log.Info().Msg("Templated pages set up")
+
+	r := routes.RouterProps{
+		Conf:            conf,
+		Log:             &log,
+		LogHandler:      fzlog,
+		LegacyDB:        dbConn,
+		DB:              pgConn,
+		App:             app,
+		SessionHandler:  sess,
+		WebsocketConfig: &wsConfig,
+		Validation:      validationProvider,
+		Cache:           searchCache,
+	}
+
+	log.Info().Msg("Setting up routes")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	err = setupRoutes(ctx, &r)
 	if err != nil {
 		log.Panic().Err(err).Msg("Failed to setup routes")
 	}
+	log.Info().Msg("Routes set up")
 
 	// Listen on chosen port, host and protocol
 	// (disabling HTTPS still works if you use reverse proxy)
@@ -239,10 +247,25 @@ func main() {
 	}
 }
 
+// Set up a Proof of Work middleware
+// This is an ethical alternative to things like Cloudflare
+// Basically, an attacker would have to run the same computation as the server
+// (granted the difficulty, which is measured in
+// the number of calculations required to find a SHA256 hash with a certain number of leading zeroes,
+// is set high enough, and the check frequency is set low enough)
+// to access a resource or perform an action
+// One thing to keep in mind when setting the difficulty and
+// check frequency is that a too high difficulty with too frequent checks
+// might significantly slow down the page,
+// harm SEO and drain battery on mobile devices
+// A good value for stack where you have additional measures in place
+// like a rate limiter on your reverse proxy
+// lies somewhere between 15-45kH/s difficulty and 5-15 minutes check frequency
 func setupPOW(conf *cfg.Config, app *fiber.App) {
 	if conf.Fiber.PowDifficulty == 0 {
 		conf.Fiber.PowDifficulty = 60000
 	}
+
 	app.Use(fiberpow.New(fiberpow.Config{
 		PowInterval: time.Duration(conf.Fiber.PowInterval * int(time.Second)),
 		Difficulty:  conf.Fiber.PowDifficulty,
@@ -259,7 +282,7 @@ func setupPOW(conf *cfg.Config, app *fiber.App) {
 	}))
 }
 
-func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) error {
+func initDB(dbConf *cfg.DBConfig, do bool, logger *zerolog.Logger) error {
 	if !do {
 		return nil
 	}
@@ -269,7 +292,7 @@ func initDB(dbConf *cfg.DBConfig, do, exitAfter bool, logger *zerolog.Logger) er
 		return nil
 	}
 
-	err := db.InitDB(dbConf, exitAfter, logger)
+	err := db.InitDB(dbConf, logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -295,8 +318,8 @@ func DBRunning(port uint16) bool {
 
 func parseFlags() FlagArgs {
 	var (
-		init, exit                   bool
-		configFile, path, skipErrors string
+		init, profiler         bool
+		configFile, skipErrors string
 	)
 
 	const (
@@ -304,32 +327,28 @@ func parseFlags() FlagArgs {
 		initUse    = "Initialize database"
 		confVal    = "config.yml"
 		confUse    = "Path to config file"
+		pprofVal   = false
+		pprofUse   = "Start tracing/profiling server. LibrateEnv must be set to development"
 		skipErrVal = ""
 		skipErrUse = "Comma-separated list of error codes to skip and not panic on"
-		pathVal    = "db/migrations"
-		pathUse    = "Path to migrations to apply"
-		exitVal    = false
-		exitUse    = "Exit after running migrations"
 		short      = " (shorthand)"
 	)
+
 	flag.BoolVar(&init, "init", initVal, initUse)
 	flag.BoolVar(&init, "i", initVal, initUse+short)
 	flag.StringVar(&configFile, "config", confVal, confUse)
 	flag.StringVar(&configFile, "c", confVal, confUse+short)
 	flag.StringVar(&skipErrors, "skip-errors", skipErrVal, skipErrUse)
 	flag.StringVar(&skipErrors, "s", skipErrVal, skipErrUse+short)
-	flag.StringVar(&path, "path", pathVal, pathUse)
-	flag.StringVar(&path, "p", pathVal, pathUse+short)
-	flag.BoolVar(&exit, "exit", exitVal, exitUse)
-	flag.BoolVar(&exit, "x", exitVal, exitUse+short)
+	flag.BoolVar(&profiler, "tracing", pprofVal, pprofUse)
+	flag.BoolVar(&profiler, "t", pprofVal, pprofUse+short)
 
 	flag.Parse()
 
 	return FlagArgs{
 		Init:       init,
 		ConfigFile: configFile,
-		Path:       path,
-		Exit:       exit,
+		Profile:    profiler,
 		SkipErrors: skipErrors,
 	}
 }
@@ -401,32 +420,11 @@ func modularListen(conf *cfg.Config, app *fiber.App) error {
 	return nil
 }
 
-func setupRoutes(
-	conf *cfg.Config,
-	log *zerolog.Logger,
-	fzlog fiber.Handler,
-	pgConn *pgxpool.Pool,
-	dbConn *sqlx.DB,
-	app *fiber.App,
-	sess *fiberSession.Store,
-	wsConfig websocket.Config,
-) (err error) {
+func setupRoutes(ctx context.Context, r *routes.RouterProps) (err error) {
 	// Setup routes
-	err = routes.Setup(log, fzlog, conf, dbConn, pgConn, app, sess, wsConfig)
+	err = routes.Setup(ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to setup routes: %v", err)
 	}
-	return nil
-}
-
-func handleMigrations(conf *cfg.Config, log *zerolog.Logger, path string) error {
-	if !lo.Contains(os.Args, "migrate") {
-		return nil
-	}
-
-	if err := db.Migrate(log, conf, path); err != nil {
-		return fmt.Errorf("failed to migrate database: %w", err)
-	}
-	log.Info().Msg("Database migrated")
 	return nil
 }

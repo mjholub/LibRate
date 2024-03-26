@@ -10,6 +10,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -21,8 +22,8 @@ import (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID       int       `json:"-" db:"id"`
-		UUID     uuid.UUID `json:"uuid,omitempty" db:"uuid"`
+		ID       int       `json:"-" db:"id_numeric"`
+		UUID     uuid.UUID `json:"uuid,omitempty" db:"id"`
 		PassHash string    `json:"-" db:"passhash"`
 		// MemberName != webfinger
 		MemberName string `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
@@ -36,16 +37,16 @@ type (
 		RegTimestamp     time.Time      `json:"regdate" db:"reg_timestamp" example:"2020-01-01T00:00:00Z"`
 		ProfilePicID     sql.NullInt64  `json:"-" db:"profilepic_id"`
 		ProfilePicSource string         `json:"profile_pic,omitempty" db:"-" example:"/static/img/profile/lain.jpg"`
-		Homepage         sql.NullString `json:"homepage,omitempty" db:"homepage" example:"https://webnavi.neocities.org/"`
-		// doomed fields, will be removed by arbitrary user-defined fields
-		IRC            sql.NullString `json:"irc,omitempty" db:"irc"`
-		XMPP           sql.NullString `json:"xmpp,omitempty" db:"xmpp"`
-		Matrix         sql.NullString `json:"matrix,omitempty" db:"matrix"`
-		Visibility     string         `json:"visibility" db:"visibility" example:"followers_only"`
-		FollowingURI   string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
-		FollowersURI   string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
-		SessionTimeout sql.NullInt64  `json:"-" db:"session_timeout"`
-		PublicKeyPem   string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem" db:"public_key_pem"`
+		Visibility       string         `json:"visibility" db:"visibility" example:"followers_only"`
+		FollowingURI     string         `json:"following_uri" db:"following_uri"` // URI for getting the following list of this account
+		FollowersURI     string         `json:"followers_uri" db:"followers_uri"` // URI for getting the followers list of this account
+		SessionTimeout   sql.NullInt64  `json:"-" db:"session_timeout"`
+		PublicKeyPem     string         `jsonld:"publicKeyPem,omitempty" json:"publicKeyPem" db:"public_key_pem"`
+		CustomFields     pgtype.JSONB   `json:"customFields,omitempty" db:"custom_fields"`
+		Modified         sql.NullInt64  `json:"modified,omitempty" db:"modified"`
+		Added            sql.NullInt64  `json:"added,omitempty" db:"added"`
+		Doc              pgtype.JSONB   `json:"-,omitempty" db:"doc"`
+		DocID            sql.NullString `json:"-,omitempty" db:"doc_id"`
 	}
 
 	// TODO: move the password here
@@ -60,7 +61,8 @@ type (
 	UXPreferences struct {
 		Locale language.Tag `json:"locale,omitempty" db:"locale"`
 		// everything is calculated relative to the maximum scale of 0-100
-		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatinScaleUpper",min=0,max=1" default:"1"`
+		// nolint: revive // we'd need to configure validation inside function calls otherwise. That can harm consistency.
+		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatingScaleUpper",min=0,max=1" default:"1"`
 		RatingScaleUpper int16 `json:"rating_scale_upper,omitempty" db:"rating_scale_upper" validate:"min=2,max=100" default:"10"`
 	}
 
@@ -135,7 +137,8 @@ type (
 		Ends      time.Time `json:"ends" db:"ends" validate:"required" example:"2038-01-16T00:00:00Z"`
 		CanAppeal bool      `json:"canAppeal" db:"can_appeal" validate:"required" example:"true"`
 		// usage: https://pkg.go.dev/net#ParseCIDR
-		Mask *net.IPNet `json:"mask" db:"mask"`
+		Mask     *net.IPNet `json:"mask" db:"mask"`
+		BannedBy string     `json:"bannedBy" db:"banned_by"`
 	}
 
 	// BanStatus is used to retrieve the ban details
@@ -147,23 +150,41 @@ type (
 		Started    time.Time `json:"started" db:"started"`
 	}
 
-	// TODO: debload this interface
 	Storer interface {
+		Writer
+		Getter
+		Checker
+		FollowStorer
+		Exporter
+	}
+
+	Writer interface {
 		Save(ctx context.Context, member *Member) error
-		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
-		HasRole(ctx context.Context, name, role string, exact bool) bool
 		Ban(ctx context.Context, member *Member, input *BanInput) error
 		Unban(ctx context.Context, member *Member) error
+		Update(ctx context.Context, member *Member) error
+		UpdatePassword(ctx context.Context, nick, pass string) error
+		Delete(ctx context.Context, memberName string) error
+		CreateSession(ctx context.Context, member *Member) (string, error)
+	}
+
+	Getter interface {
+		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
+		GetID(ctx context.Context, key string) (int, error)
+		GetPassHash(email, login string) (string, error)
+	}
+
+	Checker interface {
+		HasRole(ctx context.Context, name, role string, exact bool) bool
+		// VerifyViewability checks if the viewer can view the viewee's profile (e.g. if some info is visible to followers only)
 		VerifyViewability(ctx context.Context, viewer, viewee string) (bool, error)
 		// Check checks if a member with the given email or nickname already exists
 		Check(ctx context.Context, email, nickname string) (bool, error)
-		Update(ctx context.Context, member *Member) error
-		Delete(ctx context.Context, member *Member) error
-		GetID(ctx context.Context, key string) (int, error)
-		GetPassHash(email, login string) (string, error)
-		CreateSession(ctx context.Context, member *Member) (string, error)
 		IsBlocked(ctx context.Context, fr *FollowBlockRequest) (blocked bool, err error)
-		FollowStorer
+	}
+
+	Exporter interface {
+		Export(ctx context.Context, memberName, format string) ([]byte, []byte, error)
 	}
 
 	FollowStorer interface {

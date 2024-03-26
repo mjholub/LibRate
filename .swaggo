@@ -1,3 +1,4 @@
 replace pq.StringArray []string
 replace sql.NullTime time.Time
 replace sql.NullString string
+replace pgtype.JSONB map[string]interface{}
