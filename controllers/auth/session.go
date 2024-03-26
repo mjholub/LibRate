@@ -60,24 +60,9 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, memberData *member.
 		close(tokenCreatedCh)
 	}()
 
-	if c.Cookies("device_id") == "" {
-		deviceID, err := a.identifyDevice()
-		if err != nil {
-			a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
-			return h.Res(c, http.StatusInternalServerError, "Failed to create session")
-		}
-		deviceHash = deviceID.String()
-		c.Cookie(&fiber.Cookie{
-			Domain:      a.conf.Fiber.Domain,
-			SessionOnly: true,
-			Expires:     time.Now().Add(time.Minute * time.Duration(timeout)),
-			SameSite:    "Lax",
-			Name:        "device_id",
-			Value:       deviceHash,
-			HTTPOnly:    false,
-		})
-	} else {
-		deviceHash = c.Cookies("device_id")
+	deviceHash, err = a.setDeviceCookie(c, timeout)
+	if err != nil {
+		return err
 	}
 
 	if sess == nil {
@@ -91,15 +76,7 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, memberData *member.
 	a.log.Debug().Msgf("Session keys: %+v", sess.Keys())
 	sess.SetExpiry(sessionExpiry)
 
-	c.Cookie(&fiber.Cookie{
-		HTTPOnly: true,
-		Name:     "session_id",
-		MaxAge:   int(sessionExpiry.Seconds()),
-		Domain:   a.conf.Fiber.Domain,
-		SameSite: "Lax",
-		Value:    sess.ID(),
-	},
-	)
+	a.setSessionCookie(c, sess, timeout)
 
 	a.log.Debug().Msg("Session created")
 	wg.Wait()
@@ -122,6 +99,44 @@ func (a *Service) createSession(c *fiber.Ctx, timeout int32, memberData *member.
 		"token":      signedToken,
 		"memberName": memberData.MemberName,
 	})
+}
+
+func (a *Service) setDeviceCookie(c *fiber.Ctx, timeout int32) (deviceHash string, err error) {
+	if c.Cookies("device_id") == "" {
+		deviceID, err := a.identifyDevice()
+		if err != nil {
+			a.log.Error().Err(err).Msgf("Failed to create session: %s", err.Error())
+			return "", h.Res(c, http.StatusInternalServerError, "Failed to create session")
+		}
+		deviceHash = deviceID.String()
+		c.Cookie(&fiber.Cookie{
+			Domain:      a.conf.Fiber.Domain,
+			SessionOnly: true,
+			Expires:     time.Now().Add(time.Minute * time.Duration(timeout)),
+			SameSite:    "Lax",
+			Name:        "device_id",
+			Value:       deviceHash,
+			HTTPOnly:    false,
+		})
+	} else {
+		deviceHash = c.Cookies("device_id")
+	}
+
+	return deviceHash, nil
+}
+
+func (a *Service) setSessionCookie(c *fiber.Ctx, sess *session.Session, timeout int32) {
+	if c.Cookies("session_id") == "" {
+		c.Cookie(&fiber.Cookie{
+			HTTPOnly: true,
+			Name:     "session_id",
+			MaxAge:   int(timeout * 60),
+			Domain:   a.conf.Fiber.Domain,
+			SameSite: "Lax",
+			Value:    sess.ID(),
+		},
+		)
+	}
 }
 
 func setSessionKeys(IP, UA, deviceHash string, sess *session.Session, memberData *member.Member) {
