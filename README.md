@@ -2,7 +2,6 @@
 [![weblate badge](https://translate.codeberg.org/widget/librate/frontend-messages/svg-badge.svg?native=1
 )](https://translate.codeberg.org/projects/librate/)
 [![GoDoc](https://godoc.org/codeberg.org/mjh/LibRate?status.svg)](https://pkg.go.dev/codeberg.org/mjh/LibRate)
-![Matrix](https://img.shields.io/matrix/libratedev:matrix.org)
 ![Depfu](https://img.shields.io/depfu/dependencies/github/mjholub%2FLibRate)
 ![LiberaPay](https://img.shields.io/liberapay/receives/Librate.svg?logo=liberapay)
 
@@ -10,7 +9,10 @@ LibRate is a project that aims to provide a free, federated service for tracking
 
 This project is currently in early beta stage, bugs are expected and PRs are very welcome.
 
-You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate) Monero or BLIK (contact me on Matrix for the latter two).
+Element, probably the only Matrix client to support publishing roomss has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
+[#librate-dev:matrix.org](https://matrix.to/#/#librate-dev:matrix.org)
+
+You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate), Monero or BLIK (contact me via Matrix for the latter two).
 
 **The only public beta instance can be found at [librate.club](https://librate.club/). Federation is currently work in progress. Bleeding edge branch can be found [here](https://codeberg.org/mjh/LibRate/src/branch/dev)**
 
@@ -49,7 +51,7 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 - [ ] Direct messages (E2EE)
 - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
 - [x] (**WIP**) User-generated content tagging and categorization
-- [x] (**WIP**) Following
+- [x] Following
 - [ ] Sharing
 - [x] (**WIP**) **ActivityPub support**, with selective federation
 
@@ -73,7 +75,8 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 - [ ] Scrobbling
 - [ ] Decentralized subtitle repository
 - [ ] DRM-free audio hosting and streaming(?)
-- [ ] Artwork galleries for visual artists(?)
+- [ ] Visual artwork galleries and ability to claim own page as an artist
+- [ ] Arbitrarily defined custom media objects (like board games, anime figures or other collectible)
 
 ### **Reviews**
 
@@ -94,9 +97,9 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 
 - [x] Extended configurability
 - [x] Internationalization
-- [ ] Events, federating with Mobilizon
+- [ ] Events (like concerts or conventions)
 - [ ] Federated merch and works marketplace, possibly an alternative to Bandcamp
-- [ ] Mobile app (although the frontend is and will be mobile friendly, but also never at the expense of desktop experience. We'll also try to make it work with Fedilab, though the number of distinctive features may make it difficult)
+- [ ] Mobile app
 
 ## General administration information
 
@@ -113,13 +116,13 @@ The following configuration paths will be automatically checked and not require 
 -     ~/.local/share/librate/config",
 -     ~/.config/librate/config"
 
-Then make the necessary adjustments to the privacy policy and Terms of Service, located in _static/templates/examples_ and move them one directory up. If your instance is country-specific, you can add another file with your prospective users' main language code as a suffix to that directory. You need to at keep at least one version of TOS and Privacy using the [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) you've set as `defaultLanguage` in config.
+Then make the necessary adjustments to the privacy policy and Terms of Service templates, located in _static/templates/examples_ and move them one directory up. If your instance is country-specific, you can add another file with your prospective users' main language code as a suffix to that directory. You need to at keep at least one version of TOS and Privacy using the [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) you've set as `defaultLanguage` in config.
 
 ## Deploying with Docker
 
-Set up your config. If something's wrong with the networking, try setting the hostnames in config for anything except the gRPC server to `0.0.0.0`.
+Set up your configuration as described earlier. If something's wrong with the networking, try setting the hostnames in config for anything except the gRPC server to `0.0.0.0`.
 
-Then, before deploying, update the following line in [postgres container start script](./db/start.sh):
+Then, before deploying, update the following line in [postgres container start script](./db/start.sh), or use a secrets management tool of your choice:
 
 ```sh
 psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'CHANGE_ME';"
@@ -127,7 +130,7 @@ psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'CHANGE_ME';"
 
 You can use compose. Just remember to execute the commands from step 5 and create the network first. 
 
-Optionally in compose you can enable monitoring of your instance with Grafana and Prometheus, make sure to modify your password and remove the entrypoint lines for these services.
+Optionally in compose you can enable monitoring of your instance with Grafana and Prometheus. To do so, make sure to modify the password and remove the entrypoint lines for these services in the compose file.
 
 1. Create a Docker network with
 
@@ -158,26 +161,39 @@ docker run -it --network=librate-net --hostname "librate-db" librate-db:latest
 ```sh
 lrctl -c [path to config file or 'env'] db init
 lrctl -c [...] db migrate # If the migrations fail you can copy them to the database container and apply them manually, although this shouldn't happen. Note that each migration has a corresponding rollback (down) migration.
+# Something like (fish syntax) for f in (fd -t f *.up.sql .);psql -u postgres -d librate -a -f $f;end should do as a fallback, but please note thad you lose the benefit of proper rollback on any errors along the way.
 ```
 
 6. Finally, set up some reverse proxy, like caddy or nginx, to resolve the app to a
    hostname (locally you can also use something like `lr.localhost`). Note that
-   YOU MUST set up some reverse proxy, since the app hardcodes certain security
+   YOU MUST set up some downstream server with HTTPS or get your own TLS certificates and set tls to true and specify key paths in config. since the app hardcodes certain security
    headers that make it unusable without HTTPS (although self-signed certs work,
    but you're better off using caddy which will automatically generate a free
    certificate with Let's Encrypt for you).
+
+**TIP:**
+Caddy lets you really easily have zero to minimum downtime when updating the app. All you need to do is set up `lb_policy` to `first`, then when updating the app, change the config to use the second port you've set Caddy to balance the load for your domain.
+
+Note the required healthchecks setup. Our API endpoint for that is `/api/health/check`. See [official documentation](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#load-balancing) for more details.
+
+It also lets you have other nice things, like automatically rejecting bad actors using a crowdsec plugin.
 
 ## Prerequisites for running natively:
 
 ### Get the Dependencies
 
 - [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for handling secrets
-- `pnpm`, `yarn` or `npm`, for building the frontend
+- A JS bundler, like pnpm or bun, for building the frontend
 - working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 ### Setup secrets
 
-**A foreword**: you may ask about other storage options for secrets.
+
+
+**A foreword**: 
+If you experience any issues, just set `USE_SOPS` to false in your environment.
+
+You may ask about other storage options for secrets.
 Well, relying on local storage and age is the simplest way for now, but luckily
 thanks to sops' versatility, we'll successively work on adding support for more ways of handling them.
 
@@ -205,7 +221,7 @@ path>
 
 ## Development prerequisites
 
-To develop the recommendations feature, you'll need:
+To develop the (currently not in active development) recommendations feature, you'll need:
 
 - `protoc` and `protoc-gen-go` for generating code from the protocol buffers files.
 - Rust and Go toolchains
@@ -224,16 +240,13 @@ Alternatively, edit the example config file and run:
 go mod tidy  && \
 cd fe && pnpm install \
 && pnpm run build && \
-go run . -init -exit && \
-go run . migrate -auto-migrate
+go build -ldflags "-w -s" -o librate
+./librate
+# then the lrctl bootstraping commands described earlier WHILE librate is running
 ```
-
-For subsequent runs of course you shouldn't use the `init` flag.
 
 You can then test your instance at [http://127.0.0.1:3000](127.0.0.1:3000) (or the other port you've specified)
 
 # Testing
 
-In order to test the database code, you should create a `librate_test` database.
-
-If you set the `$CLEANUP_TEST_DB` variable to 0, the test database will not be cleaned up by the deferred function in the database initialization unit test.
+In order to test the database code, you should create a `librate_test` database. We currently try to move towards using mocks where possible, but there are some incompatibilities between the mocking library we use and the actual implementation.

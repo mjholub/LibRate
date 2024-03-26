@@ -10,14 +10,33 @@ For your commits on the feature branch, follow **atomic and conventional commits
 
 # Testing
 
-Although striving towards 100% test coverage is irrational, to say the least, provide unit tests for your code. Test driven development is advisable especially for new features. Test the frontend with jest, and for the backend just run `go test -v. /...`
+For small changes you might just do some manual testing, for larger changes provide unit tests and for really large ones, integration tests.
+As a maintainer I can help you if anything feels unclear or overwhelming during the process of testing any larger components.
 
-  **TIP**: First, define or extend existing interfaces, then use a tool like _mockgen_ to generate mocks. Although if you want to be 100% sure when contributing code that affects the database, you can create a test db with the relevant tables, or (although the data types might not always exactly match), an in-memory sqlite database.
+**TIP**: First, define or extend existing interfaces, then use a tool like _mockgen_ to generate mocks.
+Although if you want to be 100% sure when contributing code that affects the database, you can create a test db with the relevant tables, 
+or (although the data types might not always exactly match), an in-memory sqlite database.
 
-# Style
+# Style, concurrent code
 
 Your editor should have support for _eslint_, svelte LSP and _golangci-lint_ installed and enabled. For _golangci-lint_ though, you can also use it as a CLI tool, although a language server version is more convenient.
-Your code should be referentially transparent. It can be self-documenting but if it's more complex, add some short comment.
+
+As you probably see, LibRate's codebase relies heavily on the dependency injection pattern for anything public. 
+
+This also implies other related pattern which are rather idiomatic in Go, such as constructors and method receivers.
+
+Your code should be [referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency). Channels are not, so if you want to do concurrency, only use them if it's 
+really necessary, like long-running background tasks that actually require inter-procedure communication. See [this blog post](https://www.jtolio.com/2016/03/go-channels-are-bad-and-you-should-feel-bad/). 
+
+Also when it comes to concurrency, before deciding to write anything concurrent, please write two copies of your function, one sequential and the other not, then benchmark them.
+
+You'd be surprised how often the goroutine overhead exceeds it's benefits you'd expect based on your initial assumptions.
+
+Also, please do not use busy wait. It's highly unidiomatic in Go.
+
+  It can be self-documenting but if it's more complex, add some short comment.
+
+In the _controllers_ pacakge you'll find examples of how to write Swagger-compatible comments for APIs and in _models_, in structs tagged with the `example` tag, how to document your models. For more details please see the wiki.
 
 # Dependencies
 
@@ -44,6 +63,8 @@ just submit a PR with the backend functionality, as long as it returns the expec
 in the unit tests or to `curl`.
 
 ## Frontend
+
+An easy and welcome way to contribute is writing CSS stylesheets to be used as themes. Please put them in ./static/themes folder. SCSS or other stuff that hasn't gone through a preprocessor won't work, only CSS files can be used by the frontend as custom themes source.
 
 Avoid doing too much computation on the client's side. If something can be done by an API endpoint in the Go backend, then do it this way.
 
