@@ -60,7 +60,7 @@
     "@sveltestrap/sveltestrap": "^6.2.2",
     "@types/http-errors": "^2.0.4",
     "axios": "^1.6.7",
-    "bits-ui": "^0.18.2",
+    "bits-ui": "^0.19.5",
     "clsx": "^2.1.0",
     "feather-icons": "^4.29.1",
     "http-errors": "^2.0.0",
