@@ -22,10 +22,10 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 	mu.Unlock()
 
 	batch := &pgx.Batch{}
-	batch.Queue(`INSERT INTO public.members (uuid, passhash, nick, webfinger, email, reg_timestamp, active, roles)
-	VALUES ($1, $2, $3, $4, $5, to_timestamp($6), $7, $8)
-	RETURNING id`,
-		member.UUID, member.PassHash, member.MemberName, member.Webfinger,
+	batch.Queue(`INSERT INTO public.members (passhash, nick, webfinger, email, reg_timestamp, active, roles)
+	VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7)
+	RETURNING id_numeric`,
+		member.PassHash, member.MemberName, member.Webfinger,
 		member.Email, member.RegTimestamp.Unix(), member.Active, pq.StringArray(member.Roles))
 
 	tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{

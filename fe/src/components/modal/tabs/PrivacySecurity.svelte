@@ -13,7 +13,6 @@
 		type DataExportRequest
 	} from '$stores/members/getInfo';
 	import { authStore, type PasswordUpdateInput } from '$stores/members/auth';
-	import axios from 'axios';
 	import PasswordInput from '$components/form/PasswordInput.svelte';
 	let errorMessages: string[] = [];
 	let confirmMutingInstance = false;
@@ -137,26 +136,34 @@
 		}
 	};
 
-	const settingsUpdate = async () => {
-		{
-			const res = await axios.patch(`/api/members/update/${memberName}/preferences`, settings, {
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${jwtToken}`,
-					'X-CSRF-Token': csrfToken || ''
-				}
-			});
-			if (res.status !== 200) {
-				errorMessages.push(`Error updating settings: ${res.data.message} (${res.status})`);
-				errorMessages = [...errorMessages];
-			}
-			settingsSaved = true;
+const settingsUpdate = async () => {
+    try {
+        const res = await fetch(`/api/members/update/${memberName}/preferences`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwtToken}`,
+                'X-CSRF-Token': csrfToken || ''
+            },
+            body: JSON.stringify(settings)
+        });
 
-			dispatch('privacySettingsUpdated', {
-				newSettings: settings
-			});
-		}
-	};
+        if (!res.ok) {
+            const errorMessage = `Error updating settings: ${await res.text()} (${res.status})`;
+            errorMessages.push(errorMessage);
+            errorMessages = [...errorMessages];
+        }
+
+        settingsSaved = true;
+
+        dispatch('privacySettingsUpdated', {
+            newSettings: settings
+        });
+    } catch (error) {
+        // Handle fetch errors here
+        console.error('Fetch error:', error);
+    }
+};
 </script>
 
 <form id="privacy-settings" on:submit={settingsUpdate}>

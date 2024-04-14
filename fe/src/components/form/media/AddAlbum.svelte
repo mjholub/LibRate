@@ -1,5 +1,4 @@
 <script lang="ts">
-	import axios from 'axios';
 	import { filterXSS } from 'xss';
 	import {
 		Card,
@@ -184,7 +183,10 @@
 			};
 			localStorage.setItem('album', JSON.stringify(albumWithLifeTime));
 		});
-		ws = searchQueryStore.createWebSocket(window.location.host);
+		const maybeWS = searchQueryStore.createWebSocket(window.location.host);
+    if (maybeWS) {
+      ws = maybeWS;
+    }
 		ws.onmessage = (e) => {
 			const data = JSON.parse(e.data);
 			searchResults = data.results;
@@ -352,21 +354,26 @@
 						formData.append('imageType', 'album_cover');
 						formData.append('member', nickname);
 						try {
-							const res = await axios.post('/api/upload/image', formData, {
+							const res = await fetch('/api/upload/image', {
+                method: 'POST',
 								headers: {
 									'Content-Type': 'multipart/form-data',
 									Authorization: `Bearer ${localStorage.getItem('jwtToken')}`,
 									'X-CSRF-Token': csrfToken || ''
-								}
+								},
+                body: formData
 							});
-							if (res.status === 200) {
-								album.image_paths = [res.data.path];
-								imagePaths = [res.data.path];
+              
+							if (res.ok) {
+                const resData = await res.json();
+								album.image_paths = [resData.path];
+								imagePaths = [resData.path];
 								isUploading = false;
-								resolve(res.data.path);
+								resolve(resData.path);
 							} else {
+                const errorMessage = await res.text();
 								errorMessages.push({
-									message: res.data.message,
+									message: errorMessage,
 									status: res.status
 								});
 								isUploading = false;

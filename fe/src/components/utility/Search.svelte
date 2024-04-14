@@ -1,7 +1,6 @@
 <script lang="ts">
   import * as DropdownMenu from "$components/ui/dropdown-menu";
   import { Button } from "$components/ui/button";
-	import axios from 'axios';
 	import { _ } from 'svelte-i18n';
 	import type { SearchResponse, resultCategory } from '$lib/types/search.ts';
 	import type { CustomHttpError } from '$lib/types/error';
@@ -40,35 +39,37 @@
 	let errors: CustomHttpError[] = [];
 	let showOptionsDropdown = false;
 
-	async function searchItems(query: string) {
-		try {
-			const res = await axios.get<SearchResponse>('/api/search', {
-				params: {
-					q: query,
-					category: categories.join(','),
-					fuzzy: true,
-					sort: 'Data.name',
-					desc: true,
-					page: 1,
-					pageSize: pageSize
-				},
-			})
-			if (res.status === 200) {
-				goto('/search/results', { state: { results: res.data } });
-			} else {
-				errors.push({
-					message: 'search request failed with status',
-					status: res.status
-				})
-				errors = [...errors];
-			}
-		} catch (error) {
-			errors.push({
-					message: `search request failed with error: ${error}`,
-					status: 500
-			})
-		}		
-	}	
+async function searchItems(query: string) {
+    try {
+        const queryString = new URLSearchParams({
+            q: query,
+            category: categories.join(','),
+            fuzzy: 'true',
+            sort: 'Data.name',
+            desc: 'true',
+            page: '1',
+            pageSize: pageSize.toString()
+        }).toString();
+
+        const res = await fetch(`/api/search?${queryString}`);
+        if (res.ok) {
+            const data: SearchResponse = await res.json();
+            goto('/search/results', { state: { results: data } });
+        } else {
+            const status = res.status;
+            errors.push({
+                message: 'search request failed with status',
+                status: status
+            });
+            errors = [...errors];
+        }
+    } catch (error) {
+        errors.push({
+            message: `search request failed with error: ${error}`,
+            status: 500
+        });
+    }
+}
 </script>
 
 <div class="search-bar">

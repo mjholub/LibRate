@@ -1,7 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { Genre } from '$lib/types/media.ts';
-import axios from 'axios';
 
 interface GenreStoreState {
   genres: Genre[];
@@ -24,40 +23,41 @@ function createGenreStore(): GenreStore {
     subscribe,
     set,
     update,
-    getGenres: async (all: boolean, columns: column[], kind: kind) => {
-      await axios.get(`/api/media/genres/${kind}?all=${all}&columns=${columns.join('&columns=')}`, {
-      }).then(response =>
-        set({ genres: response.data })
-      ).catch(err => {
+    getGenres: async (all: boolean, columns: column[], kind: kind): Promise<void> => {
+      try {
+        const response = await fetch(`/api/media/genres/${kind}?all=${all}&columns=${columns.join('&columns=')}`);
+        const data = await response.json();
+        set({ genres: data });
+      } catch (err) {
         console.log(err);
-        return [];
-      });
+        throw err;
+      }
     },
-    getGenreNames: async (kind: kind, asLinks: boolean) => {
-      return new Promise(async (resolve, reject) => {
-        await axios.get(`/api/media/genres/${kind}?names_only=true?as_links=${asLinks}?all=true`, {
-        }).then(res => {
-          resolve(res.data);
-        }).catch(err => {
-          console.log(err);
-          reject(err);
-        });
-      });
+
+    getGenreNames: async (kind, asLinks) => {
+      try {
+        const response = await fetch(`/api/media/genres/${kind}?names_only=true&as_links=${asLinks}&all=true`);
+        const data = await response.json();
+        return data;
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
     },
-    getGenre: async (kind: kind, lang: string, genre: string) => {
-      return new Promise(async (resolve, reject) => {
+
+    getGenre: async (kind, lang, genre) => {
+      try {
         // format to snake_case, lowercase
         genre = genre.toLowerCase().replace(/ /g, '_');
-        await axios.get(`/api/media/genre/${kind}/${genre}/?lang=${lang.toString()}`, {
-        }).then(res => {
-          set({ genres: res.data.data })
-          resolve(res.data.data);
-        }).catch(err => {
-          console.log(err);
-          reject(err);
-        });
-      });
-    },
+        const response = await fetch(`/api/media/genre/${kind}/${genre}/?lang=${lang.toString()}`);
+        const data = await response.json();
+        set({ genres: data.data });
+        return data.data;
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
+    }
   };
 };
 

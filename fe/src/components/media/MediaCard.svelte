@@ -2,7 +2,6 @@
 this one might be completely scrapped in near future. -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import axios from 'axios';
 	import type { Person, Group, Creator } from '$lib/types/people.ts';
 	import type { Media } from '$lib/types/media.ts';
 
@@ -40,16 +39,19 @@ this one might be completely scrapped in near future. -->
 	const getAverageRatings = async () => {
 		console.log('media.UUID', media.UUID);
 		try {
-			const response = await axios.get('/api/reviews/', {
+			const response = await fetch('/api/reviews/?id${JSON.stringify(media.UUID)}', {
+        method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				params: {
-					id: JSON.stringify(media.UUID)
-				}
 			});
 
-			averageRating = response.data.averageRating;
+      if (!response.ok) {
+        throw new Error('Failed to fetch average ratings');
+      }
+      const responseData = await response.json();
+
+			averageRating = responseData.averageRating;
 		} catch (error) {
 			// Handle error here
 			console.error('Error fetching average ratings:', error);

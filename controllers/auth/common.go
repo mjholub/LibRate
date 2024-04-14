@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/rs/zerolog"
+	"github.com/samber/mo"
 
 	"codeberg.org/mjh/LibRate/cfg"
 	h "codeberg.org/mjh/LibRate/internal/handlers"
@@ -72,35 +73,36 @@ func isEmail(email string) bool {
 	return err == nil
 }
 
-func parseLoginInput(c *fiber.Ctx, log *zerolog.Logger) (*LoginInput, error) {
-	var input LoginInput
-	var err error
-	if input.Email != "" || input.MemberName != "" {
-		if !isEmail(input.Email) {
-			return nil, h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+func parseLoginInput(c *fiber.Ctx, log *zerolog.Logger) (mo.Option[LoginInput], error) {
+	if form, err := c.MultipartForm(); err == nil {
+		if form.Value["email"][0] == "" && form.Value["membername"][0] == "" {
+			return mo.None[LoginInput](), h.Res(c, fiber.StatusBadRequest, "Email or nickname required")
 		}
-	}
-	input.Email = c.FormValue("email", "")
-	input.MemberName = c.FormValue("membername", "")
-	input.Password = c.FormValue("password", "")
-	sessionTime := c.FormValue("session_time", "30")
-	sTimeout, err := strconv.Atoi(sessionTime)
-	if err != nil {
-		log.Log().Err(err).Msgf("Failed to parse session time %s for member %s (%s): %s",
-			sessionTime, input.MemberName, input.Email, err.Error())
-		input.SessionTime = 30
-	} else {
+		if form.Value["password"][0] == "" {
+			return mo.None[LoginInput](), h.Res(c, fiber.StatusBadRequest, "Password required")
+		}
+		if !isEmail(form.Value["email"][0]) && form.Value["membername"][0] == "" {
+			return mo.None[LoginInput](), h.Res(c, fiber.StatusBadRequest, "Invalid email address")
+		}
+		sTimeout, err := strconv.ParseInt(form.Value["session_time"][0], 10, 32)
+		if err != nil {
+			return mo.None[LoginInput](), h.Res(c, fiber.StatusBadRequest, "Invalid session time")
+		}
 		if sTimeout < 0 || sTimeout > 2147483647 {
-			input.SessionTime = 2147483647 // assume the user used -1 as infinite session time, also protects from overflow
-		} else {
-			// nolint:gosec //check for overflow is done above
-			input.SessionTime = int32(sTimeout)
+			sTimeout = 2147483647 // assume the user used -1 as infinite session time, also protects from overflow
 		}
+		log.Debug().Msgf("form data: %+v", form)
+
+		return mo.Some(LoginInput{
+			Email:       form.Value["email"][0],
+			MemberName:  form.Value["membername"][0],
+			Password:    form.Value["password"][0],
+			SessionTime: int32(sTimeout),
+		}), nil
+	} else {
+		log.Error().Msgf("Failed to parse form data: %s", err.Error())
+		return mo.None[LoginInput](), h.Res(c, fiber.StatusBadRequest, "Invalid login request")
 	}
-	if err != nil {
-		return nil, h.Res(c, fiber.StatusBadRequest, "Invalid login request")
-	}
-	return &input, nil
 }
 
 func parseRegistrationInput(c *fiber.Ctx) (input *RegisterInput, err error) {

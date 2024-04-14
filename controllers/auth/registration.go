@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	uuid "github.com/gofrs/uuid/v5"
 
 	h "codeberg.org/mjh/LibRate/internal/handlers"
 	"codeberg.org/mjh/LibRate/lib/redist"
@@ -96,7 +95,6 @@ func createMember(input *member.Input) (*member.Member, error) {
 	}
 
 	memberData := &member.Member{
-		UUID:         uuid.Must(uuid.NewV4()),
 		PassHash:     passhash,
 		MemberName:   in.MemberName,
 		Email:        in.Email,
@@ -107,9 +105,9 @@ func createMember(input *member.Input) (*member.Member, error) {
 	return memberData, nil
 }
 
-func (a *Service) saveMember(member *member.Member) error {
+func (a *Service) saveMember(memberData *member.Member) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return a.ms.Save(ctx, member)
+	return a.ms.Save(ctx, memberData)
 }

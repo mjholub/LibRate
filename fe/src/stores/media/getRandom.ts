@@ -1,5 +1,4 @@
 import { writable } from 'svelte/store';
-import axios from 'axios';
 import type { Writable } from 'svelte/store';
 import type { AnyMedia } from '$lib/types/media.ts';
 import type { MediaStoreState } from './media.ts';
@@ -24,11 +23,16 @@ function createRandomStore(): RandomStore {
     update,
     getRandom: async () => {
       try {
-        const response = await axios.get('/api/media/random/', {
+        const response = await fetch('/api/media/random/', {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
 
-        const responseData = response.data;
+        if (!response.ok) {
+          throw new Error('Error while retrieving random media data');
+        }
+
+        const responseData = await response.json();
 
         if (!responseData || !responseData.data || !Array.isArray(responseData.data)) {
           throw new Error('No data returned from the server');
@@ -52,7 +56,7 @@ function createRandomStore(): RandomStore {
 
           set({
             ...initialRandomState,
-            media_id: processedMediaData.map((media: AnyMedia) => media.media_id),
+            media_id: processedMediaData.map((media: any) => media.media_id),
             mediaType: mediaType,
             media: processedMediaData[i],
             isLoading: false,
@@ -75,7 +79,7 @@ const determineMediaTypes = (mediaData: AnyMedia[]): Array<'Album' | 'Film' | 'B
 
   const mediaTypes: Array<'Album' | 'Film' | 'Book' | 'Track' | 'TVShow' | 'Unknown'> = [];
 
-  mediaData.forEach((media) => {
+  mediaData.forEach((media: any) => {
     switch (media.kind) {
       case 'album':
         mediaTypes.push('Album');

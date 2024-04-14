@@ -5,7 +5,15 @@ const searchQueryStore: Writable<string> = writable('');
 
 // client side code needs to get the domain name using window.location
 const createWebSocket = (url: string) => {
-  const socket = new WebSocket(`wss://${url}/api/search/ws`);
+  const provided = new URL(url).origin;
+  const current = window.location.origin;
+
+  if (provided !== current) {
+    console.error(`Provided URL ${provided} does not match current URL ${current}. WebSocket connection aborted.`);
+    return null;
+  }
+
+  const socket = new WebSocket(`wss://${provided}/api/search/ws`);
 
   socket.addEventListener('open', () => {
     socket.send("");
@@ -19,9 +27,11 @@ const createWebSocket = (url: string) => {
 }
 
 const performSearch = (query: string, socket: WebSocket) => {
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ query }));
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    console.error('WebSocket is not connected');
+    return;
   }
+  socket.send(JSON.stringify({ query }));
 }
 
 export default {
