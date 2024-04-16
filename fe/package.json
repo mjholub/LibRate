@@ -52,7 +52,7 @@
     "@appbaseio/searchbase": "^1.8.1",
     "@sveltestrap/sveltestrap": "^6.2.2",
     "@types/http-errors": "^2.0.4",
-    "bits-ui": "^0.18.2",
+    "bits-ui": "^0.21.0",
     "clsx": "^2.1.0",
     "feather-icons": "^4.29.1",
     "http-errors": "^2.0.0",
