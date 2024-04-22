@@ -1,4 +1,4 @@
-**NOTE: ** Codeberg throws a server error when trying to update my github credentials for mirroring, see there for the most recent project updates.
+**NOTE:** Codeberg throws a server error when trying to update my github credentials for mirroring, see there for the most recent project updates.
 
 # LibRate
 [![weblate badge](https://translate.codeberg.org/widget/librate/frontend-messages/svg-badge.svg?native=1
