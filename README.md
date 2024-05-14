@@ -7,7 +7,7 @@
 
 ### Project status - May 2024
 
-I have not abandoned LibRate. This is one of the projects I am most proud of and would not want to see all the time and energy I've put in it go to waste. But I really have other priorities at the moment, perhaps I will be able to tick of at least 1/5 of the milestones in summer. Besides I think a hiatus could actually help me redesign the project, especially for greater complexity which could mean easier development in the future; to slow down to speed up, if you will.
+I have not abandoned LibRate. This is one of the projects I am most proud of and would not want to see all the time and energy I've put in it go to waste. But I really have other priorities at the moment, perhaps I will be able to tick of at least 1/5 of the milestones in summer. Besides I think a hiatus could actually help me redesign the project, especially by reducing complexity which could mean easier development in the future; to slow down to speed up, if you will.
 <hr />
 
 LibRate is a project that aims to provide a free, federated service for tracking, reviewing, sharing and discovering films, books, music, games and other culture texts.
