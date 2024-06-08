@@ -15,8 +15,8 @@ func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
 	var id uint32
 	var mu sync.Mutex
 	mu.Lock()
-	err := s.client.Get(&id, findEmailOrNickQuery, member.MemberName, member.Email)
-	if err == nil {
+	r := s.newClient.QueryRow(ctx, findEmailOrNickQuery, member.MemberName, member.Email)
+	if err := r.Scan(&id); err == nil {
 		return fmt.Errorf("email %s or nick %s is already taken", member.Email, member.MemberName)
 	}
 	mu.Unlock()
