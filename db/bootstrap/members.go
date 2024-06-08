@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Members(ctx context.Context, db *sqlx.DB) error {
+func Members(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -16,7 +16,7 @@ func Members(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role enum: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS public.members (
 	id serial4 NOT NULL,
 	uuid uuid NOT NULL,
@@ -44,12 +44,12 @@ func Members(ctx context.Context, db *sqlx.DB) error {
 	}
 }
 
-func MembersProfilePic(ctx context.Context, db *sqlx.DB) error {
+func MembersProfilePic(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`
+		_, err := db.Exec(ctx, `
 			ALTER TABLE public.members
 			ADD CONSTRAINT members_profilepic_fkey FOREIGN KEY (profilepic_id)
 			REFERENCES cdn.images(id);

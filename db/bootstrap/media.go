@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 )
 
-func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
+func MediaCore(ctx context.Context, connection *pgxpool.Pool) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -18,7 +18,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
 		}
-		_, err = connection.ExecContext(ctx,
+		_, err = connection.Exec(ctx,
 			`CREATE TABLE IF NOT EXISTS media.media (
 	id uuid NOT NULL DEFAULT uuid_time_nextval(30,65536),
 	title varchar(255) NOT NULL,
@@ -31,7 +31,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media table: %w", err)
 		}
-		_, err = connection.ExecContext(ctx, `
+		_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.genres (
 			id SMALLSERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -44,7 +44,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create media genres table: %w", err)
 		}
-		_, err = connection.ExecContext(ctx, `
+		_, err = connection.Exec(ctx, `
 			ALTER TABLE media.genres
 				ADD CONSTRAINT genres_parent_fkey FOREIGN KEY (parent) REFERENCES media.genres(id)
 		`)
@@ -64,7 +64,7 @@ func MediaCore(ctx context.Context, connection *sqlx.DB) (err error) {
 	}
 }
 
-func Media(ctx context.Context, connection *sqlx.DB) (err error) {
+func Media(ctx context.Context, connection *pgxpool.Pool) (err error) {
 	// TODO: use foreign keys to link media to artists and
 	// create a graph-like structure
 	select {
@@ -74,7 +74,7 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 		/*
 		 * Languages
 		 */
-		_, err = connection.ExecContext(ctx, `
+		_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.languages (
 			id SMALLSERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -127,8 +127,8 @@ func Media(ctx context.Context, connection *sqlx.DB) (err error) {
 }
 
 // media.media_images should just be a junction table with additional column for the primary image
-func bootstrapMediaImages(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func bootstrapMediaImages(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.media_images (
 			media_id UUID NOT NULL REFERENCES media.media(id),
 			image_id BIGINT NOT NULL REFERENCES cdn.images(id),
@@ -141,8 +141,8 @@ func bootstrapMediaImages(ctx context.Context, connection *sqlx.DB) (err error) 
 	return nil
 }
 
-func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func bootstrapAlbums(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.albums (
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_time_nextval(30,65536),
 			name VARCHAR(255) NOT NULL,
@@ -153,7 +153,7 @@ func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
 		return fmt.Errorf("failed to create media albums table: %w", err)
 	}
 	// junction table for keywords
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_keywords (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
 			keyword_id SMALLINT NOT NULL REFERENCES media.keywords(id),
@@ -162,7 +162,7 @@ func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media album keywords table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_langs (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
 			lang SMALLINT NOT NULL REFERENCES media.languages(id),
@@ -172,7 +172,7 @@ func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
 		return fmt.Errorf("failed to create media album languages table: %w", err)
 	}
 
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_genres (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
 			genre SMALLSERIAL NOT NULL REFERENCES media.genres(id),
@@ -185,8 +185,8 @@ func bootstrapAlbums(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func albumTracks(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func albumTracks(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_tracks (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
 			track UUID NOT NULL REFERENCES media.tracks(media_id),
@@ -198,8 +198,8 @@ func albumTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func AlbumArtists(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `	
+func AlbumArtists(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `	
 	CREATE TABLE IF NOT EXISTS media.album_artists (
     album uuid NOT NULL,
     person_artist int4,
@@ -217,8 +217,8 @@ func AlbumArtists(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func bootstrapTracks(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func bootstrapTracks(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tracks (
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL,
@@ -229,7 +229,7 @@ func bootstrapTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tracks table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.album_tracks (
 			album UUID NOT NULL REFERENCES media.albums(media_id),
 			track UUID NOT NULL REFERENCES media.tracks(media_id),
@@ -239,7 +239,7 @@ func bootstrapTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media album tracks table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.track_artists (
 			track UUID NOT NULL REFERENCES media.tracks(media_id),
 			artist SERIAL NOT NULL REFERENCES people.person(id),
@@ -248,7 +248,7 @@ func bootstrapTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media track artists table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.track_langs (
 			track UUID NOT NULL REFERENCES media.tracks(media_id),
 			lang SMALLINT NOT NULL REFERENCES media.languages(id),
@@ -260,8 +260,8 @@ func bootstrapTracks(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func bootstrapFilms(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func bootstrapFilms(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.films (
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			title VARCHAR(255) NOT NULL
@@ -269,7 +269,7 @@ func bootstrapFilms(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media films table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.film_cast (
 			film UUID NOT NULL REFERENCES media.films(media_id),
 			person SERIAL NOT NULL REFERENCES people.person(id),
@@ -278,7 +278,7 @@ func bootstrapFilms(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media film cast table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.film_countries (
 			film UUID NOT NULL REFERENCES media.films(media_id),
 			country SMALLINT NOT NULL REFERENCES places.country(id),
@@ -290,8 +290,8 @@ func bootstrapFilms(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func bootstrapTV(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_shows (
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			title VARCHAR(255) NOT NULL
@@ -299,7 +299,7 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tv shows table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_show_countries (
 			tv_show UUID NOT NULL REFERENCES media.tv_shows(media_id),
 			country SMALLINT NOT NULL REFERENCES places.country(id),
@@ -308,7 +308,7 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tv show countries table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_show_cast (
 			tv_show UUID NOT NULL REFERENCES media.tv_shows(media_id),
 			person SERIAL NOT NULL REFERENCES people.person(id),
@@ -317,7 +317,7 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tv show cast table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_show_langs (
 			tv_show UUID NOT NULL REFERENCES media.tv_shows(media_id),
 			lang SMALLINT NOT NULL REFERENCES media.languages(id),
@@ -326,7 +326,7 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tv show languages table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_show_seasons (
 			media_id UUID REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			tv_show UUID NOT NULL REFERENCES media.tv_shows(media_id),
@@ -336,7 +336,7 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tv show seasons table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.tv_show_episodes (
 			media_id UUID REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			tv_show UUID NOT NULL,
@@ -352,8 +352,8 @@ func bootstrapTV(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func Books(ctx context.Context, connection *sqlx.DB) (err error) {
-	_, err = connection.ExecContext(ctx, `
+func Books(ctx context.Context, connection *pgxpool.Pool) (err error) {
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.books (
 			media_id UUID PRIMARY KEY REFERENCES media.media(id) DEFAULT uuid_generate_v4(),
 			edition VARCHAR(255) NOT NULL,
@@ -371,7 +371,7 @@ func Books(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media tables: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.book_authors (
 			book UUID NOT NULL REFERENCES media.books(media_id),
 			person SERIAL NOT NULL REFERENCES people.person(id),
@@ -380,7 +380,7 @@ func Books(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media book authors table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.book_languages (
 			book UUID NOT NULL REFERENCES media.books(media_id),
 			lang SMALLINT NOT NULL REFERENCES media.languages(id),
@@ -389,7 +389,7 @@ func Books(ctx context.Context, connection *sqlx.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create media book languages table: %w", err)
 	}
-	_, err = connection.ExecContext(ctx, `
+	_, err = connection.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.book_genres (
 			book UUID NOT NULL REFERENCES media.books(media_id),
 			genre SMALLSERIAL NOT NULL REFERENCES media.genres(id),
@@ -402,8 +402,8 @@ func Books(ctx context.Context, connection *sqlx.DB) (err error) {
 	return nil
 }
 
-func bootstrapKeywords(ctx context.Context, db *sqlx.DB) error {
-	_, err := db.ExecContext(ctx,
+func bootstrapKeywords(ctx context.Context, db *pgxpool.Pool) error {
+	_, err := db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS media.keywords (
   id serial PRIMARY KEY,
   keyword varchar NOT NULL UNIQUE,
@@ -414,7 +414,7 @@ func bootstrapKeywords(ctx context.Context, db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create keywords table: %w", err)
 	}
-	_, err = db.ExecContext(ctx,
+	_, err = db.Exec(ctx,
 		`CREATE INDEX IF NOT EXISTS keywords_media_id_idx ON media.keywords(media_id);`)
 	if err != nil {
 		return fmt.Errorf("failed to create keywords index: %w", err)

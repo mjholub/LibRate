@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func CDN(ctx context.Context, db *sqlx.DB) error {
+func CDN(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.Exec(`CREATE TABLE IF NOT EXISTS cdn.images (
+		_, err := db.Exec(ctx, `CREATE TABLE IF NOT EXISTS cdn.images (
 			id BIGSERIAL PRIMARY KEY,
 			source VARCHAR(255) NOT NULL,
 			thumbnail VARCHAR(255) NOT NULL,

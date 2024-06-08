@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Review(ctx context.Context, connection *sqlx.DB) (err error) {
+func Review(ctx context.Context, connection *pgxpool.Pool) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err = connection.ExecContext(ctx, ` 
+		_, err = connection.Exec(ctx, ` 
 		CREATE TABLE IF NOT EXISTS reviews.ratings (
 		id BIGSERIAL PRIMARY KEY,
     stars SMALLINT NOT NULL CHECK (stars >= 1 AND stars <= 10),
@@ -27,7 +27,7 @@ func Review(ctx context.Context, connection *sqlx.DB) (err error) {
 			return fmt.Errorf("failed to create ratings table: %w", err)
 		}
 
-		_, err = connection.ExecContext(ctx, `
+		_, err = connection.Exec(ctx, `
 CREATE TABLE reviews.track_ratings (
 	id bigserial NOT NULL,
 	track uuid NOT null references media.tracks(media_id),
@@ -37,7 +37,7 @@ CREATE TABLE reviews.track_ratings (
 		if err != nil {
 			return fmt.Errorf("failed to create track_ratings table: %w", err)
 		}
-		_, err = connection.ExecContext(ctx, `
+		_, err = connection.Exec(ctx, `
 CREATE TABLE reviews.cast_ratings (
 	id bigserial NOT NULL,
 	cast_id bigint not null references people.cast(id),

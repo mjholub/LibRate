@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Places(ctx context.Context, db *sqlx.DB) error {
+func Places(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -18,7 +18,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 			return err
 		}
 
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS places.country (
 			id SMALLINT PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -27,7 +27,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create country table: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS places.place (
 			uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(255) NOT NULL,
@@ -39,7 +39,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create place table: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS places.city (
 			uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(255) NOT NULL,
@@ -50,7 +50,7 @@ func Places(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create city table: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS places.venue (
 			uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			name VARCHAR(255) NOT NULL,

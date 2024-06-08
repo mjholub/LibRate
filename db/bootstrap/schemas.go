@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Schemas(ctx context.Context, db *sqlx.DB) (err error) {
+func Schemas(ctx context.Context, db *pgxpool.Pool) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -34,12 +34,12 @@ func Schemas(ctx context.Context, db *sqlx.DB) (err error) {
 	}
 }
 
-func createSchema(ctx context.Context, name string, db *sqlx.DB) (err error) {
+func createSchema(ctx context.Context, name string, db *pgxpool.Pool) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s;", name))
+		_, err = db.Exec(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s;", name))
 		if err != nil {
 			return fmt.Errorf("failed to create schema %s: %v", name, err)
 		}

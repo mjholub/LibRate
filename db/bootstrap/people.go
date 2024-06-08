@@ -5,23 +5,27 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 )
 
-func People(ctx context.Context, db *sqlx.DB) (err error) {
+func People(ctx context.Context, db *pgxpool.Pool) (err error) {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people", err)
 		}
 
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -30,14 +34,14 @@ func People(ctx context.Context, db *sqlx.DB) (err error) {
 			}
 		}()
 
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 			CREATE SCHEMA IF NOT EXISTS people;
 			SET search_path TO people, public;
 		`)
 		if err != nil {
 			return fmt.Errorf("failed to create people schema: %w", err)
 		}
-		err = tx.Commit()
+		err = tx.Commit(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
@@ -49,18 +53,21 @@ func People(ctx context.Context, db *sqlx.DB) (err error) {
 // Supported roles are:
 // actor, director, producer, writer, composer, artist,
 // author, publisher, editor, photographer, illustrator, narrator, performer, host, guest, other
-func Roles(ctx context.Context, db *sqlx.DB) error {
+func Roles(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.roles", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -75,7 +82,7 @@ func Roles(ctx context.Context, db *sqlx.DB) error {
 			return err
 		}
 		mu.Unlock()
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS people.person (
 			id SERIAL PRIMARY KEY,
 			first_name VARCHAR(255) NOT NULL,
@@ -95,25 +102,28 @@ func Roles(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people table: %w", err)
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 		return nil
 	}
 }
 
-func roleTypes(ctx context.Context, db *sqlx.DB) error {
+func roleTypes(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.role_types", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -131,7 +141,7 @@ func roleTypes(ctx context.Context, db *sqlx.DB) error {
 			return err
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 		return nil
@@ -139,18 +149,21 @@ func roleTypes(ctx context.Context, db *sqlx.DB) error {
 }
 
 // MediaCreators creates the media.media_creators table
-func MediaCreators(ctx context.Context, db *sqlx.DB) error {
+func MediaCreators(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("media.media_creators", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -159,7 +172,7 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 			}
 		}()
 		// junction table for additional media creators
-		_, err = db.ExecContext(ctx, `
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS media.media_creators (
 			media_id UUID NOT NULL references media.media(id),
 			creator_id INTEGER NOT NULL references people.person(id),
@@ -173,7 +186,7 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 			return err
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 
@@ -186,8 +199,8 @@ func MediaCreators(ctx context.Context, db *sqlx.DB) error {
 	}
 }
 
-func createCreatorSeq(ctx context.Context, db *sqlx.DB) error {
-	_, err := db.ExecContext(ctx, `CREATE SEQUENCE media.media_creators_seq
+func createCreatorSeq(ctx context.Context, db *pgxpool.Pool) error {
+	_, err := db.Exec(ctx, `CREATE SEQUENCE media.media_creators_seq
 	INCREMENT BY 1
 	MINVALUE 1
 	MAXVALUE 2147483647
@@ -208,12 +221,12 @@ func createCreatorSeq(ctx context.Context, db *sqlx.DB) error {
 	return nil
 }
 
-func mediaFkey(ctx context.Context, db *sqlx.DB) error {
+func mediaFkey(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := db.ExecContext(ctx, `
+		_, err := db.Exec(ctx, `
 		ALTER TABLE media.media
 			ADD COLUMN IF NOT EXISTS creator int4
 			DEFAULT nextval('media.media_creators_seq'::regclass),
@@ -235,18 +248,21 @@ func mediaFkey(ctx context.Context, db *sqlx.DB) error {
 }
 
 // PeopleMeta creates the tables that store the artists' photos and works
-func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
+func PeopleMeta(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.person", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -255,7 +271,7 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 			}
 		}()
 
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.person_photos (
 				person_id SERIAL REFERENCES people.person(id),
 				image_id BIGINT REFERENCES cdn.images(id),
@@ -265,9 +281,9 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people photos table: %w", err)
 		}
 
-		err = createWorks(db)
+		err = createWorks(ctx, db)
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 
@@ -275,8 +291,8 @@ func PeopleMeta(ctx context.Context, db *sqlx.DB) error {
 	}
 }
 
-func createWorks(db *sqlx.DB) error {
-	_, err := db.Exec(`
+func createWorks(ctx context.Context, db *pgxpool.Pool) error {
+	_, err := db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.person_works (
 				person_id SERIAL REFERENCES people.person(id),
 				media_id UUID REFERENCES media.media(id),
@@ -289,19 +305,22 @@ func createWorks(db *sqlx.DB) error {
 }
 
 // CreatorGroups creates the people.group table and its associated tables
-func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
+func CreatorGroups(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.group", err)
 		}
 
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -315,7 +334,7 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people group kind enum: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS people.group (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -335,11 +354,11 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people group table: %w", err)
 		}
 
-		if err := createGroupMeta(db); err != nil {
+		if err := createGroupMeta(ctx, db); err != nil {
 			return err
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 
@@ -347,8 +366,8 @@ func CreatorGroups(ctx context.Context, db *sqlx.DB) error {
 	}
 }
 
-func createGroupMeta(db *sqlx.DB) error {
-	_, err := db.Exec(`
+func createGroupMeta(ctx context.Context, db *pgxpool.Pool) error {
+	_, err := db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.group_locations (
 				group_id SERIAL REFERENCES people.group(id),
 				location_id UUID REFERENCES places.place(uuid),
@@ -357,7 +376,7 @@ func createGroupMeta(db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create people group locations table: %w", err)
 	}
-	_, err = db.Exec(`
+	_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.group_photos (
 				group_id SERIAL REFERENCES people.group(id),
 				image_id BIGINT REFERENCES cdn.images(id),
@@ -366,7 +385,7 @@ func createGroupMeta(db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create people group photos table: %w", err)
 	}
-	_, err = db.Exec(`
+	_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.group_members (
 				group_id SERIAL REFERENCES people.group(id),
 				person_id SERIAL REFERENCES people.person(id),
@@ -375,7 +394,7 @@ func createGroupMeta(db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create people group members table: %w", err)
 	}
-	_, err = db.Exec(`
+	_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.group_genres (
 				group_id SERIAL REFERENCES people.group(id),
 				primary_genre_id SMALLINT REFERENCES media.genres(id),
@@ -384,7 +403,7 @@ func createGroupMeta(db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to create people group genres table: %w", err)
 	}
-	_, err = db.Exec(`
+	_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.group_works (
 				group_id SERIAL REFERENCES people.group(id),
 				media_id UUID REFERENCES media.media(id),
@@ -399,18 +418,21 @@ func createGroupMeta(db *sqlx.DB) error {
 // Studios creates the people.studio table and its associated tables
 // By studio we mean an entity that produces media, such as a film studio, a record label, a publishing house, etc.
 
-func Studio(ctx context.Context, db *sqlx.DB) error {
+func Studio(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.studio", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -419,7 +441,7 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 			}
 		}()
 
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS people.studio (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
@@ -434,7 +456,7 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people studio table: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.studio_artists (
 				studio_id SERIAL REFERENCES people.studio(id),
 				person_id SERIAL REFERENCES people.person(id),
@@ -443,7 +465,7 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create people studio artists table: %w", err)
 		}
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 			CREATE TABLE IF NOT EXISTS people.studio_works (
 				studio_id SERIAL REFERENCES people.studio(id),
 				media_id UUID REFERENCES media.media(id),
@@ -453,7 +475,7 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 			return fmt.Errorf("failed to create people studio works table: %w", err)
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 		return nil
@@ -462,18 +484,21 @@ func Studio(ctx context.Context, db *sqlx.DB) error {
 
 // Cast creates the people.cast table and its associated tables
 // nolint:gocognit // would need to remove error checking for rollback
-func Cast(ctx context.Context, db *sqlx.DB) error {
+func Cast(ctx context.Context, db *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel:       pgx.Serializable,
+			DeferrableMode: pgx.NotDeferrable,
+		})
 		if err != nil {
 			return txErr("people.cast", err)
 		}
 		defer func() {
 			if e := recover(); e != nil {
-				rb := tx.Rollback()
+				rb := tx.Rollback(ctx)
 				if rb != nil {
 					err = fmt.Errorf("failed to rollback transaction: %w", rb)
 				} else {
@@ -482,7 +507,7 @@ func Cast(ctx context.Context, db *sqlx.DB) error {
 			}
 		}()
 
-		_, err = db.Exec(`
+		_, err = db.Exec(ctx, `
 CREATE TABLE IF NOT EXISTS people.cast (
   id BIGSERIAL PRIMARY KEY,
   media_id uuid NOT NULL REFERENCES media.media(id),
@@ -493,7 +518,7 @@ CREATE TABLE IF NOT EXISTS people.cast (
 			return fmt.Errorf("failed to create people cast table: %w", err)
 		}
 
-		if err = tx.Commit(); err != nil {
+		if err = tx.Commit(ctx); err != nil {
 			return fmt.Errorf("failed to commit transaction: %w", err)
 		}
 
@@ -502,7 +527,7 @@ CREATE TABLE IF NOT EXISTS people.cast (
 
 		go func() {
 			defer wg.Done()
-			if err := createCastTrigger(db); err != nil {
+			if err := createCastTrigger(ctx, db); err != nil {
 				fmt.Printf("Error creating cast trigger: %v", err)
 			}
 		}()
@@ -513,10 +538,10 @@ CREATE TABLE IF NOT EXISTS people.cast (
 	}
 }
 
-func createCastTrigger(db *sqlx.DB) error {
+func createCastTrigger(ctx context.Context, db *pgxpool.Pool) error {
 	var exists bool
 
-	err := db.Get(&exists, `SELECT EXISTS (
+	rows, err := db.Query(ctx, `SELECT EXISTS (
 		SELECT 1
 		FROM pg_trigger
 		WHERE tgname = 'check_roles_before_insert_or_update'
@@ -526,8 +551,12 @@ func createCastTrigger(db *sqlx.DB) error {
 		return fmt.Errorf("failed to check trigger existence: %w", err)
 	}
 
+	if rows.Scan(&exists) != nil {
+		return fmt.Errorf("failed to scan rows: %v", err)
+	}
+
 	if !exists {
-		_, err := db.Exec(`
+		_, err := db.Exec(ctx, `
 CREATE OR REPLACE FUNCTION check_actor_director_roles()
 RETURNS TRIGGER AS $$
 BEGIN

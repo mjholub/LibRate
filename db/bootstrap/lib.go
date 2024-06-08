@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // CreateEnumType reads the sql file containing the function
 // responsible for creating the enum types only if they do not exist already,
 // to work around the lack of idempotency with type creation in postgres
-func createEnumType(ctx context.Context, db *sqlx.DB, typeName, schema string, values ...string) error {
+func createEnumType(ctx context.Context, db *pgxpool.Pool, typeName, schema string, values ...string) error {
 	if len(values) == 0 {
 		return errors.New("no values for the enum type were provided, but are required")
 	}
 
-	_, err := db.ExecContext(ctx, fmt.Sprintf("CREATE TYPE %s.%s AS ENUM (%s)",
+	_, err := db.Exec(ctx, fmt.Sprintf("CREATE TYPE %s.%s AS ENUM (%s)",
 		schema, typeName, formatValues(values)))
 	if err != nil {
 		pgErr, ok := err.(*pq.Error)
