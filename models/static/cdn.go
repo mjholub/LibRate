@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/samber/mo"
 
@@ -44,12 +44,12 @@ type (
 	}
 
 	Storage struct {
-		db  *sqlx.DB
+		db  *pgxpool.Pool
 		Log *zerolog.Logger
 	}
 )
 
-func NewStorage(db *sqlx.DB, log *zerolog.Logger) *Storage {
+func NewStorage(db *pgxpool.Pool, log *zerolog.Logger) *Storage {
 	return &Storage{
 		db:  db,
 		Log: log,
@@ -102,7 +102,7 @@ func (s *Storage) AddVideo(v *Video) error {
 	}
 	s.Log.Info().Msgf("Generated thumbnail for video %s, \nPath: %s", v.Source, thumb)
 
-	_, err = s.db.ExecContext(context.Background(), `INSERT INTO cdn.videos (source, thumbnail, alt)
+	_, err = s.db.Exec(context.Background(), `INSERT INTO cdn.videos (source, thumbnail, alt)
 		VALUES ($1, $2, $3)`, v.Source, thumb, v.Alt)
 	if err != nil {
 		return fmt.Errorf("error adding video: %w", err)

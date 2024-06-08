@@ -19,7 +19,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -44,7 +43,6 @@ type RouterProps struct {
 	Conf            *cfg.Config
 	Log             *zerolog.Logger
 	LogHandler      fiber.Handler
-	LegacyDB        *sqlx.DB
 	DB              *pgxpool.Pool
 	App             *fiber.App
 	SessionHandler  *session.Store
@@ -61,8 +59,6 @@ func Setup(ctx context.Context, r *RouterProps) error {
 
 	r.App.Get("/docs/*", swagger.New(swagger.Config{
 		URL: "/static/meta/swagger.json",
-		// TODO: figure out how to use https://github.com/svmk/swagger-i18n-extension#readme
-		// with this middleware
 		Plugins: []template.JS{
 			template.JS("SwaggerUIBundle.plugins.DownloadUrl"),
 		},
@@ -73,21 +69,16 @@ func Setup(ctx context.Context, r *RouterProps) error {
 		mediaStor *mediaModels.Storage
 	)
 
-	switch r.Conf.Engine {
-	case "postgres", "sqlite", "mariadb":
-		mStor = member.NewSQLStorage(r.LegacyDB, r.DB, r.Log, r.Conf)
-	default:
-		return fmt.Errorf("unsupported database engine \"%q\" or error reading r.Config", r.Conf.Engine)
-	}
-	mediaStor = mediaModels.NewStorage(r.DB, r.LegacyDB, r.Log)
+	mStor = member.NewSQLStorage(r.DB, r.Log, r.Conf)
+	mediaStor = mediaModels.NewStorage(r.DB, r.Log)
 
-	memberSvc := memberCtrl.NewController(mStor, r.LegacyDB, r.SessionHandler, r.Log, r.Conf)
+	memberSvc := memberCtrl.NewController(mStor, r.DB, r.SessionHandler, r.Log, r.Conf)
 	formCon := form.NewController(r.Log, *mediaStor, r.Conf)
-	uploadSvc := static.NewController(r.Conf, r.LegacyDB, r.Log)
+	uploadSvc := static.NewController(r.Conf, r.DB, r.Log)
 
 	r.App.Get("/api/version", version.Get)
 
-	setupReviews(api, r.SessionHandler, r.Log, r.Conf, r.LegacyDB)
+	setupReviews(api, r.SessionHandler, r.Log, r.Conf, r.DB)
 
 	setupAuth(api, r.SessionHandler, r.Log, r.Conf, mStor)
 
@@ -172,7 +163,8 @@ func setupMembers(memberSvc *memberCtrl.Controller, api fiber.Router, sess *sess
 	members.Get("/:email_or_username/info", memberSvc.GetMemberByNickOrEmail)
 }
 
-func setupReviews(api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config, dbConn *sqlx.DB) {
+func setupReviews(api fiber.Router, sess *session.Store, logger *zerolog.Logger,
+	conf *cfg.Config, dbConn *pgxpool.Pool) {
 	rStor := models.NewRatingStorage(dbConn, logger)
 	reviewSvc := controllers.NewReviewController(*rStor)
 

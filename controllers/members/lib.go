@@ -3,6 +3,7 @@ package members
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 
@@ -36,7 +37,7 @@ type (
 
 func NewController(
 	storage member.Storer,
-	db *sqlx.DB,
+	db *pgxpool.Pool,
 	sess *session.Store,
 	logger *zerolog.Logger,
 	conf *cfg.Config,

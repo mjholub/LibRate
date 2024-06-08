@@ -199,7 +199,6 @@ type (
 	}
 
 	PgMemberStorage struct {
-		client        *sqlx.DB
 		newClient     *pgxpool.Pool
 		log           *zerolog.Logger
 		config        *cfg.Config
@@ -208,6 +207,6 @@ type (
 	}
 )
 
-func NewSQLStorage(client *sqlx.DB, newClient *pgxpool.Pool, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
-	return &PgMemberStorage{client: client, newClient: newClient, log: log, config: conf}
+func NewSQLStorage(newClient *pgxpool.Pool, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
+	return &PgMemberStorage{newClient: newClient, log: log, config: conf}
 }

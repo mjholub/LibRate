@@ -93,8 +93,8 @@ type (
 	}
 )
 
-func NewStorage(newDB *pgxpool.Pool, db *sqlx.DB, l *zerolog.Logger) *Storage {
-	ks := NewKeywordStorage(db, l)
+func NewStorage(newDB *pgxpool.Pool, l *zerolog.Logger) *Storage {
+	ks := NewKeywordStorage(newDB, l)
 	Ps := NewPeopleStorage(newDB, db, l)
 	return &Storage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
 }

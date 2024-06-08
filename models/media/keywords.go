@@ -6,9 +6,8 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
-
-	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -29,12 +28,12 @@ type (
 	}
 
 	KeywordStorage struct {
-		db  *sqlx.DB
+		db  *pgxpool.Pool
 		log *zerolog.Logger
 	}
 )
 
-func NewKeywordStorage(db *sqlx.DB, log *zerolog.Logger) *KeywordStorage {
+func NewKeywordStorage(db *pgxpool.Pool, log *zerolog.Logger) *KeywordStorage {
 	return &KeywordStorage{db, log}
 }
 
@@ -43,7 +42,7 @@ func (ks *KeywordStorage) CastVote(ctx context.Context, k Keyword) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := ks.db.ExecContext(ctx, `
+		_, err := ks.db.Exec(ctx, `
 		UPDATE media.keywords SET total_stars = total_stars + $1, vote_count = vote_count + 1 WHERE id = $2`,
 			k.TotalStars, k.ID)
 		if err != nil {
@@ -58,7 +57,7 @@ func (ks *KeywordStorage) RemoveVote(ctx context.Context, k Keyword) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err := ks.db.ExecContext(ctx, `
+		_, err := ks.db.Exec(ctx, `
 		UPDATE media.keywords SET total_stars = total_stars - $1, vote_count = vote_count - 1 WHERE id = $2`,
 			k.TotalStars, k.ID)
 		if err != nil {

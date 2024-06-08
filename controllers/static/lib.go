@@ -2,7 +2,7 @@ package static
 
 import (
 	"github.com/gofiber/storage/redis/v3"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -16,7 +16,7 @@ type Controller struct {
 	conf    *cfg.Config
 }
 
-func NewController(conf *cfg.Config, dbConn *sqlx.DB, logger *zerolog.Logger) *Controller {
+func NewController(conf *cfg.Config, dbConn *pgxpool.Pool, logger *zerolog.Logger) *Controller {
 	return &Controller{
 		conf:    conf,
 		log:     logger,

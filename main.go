@@ -79,7 +79,6 @@ func main() {
 	log.Info().Msg("Starting LibRate")
 	// Load config
 	var (
-		dbConn             *sqlx.DB
 		pgConn             *pgxpool.Pool
 		err                error
 		conf               *cfg.Config
@@ -146,15 +145,12 @@ func main() {
 	}()
 
 	// database first-run initialization
-	dbConn, pgConn, err = connectDB(conf)
+	pgConn, err = connectDB(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to connect to database: %v", err)
 	}
 	log.Info().Msg("Connected to database")
 	defer func() {
-		if dbConn != nil {
-			dbConn.Close()
-		}
 		if pgConn != nil {
 			pgConn.Close()
 		}
@@ -218,7 +214,6 @@ func main() {
 		Conf:            conf,
 		Log:             &log,
 		LogHandler:      fzlog,
-		LegacyDB:        dbConn,
 		DB:              pgConn,
 		App:             app,
 		SessionHandler:  sess,
