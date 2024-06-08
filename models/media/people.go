@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
@@ -93,7 +92,7 @@ type (
 	PeopleStorage struct {
 		newDBConn *pgxpool.Pool
 		// legacy
-		dbConn *sqlx.DB
+		dbConn *pgxpool.Pool
 		logger *zerolog.Logger
 	}
 )
@@ -112,10 +111,9 @@ func (s studioKind) valid() bool {
 	)
 }
 
-func NewPeopleStorage(newConn *pgxpool.Pool, dbConn *sqlx.DB, logger *zerolog.Logger) *PeopleStorage {
+func NewPeopleStorage(newConn *pgxpool.Pool, logger *zerolog.Logger) *PeopleStorage {
 	return &PeopleStorage{
 		newDBConn: newConn,
-		dbConn:    dbConn,
 		logger:    logger,
 	}
 }

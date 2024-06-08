@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 )
 
@@ -45,9 +45,9 @@ type (
 	}
 )
 
-func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
+func addAlbum(ctx context.Context, db *pgxpool.Pool, album *Album) error {
 	// Insert the album into the media.albums table
-	_, err := db.ExecContext(ctx, `
+	_, err := db.Exec(ctx, `
 		INSERT INTO media.albums (media_id, name, release_date, duration)
 		VALUES ($1, $2, $3, $4)`,
 		album.MediaID, album.Name, album.ReleaseDate, album.Duration)
@@ -55,7 +55,7 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 		return fmt.Errorf("failed to insert album into media.albums: %w", err)
 	}
 	// Insert keywords into the junction table
-	_, err = db.ExecContext(ctx, `
+	_, err = db.Exec(ctx, `
 		INSERT INTO media.album_keywords (album, keyword)
 		VALUES ($1, $2)`,
 		album.MediaID, album.Keywords)
@@ -65,7 +65,7 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 
 	// Insert the genres into the media.album_genres table
 	for i := range album.Genres {
-		_, err = db.ExecContext(ctx, "INSERT INTO media.album_genres (album, genre) VALUES ($1, $2)",
+		_, err = db.Exec(ctx, "INSERT INTO media.album_genres (album, genre) VALUES ($1, $2)",
 			album.MediaID, album.Genres[i].ID)
 		if err != nil {
 			return fmt.Errorf("failed to insert album genre into media.album_genres: %w", err)
@@ -76,7 +76,7 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 	go func() {
 		aa := album.AlbumArtists
 		for i := range aa {
-			_, err := db.ExecContext(ctx, `INSERT INTO media.album_artists (album, artist, artist_type)
+			_, err := db.Exec(ctx, `INSERT INTO media.album_artists (album, artist, artist_type)
 				VALUES ($1, $2, $3)`,
 				album.MediaID, aa[i].ID, "individual")
 			if err != nil {
@@ -94,8 +94,8 @@ func addAlbum(ctx context.Context, db *sqlx.DB, album *Album) error {
 	return nil
 }
 
-func addTrack(ctx context.Context, db *sqlx.DB, track *Track) error {
-	_, err := db.ExecContext(ctx, `
+func addTrack(ctx context.Context, db *pgxpool.Pool, track *Track) error {
+	_, err := db.Exec(ctx, `
 		INSERT INTO media.tracks (media_id, name, duration, lyrics)
 		VALUES ($1, $2, $3, $4)`,
 		&track.MediaID, &track.Name, &track.Duration, &track.Lyrics)

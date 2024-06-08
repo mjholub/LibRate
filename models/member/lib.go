@@ -12,7 +12,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 

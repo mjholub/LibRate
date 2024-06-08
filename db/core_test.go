@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,12 +87,14 @@ func TestConnect(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			dsn := CreateDsn(&tc.Inputs.DBConfig)
-			got, err := Connect(tc.Inputs.Engine, dsn, tc.Inputs.RetryAttempts)
+			ctx, cancel := context.WithTimeout(context.Background(), 5)
+			defer cancel()
+			got, err := Connect(ctx, dsn, tc.Inputs.RetryAttempts)
 			if tc.WantErr {
 				assert.Error(t, err)
 				return
 			}
-			assert.IsType(t, &sqlx.DB{}, got)
+			assert.IsType(t, &pgxpool.Pool{}, got)
 			assert.NoError(t, err)
 		})
 	}
@@ -114,8 +116,10 @@ func TestInitDB(t *testing.T) {
 }
 
 func TestCreateExtension(t *testing.T) {
-	conn, err := sqlx.ConnectContext(context.Background(),
-		"postgres", CreateDsn(&cfg.TestConfig.DBConfig))
+	ctx, cancel := context.WithTimeout(context.Background(), 5)
+	defer cancel()
+
+	conn, err := pgxpool.New(ctx, CreateDsn(&cfg.TestConfig.DBConfig))
 	require.NotNil(t, conn)
 	require.NoError(t, err)
 	err = createExtension(conn, "sequential_uuids")

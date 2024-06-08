@@ -34,7 +34,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/storage/redis/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/witer33/fiberpow"
 

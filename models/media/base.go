@@ -10,7 +10,6 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
@@ -22,7 +21,7 @@ type (
 	Storer[T any] interface {
 		Get(ctx context.Context, key string) (T, error)
 		GetAll() ([]T, error)
-		Add(ctx context.Context, db *sqlx.DB, props Media) (uuid.UUID, error)
+		Add(ctx context.Context, db *pgxpool.Pool, props Media) (uuid.UUID, error)
 		Update(ctx context.Context, key string, value T) error
 		Delete(ctx context.Context, key string) error
 	}
@@ -86,7 +85,7 @@ type (
 
 	Storage struct {
 		newDB *pgxpool.Pool
-		db    *sqlx.DB // legacy
+		db    *pgxpool.Pool // legacy
 		Log   *zerolog.Logger
 		ks    *KeywordStorage
 		Ps    *PeopleStorage
@@ -95,8 +94,8 @@ type (
 
 func NewStorage(newDB *pgxpool.Pool, l *zerolog.Logger) *Storage {
 	ks := NewKeywordStorage(newDB, l)
-	Ps := NewPeopleStorage(newDB, db, l)
-	return &Storage{newDB: newDB, db: db, Log: l, ks: ks, Ps: Ps}
+	Ps := NewPeopleStorage(newDB, l)
+	return &Storage{newDB: newDB, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct

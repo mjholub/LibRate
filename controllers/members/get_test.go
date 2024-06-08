@@ -7,32 +7,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgtype"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 )
 
-/*
-
-	"github.com/pashagolub/pgxmock/v3"
-	"github.com/rs/zerolog"
-		"github.com/gofrs/uuid/v5"
-
-		"net/http/httptest"
-	"os"
-	"strings"
-	"sync"
-
-
-	"github.com/stretchr/testify/require"
-
-	"codeberg.org/mjh/LibRate/cfg"
-	"codeberg.org/mjh/LibRate/cmd"
-	"codeberg.org/mjh/LibRate/db"
-	"codeberg.org/mjh/LibRate/middleware/session"
-	"codeberg.org/mjh/LibRate/models/member"
-*/
-
-func PrepareTest(ctx context.Context, testDBConn *sqlx.DB) error {
+func PrepareTest(ctx context.Context, testDBConn *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -48,18 +28,18 @@ func PrepareTest(ctx context.Context, testDBConn *sqlx.DB) error {
 		if err != nil {
 			return err
 		}
-		tx, err := testDBConn.BeginTx(ctx, nil)
+		tx, err := testDBConn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 		if err != nil {
 			return err
 		}
 		defer func() error {
-			err = tx.Rollback()
+			err = tx.Rollback(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to rollback transaction: %w", err)
 			}
 			return nil
 		}()
-		_, err = testDBConn.Exec(`
+		_, err = testDBConn.Exec(ctx, `
 	CREATE TABLE public.members (
 	id serial4 NOT NULL,
 	"uuid" uuid NOT NULL,
@@ -80,45 +60,49 @@ func PrepareTest(ctx context.Context, testDBConn *sqlx.DB) error {
 		if err != nil {
 			return err
 		}
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit(ctx); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func createTestSchema(ctx context.Context, conn *sqlx.DB) error {
+func createTestSchema(ctx context.Context, conn *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := conn.BeginTx(ctx, nil)
+		tx, err := conn.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
 		if err != nil {
 			return err
 		}
-		defer tx.Rollback()
-		_, err = conn.Exec("CREATE SCHEMA IF NOT EXISTS public; SET search_path TO public;")
+		defer tx.Rollback(ctx)
+		_, err = conn.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS public; SET search_path TO public;")
 		if err != nil {
 			return err
 		}
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit(ctx); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func createTestRole(ctx context.Context, conn *sqlx.DB) error {
+func createTestRole(ctx context.Context, conn *pgxpool.Pool) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := conn.BeginTx(ctx, nil)
+		tx, err := conn.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
 		if err != nil {
 			return err
 		}
-		defer tx.Rollback()
-		_, err = conn.Exec(`
+		defer tx.Rollback(ctx)
+		_, err = conn.Exec(ctx, `
 	CREATE TYPE public."_role" AS ENUM (
 	'member',
 	'admin'
@@ -126,20 +110,23 @@ func createTestRole(ctx context.Context, conn *sqlx.DB) error {
 		if err != nil {
 			return err
 		}
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit(ctx); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func CleanupTest(testDBConn *sqlx.DB) error {
-	_, err := testDBConn.Exec("DROP TABLE IF EXISTS members")
+func CleanupTest(testDBConn *pgxpool.Pool) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := testDBConn.Exec(ctx, "DROP TABLE IF EXISTS members")
 	if err != nil {
 		return err
 	}
 
-	_, err = testDBConn.Exec("DROP TYPE IF EXISTS public.\"_role\"")
+	_, err = testDBConn.Exec(ctx, "DROP TYPE IF EXISTS public.\"_role\"")
 	if err != nil {
 		return err
 	}

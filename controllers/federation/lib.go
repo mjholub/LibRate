@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-ap/activitypub"
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 
 	"codeberg.org/mjh/LibRate/models/member"
@@ -28,7 +28,7 @@ type Converter interface {
 // FedController holds the dependencies for the federation handler
 type FedController struct {
 	log     *zerolog.Logger
-	storage *sqlx.DB
+	storage *pgxpool.Pool
 	members member.Storer
 	Converter
 }
@@ -38,6 +38,6 @@ type ConversionHandler struct {
 }
 
 // NewFedController returns a new FedController
-func NewController(log *zerolog.Logger, storage *sqlx.DB, memberStorage member.Storer) *FedController {
+func NewController(log *zerolog.Logger, storage *pgxpool.Pool, memberStorage member.Storer) *FedController {
 	return &FedController{log: log, storage: storage, members: memberStorage}
 }

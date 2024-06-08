@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -27,7 +27,7 @@ type (
 	SearchController struct {
 		wsAddr string
 		log    *zerolog.Logger
-		dbConn *sqlx.DB
+		dbConn *pgxpool.Pool
 	}
 	// Search result holds the fields into which the results
 	// of a full text search are marshalled
@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func NewSearchController(dbConn *sqlx.DB, log *zerolog.Logger, wsAddr string) *SearchController {
+func NewSearchController(dbConn *pgxpool.Pool, log *zerolog.Logger, wsAddr string) *SearchController {
 	return &SearchController{
 		log:    log,
 		wsAddr: wsAddr,
@@ -137,7 +137,7 @@ func (sc *SearchController) WSHandler(c *websocket.Conn) {
 }
 
 // performSearch performs a full text search on the database
-func performSearch(ctx context.Context, db *sqlx.DB, searchTerm string) (res []SearchResult, err error) {
+func performSearch(ctx context.Context, db *pgxpool.Pool, searchTerm string) (res []SearchResult, err error) {
 	// Define the SQL query
 	stmt, err := db.PreparexContext(ctx, `
 		SELECT 'person' AS type, id::text, first_name AS name
