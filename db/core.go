@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j/config"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 
 	"github.com/avast/retry-go/v4"
@@ -71,17 +71,6 @@ func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
 	}
 
 	return db, nil
-}
-
-func ConnectNeo4j(conf *cfg.Config) (neo4j.DriverWithContext, error) {
-	dsn := fmt.Sprintf("bolt://%s:%d",
-		conf.Host, conf.Port)
-	auth := neo4j.BasicAuth(conf.User, conf.Password, "")
-	neo4jConf := func(cf *config.Config) {
-		cf.TelemetryDisabled = true
-	}
-	return neo4j.NewDriverWithContext(dsn,
-		auth, neo4jConf)
 }
 
 func createExtension(db *sqlx.DB, extName string) error {
@@ -220,4 +209,42 @@ func InitDB(conf *cfg.DBConfig, log *zerolog.Logger) error {
 	log.Info().Msg("Created review tables")
 
 	return nil
+}
+
+func TxErr(action string, input interface{}, err error) error {
+	return fmt.Errorf("failed to init transaction to %s, with input: %+v: %w",
+		action, input, err)
+}
+
+func SerializableParametrizedTx(
+	ctx context.Context,
+	conn *pgxpool.Pool,
+	qName, sql string,
+	errorHandlerInput any,
+	params ...any) (dest interface{ any | []any }, err error) {
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel: pgx.Serializable,
+	})
+	if err != nil {
+		return nil, TxErr(qName, errorHandlerInput, err)
+	}
+
+	// nolint:errcheck // we don't care about the error here
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Prepare(ctx, qName, sql)
+	if err != nil {
+		return nil, fmt.Errorf("error preparing statement: %w", err)
+	}
+
+	rows, err := conn.Query(ctx, qName, params)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %w", err)
+	}
+
+	if err = rows.Scan(&dest); err != nil {
+		return nil, fmt.Errorf("error scanning rows: %w", err)
+	}
+
+	return dest, nil
 }

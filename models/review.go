@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	dblib "codeberg.org/mjh/LibRate/db"
+
 	"github.com/gofrs/uuid/v5"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 )
 
@@ -75,12 +78,12 @@ type (
 	}
 
 	RatingStorage struct {
-		db  *sqlx.DB
+		db  *pgxpool.Pool
 		log *zerolog.Logger
 	}
 )
 
-func NewRatingStorage(db *sqlx.DB, log *zerolog.Logger) *RatingStorage {
+func NewRatingStorage(db *pgxpool.Pool, log *zerolog.Logger) *RatingStorage {
 	return &RatingStorage{db, log}
 }
 
@@ -89,28 +92,41 @@ func (rs *RatingStorage) New(ctx context.Context, rating *RatingInput) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		stmt, err := rs.db.PreparexContext(ctx,
+		tx, err := rs.db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		if err != nil {
+			return dblib.TxErr("create a review", &rating, err)
+		}
+
+		// nolint:errcheck // we don't care about the error here
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Prepare(ctx, "stmt",
 			`INSERT INTO reviews.ratings (stars, comment, topic, attribution, user_id, media_id)
 		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)
 		if err != nil {
 			return fmt.Errorf("error preparing statement: %w", err)
 		}
-		defer stmt.Close()
 
 		var id int64
 
-		err = stmt.QueryRowxContext(ctx,
+		rows, err := tx.Query(ctx, "stmt",
 			rating.NumStars,
 			rating.Comment,
 			rating.Topic,
 			rating.Attribution,
 			rating.UserID,
 			rating.MediaID,
-		).Scan(&id)
+		)
 
 		if err != nil {
 			return fmt.Errorf("error inserting rating: %w", err)
 		}
+		if rows.Scan(&id) != nil {
+			return fmt.Errorf("error scanning rows while creating a review: %w", err)
+		}
+
 		rs.log.Debug().Msgf("Inserted rating with id %d", id)
 
 		return nil
@@ -124,7 +140,7 @@ func UpdateRating[U UpdateableKeyTypes](ctx context.Context, rs *RatingStorage, 
 	default:
 
 		for v := range values {
-			_, err = rs.db.ExecContext(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
+			_, err = rs.db.Exec(ctx, `UPDATE reviews.ratings SET $1 = $2 WHERE id = $3`, v, values[v], id)
 			if err != nil {
 				return fmt.Errorf("error updating rating: %w", err)
 			}
@@ -134,11 +150,16 @@ func UpdateRating[U UpdateableKeyTypes](ctx context.Context, rs *RatingStorage, 
 }
 
 // Get retrieves a rating by its id.
-func (rs *RatingStorage) Get(ctx context.Context, id int64) (r Review, err error) {
-	err = rs.db.GetContext(ctx, &r, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
+func (rs *RatingStorage) Get(ctx context.Context, id int64) (r *Review, err error) {
+	var rev Review
+	rows, err := rs.db.Query(ctx, `SELECT * FROM reviews.ratings WHERE id = $1`, id)
 	if err != nil {
-		return Review{}, fmt.Errorf("error getting review: %w", err)
+		return nil, fmt.Errorf("error getting review: %w", err)
 	}
+	if err = rows.Scan(&rev); err != nil {
+		return nil, fmt.Errorf("error scanning rows: %v", err)
+	}
+
 	return r, nil
 }
 
@@ -147,7 +168,7 @@ func (rs *RatingStorage) Delete(ctx context.Context, id int64) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		_, err = rs.db.ExecContext(ctx, `DELETE FROM reviews.ratings WHERE id = $1`, id)
+		_, err = rs.db.Exec(ctx, `DELETE FROM reviews.ratings WHERE id = $1`, id)
 		if err != nil {
 			return fmt.Errorf("error deleting rating: %w", err)
 		}
@@ -158,33 +179,57 @@ func (rs *RatingStorage) Delete(ctx context.Context, id int64) (err error) {
 // GetLatestRatings retrieves the latest reviews for all media items. The limit and offset
 // parameters are used for pagination.
 func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Review, err error) {
-	err = rs.db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings 
+	result, err := dblib.SerializableParametrizedTx(
+		ctx,
+		rs.db,
+		"get-latest-reviews",
+		`SELECT * FROM reviews.ratings 
 		ORDER BY created_at
-		DESC LIMIT $1 OFFSET $2`, limit, offset)
+		DESC LIMIT $1 OFFSET $2`,
+		map[string]int{"limit": limit, "offset": offset},
+		limit, offset,
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("error getting ratings: %w", err)
+		return nil, fmt.Errorf("error getting latest reviews: %v", err)
 	}
-	return ratings, nil
+
+	return result.([]*Review), nil
 }
 
+// GetAll gets all the reviews
 func (rs *RatingStorage) GetAll() (ratings []*Review, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = rs.db.SelectContext(ctx, &ratings, `SELECT * FROM reviews.ratings`)
+	result, err := dblib.SerializableParametrizedTx(
+		ctx,
+		rs.db,
+		"get-all-reviews",
+		"SELECT * FROM reviews.ratings",
+		nil,
+		nil,
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("error getting ratings: %w", err)
+		return nil, fmt.Errorf("error getting reviews: %v", err)
 	}
-	return ratings, nil
+
+	return result.([]*Review), nil
 }
 
 func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Review, err error) {
-	err = rs.db.SelectContext(
-		ctx, &ratings, `SELECT * FROM reviews.ratings WHERE media_id = $1`, mediaID)
+	result, err := dblib.SerializableParametrizedTx(
+		ctx, rs.db, "get-reviews-by-media-id",
+		"SELECT * FROM reviews.ratings WHERE media_id = $1",
+		map[string]string{"media ID": mediaID.String()},
+		mediaID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("error getting ratings: %w", err)
+		return nil, fmt.Errorf("error getting reviews: %w", err)
 	}
-	return ratings, nil
+
+	return result.([]*Review), nil
 }
 
 func (rs *RatingStorage) GetAverageStars(ctx context.Context,
@@ -195,10 +240,14 @@ func (rs *RatingStorage) GetAverageStars(ctx context.Context,
 		return 0, ctx.Err()
 	default:
 		var avgStarsFloat sql.NullFloat64
-		err = rs.db.GetContext(ctx, &avgStarsFloat,
+		rows, err := rs.db.Query(ctx,
 			`SELECT AVG(stars) FROM reviews.ratings WHERE media_id = $1`, mediaID)
 		if err != nil {
-			return 0, fmt.Errorf("error getting average stars: %w", err)
+			return 0, fmt.Errorf("error querying database: %w", err)
+		}
+
+		if err := rows.Scan(&avgStarsFloat); err != nil {
+			return 0, fmt.Errorf("error scanning rows: %w", err)
 		}
 
 		return avgStarsFloat.Float64, nil
