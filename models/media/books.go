@@ -8,6 +8,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 
 	"codeberg.org/mjh/LibRate/models/language"
@@ -83,28 +84,48 @@ func (ms *Storage) AddBook(
 			return err
 		}
 
-		_, err = ms.db.NamedExecContext(ctx, `
-		INSERT INTO media.books (
+		tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		if err != nil {
+			return fmt.Errorf("error starting transaction: %w", err)
+		}
+		defer tx.Rollback(ctx)
+
+		batch := &pgx.Batch{}
+
+		batch.Queue(`INSERT INTO media.books (
 		title, publisher, publication_date,
 		keywords, pages, isbn, asin, cover, summary
-		) VALUES (
-		:title, :publisher, :publication_date,
-		:keywords, :pages, :isbn, :asin, :cover, :summary
-		`, book)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+			book.Title, publisher.ID, book.PublicationDate,
+			book.Keywords, book.Pages, book.ISBN, book.ASIN, book.Cover, book.Summary)
+
+		for _, author := range book.Authors {
+			batch.Queue(`INSERT INTO media.book_authors (book, person) VALUES ($1, $2)`, *mediaID, author.ID)
+		}
+
+		for _, genre := range book.Genres {
+			batch.Queue(`INSERT INTO media.book_genres (book, genre) VALUES ($1, $2)`, *mediaID, genre.ID)
+		}
+
+		for i := range book.Languages {
+			langID, err := language.ReverseLookupLangID(book.Languages[i])
+			if err != nil {
+				ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", book.Languages[i], *mediaID)
+			}
+			batch.Queue(`INSERT INTO media.book_languages (book, lang) VALUES ($1, $2)`, *mediaID, langID)
+		}
+
+		br := tx.SendBatch(ctx, batch)
+		err = br.Close()
 		if err != nil {
-			return fmt.Errorf("error adding book: %w", err)
+			return fmt.Errorf("error executing batch: %w", err)
 		}
 
-		if err := ms.addBookAuthors(ctx, *mediaID, book.Authors); err != nil {
-			return err
-		}
-
-		if err := ms.addBookGenres(ctx, *mediaID, book.Genres); err != nil {
-			return err
-		}
-
-		if err := ms.addBookLanguages(ctx, *mediaID, book.Languages); err != nil {
-			return err
+		err = tx.Commit(ctx)
+		if err != nil {
+			return fmt.Errorf("error committing transaction: %w", err)
 		}
 
 		return nil
@@ -133,57 +154,4 @@ func (ms *Storage) addBookAsMedia(ctx context.Context, book *Book) (mediaID *uui
 	ms.Log.Info().Msgf("added media with ID %s", mediaID)
 
 	return mediaID, nil
-}
-
-func (ms *Storage) addBookAuthors(ctx context.Context, bookID uuid.UUID, authors []Person) error {
-	for i := range authors {
-		authorID := authors[i].ID
-		_, err := ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_authors (
-		book, person
-		) VALUES (
-		$1, $2
-		)`, bookID, authorID)
-		if err != nil {
-			return fmt.
-				Errorf("error adding author %s %s to book with ID %s: %v",
-					authors[i].FirstName, authors[i].LastName, bookID.String(), err)
-		}
-	}
-	return nil
-}
-
-func (ms *Storage) addBookGenres(ctx context.Context, bookID uuid.UUID, genres []Genre) error {
-	for i := range genres {
-		genreID := genres[i].ID
-		_, err := ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_genres (
-		book, genre
-		) VALUES (
-		$1, $2
-		)`, bookID, genreID)
-		if err != nil {
-			return fmt.Errorf("error adding genre %s to book with ID %s: %v", genres[i].Name, bookID.String(), err)
-		}
-	}
-	return nil
-}
-
-func (ms *Storage) addBookLanguages(ctx context.Context, bookID uuid.UUID, languages []string) error {
-	for i := range languages {
-		langID, err := language.ReverseLookupLangID(languages[i])
-		if err != nil {
-			ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", languages[i], bookID)
-		}
-		_, err = ms.db.ExecContext(ctx, `
-		INSERT INTO media.book_languages (
-		book, lang
-		) VALUES (
-		$1, $2
-		)`, bookID, langID)
-		if err != nil {
-			ms.Log.Error().Err(err).Msgf("error adding language %s to book with ID %s", languages[i], bookID)
-		}
-	}
-	return nil
 }

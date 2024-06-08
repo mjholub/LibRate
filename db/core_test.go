@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -124,4 +126,64 @@ func TestCreateExtension(t *testing.T) {
 	require.NoError(t, err)
 	err = createExtension(conn, "sequential_uuids")
 	assert.NoError(t, err)
+}
+
+func createTestData(ctx context.Context, conn *pgxpool.Pool) error {
+	_, err := conn.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS members (
+			id SERIAL PRIMARY KEY,
+			email text NOT NULL
+		);`)
+	if err != nil {
+		return fmt.Errorf("failed to create test table: %w", err)
+	}
+
+	_, err = conn.Exec(ctx, `
+	INSERT INTO members (email) VALUES ('test@foo.com');`)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert test data: %w", err)
+	}
+
+	return nil
+}
+
+func cleanTestData(ctx context.Context, conn *pgxpool.Pool) error {
+	_, err := conn.Exec(ctx, "DROP TABLE IF EXISTS members")
+	if err != nil {
+		return fmt.Errorf("failed to drop test table: %w", err)
+	}
+	return nil
+}
+
+func TestSerializableParametrizedTx(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	conn, err := pgxpool.New(ctx, CreateDsn(&cfg.TestConfig.DBConfig))
+	require.NotNil(t, conn)
+	require.NoError(t, err)
+
+	defer func(ctx context.Context, conn *pgxpool.Pool) {
+		if err := cleanTestData(ctx, conn); err != nil {
+			t.Fatalf("failed to clean test data: %v", err)
+		}
+	}(ctx, conn)
+
+	if err = createTestData(ctx, conn); err != nil {
+		t.Fatalf("failed to create test data: %v", err)
+	}
+
+	var result []int
+	result, err = SerializableParametrizedTx[int](ctx, conn,
+		"test-query", // query name
+		"SELECT id FROM members WHERE email = $1", // sql query
+		"test",         // error handler input
+		"test@foo.com", // parameter
+	)
+	require.Nilf(t, err, "failed to run serializable transaction: %v", err)
+	assert.IsType(t, []int{0}, result)
+
+	assert.NotEmpty(t, result)
+	assert.Greater(t, result[0], 0)
 }

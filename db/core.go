@@ -2,13 +2,17 @@ package db
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
+	lop "github.com/samber/lo/parallel"
 
 	"github.com/avast/retry-go/v4"
 	_ "github.com/lib/pq"
@@ -216,35 +220,152 @@ func TxErr(action string, input interface{}, err error) error {
 		action, input, err)
 }
 
-func SerializableParametrizedTx(
+func convertParam(param interface{}) (driver.Value, error) {
+	switch v := param.(type) {
+	case string:
+		return v, nil
+	case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64:
+		return v, nil
+	case bool:
+		return v, nil
+	case []byte:
+		return v, nil
+	case time.Time:
+		return v, nil
+	case uuid.UUID:
+		return v, nil
+	case []string:
+		return pgtype.FlatArray[string](param.([]string)), nil
+	case []int:
+		return pgtype.FlatArray[int](param.([]int)), nil
+	default:
+		return nil, fmt.Errorf("unsupported type %T for conversion", v)
+	}
+}
+
+func convertParams(params ...any) ([]driver.Value, error) {
+	var args []driver.Value
+
+	for _, p := range params {
+		v, err := convertParam(p)
+		if err != nil {
+			return nil, fmt.Errorf("error converting parameter: %w", err)
+		}
+		args = append(args, v)
+	}
+
+	return args, nil
+}
+
+// like SerializableParametrizedTx, but doesn't scan into anything,
+// instead simply returning an error
+func SerialParametrizedUnaryTx(
 	ctx context.Context,
 	conn *pgxpool.Pool,
 	qName, sql string,
-	errorHandlerInput any,
-	params ...any) (dest interface{ any | []any }, err error) {
+	errorInput any,
+	params ...any,
+) error {
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel: pgx.Serializable,
 	})
 	if err != nil {
-		return nil, TxErr(qName, errorHandlerInput, err)
+		return TxErr(qName, errorInput, err)
 	}
-
-	// nolint:errcheck // we don't care about the error here
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Prepare(ctx, qName, sql)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing statement: %w", err)
+		return fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := conn.Query(ctx, qName, params)
+	args, err := convertParams(params...)
+
 	if err != nil {
-		return nil, fmt.Errorf("error executing query: %w", err)
+		return err
 	}
 
-	if err = rows.Scan(&dest); err != nil {
-		return nil, fmt.Errorf("error scanning rows: %w", err)
+	errCh := make(chan error, 1)
+	defer close(errCh)
+
+	lop.ForEach(args, func(v driver.Value, _ int) {
+		rows, err := tx.Query(ctx, qName, v)
+		if err != nil {
+			errCh <- fmt.Errorf("error executing query: %w", err)
+			return
+		}
+		defer rows.Close()
+	})
+
+	select {
+	case err = <-errCh:
+		return err
+	case <-ctx.Done():
+		return fmt.Errorf("context cancelled: %w", ctx.Err())
+	default:
+		if err = tx.Commit(ctx); err != nil {
+			return TxErr(qName, errorInput, err)
+		}
+		return nil
+	}
+}
+
+func SerializableParametrizedTx[T any](
+	ctx context.Context,
+	conn *pgxpool.Pool,
+	qName, sql string,
+	errorHandlerInput any,
+	params ...any) (dest []T, err error) {
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel: pgx.Serializable,
+	})
+
+	if err != nil {
+		return dest, TxErr(qName, errorHandlerInput, err)
 	}
 
-	return dest, nil
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Prepare(ctx, qName, sql)
+	if err != nil {
+		return dest, fmt.Errorf("error preparing statement: %w", err)
+	}
+
+	args, err := convertParams(params...)
+	if err != nil {
+		return dest, err
+	}
+
+	errCh := make(chan error, 1)
+	defer close(errCh)
+
+	lop.ForEach(args, func(v driver.Value, _ int) {
+		rows, err := tx.Query(ctx, qName, v)
+		if err != nil {
+			errCh <- fmt.Errorf("error executing query: %w", err)
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var d T
+			if err = rows.Scan(&d); err != nil {
+				errCh <- fmt.Errorf("error scanning row: %w", err)
+				return
+			}
+			dest = append(dest, d)
+		}
+	})
+
+	select {
+	case err = <-errCh:
+		return dest, err
+	case <-ctx.Done():
+		return dest, fmt.Errorf("context cancelled: %w", ctx.Err())
+	default:
+		if err = tx.Commit(ctx); err != nil {
+			return dest, TxErr(qName, errorHandlerInput, err)
+		}
+		return dest, nil
+	}
 }

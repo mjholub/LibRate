@@ -7,8 +7,11 @@ import (
 	"strings"
 	"time"
 
+	dblib "codeberg.org/mjh/LibRate/db"
+
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -101,26 +104,19 @@ func NewStorage(newDB *pgxpool.Pool, l *zerolog.Logger) *Storage {
 // Get scans into a complete Media struct
 // In most cases though, all we need is an intermediate, partial instance with the UUID and Kind fields
 // to be passed to GetDetails
-func (ms *Storage) Get(ctx context.Context, id uuid.UUID) (media Media, err error) {
+func (ms *Storage) Get(ctx context.Context, id uuid.UUID) (media *Media, err error) {
 	select {
 	case <-ctx.Done():
-		return Media{}, ctx.Err()
+		return nil, ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT * FROM media.media WHERE id = $1")
+		result, err := dblib.SerializableParametrizedTx[*Media](ctx, ms.newDB, "get_media",
+			`SELECT * FROM media.media WHERE id = $1`,
+			map[string]string{"media_id": id.String()},
+			id)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return Media{}, fmt.Errorf("error preparing statement: %v", err)
+			return nil, fmt.Errorf("error querying media: %v", err)
 		}
-		defer stmt.Close()
-
-		row := stmt.QueryRowContext(ctx, id)
-		err = row.Scan(
-			&media.ID, &media.Title, &media.Kind, &media.Created, &media.Creator)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error scanning row")
-			return Media{}, fmt.Errorf("error scanning row: %v", err)
-		}
-		return media, nil
+		return result[0], nil
 	}
 }
 
@@ -129,41 +125,37 @@ func (ms *Storage) GetImagePath(ctx context.Context, id uuid.UUID) (path string,
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		// TODO: add thumbnail paths
-		err := ms.db.GetContext(ctx, &path, `SELECT i.source
-			FROM media.media_images AS mi
-			JOIN cdn.images AS i ON mi.image_id = i.id
-			WHERE mi.media_id = $1
-			LIMIT 1
-			`, id)
+		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.newDB, "get_image_path",
+			`SELECT i.source FROM media.media_images AS mi
+		JOIN cdn.images AS i ON mi.image_id = i.id
+		WHERE mi.media_id = $1
+		LIMIT 1`,
+			map[string]string{"media_id": id.String()},
+			id)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error querying image path: %v", err)
 		}
 
-		return path, nil
+		return result[0], nil
 	}
 }
+
+// TODO: a method to get thumbnail path(s) (?)
 
 func (ms *Storage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		stmt, err := ms.db.PrepareContext(ctx, "SELECT kind FROM media.media WHERE id = $1")
+		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.newDB, "get_kind",
+			`SELECT kind FROM media.media WHERE id = $1`,
+			map[string]string{"media_id": id.String()},
+			id)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return "", fmt.Errorf("error preparing statement: %v", err)
+			return "", fmt.Errorf("error querying kind: %v", err)
 		}
-		defer stmt.Close()
 
-		var kind string
-		row := stmt.QueryRowContext(ctx, id)
-		err = row.Scan(&kind)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error scanning row")
-			return "", fmt.Errorf("error scanning row: %v", err)
-		}
-		return kind, nil
+		return result[0], nil
 	}
 }
 
@@ -180,7 +172,7 @@ func GetGenres[G GenresOrGenreNames](
 	kind string,
 	all bool,
 	columns ...string,
-) (G, error) {
+) ([]G, error) {
 	if len(columns) > 0 {
 		validColumns := []string{"id", "kinds", "name", "parent", "children"}
 		for i := range columns {
@@ -205,17 +197,20 @@ func GetGenres[G GenresOrGenreNames](
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		stmt, err := ms.db.PreparexContext(ctx, fmt.Sprintf(queryTemplate, strings.Join(columns, ", "), whereClause))
+		stmt := fmt.Sprintf(queryTemplate, strings.Join(columns, ", "), whereClause)
+
+		genreList, err := dblib.SerializableParametrizedTx[G](ctx, ms.newDB, "get_genres",
+			stmt, map[string]any{
+				"kind":    kind,
+				"all":     all,
+				"columns": columns,
+			},
+			kind)
+
 		if err != nil {
 			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
-		defer stmt.Close()
 
-		var genreList G
-		err = stmt.SelectContext(ctx, &genreList, kind)
-		if err != nil {
-			return nil, fmt.Errorf("error selecting rows: %v", err)
-		}
 		return genreList, nil
 	}
 }
@@ -305,47 +300,20 @@ func (ms *Storage) GetRandom(ctx context.Context, count int, blacklistKinds ...s
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		// early return on faulty db connection
-		if ms.db == nil {
-			ms.Log.Error().Msg("no database connection or nil pointer")
-			return nil, fmt.Errorf("no database connection or nil pointer")
-		}
-
-		// prepare statement
-		stmt, err := ms.db.PreparexContext(ctx,
+		result, err := dblib.SerializableParametrizedTx[map[uuid.UUID]string](ctx, ms.newDB, "get_random_media",
 			`SELECT id, kind
 			FROM media.media 
 			WHERE kind != ALL($1)
 			ORDER BY RANDOM()
-			LIMIT $2`)
-		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return nil, fmt.Errorf("error preparing statement: %v", err)
-		}
-		defer stmt.Close()
+			LIMIT $2`,
+			map[string]any{"blacklist": blacklistKinds, "count": count},
+			blacklistKinds, count)
 
-		// query
-		rows, err := stmt.QueryxContext(ctx, pq.Array(blacklistKinds), count)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error querying rows")
-			return nil, fmt.Errorf("error querying rows: %v", err)
+			return nil, fmt.Errorf("error querying random media: %v", err)
 		}
-		defer rows.Close()
 
-		// scan rows into map
-		mwks = make(map[uuid.UUID]string)
-		var (
-			id   uuid.UUID
-			kind string
-		)
-		for rows.Next() {
-			if err := rows.Scan(&id, &kind); err != nil {
-				ms.Log.Error().Err(err).Msg("error scanning row")
-				return nil, fmt.Errorf("error scanning row: %v", err)
-			}
-			mwks[id] = kind
-		}
-		return mwks, nil
+		return result[0], nil
 	}
 }
 
@@ -361,23 +329,33 @@ func (ms *Storage) Add(ctx context.Context, props *Media) (mediaID *uuid.UUID, e
 		if ms.db == nil {
 			return nil, fmt.Errorf("no database connection or nil pointer")
 		}
-		stmt, err := ms.db.PreparexContext(ctx, `	
+
+		stmt, err := dblib.SerializableParametrizedTx[*uuid.UUID](ctx,
+			ms.db,
+			"add_media",
+			`	
 		INSERT INTO media.media (
 			title, kind, created
 		) VALUES (
 			$1, $2, $3
 		)
 		RETURNING id
-		`)
+		`,
+			map[string]any{
+				"title":   props.Title,
+				"kind":    props.Kind,
+				"created": props.Created,
+			},
+			props.Title, props.Kind, props.Created)
 		if err != nil {
 			return nil, fmt.Errorf("error preparing statement: %v", err)
 		}
-		defer stmt.Close()
 
-		err = stmt.GetContext(ctx, mediaID, props.Title, props.Kind, props.Created)
-		if err != nil {
-			return nil, fmt.Errorf("error executing statement: %v", err)
+		mediaID = stmt[0]
+		if mediaID == nil {
+			return nil, fmt.Errorf("no media ID returned")
 		}
+
 		err = ms.AddCreators(ctx, *mediaID, props.Creators)
 		// handle the case in which the said person is not in the database
 		if err == sql.ErrNoRows {
@@ -396,29 +374,42 @@ func (ms *Storage) AddCreators(ctx context.Context, id uuid.UUID, creators []Per
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		// early return on faulty db connection
-		if ms.db == nil {
-			return fmt.Errorf("no database connection or nil pointer")
-		}
-		stmt, err := ms.db.PreparexContext(ctx, `	
-		INSERT INTO media.media_creators (
+		// WARN: cannot use dblib.SerialParametrizedUnaryTx,
+		// because Go type system fucking sucks and I regret picking it
+		// to build LibRate in the first place
+		// (i.e. adding it to this stupid convertParam type switch
+		// would cause a cyclic dependency).
+		// Of course we can always use mapstructure, but honestly,
+		// how many annotations are we going to put in our structs?
+		// Soon I'll either have to disable line length limit in linter or
+		// make my struct definitions unreadable.
+		// jfc
+		// https://super8.absturztau.be/watch?v=aSEQfqNYNAc
+		tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		const (
+			q   = "add-creators"
+			sql = `INSERT INTO media.media_creators (
 			media_id, creator_id
 		) VALUES (
-			$1, $2
+			$1, $2)`
 		)
-		`)
 		if err != nil {
-			ms.Log.Error().Err(err).Msg("error preparing statement")
-			return fmt.Errorf("error preparing statement: %v", err)
+			return dblib.TxErr(q, map[string]any{
+				"media_id": id.String(),
+				"creators": creators,
+			}, err)
 		}
-		defer stmt.Close()
+		defer tx.Rollback(ctx)
 
-		for i := range creators {
-			_, err = stmt.ExecContext(ctx, id, creators[i].ID)
-			if err != nil {
-				ms.Log.Error().Err(err).Msg("error executing statement")
-				return fmt.Errorf("error executing statement: %v", err)
-			}
+		_, err = tx.Prepare(ctx, q, sql)
+		if err != nil {
+			return fmt.Errorf("error preparing statement: %w", err)
+		}
+
+		if err = tx.Commit(ctx); err != nil {
+			return fmt.Errorf("error executing statement: %w", err)
 		}
 		return nil
 	}
@@ -437,19 +428,15 @@ func (ms *Storage) Update(ctx context.Context, key string, value interface{}, me
 		if ms.db == nil {
 			return fmt.Errorf("no database connection or nil pointer")
 		}
-		// TODO: add a switch statement to handle different types of values
-		stmt, err := ms.db.PreparexContext(ctx, `
+		_, err := ms.db.Exec(ctx, `
 		UPDATE media.media
 		SET $1 = $2
 		WHERE id = $3
-		`)
-		if err = handlePrepareError(ms.Log, err); err != nil {
-			return err
+		`, key, value, mediaID)
+		if err != nil {
+			return fmt.Errorf("error updating media: %v", err)
 		}
-		defer stmt.Close()
-
-		_, err = stmt.ExecContext(ctx, key, value, mediaID)
-		return handleExecError(ms.Log, err)
+		return nil
 	}
 }
 
@@ -458,35 +445,13 @@ func (ms *Storage) Delete(ctx context.Context, mediaID uuid.UUID) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if ms.db == nil {
-			return fmt.Errorf("no database connection or nil pointer")
+		if err := dblib.SerialParametrizedUnaryTx(ctx, ms.db, "delete_media",
+			`DELETE FROM media.media WHERE id = $1`,
+			map[string]string{"media_id": mediaID.String()},
+			mediaID,
+		); err != nil {
+			return fmt.Errorf("error deleting media with ID %s: %w", mediaID.String(), err)
 		}
-		stmt, err := ms.db.PreparexContext(ctx, `
-		DELETE FROM media.media
-		WHERE id = $1
-		`)
-		if err = handlePrepareError(ms.Log, err); err != nil {
-			return err
-		}
-		defer stmt.Close()
-
-		_, err = stmt.ExecContext(ctx, mediaID)
-		return handleExecError(ms.Log, err)
+		return nil
 	}
-}
-
-func handlePrepareError(log *zerolog.Logger, err error) error {
-	if err != nil {
-		log.Error().Err(err).Msg("error preparing statement")
-		return fmt.Errorf("error preparing statement: %v", err)
-	}
-	return nil
-}
-
-func handleExecError(log *zerolog.Logger, err error) error {
-	if err != nil {
-		log.Error().Err(err).Msg("error executing statement")
-		return fmt.Errorf("error executing statement: %v", err)
-	}
-	return nil
 }

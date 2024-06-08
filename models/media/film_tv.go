@@ -19,8 +19,6 @@ type (
 		ReleaseDate sql.NullTime   `json:"release_date" db:"release_date"`
 		Duration    sql.NullTime   `json:"duration" db:"duration"`
 		Synopsis    sql.NullString `json:"synopsis" db:"synopsis"`
-		// TODO: check if nullFloat64 is the right type for this
-		Rating sql.NullFloat64 `json:"rating"` // stored in the reviews.rating table, can be queried with a join on media ID
 	}
 
 	TVShow struct {
@@ -73,8 +71,9 @@ type (
 
 func (ms *Storage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
 	var film Film
-	err := ms.db.GetContext(ctx, &film, "SELECT * FROM media.films WHERE media_id = $1", id)
-	if err != nil {
+	r := ms.db.QueryRow(ctx, "SELECT * FROM media.films WHERE media_id = $1", id)
+
+	if err := r.Scan(&film); err != nil {
 		return Film{}, err
 	}
 
@@ -87,9 +86,10 @@ func (ms *Storage) getFilm(ctx context.Context, id uuid.UUID) (Film, error) {
 
 func (ms *Storage) getSeries(ctx context.Context, id uuid.UUID) (TVShow, error) {
 	var tvshow TVShow
-	err := ms.db.GetContext(ctx, &tvshow, "SELECT * FROM media.tvshows WHERE media_id = $1", id)
-	if err != nil {
-		return TVShow{}, err
+	row := ms.db.QueryRow(ctx, "SELECT * FROM media.tvshows WHERE media_id = $1", id)
+
+	if err := row.Scan(&tvshow); err != nil {
+		return TVShow{}, fmt.Errorf("error getting series with ID %s: %w", id.String(), err)
 	}
 
 	return tvshow, nil
@@ -105,7 +105,6 @@ func (ms *Storage) AddFilm(ctx context.Context, film *Film) error {
 	// While making the media."media"(created) nullable would seem more intuitive,
 	// we do not want this to prevent low quality submissions for stuff that has already been released.
 	// This seems like a fair compromise.
-	// TODO: in the frontend display "Not released yet" if the release date is 31st December 9999
 	//
 	// If an exact release date is not known, there is no way we can prevent users from setting that to 1st January of the
 	// actual release year. It should be visible as a tip in the UI, so that if someone reviewing a submission happens to know
@@ -126,7 +125,6 @@ func (ms *Storage) AddFilm(ctx context.Context, film *Film) error {
 		return err
 	}
 	ms.Log.Debug().Msgf("Added media with ID " + mediaID.String())
-	// ratings are stored in a
 	_, err = ms.db.NamedExecContext(ctx, `
 		INSERT INTO media.films (
 			media_id, title, cast, release_date, duration, synopsis
