@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
 	"codeberg.org/mjh/LibRate/cfg"
@@ -39,8 +38,10 @@ func CreateDsn(dsn *cfg.DBConfig) string {
 	}
 }
 
-func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
-	var db *sqlx.DB
+// Currently only postgres is supported, as we try to
+// stick to YAGNI and convetion over configuration.
+func Connect(ctx context.Context, dsn string, attempts int32) (*pgxpool.Pool, error) {
+	var db *pgxpool.Pool
 
 	if attempts < 0 {
 		attempts = 2147483647
@@ -53,9 +54,7 @@ func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
 	err := retry.Do(
 		func() error {
 			var err error
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			db, err = sqlx.ConnectContext(ctx, engine, dsn)
+			db, err = pgxpool.New(ctx, dsn)
 			return err
 		},
 		retry.Attempts(uint(attempts)),
@@ -73,11 +72,11 @@ func Connect(engine, dsn string, attempts int32) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func createExtension(db *sqlx.DB, extName string) error {
+func createExtension(db *pgxpool.Pool, extName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// nolint:gocritic // postgres doesn't parse "%q" properly
-	_, err := db.ExecContext(ctx,
+	_, err := db.Exec(ctx,
 		fmt.Sprintf(`CREATE EXTENSION IF NOT EXISTS "%s" SCHEMA public;`, extName))
 	if err != nil {
 		return fmt.Errorf("failed to create extension %s: %w", extName, err)
@@ -89,15 +88,16 @@ func createExtension(db *sqlx.DB, extName string) error {
 func InitDB(conf *cfg.DBConfig, log *zerolog.Logger) error {
 	dsn := CreateDsn(conf)
 
-	db, err := Connect(conf.Engine, dsn, conf.RetryAttempts)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	db, err := Connect(ctx, dsn, conf.RetryAttempts)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
-	defer cancel()
-	_, err = db.ExecContext(ctx, `CREATE SCHEMA IF NOT EXISTS public; SET search_path TO public;`)
+	_, err = db.Exec(ctx, `CREATE SCHEMA IF NOT EXISTS public; SET search_path TO public;`)
 	if err != nil {
 		return fmt.Errorf("failed to create public schema: %w", err)
 	}

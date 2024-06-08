@@ -29,7 +29,6 @@ import (
 	"codeberg.org/mjh/LibRate/lib/redist"
 	"codeberg.org/mjh/LibRate/routes"
 
-	//	"github.com/k42-software/go-altcha"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/gofiber/fiber/v2"
@@ -369,29 +368,10 @@ func initLogging(logConf *logging.Config) zerolog.Logger {
 	return logging.Init(logConf)
 }
 
-func connectDB(conf *cfg.Config) (*sqlx.DB, *pgxpool.Pool, error) {
-	// Connect to database
-	var (
-		err    error
-		dbConn *sqlx.DB
-	)
-
+func connectDB(conf *cfg.Config) (*pgxpool.Pool, error) {
 	dsn := db.CreateDsn(&conf.DBConfig)
 
-	switch conf.Engine {
-	case "postgres":
-		dbConn, err = db.Connect(conf.Engine, dsn, conf.RetryAttempts)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-		pgConnPool, err := pgxpool.New(context.Background(), dsn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-		return dbConn, pgConnPool, nil
-	default:
-		return nil, nil, fmt.Errorf("unsupported database engine \"%q\" or error reading config", conf.Engine)
-	}
+	return db.Connect(context.Background(), dsn, conf.RetryAttempts)
 }
 
 func modularListen(conf *cfg.Config, app *fiber.App) error {
