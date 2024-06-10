@@ -107,7 +107,7 @@ func addTrack(ctx context.Context, db *pgxpool.Pool, track *Track) error {
 }
 
 func (ms *Storage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
-	stmt, err := ms.db.PrepareContext(ctx, `SELECT media_id, album_name, release_date, duration
+	stmt, err := ms.dbOld.PrepareContext(ctx, `SELECT media_id, album_name, release_date, duration
 		FROM media.albums 
 		WHERE media_id = $1`)
 	if err != nil {
@@ -124,7 +124,7 @@ func (ms *Storage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
 	// join to get the name of the artist based on the artist ID, by looking up the person and group tables
 	// In person table, we need to select first_name, last_name and nick_names columns
 	// then format that using Sprintf
-	rows, err := ms.db.QueryContext(ctx, `
+	rows, err := ms.dbOld.QueryContext(ctx, `
 SELECT 
     p.first_name, 
     p.last_name, 
@@ -157,7 +157,7 @@ WHERE
 
 	album.AlbumArtists = albumArtists
 
-	rows, err = ms.db.QueryContext(ctx, `SELECT genre FROM media.album_genres WHERE album = $1`, id)
+	rows, err = ms.dbOld.QueryContext(ctx, `SELECT genre FROM media.album_genres WHERE album = $1`, id)
 	if err != nil {
 		return Album{}, fmt.Errorf("error querying album genres: %w", err)
 	}
@@ -174,7 +174,7 @@ WHERE
 
 	album.Genres = genres
 
-	rows, err = ms.db.QueryContext(ctx, `SELECT keyword_id FROM media.album_keywords WHERE album = $1`, id)
+	rows, err = ms.dbOld.QueryContext(ctx, `SELECT keyword_id FROM media.album_keywords WHERE album = $1`, id)
 	if err != nil {
 		return Album{}, fmt.Errorf("error querying album keywords: %w", err)
 	}
@@ -197,7 +197,7 @@ WHERE
 
 	album.Keywords = keywords
 
-	rows, err = ms.db.QueryContext(ctx, `SELECT media_id, name, duration, lyrics
+	rows, err = ms.dbOld.QueryContext(ctx, `SELECT media_id, name, duration, lyrics
 		FROM media.tracks
 		WHERE album = $1`, id)
 	if err != nil {
@@ -220,7 +220,7 @@ WHERE
 }
 
 func (ms *Storage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
-	stmt, err := ms.db.PreparexContext(ctx, `SELECT * 
+	stmt, err := ms.dbOld.PreparexContext(ctx, `SELECT * 
 		FROM media.tracks 
 		WHERE media_id = $1`)
 	if err != nil {
@@ -247,7 +247,7 @@ func (ms *Storage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Tra
 		ORDER BY at.track_number
 	`
 
-	rows, err := ms.db.QueryxContext(ctx, query, albumID)
+	rows, err := ms.dbOld.QueryxContext(ctx, query, albumID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying album tracks: %w", err)
 	}
@@ -272,7 +272,7 @@ func (ms *Storage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) ([]u
 		ORDER BY track_number
 	`
 
-	rows, err := ms.db.QueryContext(ctx, query, albumID)
+	rows, err := ms.dbOld.QueryContext(ctx, query, albumID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying album tracks: %w", err)
 	}

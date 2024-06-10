@@ -43,7 +43,7 @@ var BookKeys = []string{
 }
 
 func (ms *Storage) getBook(ctx context.Context, id uuid.UUID) (*Book, error) {
-	rows, err := ms.newDB.Query(ctx, "SELECT * FROM books WHERE media_id = $1", id)
+	rows, err := ms.db.Query(ctx, "SELECT * FROM books WHERE media_id = $1", id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting book with ID %s: %v", id.String(), err)
 	}
@@ -84,7 +84,7 @@ func (ms *Storage) AddBook(
 			return err
 		}
 
-		tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
+		tx, err := ms.dbOld.BeginTx(ctx, pgx.TxOptions{
 			IsoLevel: pgx.Serializable,
 		})
 		if err != nil {

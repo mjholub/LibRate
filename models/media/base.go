@@ -87,18 +87,17 @@ type (
 	}
 
 	Storage struct {
-		newDB *pgxpool.Pool
-		db    *pgxpool.Pool // legacy
-		Log   *zerolog.Logger
-		ks    *KeywordStorage
-		Ps    *PeopleStorage
+		db  *pgxpool.Pool
+		Log *zerolog.Logger
+		ks  *KeywordStorage
+		Ps  *PeopleStorage
 	}
 )
 
-func NewStorage(newDB *pgxpool.Pool, l *zerolog.Logger) *Storage {
-	ks := NewKeywordStorage(newDB, l)
-	Ps := NewPeopleStorage(newDB, l)
-	return &Storage{newDB: newDB, Log: l, ks: ks, Ps: Ps}
+func NewStorage(db *pgxpool.Pool, l *zerolog.Logger) *Storage {
+	ks := NewKeywordStorage(db, l)
+	Ps := NewPeopleStorage(db, l)
+	return &Storage{db: db, Log: l, ks: ks, Ps: Ps}
 }
 
 // Get scans into a complete Media struct
@@ -109,7 +108,7 @@ func (ms *Storage) Get(ctx context.Context, id uuid.UUID) (media *Media, err err
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		result, err := dblib.SerializableParametrizedTx[*Media](ctx, ms.newDB, "get_media",
+		result, err := dblib.SerializableParametrizedTx[*Media](ctx, ms.db, "get_media",
 			`SELECT * FROM media.media WHERE id = $1`,
 			map[string]string{"media_id": id.String()},
 			id)
@@ -125,7 +124,7 @@ func (ms *Storage) GetImagePath(ctx context.Context, id uuid.UUID) (path string,
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.newDB, "get_image_path",
+		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.db, "get_image_path",
 			`SELECT i.source FROM media.media_images AS mi
 		JOIN cdn.images AS i ON mi.image_id = i.id
 		WHERE mi.media_id = $1
@@ -147,7 +146,7 @@ func (ms *Storage) GetKind(ctx context.Context, id uuid.UUID) (string, error) {
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.newDB, "get_kind",
+		result, err := dblib.SerializableParametrizedTx[string](ctx, ms.db, "get_kind",
 			`SELECT kind FROM media.media WHERE id = $1`,
 			map[string]string{"media_id": id.String()},
 			id)
@@ -199,7 +198,7 @@ func GetGenres[G GenresOrGenreNames](
 	default:
 		stmt := fmt.Sprintf(queryTemplate, strings.Join(columns, ", "), whereClause)
 
-		genreList, err := dblib.SerializableParametrizedTx[G](ctx, ms.newDB, "get_genres",
+		genreList, err := dblib.SerializableParametrizedTx[G](ctx, ms.db, "get_genres",
 			stmt, map[string]any{
 				"kind":    kind,
 				"all":     all,
@@ -225,7 +224,7 @@ func (ms *Storage) GetGenre(ctx context.Context, kind, lang, name string) (genre
 		genre := Genre{
 			Kinds: pq.StringArray{kind},
 		}
-		rows, err := ms.newDB.Query(ctx, `
+		rows, err := ms.db.Query(ctx, `
 			SELECT id, name, parent, children FROM media.genres WHERE $1 = ANY(kinds) AND name = $2`,
 			kind, name)
 		if err != nil {
@@ -238,7 +237,7 @@ func (ms *Storage) GetGenre(ctx context.Context, kind, lang, name string) (genre
 				return nil, fmt.Errorf("error scanning row: %v", err)
 			}
 		}
-		dc, err := ms.newDB.Acquire(ctx)
+		dc, err := ms.db.Acquire(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error acquiring connection: %v", err)
 		}
@@ -300,7 +299,7 @@ func (ms *Storage) GetRandom(ctx context.Context, count int, blacklistKinds ...s
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		result, err := dblib.SerializableParametrizedTx[map[uuid.UUID]string](ctx, ms.newDB, "get_random_media",
+		result, err := dblib.SerializableParametrizedTx[map[uuid.UUID]string](ctx, ms.db, "get_random_media",
 			`SELECT id, kind
 			FROM media.media 
 			WHERE kind != ALL($1)
