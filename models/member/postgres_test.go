@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -27,7 +28,9 @@ func TestBan(t *testing.T) {
 
 	defer pool.Close()
 
-	storage := NewSQLStorage(nil, pool, &logger, &cfg.TestConfig)
+	vp := validator.New()
+
+	storage := NewSQLStorage(pool, &logger, &cfg.TestConfig, vp)
 	ends := time.Now().Add(24 * time.Hour)
 	_, mask, err := net.ParseCIDR("192.0.2.0/24")
 	require.NoError(t, err)
@@ -160,7 +163,8 @@ func TestRead(t *testing.T) {
 
 	require.NoErrorf(t, err, "failed to create member: %v", err)
 
-	storage := NewSQLStorage(nil, pool, &logger, &cfg.TestConfig)
+	vp := validator.New()
+	storage := NewSQLStorage(pool, &logger, &cfg.TestConfig, vp)
 
 	var member *Member
 

@@ -69,7 +69,7 @@ func Setup(ctx context.Context, r *RouterProps) error {
 		mediaStor *mediaModels.Storage
 	)
 
-	mStor = member.NewSQLStorage(r.DB, r.Log, r.Conf)
+	mStor = member.NewSQLStorage(r.DB, r.Log, r.Conf, r.Validation)
 	mediaStor = mediaModels.NewStorage(r.DB, r.Log)
 
 	memberSvc := memberCtrl.NewController(mStor, r.DB, r.SessionHandler, r.Log, r.Conf)

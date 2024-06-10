@@ -3,6 +3,8 @@ package member
 import (
 	"context"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (s *PgMemberStorage) Delete(ctx context.Context, memberName string) error {
@@ -10,15 +12,17 @@ func (s *PgMemberStorage) Delete(ctx context.Context, memberName string) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		tx, err := s.client.BeginTx(ctx, nil)
+		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to begin transaction: %v", err)
 		}
-		defer tx.Rollback()
-		_, err = s.client.ExecContext(ctx, `DELETE FROM members WHERE nick = $1`, memberName)
+		defer tx.Rollback(ctx)
+		_, err = tx.Exec(ctx, `DELETE FROM members WHERE nick = $1`, memberName)
 		if err != nil {
 			return fmt.Errorf("failed to delete member: %v", err)
 		}
-		return tx.Commit()
+		return tx.Commit(ctx)
 	}
 }

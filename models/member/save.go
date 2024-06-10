@@ -3,60 +3,40 @@ package member
 import (
 	"context"
 	"fmt"
-	"sync"
+	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 )
 
 func (s *PgMemberStorage) Save(ctx context.Context, member *Member) error {
+	if err := s.validationProvider.Struct(member); err != nil {
+		return fmt.Errorf("validation failed: %v", err)
+	}
+
 	// first, check if nick or email is already taken
 	findEmailOrNickQuery := `SELECT id FROM members WHERE nick = $1 OR email = $2`
 	var id uint32
-	var mu sync.Mutex
-	mu.Lock()
 	r := s.newClient.QueryRow(ctx, findEmailOrNickQuery, member.MemberName, member.Email)
 	if err := r.Scan(&id); err == nil {
-		return fmt.Errorf("email %s or nick %s is already taken", member.Email, member.MemberName)
+		return fmt.Errorf("email %q or nick %q is already taken", member.Email, member.MemberName)
 	}
-	mu.Unlock()
 
-	batch := &pgx.Batch{}
-	batch.Queue(`INSERT INTO public.members (passhash, nick, webfinger, email, reg_timestamp, active, roles)
+	row := s.newClient.QueryRow(ctx, `INSERT INTO public.members (passhash, nick, webfinger, email, reg_timestamp, active, roles)
 	VALUES ($1, $2, $3, $4, to_timestamp($5), $6, $7)
-	RETURNING id_numeric`,
-		member.PassHash, member.MemberName, member.Webfinger,
-		member.Email, member.RegTimestamp.Unix(), member.Active, pq.StringArray(member.Roles))
+	RETURNING id_numeric`, member.PassHash, member.MemberName, member.Webfinger,
+		member.Email, time.Now().Unix(), member.Active, pq.StringArray(member.Roles))
 
-	tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
-		AccessMode:     pgx.ReadWrite,
-		DeferrableMode: pgx.NotDeferrable,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
+	if err := row.Scan(&id); err != nil {
+		return fmt.Errorf("failed to create user: %v", err)
 	}
 
-	defer tx.Rollback(ctx) //nolint:errcheck // In case of failure during commit, "err" from commit will be returned
+	fmt.Println("id: ", id)
 
-	conn, err := s.newClient.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %v", err)
-	}
-	defer conn.Release()
-
-	br := tx.SendBatch(ctx, batch)
-	row := br.QueryRow()
-	if err = row.Scan(&id); err != nil {
-		return fmt.Errorf("failed to get member ID: %v", err)
-	}
 	s.log.Debug().Msgf("id: %d", id)
-	br.Close()
-	_, err = tx.Exec(ctx, `INSERT INTO member_prefs (member_id) VALUES ($1)`, id)
+	_, err := s.newClient.Exec(ctx, `INSERT INTO member_prefs (member_id) VALUES ($1)`, id)
 	if err != nil {
 		return fmt.Errorf("failed to save member prefs: %v", err)
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("failed to commit transaction: %v", err)
-	}
+
 	return nil
 }

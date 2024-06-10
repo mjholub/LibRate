@@ -55,7 +55,20 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 		s.log.Debug().Msg("not blocked")
 
 		// check for duplicate follow request
-		st, err := s.client.PreparexContext(ctx, `SELECT EXISTS (
+		tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		if err != nil {
+			s.log.Error().Msgf("failed to begin transaction: %v", err)
+			return FollowResponse{
+				Status: "failed",
+				ID:     0,
+			}
+		}
+
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Prepare(ctx, "check_duplicate", `SELECT EXISTS (
     SELECT 1
     FROM public.follow_requests AS fr
     LEFT JOIN public.followers AS f ON fr.requester_webfinger = f.follower AND fr.target_webfinger = f.followee
@@ -67,14 +80,20 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 				Error:  fmt.Errorf("failed to prepare statement to check for duplicate request: %v", err),
 			}
 		}
+
 		var duplicate bool
-		if err = st.GetContext(ctx, &duplicate, fr.Requester, fr.Target); err != nil {
+
+		if err = tx.QueryRow(ctx, "check_duplicate",
+			fr.Requester, fr.Target).Scan(&duplicate); err != nil {
 			return FollowResponse{
 				Status: "failed",
 				Error:  fmt.Errorf("failed to check for duplicate request: %v", err),
 			}
 		}
 		if duplicate {
+			if err := tx.Commit(ctx); err != nil {
+				s.log.Error().Msgf("failed to commit transaction: %v", err)
+			}
 			return FollowResponse{
 				Status: "already_following",
 			}
@@ -84,7 +103,8 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 
 		// check if target has auto_accept_follow enabled in public.member_prefs
 		var autoAcceptFollow bool
-		st, err = s.client.PreparexContext(ctx, `
+
+		_, err = tx.Prepare(ctx, "check_auto_accept", `
 		SELECT auto_accept_follow
 		FROM public.member_prefs 
 		WHERE member_id = (SELECT id FROM public.members WHERE webfinger = $1)`)
@@ -95,7 +115,7 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 			}
 		}
 
-		if err = st.GetContext(ctx, &autoAcceptFollow, fr.Target); err != nil {
+		if err = tx.QueryRow(ctx, "check_auto_accept", fr.Target).Scan(&autoAcceptFollow); err != nil {
 			return FollowResponse{
 				Status: "failed",
 				Error:  fmt.Errorf("failed to check if follow acceptance is enabled: %v", err),
@@ -104,7 +124,8 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 
 		if autoAcceptFollow {
 			s.log.Debug().Msg("auto accept follow enabled")
-			_, err = s.client.ExecContext(ctx, `INSERT INTO public.followers (follower, followee, notifications, reblogs) 
+
+			_, err = tx.Exec(ctx, `INSERT INTO public.followers (follower, followee, notifications, reblogs) 
 			VALUES ($1, $2, $3, $4)`,
 				fr.Requester, fr.Target, fr.Notify, fr.Reblogs)
 			if err != nil {
@@ -114,6 +135,13 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 				}
 			}
 			now := time.Now()
+			if err := tx.Commit(ctx); err != nil {
+				s.log.Error().Msgf("failed to commit transaction: %v", err)
+				return FollowResponse{
+					Status: "failed",
+				}
+			}
+
 			return FollowResponse{
 				Status:     "accepted",
 				AcceptTime: &now,
@@ -122,14 +150,10 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 
 		s.log.Debug().Msg("auto accept follow disabled")
 
-		row := s.client.QueryRowContext(ctx, `INSERT INTO follow_requests 
+		if err = tx.QueryRow(ctx, `INSERT INTO follow_requests 
 		(requester_webfinger, target_webfinger, reblogs, notifications)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id`, fr.Requester, fr.Target, fr.Reblogs, fr.Notify)
-
-		var id int64
-
-		if err = row.Scan(&id); err != nil {
+		RETURNING id`, fr.Requester, fr.Target, fr.Reblogs, fr.Notify).Scan(&fr.ID); err != nil {
 			return FollowResponse{
 				Status: "failed",
 				Error:  fmt.Errorf("failed to save follow request: %v", err),
@@ -137,7 +161,7 @@ func (s *PgMemberStorage) RequestFollow(ctx context.Context, fr *FollowBlockRequ
 		}
 		return FollowResponse{
 			Status: "pending",
-			ID:     id,
+			ID:     fr.ID,
 		}
 	}
 }
@@ -204,7 +228,7 @@ func (s *PgMemberStorage) RejectFollow(ctx context.Context, rejecter string, req
 			return fmt.Errorf("request with ID %d does not belong to %s", requestID, rejecter)
 		}
 
-		_, err = s.client.ExecContext(ctx, `DELETE FROM public.follow_requests WHERE id = $1`, requestID)
+		_, err = s.newClient.Exec(ctx, `DELETE FROM public.follow_requests WHERE id = $1`, requestID)
 		if err != nil {
 			return fmt.Errorf("failed to delete follow request: %v", err)
 		}

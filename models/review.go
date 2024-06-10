@@ -179,7 +179,7 @@ func (rs *RatingStorage) Delete(ctx context.Context, id int64) (err error) {
 // GetLatestRatings retrieves the latest reviews for all media items. The limit and offset
 // parameters are used for pagination.
 func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (ratings []*Review, err error) {
-	result, err := dblib.SerializableParametrizedTx(
+	result, err := dblib.SerializableParametrizedTx[[]*Review](
 		ctx,
 		rs.db,
 		"get-latest-reviews",
@@ -194,7 +194,7 @@ func (rs *RatingStorage) GetLatest(ctx context.Context, limit int, offset int) (
 		return nil, fmt.Errorf("error getting latest reviews: %v", err)
 	}
 
-	return result.([]*Review), nil
+	return result[0], nil
 }
 
 // GetAll gets all the reviews
@@ -202,7 +202,7 @@ func (rs *RatingStorage) GetAll() (ratings []*Review, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	result, err := dblib.SerializableParametrizedTx(
+	result, err := dblib.SerializableParametrizedTx[[]*Review](
 		ctx,
 		rs.db,
 		"get-all-reviews",
@@ -215,11 +215,11 @@ func (rs *RatingStorage) GetAll() (ratings []*Review, err error) {
 		return nil, fmt.Errorf("error getting reviews: %v", err)
 	}
 
-	return result.([]*Review), nil
+	return result[0], nil
 }
 
 func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (ratings []*Review, err error) {
-	result, err := dblib.SerializableParametrizedTx(
+	result, err := dblib.SerializableParametrizedTx[[]*Review](
 		ctx, rs.db, "get-reviews-by-media-id",
 		"SELECT * FROM reviews.ratings WHERE media_id = $1",
 		map[string]string{"media ID": mediaID.String()},
@@ -229,7 +229,7 @@ func (rs *RatingStorage) GetByMediaID(ctx context.Context, mediaID uuid.UUID) (r
 		return nil, fmt.Errorf("error getting reviews: %w", err)
 	}
 
-	return result.([]*Review), nil
+	return result[0], nil
 }
 
 func (rs *RatingStorage) GetAverageStars(ctx context.Context,

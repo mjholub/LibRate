@@ -2,7 +2,6 @@ package member
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -48,21 +47,28 @@ func (s *PgMemberStorage) Update(ctx context.Context, member *Member) error {
 	setClause = strings.TrimSuffix(setClause, ", ")
 	s.log.Trace().Msgf("setClause: %s", setClause)
 
+	tx, err := s.newClient.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel: pgx.Serializable,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
 	stmt := fmt.Sprintf(`
 		UPDATE public.members AS m
 		%s
 		FROM (SELECT id FROM members WHERE nick = :nick) AS subquery
 		WHERE m.id = subquery.id
 	`, setClause)
-	namedQuery, err := s.client.PrepareNamedContext(ctx, stmt)
-	if err != nil {
-		return fmt.Errorf("failed to update member: %v", err)
-	}
-	s.log.Trace().Msgf("namedQuery: %+v", *namedQuery)
-	defer namedQuery.Close()
 
-	var res sql.Result
-	res, err = namedQuery.ExecContext(ctx, map[string]interface{}{
+	s.log.Trace().Msgf("stmt: %s", stmt)
+	_, err = tx.Prepare(ctx, "update_user", stmt)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+
+	res, err := tx.Exec(ctx, "update_user", map[string]interface{}{
 		"display_name":    member.DisplayName,
 		"email":           member.Email,
 		"bio":             member.Bio,

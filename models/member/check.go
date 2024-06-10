@@ -83,9 +83,7 @@ func (s *PgMemberStorage) Check(c context.Context, email, nickname string) (bool
 	default:
 		query := `SELECT id FROM members WHERE email = $1 OR nick = $2`
 		var id uint32
-		err := s.client.Get(&id, query, email, nickname)
-		// for example if sql.ErrNoRows is returned, it means that the member does not exist
-		if err != nil {
+		if err := s.newClient.QueryRow(c, query, email, nickname).Scan(&id); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				id = 0
 				return false, nil

@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"net"
-	"sync"
 	"time"
 
 	"golang.org/x/text/language"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,9 +21,10 @@ import (
 // Member holds the core information about a member
 type (
 	Member struct {
-		ID       int       `json:"-" db:"id_numeric"`
-		UUID     uuid.UUID `json:"uuid,omitempty" db:"id"`
-		PassHash string    `json:"-" db:"passhash"`
+		ID   int       `json:"-" db:"id_numeric"`
+		UUID uuid.UUID `json:"uuid,omitempty" db:"id"`
+		// argon2id hash
+		PassHash string `json:"-" db:"passhash" validate:"required" example:"$argon2id$v=19$m=65536,t=3,p=2$..."`
 		// MemberName != webfinger
 		MemberName string `json:"memberName" db:"nick,unique" validate:"required,alphanumunicode,min=3,max=30" example:"lain"`
 		// email like
@@ -61,7 +62,7 @@ type (
 		Locale language.Tag `json:"locale,omitempty" db:"locale"`
 		// everything is calculated relative to the maximum scale of 0-100
 		// nolint: revive // we'd need to configure validation inside function calls otherwise. That can harm consistency.
-		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatingScaleUpper",min=0,max=1" default:"1"`
+		RatingScaleLower int16 `json:"rating_scale_lower,omitempty" db:"rating_scale_lower" validate:"ltfield=RatingScaleUpper,min=0,max=1" default:"1"`
 		RatingScaleUpper int16 `json:"rating_scale_upper,omitempty" db:"rating_scale_upper" validate:"min=2,max=100" default:"10"`
 	}
 
@@ -96,10 +97,10 @@ type (
 	FollowResponse struct {
 		// when checking status, we treat not_found as not following
 		// but when creating a request, we treat not_found as target account not existing
-		Status     string     `json:"status" db:"status", validate:"required,oneof=accepted failed pending blocked already_following not_found"`
+		Status     string     `json:"status" db:"status" validate:"required,oneof=accepted failed pending blocked already_following not_found"`
 		ID         int64      `json:"id,omitempty" db:"id"`
-		Reblogs    bool       `json:"reblogs,omitempty" db:"reblogs"`
-		Notify     bool       `json:"notify,omitempty" db:"notify"`
+		Reblogs    bool       `json:"reblogs,omitempty" db:"reblogs" default:"true" sql:"-"`
+		Notify     bool       `json:"notify,omitempty" db:"notify" default:"true" sql:"-"`
 		Error      error      `json:"-"`
 		AcceptTime *time.Time `json:"acceptTime" db:"created"`
 	}
@@ -170,7 +171,7 @@ type (
 	Getter interface {
 		Read(ctx context.Context, key string, keyNames ...string) (*Member, error)
 		GetID(ctx context.Context, key string) (int, error)
-		GetPassHash(email, login string) (string, error)
+		GetPassHash(ctx context.Context, email, login string) (string, error)
 	}
 
 	Checker interface {
@@ -198,14 +199,14 @@ type (
 	}
 
 	PgMemberStorage struct {
-		newClient     *pgxpool.Pool
-		log           *zerolog.Logger
-		config        *cfg.Config
-		nicknameCache []string
-		cacheMutex    sync.RWMutex
+		validationProvider *validator.Validate
+		newClient          *pgxpool.Pool
+		log                *zerolog.Logger
+		config             *cfg.Config
 	}
 )
 
-func NewSQLStorage(newClient *pgxpool.Pool, log *zerolog.Logger, conf *cfg.Config) *PgMemberStorage {
-	return &PgMemberStorage{newClient: newClient, log: log, config: conf}
+func NewSQLStorage(newClient *pgxpool.Pool, log *zerolog.Logger, conf *cfg.Config,
+	vp *validator.Validate) *PgMemberStorage {
+	return &PgMemberStorage{newClient: newClient, log: log, config: conf, validationProvider: vp}
 }

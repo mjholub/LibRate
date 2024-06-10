@@ -56,7 +56,7 @@ func (s *PgMemberStorage) Unban(ctx context.Context, member *Member) error {
 		if err != nil {
 			return fmt.Errorf("invalid UUID: %v", member.UUID)
 		}
-		_, err = s.client.ExecContext(ctx, `DELETE FROM bans WHERE member_uuid = $1`, member.UUID)
+		_, err = s.newClient.Exec(ctx, `DELETE FROM bans WHERE member_uuid = $1`, member.UUID)
 		if err != nil {
 			return fmt.Errorf("failed to delete ban: %v", err)
 		}
