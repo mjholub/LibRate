@@ -7,19 +7,18 @@
 
 ### Project status - May 2024
 
-I have not abandoned LibRate. This is one of the projects I am most proud of and would not want to see all the time and energy I've put in it go to waste. But I really have other priorities at the moment, perhaps I will be able to tick of at least 1/5 of the milestones in summer. Besides I think a hiatus could actually help me redesign the project, especially by reducing complexity which could mean easier development in the future; to slow down to speed up, if you will.
+I am doing a substantial rewrite and focusing on paying off the technical debt as much as possible so don't expect many new features within the next couple months. But I really have other priorities at the moment, perhaps I will be able to tick of at least 1/5 of the milestones later in the summer.
 <hr />
 
 LibRate is a project that aims to provide a free, federated service for tracking, reviewing, sharing and discovering films, books, music, games and other culture texts.
 
-This project is currently in early beta stage, bugs are expected and PRs are very welcome.
 
 Element, probably the only Matrix client to support publishing roomss has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
 [#librate-dev:matrix.org](https://matrix.to/#/#librate-dev:matrix.org)
 
 You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate), Monero or BLIK (contact me via Matrix for the latter two).
 
-**The only public beta instance can be found at [librate.club](https://librate.club/). Federation is currently work in progress. Bleeding edge branch can be found [here](https://codeberg.org/mjh/LibRate/src/branch/dev)**
+**The only public beta instance can be found at [librate.club](https://librate.club/). Federation is currently work in progress.**
 
 # Table of contents
 
@@ -51,7 +50,7 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 - [x] User profile cards
 - [x] Full profile pages
 - [ ] Tagging and mentions
-- [x] (WIP) Advanced profile and UI customization
+- [x] Advanced profile and UI customization
 - [ ] Groups
 - [ ] Direct messages (E2EE)
 - [ ] Group chats, more group-friendly design, like Lemmy or Kbin
@@ -94,9 +93,9 @@ You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate
 ### **Recommendations**
 
 - [x] Prototype logic
-- [ ] Actual working implementation
+- [ ] Basic working implementation
   - [ ] Personalized feeds
-  - [ ] Advanced algorithm powered by ML and **graph-like database structure - already implemented**
+  - [ ] Advanced algorithm
 
 ### **Other**
 
@@ -189,10 +188,9 @@ It also lets you have other nice things, like automatically rejecting bad actors
 
 - [SOPS](https://github.com/getsops/sops) and [age](https://github.com/FiloSottile/age) for handling secrets
 - A JS bundler, like pnpm or bun, for building the frontend
-- working **Postgres** and **Redis** instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
+- working **Postgres**, **Redis** and **Melisearch** (it also supports an embedded *Bleve* search engine, but it's less reliable than Meili. I'll probably also include support for Postgresql's RUM in the future) instances. You'll also need to install the development files package for postgres since LibRate uses Postgres extensions. You may also need to manually build the [sequential UUIDs](https://github.com/tvondra/sequential-uuids/) extension
 
 ### Setup secrets
-
 
 
 **A foreword**: 
@@ -223,6 +221,8 @@ LibRate provides an utility for administration an instance, called [lrctl](https
 /app/bin/lrctl -c /app/data/config.yml db migrate <migration directory's base
 path>
 ```
+
+In the future it will ship as a module of the base app once I restructure the repo since the current approach poses some risk of dependency cycles.
 
 ## Development prerequisites
 
