@@ -131,86 +131,29 @@ func InitDB(conf *cfg.DBConfig, log *zerolog.Logger) error {
 	close(errChan)
 	mu.Unlock()
 	log.Info().Msg("Created extensions")
-	err = bootstrap.CDN(ctx, db)
-	if err != nil {
-		return fmt.Errorf("failed to create cdn tables: %w", err)
+	type seedFn struct {
+		fn   func(context.Context, *pgxpool.Pool) error
+		name string
 	}
-	log.Info().Msg("Created cdn tables")
-	err = bootstrap.Places(ctx, db)
-	if err != nil {
-		return err
+
+	seedFns := []func(context.Context, *pgxpool.Pool) error{
+		bootstrap.CDN, bootstrap.Places, bootstrap.MediaCore, bootstrap.People,
+		bootstrap.Roles, bootstrap.MediaCreators, bootstrap.PeopleMeta, bootstrap.Media,
+		bootstrap.CreatorGroups, bootstrap.AlbumArtists, bootstrap.Studio, bootstrap.Books,
+		bootstrap.Cast, bootstrap.Members, bootstrap.MembersProfilePic, bootstrap.Review}
+
+	seedFnNames := []string{
+		"cdn", "places", "media_core", "people", "roles", "media_creators", "people_meta",
+		"media", "creator_groups", "album_artists", "studio", "books", "cast", "members",
+		"members_profilepic", "review"}
+
+	for i := range seedFns {
+		err = seedFns[i](ctx, db)
+		if err != nil {
+			return fmt.Errorf("failed to create %s tables: %w", seedFnNames[i], err)
+		}
+		log.Info().Msgf("Created %s tables", seedFnNames[i])
 	}
-	log.Info().Msg("Created places tables")
-	err = bootstrap.MediaCore(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Creating media tables: 1/2...")
-	err = bootstrap.People(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created people tables")
-	err = bootstrap.Roles(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created roles tables")
-	err = bootstrap.MediaCreators(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created media_creators tables")
-	err = bootstrap.PeopleMeta(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created people_meta tables")
-	err = bootstrap.Media(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Creating media tables complete")
-	err = bootstrap.CreatorGroups(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created creator_groups tables")
-	err = bootstrap.AlbumArtists(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created album_artists tables")
-	err = bootstrap.Studio(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created studio tables")
-	err = bootstrap.Books(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created books tables")
-	err = bootstrap.Cast(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created cast tables")
-	err = bootstrap.Members(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created members tables")
-	err = bootstrap.MembersProfilePic(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created members profilepic tables")
-	err = bootstrap.Review(ctx, db)
-	if err != nil {
-		return err
-	}
-	log.Info().Msg("Created review tables")
 
 	return nil
 }
