@@ -17,7 +17,7 @@ This project is currently in early beta stage, bugs are expected and PRs are ver
 Element, probably the only Matrix client to support publishing roomss has _temporarily_ disabled this feature, therefore we've removed the widget for it, so if you want to join us, go to
 [#librate-dev:matrix.org](https://matrix.to/#/#librate-dev:matrix.org)
 
-You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate), Monero or BLIK (contact me via Matrix for the latter two).
+You can donate to it's development via [LiberaPay](https://liberapay.com/LibRate) or Monero (contact me via Matrix for the latter).
 
 **The only public beta instance can be found at [librate.club](https://librate.club/). Federation is currently work in progress. Bleeding edge branch can be found [here](https://codeberg.org/mjh/LibRate/src/branch/dev)**
 
