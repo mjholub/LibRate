@@ -38,24 +38,26 @@ type (
 
 	SharedMetadata struct {
 		ID       uuid.UUID      `json:"id,omitempty" db:"id,pk,unique" swaggertype:"string" example:"12345678-90ab-cdef-9876-543210fedcba"`
-		Name     string         `json:"name,omitempty" db:"name"`
-		Added    int64          `json:"added,omitempty" db:"added"`       // unix timestamp
-		Modified int64          `json:"modified,omitempty" db:"modified"` // unix timestamp
-		Website  sql.NullString `json:"website,omitempty" db:"website" example:"https://www.vatican.va/content/john-paul-ii/en.html"`
-		Bio      sql.NullString `json:"bio,omitempty" db:"bio"`
+		Name     string         `json:"name,omitempty" db:"name" example:"John Paul II" fake:"{firstname} {lastname}"`
+		Added    int64          `json:"added,omitempty" db:"added" fake:"{number:90000000,900000000}"`         // unix timestamp
+		Modified int64          `json:"modified,omitempty" db:"modified" fake:"{number:900000009, 999000009}"` // unix timestamp
+		Website  sql.NullString `json:"website,omitempty" db:"website" example:"https://www.vatican.va/" fake:"{url}"`
+		Bio      sql.NullString `json:"bio,omitempty" db:"bio" example:"wojtyła disco dance" fake:"{sentence}"`
 	}
 
 	Person struct {
 		SharedMetadata
-		Aliases   pq.StringArray `json:"nick_names,omitempty" db:"nick_names" example:"['pawlacz', 'jan pawulon']"`
-		Roles     pq.StringArray `json:"roles,omitempty" db:"roles"`
-		Works     []*uuid.UUID   `json:"works,omitempty" db:"works"`
-		Birth     sql.NullTime   `json:"birth,omitempty" db:"birth"` // DOB can also be unknown
+		Roles     pq.StringArray `json:"roles,omitempty" db:"roles" fake:"{randomstring:[actor,director,producer,writer,host,guest]}"`
+		Works     []*uuid.UUID   `json:"works,omitempty" db:"works" fake:"{uuid}"`
+		Birth     sql.NullTime   `json:"birth,omitempty" db:"birth"`
 		Death     sql.NullTime   `json:"death,omitempty" db:"death" example:"2005-04-02T21:37:00Z"`
-		Bio       sql.NullString `json:"bio,omitempty" db:"bio" example:"wojtyła disco dance"`
-		Photos    pq.StringArray `json:"photos,omitempty" db:"photos"`
 		Hometown  places.Place   `json:"hometown,omitempty" db:"hometown"`
 		Residence places.Place   `json:"residence,omitempty" db:"residence"`
+	}
+
+	PersonPhotos struct {
+		PersonID uuid.UUID `json:"person_id,omitempty" db:"person_id"`
+		ImageID  int64     `json:"image_id,omitempty" db:"image_id"`
 	}
 
 	Group struct {
