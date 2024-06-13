@@ -1,7 +1,7 @@
 package testhelpers
 
-type TestCase struct {
+type TestCase[T any, R any] struct {
 	Name   string
-	Input  any
-	Output any
+	Input  func() T
+	Output R
 }

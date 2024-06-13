@@ -11,6 +11,7 @@ require (
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/blevesearch/bleve/v2 v2.4.0
+	github.com/brianvoe/gofakeit/v7 v7.0.3
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/georgysavva/scany/v2 v2.1.3
