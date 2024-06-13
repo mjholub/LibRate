@@ -165,8 +165,7 @@ func (ms *Storage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, direc
 			return 0, fmt.Errorf("error creating cast for media with id %s: %w", mediaID.String(), err)
 		}
 		// create cast for actors
-		// WARN: unsure if the value of castID will be correctly copied in the callback
-		// TODO: test this
+		// TODO: test if the value of castID will be correctly copied in the callback
 		lo.ForEach(actors, func(actor Person, _ int) {
 			_, err = ms.db.Exec(ctx, `
 			INSERT INTO actor_cast (
@@ -175,7 +174,7 @@ func (ms *Storage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, direc
 				$1, $2
 			)`, castID, actor.ID)
 			if err != nil {
-				ms.Log.Error().Err(err).Msgf("error adding actor %s to cast with ID %d", actor.FirstName+actor.LastName, castID)
+				ms.Log.Error().Err(err).Msgf("error adding actor %s to cast with ID %d", actor.Name, castID)
 			}
 		})
 		// create cast for directors
@@ -187,7 +186,7 @@ func (ms *Storage) AddCast(ctx context.Context, mediaID uuid.UUID, actors, direc
 				$1, $2
 			)`, castID, director.ID)
 			if err != nil {
-				ms.Log.Error().Err(err).Msgf("error adding director %s to cast with ID %d", director.FirstName+director.LastName, castID)
+				ms.Log.Error().Err(err).Msgf("error adding director %s to cast with ID %d", director.Name, castID)
 			}
 		})
 		return castID, nil
@@ -205,18 +204,25 @@ func (ms *Storage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, e
 		// first get the actors ids
 		actorIDs := []int64{}
 		castQuery := `SELECT id FROM cast WHERE media_id = $1`
-		err = ms.db.GetContext(ctx, &cast.ID, castQuery, mediaID)
-		if err != nil {
+		if err = ms.db.QueryRow(ctx, castQuery, mediaID).Scan(&cast.ID); err != nil {
 			return Cast{}, fmt.Errorf("error getting cast ID for media with ID %s: %w", mediaID.String(), err)
 		}
 		query := `SELECT person_id
 			FROM cast
 			JOIN actor_cast ON actor_cast.cast_id = cast.id
 			WHERE cast.media_id = $1`
-		err = ms.db.SelectContext(ctx, &actorIDs, query, mediaID)
+		rows, err := ms.db.Query(ctx, query, mediaID)
 		if err != nil {
 			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
 		}
+		defer rows.Close()
+
+		for rows.Next() {
+			if err = rows.Scan(&actorIDs); err != nil {
+				return Cast{}, fmt.Errorf("error scanning actor IDs: %w", err)
+			}
+		}
+
 		var actor Person
 		for i := range actorIDs {
 			actor, err = ms.Ps.GetPerson(ctx, actorIDs[i])
@@ -232,10 +238,17 @@ func (ms *Storage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, e
 			JOIN director_cast ON director_cast.cast_id = cast.id
 			WHERE cast.media_id = $1
 		`
-		err = ms.db.SelectContext(ctx, &directorIDs, query, mediaID)
+		rows, err = ms.db.Query(ctx, query, mediaID)
 		if err != nil {
 			return Cast{}, fmt.Errorf("error getting cast for media with id %s: %w", mediaID.String(), err)
 		}
+		defer rows.Close()
+		for rows.Next() {
+			if err = rows.Scan(&directorIDs); err != nil {
+				return Cast{}, fmt.Errorf("error scanning director IDs: %w", err)
+			}
+		}
+
 		for i := range directorIDs {
 			director, err := ms.Ps.GetPerson(ctx, directorIDs[i])
 			if err != nil {
@@ -248,7 +261,15 @@ func (ms *Storage) GetCast(ctx context.Context, mediaID uuid.UUID) (cast Cast, e
 }
 
 func (ms *Storage) UpdateFilm(ctx context.Context, film *Film) error {
-	_, err := ms.db.NamedExecContext(ctx, `
+	tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel: pgx.Serializable,
+	})
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
 		UPDATE media.films SET
 			title = :title,
 			cast = :cast,
@@ -261,5 +282,6 @@ func (ms *Storage) UpdateFilm(ctx context.Context, film *Film) error {
 		ms.Log.Error().Err(err).Msg("error updating film")
 		return err
 	}
-	return nil
+
+	return tx.Commit(ctx)
 }
