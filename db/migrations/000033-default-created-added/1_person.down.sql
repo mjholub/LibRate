@@ -1,0 +1,4 @@
+ALTER TABLE people.person 
+ALTER COLUMN added DROP DEFAULT;
+ALTER TABLE people.person
+ALTER COLUMN modified DROP DEFAULT;

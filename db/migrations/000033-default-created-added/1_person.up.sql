@@ -1,0 +1,5 @@
+-- unix timestamp as int8
+ALTER TABLE people.person
+ALTER COLUMN added SET DEFAULT EXTRACT(EPOCH FROM NOW())::INT8;
+ALTER TABLE people.person
+ALTER COLUMN modified SET DEFAULT EXTRACT(EPOCH FROM NOW())::INT8;
