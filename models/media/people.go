@@ -2,7 +2,6 @@ package media
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,6 +38,7 @@ type (
 	SharedMetadata struct {
 		ID       uuid.UUID      `json:"id,omitempty" db:"id,pk,unique" swaggertype:"string" example:"12345678-90ab-cdef-9876-543210fedcba"`
 		Name     string         `json:"name,omitempty" db:"name" example:"John Paul II" fake:"{firstname} {lastname}"`
+		Aliases  pq.StringArray `json:"aliases,omitempty" db:"aliases" example:"Karol Wojtyła" fake:"{firstname} {lastname}"`
 		Added    int64          `json:"added,omitempty" db:"added" fake:"{number:90000000,900000000}"`         // unix timestamp
 		Modified int64          `json:"modified,omitempty" db:"modified" fake:"{number:900000009, 999000009}"` // unix timestamp
 		Website  sql.NullString `json:"website,omitempty" db:"website" example:"https://www.vatican.va/" fake:"{url}"`
