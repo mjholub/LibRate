@@ -58,7 +58,7 @@ search:
     port: 5984
     user: "librate"
     password: "librate"
-  mainIndexPath: "page-index.bleve"
+  mainIndexPath: "resources/page-index.bleve" # can be a relative or absolute path
 logging:
   level: "info"
   target: "stdout"

@@ -46,3 +46,4 @@ data.ms
 Librate
 src/static/templates/*.md
 librate-dev
+resources/couchdb/data
