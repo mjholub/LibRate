@@ -120,11 +120,15 @@ func (ms *Storage) AddFilm(ctx context.Context, film *Film) error {
 		Created:  film.ReleaseDate.Time,
 		Creators: lo.Interleave(film.Cast.Actors, film.Cast.Directors),
 	}
+	ms.Log.Debug().Msgf("Adding media with fields: %+v", media)
+
 	mediaID, err := ms.Add(ctx, &media)
 	if err != nil {
 		ms.Log.Error().Err(err).Msg("error adding film")
 		return err
 	}
+	ms.Log.Info().Msgf("Added media with ID %s", mediaID.String())
+
 	tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel: pgx.Serializable,
 	})
@@ -132,16 +136,16 @@ func (ms *Storage) AddFilm(ctx context.Context, film *Film) error {
 		return fmt.Errorf("error starting transaction: %w", err)
 	}
 
+	// nolint:errcheck
 	defer tx.Rollback(ctx)
 
-	ms.Log.Debug().Msgf("Added media with ID " + mediaID.String())
 	_, err = tx.Exec(ctx, `
 		INSERT INTO media.films (
 			media_id, title, cast, release_date, duration, synopsis
 		) VALUES (
 			:media_id, :title, :release_date, :duration, :synopsis
 		)
-	`, film)
+	`, film.MediaID, film.Title, film.Cast, film.ReleaseDate, film.Duration, film.Synopsis)
 	if err != nil {
 		ms.Log.Error().Err(err).Msg("error adding film")
 		return err

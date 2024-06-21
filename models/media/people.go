@@ -41,7 +41,7 @@ type (
 		Aliases  pq.StringArray `json:"aliases,omitempty" db:"aliases" example:"Karol Wojtyła" fake:"{firstname} {lastname}"`
 		Added    int64          `json:"added,omitempty" db:"added" fake:"{number:90000000,900000000}"`         // unix timestamp
 		Modified int64          `json:"modified,omitempty" db:"modified" fake:"{number:900000009, 999000009}"` // unix timestamp
-		Website  sql.NullString `json:"website,omitempty" db:"website" example:"https://www.vatican.va/" fake:"{url}"`
+		Website  *string        `json:"website,omitempty" db:"website" example:"https://www.vatican.va/" fake:"{url}"`
 		Bio      sql.NullString `json:"bio,omitempty" db:"bio" example:"wojtyła disco dance" fake:"{sentence}"`
 	}
 
@@ -72,9 +72,9 @@ type (
 		PrimaryGenre    Genre          `json:"primary_genre,omitempty" db:"primary_genre_id"`
 		SecondaryGenres []Genre        `json:"genres,omitempty" db:"genres"`
 		Kind            string         `json:"kind,omitempty" db:"kind"` // Orchestra, Choir, Ensemble, Collective, etc.
-		Wikipedia       sql.NullString `json:"wikipedia,omitempty" db:"wikipedia"`
-		Bandcamp        sql.NullString `json:"bandcamp,omitempty" db:"bandcamp"`
-		Soundcloud      sql.NullString `json:"soundcloud,omitempty" db:"soundcloud"`
+		Wikipedia       *string        `json:"wikipedia,omitempty" db:"wikipedia"`
+		Bandcamp        *string        `json:"bandcamp,omitempty" db:"bandcamp"`
+		Soundcloud      *string        `json:"soundcloud,omitempty" db:"soundcloud"`
 	}
 
 	Studio struct {

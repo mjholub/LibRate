@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -68,6 +69,10 @@ FOREIGN KEY (media_id) REFERENCES media.media(id) ON DELETE CASCADE;
 }
 
 func cleanTestFilmTables(ctx context.Context, conn *pgxpool.Pool) error {
+	if _, err := conn.Exec(ctx, `DROP TYPE IF EXISTS media.kind CASCADE`); err != nil {
+		return fmt.Errorf("error dropping media.kind enum: %w", err)
+	}
+
 	if _, err := conn.Exec(ctx, `DROP SCHEMA IF EXISTS media CASCADE`); err != nil {
 		return fmt.Errorf("error dropping media schema: %w", err)
 	}
@@ -83,7 +88,8 @@ func TestAddFilm(t *testing.T) {
 	conn, err := pgxpool.New(ctx, db.CreateDsn(&cfg.TestConfig.DBConfig))
 	require.NoError(t, err)
 	require.NotNil(t, conn)
-	log := zerolog.Nop()
+	// need to get the debug statements out as it seems to get stuck somewhere
+	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
 	ms := NewStorage(conn, &log)
 
 	defer func(ctx context.Context, conn *pgxpool.Pool) {
@@ -93,6 +99,7 @@ func TestAddFilm(t *testing.T) {
 
 	err = createTestFilmTables(ctx, conn)
 	require.NoErrorf(t, err, "failed to create test tables: %v", err)
+	fmt.Println("created test tables")
 
 	testCases := []struct {
 		name      string
@@ -125,6 +132,7 @@ func TestAddFilm(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			fmt.Println("running test case: ", tc.name)
 			err := ms.AddFilm(ctx, tc.film)
 			if tc.wantError {
 				assert.Error(t, err)
@@ -133,6 +141,7 @@ func TestAddFilm(t *testing.T) {
 			}
 		})
 	}
+	fmt.Println("finished test cases")
 
 }
 
