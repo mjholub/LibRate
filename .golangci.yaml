@@ -5,14 +5,15 @@
 # https://github.com/mgechev/revive#text-editors
 # in command line you can run `golangci-lint run`. Shell completion is supported.
 run:
-  concurrency: 8
+  concurrency: 12
   timeout: 4m
-  skip-dirs:
-    - recommendation
   modules-download-mode: mod
   tests: false
+issues:
+  exclude-dirs:
+    - recommendation
 output:
-  format: colored-line-number
+  formats: colored-line-number
   print-issued-lines: true
   print-linter-name: true
   uniq-by-line: true
