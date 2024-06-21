@@ -51,14 +51,25 @@ func (s *PgMemberStorage) GetID(ctx context.Context, credential string) (id int,
 // i.e. email or login
 func (s *PgMemberStorage) GetPassHash(ctx context.Context, email, login string) (string, error) {
 	query := `SELECT passhash FROM members WHERE email = $1 OR nick = $2`
-
-	res, err := db.SerializableParametrizedTx[string](ctx, s.newClient,
-		"get-member-passhash",
-		query,
-		map[string]string{"email": email, "login": login},
-		email, login)
+	tx, err := s.newClient.Begin(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to get passhash: %v", err)
+		return "", fmt.Errorf("failed to start transaction: %v", err)
 	}
-	return res[0], nil
+	// nolint:errcheck
+	defer tx.Rollback(ctx)
+
+	stmt, err := tx.Prepare(ctx, "get-member-passhash", query)
+	if err != nil {
+		return "", fmt.Errorf("failed to prepare statement: %v", err)
+	}
+
+	var pHash string
+
+	err = tx.QueryRow(ctx, stmt.Name,
+		email, login).Scan(&pHash)
+	if err != nil {
+		return "", fmt.Errorf("failed to get passhash for params: %+v", map[string]string{"email": email, "login": login})
+	}
+
+	return pHash, nil
 }
