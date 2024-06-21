@@ -45,3 +45,4 @@ couchdb/data
 data.ms
 Librate
 src/static/templates/*.md
+librate-dev

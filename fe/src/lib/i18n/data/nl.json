@@ -37,7 +37,7 @@
     "auto_accept_follow": "Volgverzoeken automatisch accepteren",
     "help_translate": "Project vertalen",
     "key-combination-infomsg-tabs": "Gebruik Shift + pijltje naar links/rechts om van tabblad te wisselen",
-    "boe_trailing_gt_5": "stukjes entropie",
+    "boe_trailing_gte_5": "stukjes entropie",
     "films": "Films",
     "tos_privacy_ack": "Ik ga akkoord met de",
     "forgot_password": "Wachtwoord vergeten?",

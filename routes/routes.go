@@ -156,9 +156,10 @@ func setupUpload(uploadSvc *static.Controller, api fiber.Router, sess *session.S
 
 func setupMembers(memberSvc *memberCtrl.Controller, api fiber.Router, sess *session.Store, logger *zerolog.Logger, conf *cfg.Config) {
 	members := api.Group("/members")
+
 	members.Post("/check", memberSvc.Check)
 	members.Patch("/update/:member_name", middleware.Protected(sess, logger, conf), memberSvc.Update)
-	members.Patch("/update/:memeber_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
+	members.Patch("/update/:member_name/preferences", middleware.Protected(sess, logger, conf), memberSvc.UpdatePrefs)
 	members.Post("/:uuid/ban", middleware.Protected(sess, logger, conf), memberSvc.Ban)
 	members.Post("/follow", middleware.Protected(sess, logger, conf), memberSvc.Follow)
 	members.Put("/follow/requests/in/:id", middleware.Protected(sess, logger, conf), memberSvc.AcceptFollow)

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import axios from 'axios';
 	import { createEventDispatcher } from 'svelte';
 	import { SaveIcon, CheckIcon, Edit2Icon, XIcon } from 'svelte-feather-icons';
 
@@ -61,15 +60,18 @@
 				?.split('=')[1];
 			const formData = new FormData();
 			formData.append('bio', bio);
-			const response = await axios.patch(`/api/members/update/${memberName}`, formData, {
+			const response = await fetch(`/api/members/update/${memberName}`, {
+        method: 'PATCH',
 				headers: {
 					'Content-Type': 'multipart/form-data',
 					Authorization: `Bearer ${jwtToken}`,
 					'X-CSRF-Token': csrfToken || ''
-				}
+				},
+        body: formData
 			});
 			if (response.status !== 200) {
-				errorMessages.push(`Error saving bio: ${response.data.message} (${response.status})`);
+        const errorMessage = await response.text();
+				errorMessages.push(`Error saving bio: ${errorMessage} (${response.status})`);
 				errorMessages = [...errorMessages]
 			}
 

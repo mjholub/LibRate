@@ -1,5 +1,4 @@
 <script lang="ts">
-	import axios from 'axios';
 	import { onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { _, locale } from 'svelte-i18n';
@@ -54,21 +53,37 @@
 		const requestPayload = {
 			email
 		};
-		const res = await axios.post('/api/members/check', requestPayload, { headers });
-		res.data.message === 'available' ? (available = true) : (available = false);
+		const res = await fetch('/api/members/check', 
+    {
+      method: 'POST',
+      headers: headers as HeadersInit,
+      body: JSON.stringify(requestPayload)
+    });
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const resData = await res.json();
+
+		resData.message === 'available' ? (available = true) : (available = false);
 		return available;
 	};
 
-	const checkNicknameExistApi = async (nickname: string) => {
-		let available = false;
-		const headers = await prepareCSRF();
-		const requestPayload = {
-			memberName: nickname
-		};
-		const res = await axios.post('/api/members/check', requestPayload, { headers });
-		res.data.message === 'available' ? (available = true) : (available = false);
-		return available;
-	};
+const checkNicknameExistApi = async (nickname: string) => {
+  const headers = await prepareCSRF();
+  const requestPayload = {
+    memberName: nickname
+  };
+  const res = await fetch('/api/members/check', {
+    method: 'POST',
+    headers: {
+      ...headers as HeadersInit,
+    },
+    body: JSON.stringify(requestPayload)
+  });
+  const data = await res.json();
+  return data.message === 'available';
+};
 
 	const checkEmailExists = async (email: string, debounceTime: number) => {
 		if (timeoutId) {
@@ -111,7 +126,7 @@
 		timeoutId = window.setTimeout(async () => {
 			try {
 				strength = new PasswordMeter().getResult(password).score;
-				passwordStrength = strength > 135 ? 'Password is strong enough' : `${strength / 2.9} bits`;
+				passwordStrength = strength > 136 ? 'Password is strong enough' : `${strength / 2.9}`;
 			} catch (error) {
 				errorMessage = 'Password is not strong enough or error occurred';
 			}
@@ -154,11 +169,10 @@
 					?.split('=')[1];
 			}
 			event.preventDefault();
-			const headers = {
-				'Content-Type': 'multipart/form-data',
-				'Referrer-Policy': 'no-referrer-when-downgrade',
-				'X-CSRF-Token': csrfToken
-			};
+
+  const headers = new Headers();
+  headers.append('Referrer-Policy', 'no-referrer-when-downgrade');
+  headers.append('X-CSRF-Token', csrfToken || '');
 
 			localStorage.removeItem('email_or_username');
 
@@ -169,90 +183,91 @@
 				? ((errorMessage = 'Password is not strong enough'), false)
 				: true;
 
-			let requestPayload = {
-				membername: nickname,
-				email,
-				password,
-				passwordConfirm,
-				roles: ['regular']
-			};
+let formData = new FormData();
+    formData.append('membername', nickname);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('passwordConfirm', passwordConfirm);
+    formData.append('roles', JSON.stringify(['regular']));
 
-			const response = await axios.post('/api/authenticate/register', requestPayload, { headers });
+ try {
+    const response = await fetch('/api/authenticate/register', {
+      method: 'POST',
+      headers,
+      body: formData
+    });
 
-			const { data } = response;
+    const data = await response.json();
 
-			if (browser) {
-				if (response.data.message.includes('already taken')) {
-					errorMessage = response.data.message;
-					reject(errorMessage);
-				}
-
-				if (response.status == 200) {
-					authStore.set({
-						isAuthenticated: true
-					});
-					localStorage.removeItem('email_or_username');
-					window.location.reload();
-					console.info('Registration successful');
-					resolve(data.message);
-				} else {
-					errorMessage = data.message;
-					reject(data.message);
-					console.error(data.message);
-				}
-			}
-		});
+    if (response.ok) {
+      authStore.set({
+        isAuthenticated: true
+      });
+      localStorage.removeItem('email_or_username');
+      window.location.reload();
+      console.info('Registration successful');
+      return data.message;
+    } else {
+      return Promise.reject(data.message);
+    }
+  } catch (error: any) {
+    console.error(error.message);
+    return Promise.reject('An error occurred during registration');
+  }
+    });
 	};
 	//
 	// END OF REGISTRATION
 	// START OF LOGIN
 	//
 	const login = async (event: Event) => {
+		event.preventDefault();
 		let csrfToken: string | undefined;
 		if (browser) {
 			csrfToken = document.cookie
 				.split('; ')
 				.find((row) => row.startsWith('csrf_'))
 				?.split('=')[1];
-		}
-		event.preventDefault();
-		const headers = {
-			'Content-Type': 'multipart/form-data',
-			'Referrer-Policy': 'no-referrer-when-downgrade',
-			'X-CSRF-Token': csrfToken
-		};
+    }
+    const headers = new Headers()
+  headers.append('Referrer-Policy', 'no-referrer-when-downgrade');
+  headers.append('X-CSRF-Token', csrfToken || '');
 
 		localStorage.removeItem('member');
 
-		const nickName = email_or_username.includes('@') ? '' : email_or_username;
-		const emailValue = email_or_username.includes('@') ? email_or_username : '';
+  const formData = new FormData();
+  formData.append('membername', email_or_username.includes('@') ? '' : email_or_username);
+  formData.append('email', email_or_username.includes('@') ? email_or_username : '');
+  formData.append('session_time', sessionTimeMinutes.toString());
+  formData.append('password', password);
 
-		const response = await axios.postForm(
-			'/api/authenticate/login',
-			{
-				membername: nickName,
-				email: emailValue,
-				session_time: sessionTimeMinutes,
-				password
-			},
-			{
-				headers: headers
-			}
-		);
+try {
+    const response = await fetch('/api/authenticate/login', {
+      method: 'POST',
+      headers,
+      body: formData
+    });
 
-		if (browser) {
-			response.status == 200
-				? (authStore.set({
-						isAuthenticated: true
-				  }),
-				  console.debug('authStore updated to ', authStore),
-				  localStorage.removeItem('email_or_username'),
-				  localStorage.setItem('jwtToken', response.data.token),
-				  window.location.reload(),
-				  console.info('Login successful'))
-				: (errorMessage = response.data.message);
-			console.error(response.data.message);
-		}
+    if (response.ok) {
+      authStore.set({
+        isAuthenticated: true
+      });
+      console.debug('authStore updated to ', authStore);
+      localStorage.removeItem('email_or_username');
+      const responseData = await response.json();
+
+      localStorage.setItem('jwtToken', responseData.token);
+      window.location.reload();
+      console.info('Login successful');
+    } else {
+      const data = await response.json();
+      console.error(data.message);
+      return Promise.reject(data.message);
+    }
+  } catch (error: any) {
+    console.error(error.message);
+    return Promise.reject('An error occurred during login');
+  }
 	};
 
 	onDestroy(() => {
@@ -368,11 +383,17 @@
 			<!-- Password strength indicator -->
 			{#if passwordStrength !== 'Password is strong enough'}
 				<p style="padding: 1% 0; display: block;">
-					<!-- FIXME: declension/changing depending on the trailing digit in e.g. Slavic languages -->
-					{$_('password_strength')}: {passwordStrength} of (<a
+          {#if parseInt(passwordStrength) % 10 < 5 }
+					{$_('password_strength')}: {passwordStrength} <a
 						href="https://www.omnicalculator.com/other/password-entropy"
-					/>), {$_('required')}: 50
-				</p>
+>{$_('boe_trailing_lt_5')}</a>, {$_('required')}: 50
+          {:else}
+          {$_('password_strength')}: {passwordStrength} <a
+  href="https://www.omnicalculator.com/other/password-entropy"
+>{$_('boe_trailing_gte_5')}</a>, {$_('required')}: 50
+{/if}
+</p>
+
 			{:else}
 				<p>
 					{$_('password_strength')}: {passwordStrength}
@@ -416,7 +437,7 @@
 		font-size: inherit;
 		display: inline-table;
 		padding: 0.2em 0.4em;
-		margin: 0.1em 0 0.1em 0;
+		margin: 0.1em 0.5em;
 		box-sizing: border-box;
 		border: 1px solid #ccc;
 		border-radius: 4px;

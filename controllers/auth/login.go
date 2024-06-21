@@ -34,29 +34,21 @@ import (
 // @Router /authenticate/login [post]
 func (a *Service) Login(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Login request")
-	input, err := parseLoginInput(c, a.log)
+	maybeInput, err := parseLoginInput(c, a.log)
 	if err != nil {
 		a.log.Debug().Msgf("Failed to parse input: %s", err.Error())
 		return h.Res(c, http.StatusBadRequest, "Invalid login request")
 	}
-	if input == nil {
-		return h.Res(c, http.StatusInternalServerError, "Cannot parse input")
+	input, isSome := maybeInput.Get()
+	if !isSome {
+		return h.Res(c, http.StatusInternalServerError, "Error parsing input")
 	}
-	a.log.Debug().Msgf("Parsed input")
-
-	validatedInput, err := input.Validate()
-	if err != nil {
-		return h.Res(c, http.StatusBadRequest, "Invalid login request")
-	}
-	if validatedInput == nil {
-		return h.Res(c, http.StatusInternalServerError, "Cannot parse input")
-	}
-	a.log.Debug().Msg("Validated input")
+	a.log.Debug().Msgf("Parsed input: %+v", input)
 
 	err = a.validatePassword(
-		validatedInput.Email,
-		validatedInput.MemberName,
-		validatedInput.Password,
+		input.Email,
+		input.MemberName,
+		input.Password,
 	)
 	if err != nil {
 		if a.conf.LibrateEnv == "development" {
@@ -68,29 +60,13 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	a.log.Debug().Msg("Validated password")
 
 	memberData := member.Member{
-		Email:      validatedInput.Email,
-		MemberName: validatedInput.MemberName,
-		Webfinger:  fmt.Sprintf("%s@%s", validatedInput.MemberName, a.conf.Fiber.Domain),
-		PassHash:   validatedInput.Password,
+		Email:      input.Email,
+		MemberName: input.MemberName,
+		Webfinger:  fmt.Sprintf("%s@%s", input.MemberName, a.conf.Fiber.Domain),
+		PassHash:   input.Password,
 	}
 
 	return a.createSession(c, input.SessionTime, &memberData)
-}
-
-func (l LoginInput) Validate() (*member.Input, error) {
-	if l.Email == "" && l.MemberName == "" {
-		return nil, errors.New("email or nickname required")
-	}
-
-	if l.Password == "" {
-		return nil, errors.New("password required")
-	}
-
-	return &member.Input{
-		Email:      l.Email,
-		MemberName: l.MemberName,
-		Password:   l.Password,
-	}, nil
 }
 
 func (a *Service) validatePassword(email, login, password string) error {

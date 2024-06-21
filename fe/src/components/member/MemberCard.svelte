@@ -1,5 +1,4 @@
 <script lang="ts">
-	import axios from 'axios';
 	import { _ } from 'svelte-i18n';
 	import { XIcon, MaximizeIcon, EditIcon } from 'svelte-feather-icons';
 	import { Button } from '@sveltestrap/sveltestrap';
@@ -148,7 +147,9 @@
 				formData.append('fileData', file);
 				formData.append('imageType', 'profile');
 				formData.append('member', member.memberName);
-				const response = await axios.post('/api/upload/image', formData, {
+				const response = await fetch('/api/upload/image', {
+          method: 'POST', body:
+          formData,
 					headers: {
 						'Content-Type': 'multipart/form-data',
 						Authorization: `Bearer ${jwtToken}`,
@@ -166,50 +167,50 @@
 				console.log('uploaded!');
 				uploaded = true;
 				isUploading = false;
-				// console.log(response.data);
-				const pic_id = response.data.data.pic_id;
+				const responseJson = await response.json(); 
+
+				const pic_id = responseJson.data.data.pic_id;
 				console.log(pic_id);
 				const confirmSave = confirm('Save new profile picture?');
-				if (confirmSave) {
-					const res = await axios.patch(
-						`/api/members/update/${member.memberName}?profile_pic_id=${pic_id}`,
-						{
-							memberName: member.memberName
-						},
-						{
-							headers: {
-								'Content-Type': 'multipart/form-data',
-								Authorization: `Bearer ${jwtToken}`,
-								'X-CSRF-Token': csrfToken || ''
-							}
-						}
-					);
-					if (res.status !== 200) {
-						errorMessages.push({
-							message: 'Error updating profile picture',
-							status: res.status
-						});
-						errorMessages = [...errorMessages];
-						reject();
-					}
-				} else {
-					const res = await axios.delete(`/api/upload/image/${pic_id}`, {
-						headers: {
-							Authorization: `Bearer ${jwtToken}`,
-							'X-CSRF-Token': csrfToken || ''
-						}
-					});
-					if (res.status !== 200) {
-						errorMessages.push({
-							message: 'Error deleting profile picture',
-							status: res.status
-						});
-						errorMessages = [...errorMessages];
-						reject();
-					}
-				}
-				isUploading = false;
-				resolve(void 0);
+if (confirmSave) {
+	const response = await fetch(`/api/members/update/${member.memberName}?profile_pic_id=${pic_id}`, {
+		method: 'PATCH',
+		headers: {
+			'Content-Type': 'multipart/form-data',
+			Authorization: `Bearer ${jwtToken}`,
+			'X-CSRF-Token': csrfToken || ''
+		},
+		body: JSON.stringify({
+			memberName: member.memberName
+		})
+	});
+	if (!response.ok) {
+		errorMessages.push({
+			message: 'Error updating profile picture',
+			status: response.status
+		});
+		errorMessages = [...errorMessages];
+		reject();
+	}
+} else {
+	const response = await fetch(`/api/upload/image/${pic_id}`, {
+		method: 'DELETE',
+		headers: {
+			Authorization: `Bearer ${jwtToken}`,
+			'X-CSRF-Token': csrfToken || ''
+		}
+	});
+	if (!response.ok) {
+		errorMessages.push({
+			message: 'Error deleting profile picture',
+			status: response.status
+		});
+		errorMessages = [...errorMessages];
+		reject();
+	}
+}
+isUploading = false;
+resolve(void 0);
 			}
 		});
 	};

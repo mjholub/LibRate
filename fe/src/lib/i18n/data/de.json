@@ -50,7 +50,7 @@
   "privsec": "Privatsphäre und Sicherheit",
   "help_translate": "Dieses Projekt übersetzen",
   "key-combination-infomsg-tabs": "Mit Umschalt + horizontalen Pfeiltasten Tabs wechseln",
-  "boe_trailing_gt_5": "",
+  "boe_trailing_gte_5": "",
   "no_reviews_found": "Keine Rezensionen gefunden",
   "sign_up": "Konto erstellen",
   "required": "",

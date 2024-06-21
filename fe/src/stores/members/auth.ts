@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { writable } from "svelte/store";
 import type { Writable } from "svelte/store";
 
@@ -43,61 +42,63 @@ function createAuthStore(): AuthStore {
     authenticate: async (jwtToken: string) => {
       return new Promise<authData>(async (resolve, reject) => {
         try {
-
-          const authStatus = await axios.get('/api/authenticate/status?cache=false', {
+          const authStatus = await fetch('/api/authenticate/status?cache=false', {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${jwtToken}`
             }
           });
 
-          if (authStatus.status === 200) {
-            isAuthenticated.set(authStatus.data.isAuthenticated);
-            resolve({ isAuthenticated: authStatus.data.isAuthenticated, memberName: authStatus.data.memberName });
+          if (authStatus.ok) {
+            const data = await authStatus.json();
+            isAuthenticated.set(data.isAuthenticated);
+            resolve({ isAuthenticated: data.isAuthenticated, memberName: data.memberName });
           } else {
-            // Handle other non-200 status codes here
             isAuthenticated.set(false);
             reject(Error(`Unexpected status code: ${authStatus.status}`));
           }
-        } catch (error) {
-          // Handle errors from the axios request, including 401 status code
-          if (axios.isAxiosError(error) && error.response?.status === 401) {
-            isAuthenticated.set(false);
-            reject(Error('Unauthorized'));
+        } catch (error: any) {
+          if (typeof error === 'object' && error !== null && 'response' in error) {
+            const fetchError = error as { response: { status: number } };
+            if (fetchError.response.status === 401) {
+              isAuthenticated.set(false);
+              reject(Error('Unauthorized'));
+            } else {
+              isAuthenticated.set(false);
+              reject(Error(`Unexpected status code: ${fetchError.response.status}`));
+            }
           } else {
             isAuthenticated.set(false);
-            reject(error);
+            reject(error as Error);
           }
         }
       });
     },
     logout: (csrfToken: string) => {
       return new Promise<void>(async (resolve, reject) => {
-        const res = await axios.post(
-          '/api/authenticate/logout',
-          {},
-          {
-            headers: {
-              'X-CSRF-Token': csrfToken || ''
-            }
+        const res = await fetch('/api/authenticate/logout', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-Token': csrfToken || ''
           }
-        );
-        res.status === 200 ? resolve() : reject(Error);
+        });
+        res.ok ? resolve() : reject(Error);
       });
     },
     deleteAccount: async (input: PasswordUpdateInput) => {
       return new Promise<void>(async (resolve, reject) => {
-        const res = await axios.post('/api/authenticate/delete-account',
-          {
+        const res = await fetch('/api/authenticate/delete-account', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${input.jwtToken}`,
+            'X-CSRF-Token': input.csrfToken
+          },
+          body: JSON.stringify({
             password: input.old,
             confirmation: input.new
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${input.jwtToken}`,
-              'X-CSRF-Token': input.csrfToken
-            }
-          });
-        if (res.status === 200) {
+          })
+        });
+        if (res.ok) {
           authStore.logout(input.csrfToken);
           isAuthenticated.set(false);
           resolve();
@@ -108,17 +109,18 @@ function createAuthStore(): AuthStore {
     },
     changePassword: async (input: PasswordUpdateInput) => {
       return new Promise<void>(async (resolve, reject) => {
-        const res = await axios.patch('/api/authenticate/password', {
-          old: input.old,
-          new: input.new,
-        },
-          {
-            headers: {
-              Authorization: `Bearer ${input.jwtToken}`,
-              'X-CSRF-Token': input.csrfToken
-            }
-          });
-        res.status === 200 ? resolve() : reject(Error);
+        const res = await fetch('/api/authenticate/password', {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${input.jwtToken}`,
+            'X-CSRF-Token': input.csrfToken
+          },
+          body: JSON.stringify({
+            old: input.old,
+            new: input.new,
+          })
+        });
+        res.ok ? resolve() : reject(Error);
       });
     },
   }

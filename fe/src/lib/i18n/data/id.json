@@ -22,7 +22,7 @@
   "try": "Coba",
   "nickname": "Julukan",
   "help_translate": "Terjemahkan proyek ini",
-  "boe_trailing_gt_5": "bit entropi",
+  "boe_trailing_gte_5": "bit entropi",
   "films": "Film",
   "tos_privacy_ack": "Saya telah membaca dan menyetujui",
   "forgot_password": "Lupa kata sandi?",

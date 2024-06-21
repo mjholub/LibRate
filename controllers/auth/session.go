@@ -116,7 +116,7 @@ func (a *Service) setDeviceCookie(c *fiber.Ctx, timeout int32) (deviceHash strin
 			SameSite:    "Lax",
 			Name:        "device_id",
 			Value:       deviceHash,
-			HTTPOnly:    false,
+			HTTPOnly:    true,
 		})
 	} else {
 		deviceHash = c.Cookies("device_id")

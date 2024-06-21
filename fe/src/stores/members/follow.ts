@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { Member } from '$lib/types/member';
@@ -6,21 +5,17 @@ import type { Member } from '$lib/types/member';
 export const memberInfo: Member = {
   memberName: '',
   webfinger: '',
-  displayName: { String: '', Valid: false },
+  displayName: '',
   email: '',
   profile_pic: '',
-  bio: { String: '', Valid: false },
-  matrix: { String: '', Valid: false },
-  xmpp: { String: '', Valid: false },
-  irc: { String: '', Valid: false },
-  homepage: { String: '', Valid: false },
+  bio: '',
   regdate: 0,
   roles: [],
   visibility: "private",
   followers_uri: '',
   following_uri: '',
-  sessionTimeout: { Int64: 0, Valid: false },
   active: false,
+  customFields: [],
   uuid: ''
 };
 
@@ -75,170 +70,140 @@ function createFollowStore(): FollowStore {
     set,
     update,
     listFollowees: async (jwtToken: string, viewer: string) => {
-      return new Promise<Member[]>(async (resolve, reject) => {
-        await axios.get(`/api/members/followees`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          },
-          params: {
-            viewer: viewer
-          }
-        }).then(res => {
-          resolve(res.data.data);
-        }).catch(err => {
-          reject(err);
-        });
+      const response = await fetch(`/api/members/followees?viewer=${viewer}`, {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
       });
+      const data = await response.json();
+      return data.data;
     },
     followStatus: async (jwtToken: string | null, followee_webfinger: string) => {
-      return new Promise<FollowResponse>(async (resolve, reject) => {
-        if (jwtToken === null) {
-          resolve({
-            id: 0,
-            status: 'not_found',
-            reblogs: false,
-            notify: false,
-            acceptTime: null
-          }
-          );
+      if (jwtToken === null) {
+        return {
+          id: 0,
+          status: 'not_found',
+          reblogs: false,
+          notify: false,
+          acceptTime: null
+        };
+      }
+      const response = await fetch(`/api/members/follow/status/${followee_webfinger}`, {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
         }
-        await axios.get(`/api/members/follow/status/${followee_webfinger}`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          },
-        }).then(res => {
-          resolve(res.data.data);
-        }).catch(err => {
-          reject(err);
-        });
       });
+      const data = await response.json();
+      return data.data;
     },
     follow: async (req: FollowRequestOut) => {
-      return new Promise<FollowResponse>(async (resolve, reject) => {
-        await axios.post(`/api/members/follow`, {
+      const response = await fetch(`/api/members/follow`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${req.jwtToken}`,
+          'X-CSRF-Token': req.CSRFToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           target: req.target,
           reblogs: req.reblogs,
           notify: req.notify
-        }, {
-          headers: {
-            'Authorization': `Bearer ${req.jwtToken}`,
-            'X-CSRF-Token': req.CSRFToken
-          }
-        }).then(res => {
-          resolve(res.data.data);
-        }).catch(err => {
-          reject(err);
-        });
-      }
-      );
+        })
+      });
+      const data = await response.json();
+      return data.data;
     },
     unfollow: async (req: FollowRequestOut) => {
-      return new Promise<FollowResponse>(async (resolve, reject) => {
-        try {
-          const response = await axios.delete(`/api/members/follow`, {
-            headers: {
-              'Authorization': `Bearer ${req.jwtToken}`,
-              'X-CSRF-Token': req.CSRFToken
-            },
-            data: {
-              target: req.target
-            }
-          });
-
-          resolve(response.data.data);
-        } catch (err) {
-          reject(err);
+      const response = await fetch(`/api/members/follow`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${req.jwtToken}`,
+          'X-CSRF-Token': req.CSRFToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          target: req.target
+        })
+      });
+      const data = await response.json();
+      return data.data;
+    },
+    getFollowRequests: async (jwtToken: string, type: FollowRequestType) => {
+      const response = await fetch(`/api/members/follow/requests/${type}`, {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      });
+      const data = await response.json();
+      return data.data;
+    },
+    cancelFollowRequest: async (jwtToken: string, CSRFToken: string, id: number) => {
+      await fetch(`/api/members/follow/requests/out/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-CSRF-Token': CSRFToken
         }
       });
     },
-    getFollowRequests(jwtToken: string, type: FollowRequestType) {
-      return new Promise<FollowRequestIn[] | FollowResponse | FollowRequestsGroup>(async (resolve, reject) => {
-        await axios.get(`/api/members/follow/requests/${type}`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          }
-        }).then(res => {
-          resolve(res.data.data);
-        }).catch(err => {
-          reject(err);
-        });
-      });
-    },
-    cancelFollowRequest: async (jwtToken: string, CSRFToken: string, id: number) => {
-      return new Promise<void>(async (resolve, reject) => {
-        await axios.delete(`/api/members/follow/requests/out/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-            'X-CSRF-Token': CSRFToken
-          }
-        }).then(_ => {
-          resolve();
-        }).catch(err => {
-          reject(err);
-        });
-      });
-    },
     acceptFollowRequest: async (jwtToken: string, CSRFToken: string, id: number) => {
-      return new Promise<void>(async (resolve, reject) => {
-        await axios.put(`/api/members/follow/requests/in/${id}`, {}, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-            'X-CSRF-Token': CSRFToken
-          }
-        }).then(_ => {
-          resolve();
-        }).catch(err => {
-          reject(err);
-        });
+      await fetch(`/api/members/follow/requests/in/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-CSRF-Token': CSRFToken
+        }
       });
     },
     rejectFollowRequest: async (jwtToken: string, CSRFToken: string, id: number) => {
-      return new Promise<void>(async (resolve, reject) => {
-        await axios.delete(`/api/members/follow/requests/in/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-            'X-CSRF-Token': CSRFToken
-          }
-        }).then(_ => {
-          resolve();
-        }).catch(err => {
-          reject(err);
-        });
+      return fetch(`/api/members/follow/requests/in/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-CSRF-Token': CSRFToken
+        }
+      }).then(response => {
+        if (!response.ok) {
+          return Promise.reject(new Error('Failed to reject follow request'));
+        }
       });
     },
     block: async (jwtToken: string, blocker_webfinger: string, blockee_webfinger: string) => {
-      return new Promise<void>(async (resolve, reject) => {
-        await axios.post(`/api/members/block`, {
+      return fetch(`/api/members/block`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           blocker: blocker_webfinger,
           blockee: blockee_webfinger
-        }, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          }
-        }).then(_ => {
-          resolve();
-        }).catch(err => {
-          reject(err);
-        });
+        })
+      }).then(response => {
+        if (!response.ok) {
+          return Promise.reject(new Error('Failed to block member'));
+        }
       });
     },
     unblock: async (jwtToken: string, blocker_webfinger: string, blockee_webfinger: string) => {
-      return new Promise<void>(async (resolve, reject) => {
-        await axios.post(`/api/members/unblock`, {
+      return fetch(`/api/members/unblock`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           blocker: blocker_webfinger,
           blockee: blockee_webfinger
-        }, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          }
-        }).then(_ => {
-          resolve();
-        }).catch(err => {
-          reject(err);
-        });
+        })
+      }).then(response => {
+        if (!response.ok) {
+          return Promise.reject(new Error('Failed to unblock member'));
+        }
       });
     }
   };
 }
+
 
 export const followStore: FollowStore = createFollowStore();

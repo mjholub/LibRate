@@ -1,9 +1,13 @@
-import axios from "axios";
 
 export const getMaxFileSize = async () => {
   try {
-    const response = await axios.get('/api/upload/max-file-size');
-    return response.data;
+    const response = await fetch('/api/upload/max-file-size',
+      { method: 'GET' });
+    if (!response.ok) {
+      return 0;
+    }
+    const data = await response.text();
+    return parseInt(data, 10);
   } catch (error) {
     return 0;
   }

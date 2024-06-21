@@ -1,4 +1,3 @@
-import axios from 'axios';
 import type { Member } from '$lib/types/member';
 import { writable, type Writable } from 'svelte/store';
 
@@ -18,7 +17,7 @@ export const memberInfo: Member = {
   following_uri: '',
   active: false,
   uuid: '',
-  customFields: new Map(),
+  customFields: Array.from({ length: 0 }, () => new Map()),
 };
 
 export type DataExportRequest = {
@@ -46,15 +45,21 @@ function createMemberStore(): MemberStore {
     set,
     update,
     getMember: async (jwtToken: string, email_or_username: string) => {
-      const res = await axios.get(`/api/members/${email_or_username}/info`, {
+      const res = await fetch(`/api/members/${email_or_username}/info`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${jwtToken}`
         }
       });
-      if (res.data.message !== "success") {
+      if (!res.ok) {
         throw new Error('Error while retrieving member data');
       }
-      const member: Member = res.data.data;
+      const resData = await res.json();
+
+      if (resData.message !== "success") {
+        throw new Error('Error while retrieving member data');
+      }
+      const member: Member = resData.data;
       console.debug('member data retrieved from API: ', member);
       return member;
     },
@@ -62,26 +67,34 @@ function createMemberStore(): MemberStore {
       return new Promise<FileResponse>(async (resolve, reject) => {
         exportState.set('loading');
 
-        const res = await axios.get(`/api/members/export/${input.target}`, {
-          headers: {
-            Authorization: `Bearer ${input.jwtToken}`
-          },
-          responseType: 'blob'
-        });
-        if (res.status === 200) {
-          const fileName = res.headers['content-disposition']
-            ?.split('filename=')[1]
-            ?.replace(/['"]/g, '');
+        try {
+          const res = await fetch(`/api/members/export/${input.target}`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${input.jwtToken}`
+            }
+          });
 
-          const fileBlob: FileResponse = new Blob([res.data], {
-            type: res.headers['content-type'],
-          }) as FileResponse;
+          if (res.ok) {
+            const fileName = res.headers.get('content-disposition')
+              ?.split('filename=')[1]
+              ?.replace(/['"]/g, '');
 
-          exportState.set('success');
-          resolve(fileBlob)
-        } else {
+            const fileBlob: Blob = await res.blob();
+            (fileBlob as FileResponse).name = fileName || 'export';
+
+            const fileResponse = fileBlob as FileResponse;
+
+            exportState.set('success');
+            resolve(fileResponse);
+          } else {
+            const errorData = await res.json();
+            exportState.set('error');
+            reject(errorData);
+          }
+        } catch (error) {
           exportState.set('error');
-          reject(res.data);
+          reject(error);
         }
       });
     },

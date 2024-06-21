@@ -1,5 +1,4 @@
 import { writable } from "svelte/store";
-import axios from "axios";
 import type { Writable } from "svelte/store";
 import type { Cast } from "$lib/types/film_tv";
 
@@ -22,17 +21,23 @@ function createCastStore(): CastStore {
     update,
     getCast: async (media_id: string) => {
       try {
-        const response = await axios.get(`/api/media/${media_id}/cast/`, {
+        const response = await fetch(`/api/media/${media_id}/cast/`, {
+          method: 'GET',
           headers: { "Content-Type": "application/json" },
         });
 
-        const responseData = response.data;
+        // Check if the request was successful
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
 
         if (!responseData || !responseData.data || !Array.isArray(responseData.data)) {
           throw new Error("No data returned from the server");
         }
 
-        console.debug("castData:", response.data);
+        console.debug("castData:", responseData);
 
         const castData = responseData.data;
 

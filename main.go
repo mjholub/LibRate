@@ -39,8 +39,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/witer33/fiberpow"
 
-	_ "net/http/pprof"
-
 	_ "codeberg.org/mjh/LibRate/static/meta" // swagger docs
 
 	"codeberg.org/mjh/LibRate/db"
@@ -381,7 +379,6 @@ func connectDB(conf *cfg.Config) (*sqlx.DB, *pgxpool.Pool, error) {
 	dsn := db.CreateDsn(&conf.DBConfig)
 
 	switch conf.Engine {
-	// case "postgres", "mariadb", "sqlite":
 	case "postgres":
 		dbConn, err = db.Connect(conf.Engine, dsn, conf.RetryAttempts)
 		if err != nil {
