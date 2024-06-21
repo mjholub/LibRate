@@ -16,17 +16,39 @@ import (
 )
 
 func createTestFilmTables(ctx context.Context, conn *pgxpool.Pool) error {
+	if _, err := conn.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS media;"); err != nil {
+		return fmt.Errorf("error creating media schema: %w", err)
+	}
+
+	if _, err := conn.Exec(ctx, `
+	CREATE TYPE media."kind" AS ENUM (
+	'album',
+	'track',
+	'film',
+	'tv_show',
+	'book',
+	'anime',
+	'manga',
+	'comic',
+	'game');`); err != nil {
+		return fmt.Errorf("error creating media.kind enum: %w", err)
+	}
+
 	if _, err := conn.Exec(ctx, `
 	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-		CREATE TABLE media.media (
-		id uuid DEFAULT uuid_generate_v4() NOT NULL,
+		CREATE TABLE IF NOT EXISTS media.media (
+		id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		kind media.kind NOT NULL DEFAULT 'film', 
+		created TIMESTAMP NOT NULL DEFAULT NOW()
 	);`); err != nil {
 		return fmt.Errorf("error creating media.media table: %w", err)
 	}
 
 	_, err := conn.Exec(ctx, `
 		CREATE TABLE media.films (
+	id serial NOT NULL,
 	media_id uuid DEFAULT uuid_generate_v4() NOT NULL,
 	title varchar(255) NOT NULL,
 	duration time NULL,
@@ -46,11 +68,8 @@ FOREIGN KEY (media_id) REFERENCES media.media(id) ON DELETE CASCADE;
 }
 
 func cleanTestFilmTables(ctx context.Context, conn *pgxpool.Pool) error {
-	if _, err := conn.Exec(ctx, `DROP TABLE media.films`); err != nil {
-		return fmt.Errorf("error dropping media.films table: %w", err)
-	}
-	if _, err := conn.Exec(ctx, `DROP TABLE media.media`); err != nil {
-		return fmt.Errorf("error dropping media.media table: %w", err)
+	if _, err := conn.Exec(ctx, `DROP SCHEMA IF EXISTS media CASCADE`); err != nil {
+		return fmt.Errorf("error dropping media schema: %w", err)
 	}
 
 	return nil
