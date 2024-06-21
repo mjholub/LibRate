@@ -211,7 +211,7 @@ func SetupTemplatedPages(
 ) {
 	app.Get("/privacy/:language", func(c *fiber.Ctx) error {
 		lang := c.Params("language")
-		if err := loadPage(c, log, cache, "privacy", lang, defaultLang); err != nil {
+		if err := loadPage(c, cache, "privacy", lang, defaultLang); err != nil {
 			log.Error().Err(err).Msg("error loading privacy policy page")
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
@@ -221,7 +221,7 @@ func SetupTemplatedPages(
 
 	app.Get("/tos/:language", func(c *fiber.Ctx) error {
 		lang := c.Params("language")
-		if err := loadPage(c, log, cache, "tos", lang, defaultLang); err != nil {
+		if err := loadPage(c, cache, "tos", lang, defaultLang); err != nil {
 			log.Error().Err(err).Msg("error loading terms of service page")
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
@@ -229,7 +229,7 @@ func SetupTemplatedPages(
 	})
 }
 
-func loadPage(c *fiber.Ctx, log *zerolog.Logger, cache *redis.Storage, target, lang, defaultLang string) error {
+func loadPage(c *fiber.Ctx, cache *redis.Storage, target, lang, defaultLang string) error {
 	c.Set("Content-Type", "text/html")
 	pageData, err := cache.Get(target + "_" + lang + ".html")
 	// fiber redis adapter returns nil, nil for redis.Nil

@@ -90,7 +90,9 @@ func TestAddFilm(t *testing.T) {
 	require.NotNil(t, conn)
 	// need to get the debug statements out as it seems to get stuck somewhere
 	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
-	ms := NewStorage(conn, &log)
+	ks := NewKeywordStorage(conn, &log)
+	ps := NewPeopleStorage(conn, &log)
+	ms := NewStorage(conn, &log, ks, ps)
 
 	defer func(ctx context.Context, conn *pgxpool.Pool) {
 		err := cleanTestFilmTables(ctx, conn)

@@ -83,7 +83,7 @@ type (
 	GenreDescription struct {
 		GenreID     int64  `json:"genre_id" db:"genre_id" example:"2958"`
 		Language    string `json:"language" db:"language" example:"en"`
-		Description string `json:"description" db:"description" example:"Typified by highly distorted, trebly, tremolo-picked guitars, blast beats, double kick drumming, shrieked vocals, and raw, underproduced sound that often favors atmosphere over technical skills and melody."`
+		Description string `json:"description" db:"description" example:"Typified by highly distorted, trebly..."`
 	}
 
 	Storage struct {
@@ -94,10 +94,11 @@ type (
 	}
 )
 
-func NewStorage(db *pgxpool.Pool, l *zerolog.Logger) *Storage {
-	ks := NewKeywordStorage(db, l)
-	Ps := NewPeopleStorage(db, l)
-	return &Storage{db: db, Log: l, ks: ks, Ps: Ps}
+func NewStorage(db *pgxpool.Pool, l *zerolog.Logger,
+	ks *KeywordStorage,
+	ps *PeopleStorage,
+) *Storage {
+	return &Storage{db: db, Log: l, ks: ks, Ps: ps}
 }
 
 // Get scans into a complete Media struct
