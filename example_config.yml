@@ -27,7 +27,6 @@ fiber:
 # used to encrypt sensitive data that is stored in session redis store
 secret: "librate-secret-key"
 database:
-  engine: "postgres"
   host: "localhost"
   port: 5432
   database: "librate"
