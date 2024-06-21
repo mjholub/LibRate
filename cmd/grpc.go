@@ -96,7 +96,7 @@ func (s *GrpcServer) SendShutdown(ctx context.Context, req *shutdown.ShutdownReq
 	return &shutdown.ShutdownResponse{Received: true}, nil
 }
 
-func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*protodb.InitResponse, error) {
+func (s *GrpcServer) Init(_ context.Context, req *protodb.InitRequest) (*protodb.InitResponse, error) {
 	s.Log.Info().Msg("database initialization request received")
 
 	ssl := *req.Ssl
@@ -105,7 +105,6 @@ func (s *GrpcServer) Init(ctx context.Context, req *protodb.InitRequest) (*proto
 	}
 
 	dsn := cfg.DBConfig{
-		Engine:   req.Engine,
 		Host:     req.Host,
 		Port:     uint16(req.Port),
 		User:     req.User,
@@ -133,7 +132,6 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 	}
 
 	dsn := cfg.DBConfig{
-		Engine:         req.Dsn.Engine,
 		Host:           req.Dsn.Host,
 		Port:           uint16(req.Dsn.Port),
 		User:           req.Dsn.User,
@@ -150,7 +148,7 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 
 	switch {
 	case len(req.Migrations) == 0 || *req.All:
-		if err := db.Migrate(s.Log, &conf); err != nil {
+		if err := db.Migrate(ctx, s.Log, &conf); err != nil {
 			return &protodb.MigrateResponse{
 				Success: false,
 				Errors: []*protodb.MigrationError{
@@ -168,7 +166,7 @@ func (s *GrpcServer) Migrate(ctx context.Context, req *protodb.MigrateRequest) (
 	default:
 		count := len(req.Migrations)
 		for i, migration := range req.Migrations {
-			if err := db.Migrate(s.Log, &conf, migration); err != nil {
+			if err := db.Migrate(ctx, s.Log, &conf, migration); err != nil {
 				if req.Hardfail {
 					if i < count {
 						s.Log.Warn().Msgf("error while running migration at %s: %v", migration, err)

@@ -1,10 +1,12 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -44,15 +46,17 @@ func TestMigrate(t *testing.T) {
 	}
 	var err error
 	log := zerolog.Nop()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	for _, tc := range tcs {
 		switch tc.inputs {
 		case nil:
-			err = Migrate(&log, conf)
+			err = Migrate(ctx, &log, conf)
 		default:
 			if _, ok := tc.inputs.(string); ok {
-				err = Migrate(&log, conf, tc.inputs.(string))
+				err = Migrate(ctx, &log, conf, tc.inputs.(string))
 			} else if _, ok := tc.inputs.([]string); ok {
-				err = Migrate(&log, conf, tc.inputs.([]string)...)
+				err = Migrate(ctx, &log, conf, tc.inputs.([]string)...)
 			}
 		}
 		if tc.wantErr {

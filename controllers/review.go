@@ -221,14 +221,14 @@ func (rc *ReviewController) getAlbumAverageScore(
 	var trackScore float64
 	for i := range trackIDs {
 		// fetch the average rating for a single track
-		trackScore, err = rc.rs.GetAverageStars(ctx, trackIDs[i])
+		trackScore, err = rc.rs.GetAverageStars(ctx, *trackIDs[i])
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to fetch average track rating when trying to retrieve track ratings for album with ID %s: %w",
 				id.String(), err)
 		}
 		trackAverages = append(trackAverages, models.SecondaryRatingAverage{
-			MediaID:   trackIDs[i],
+			MediaID:   *trackIDs[i],
 			MediaKind: "track",
 			Score:     trackScore,
 		})

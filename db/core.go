@@ -21,23 +21,35 @@ import (
 	"codeberg.org/mjh/LibRate/db/bootstrap"
 )
 
+type Connector interface {
+	Get(ctx context.Context, into any, query string, args ...any) error
+}
+
+type MaybeSeq interface {
+	any | []any
+}
+
+type Connection struct {
+	Conn *pgxpool.Pool
+}
+
 func CreateDsn(dsn *cfg.DBConfig) string {
 	switch dsn.SSL {
 	case "require", "verify-ca", "verify-full", "disable":
-		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=%s",
-			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, dsn.SSL)
+		data := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, dsn.SSL)
 		return data
 	case "prefer":
-		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=%s",
-			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, "require")
+		data := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database, "require")
 		return data
 	case "unknown":
-		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
-			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
+		data := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+			dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
 		return data
 	default:
-		data := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=disable",
-			dsn.Engine, dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
+		data := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+			dsn.User, dsn.Password, dsn.Host, dsn.Port, dsn.Database)
 		return data
 	}
 }
@@ -131,10 +143,6 @@ func InitDB(conf *cfg.DBConfig, log *zerolog.Logger) error {
 	close(errChan)
 	mu.Unlock()
 	log.Info().Msg("Created extensions")
-	type seedFn struct {
-		fn   func(context.Context, *pgxpool.Pool) error
-		name string
-	}
 
 	seedFns := []func(context.Context, *pgxpool.Pool) error{
 		bootstrap.CDN, bootstrap.Places, bootstrap.MediaCore, bootstrap.People,
@@ -187,7 +195,7 @@ func convertParam(param interface{}) (driver.Value, error) {
 }
 
 func convertParams(params ...any) ([]driver.Value, error) {
-	var args []driver.Value
+	args := make([]driver.Value, 0, len(params)*2)
 
 	for _, p := range params {
 		v, err := convertParam(p)
@@ -267,6 +275,7 @@ func SerializableParametrizedTx[T any](
 		return dest, TxErr(qName, errorHandlerInput, err)
 	}
 
+	// nolint:errcheck
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Prepare(ctx, qName, sql)

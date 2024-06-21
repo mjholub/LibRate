@@ -27,7 +27,6 @@ func TestCreateDsn(t *testing.T) {
 			Name: "PostgresNoSSL",
 			Inputs: &cfg.DBConfig{
 				//				DBConfig: cfg.DBConfig{
-				Engine:   "postgres",
 				Host:     "localhost",
 				Port:     5432,
 				Database: "librate_test",
@@ -57,7 +56,6 @@ func TestConnect(t *testing.T) {
 			Name: "HappyPath",
 			Inputs: &cfg.Config{
 				DBConfig: cfg.DBConfig{
-					Engine:        "postgres",
 					Host:          "localhost",
 					Port:          5432,
 					Database:      "librate_test",
@@ -68,22 +66,6 @@ func TestConnect(t *testing.T) {
 				},
 			},
 			WantErr: false,
-		},
-		{
-			Name: "BadEngine",
-			Inputs: &cfg.Config{
-				DBConfig: cfg.DBConfig{
-					Engine:        "badengine",
-					Host:          "localhost",
-					Port:          5432,
-					Database:      "librate_test",
-					User:          "postgres",
-					Password:      "postgres",
-					SSL:           "disable",
-					RetryAttempts: 1,
-				},
-			},
-			WantErr: true,
 		},
 	}
 	for _, tc := range testCases {

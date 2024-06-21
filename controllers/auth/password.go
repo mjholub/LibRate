@@ -42,7 +42,7 @@ func (a *Service) ChangePassword(c *fiber.Ctx) error {
 		return h.Res(c, fiber.StatusUnauthorized, "Not logged in")
 	}
 
-	passHash, err := a.ms.GetPassHash("", memberName)
+	passHash, err := a.ms.GetPassHash(c.Context(), "", memberName)
 	if err != nil {
 		return h.Res(c, fiber.StatusInternalServerError, "Failed to retrieve password hash")
 	}

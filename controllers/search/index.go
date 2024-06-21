@@ -33,7 +33,9 @@ func (s *Service) CreateIndex(
 			return fmt.Errorf("error creating CPU profile file: %w", err)
 		}
 		defer f.Close()
-		pprof.StartCPUProfile(f)
+		if err = pprof.StartCPUProfile(f); err != nil {
+			return fmt.Errorf("error starting CPU profile: %w", err)
+		}
 		defer pprof.StopCPUProfile()
 		ff, err := os.Create("mem-search.out")
 		if err != nil {
@@ -173,26 +175,20 @@ func buildGenresMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) 
 	return mapping
 }
 
-func buildReviewsMapping(textFieldMapping *mapping.FieldMapping, mediaMapping, userMapping *mapping.DocumentMapping) *mapping.DocumentMapping {
-	mapping := bleve.NewDocumentMapping()
-	mapping.StructTagKey = "reviews"
+func buildReviewsMapping(textFieldMapping *mapping.FieldMapping,
+	mediaMapping, userMapping *mapping.DocumentMapping) *mapping.DocumentMapping {
+	m := bleve.NewDocumentMapping()
+	m.StructTagKey = "reviews"
 
-	mapping.AddSubDocumentMapping("media", mediaMapping)
-	mapping.AddSubDocumentMapping("user", userMapping)
-	mapping.AddFieldMappingsAt("topic", textFieldMapping)
-	mapping.AddFieldMappingsAt("body", textFieldMapping)
+	m.AddSubDocumentMapping("media", mediaMapping)
+	m.AddSubDocumentMapping("user", userMapping)
+	m.AddFieldMappingsAt("topic", textFieldMapping)
+	m.AddFieldMappingsAt("body", textFieldMapping)
 	added := bleve.NewDateTimeFieldMapping()
-	mapping.AddFieldMappingsAt("added", added)
-	mapping.AddFieldMappingsAt("modified", bleve.NewDateTimeFieldMapping())
-	// TODO: uncomment when post/review interactions are added
-	/*
-		favoriteCount := bleve.NewNumericFieldMapping()
-		mapping.AddFieldMappingsAt("favoriteCount", favoriteCount)
-		reblogCount := bleve.NewNumericFieldMapping()
-		mapping.AddFieldMappingsAt("reblogCount", reblogCount)
-	*/
+	m.AddFieldMappingsAt("added", added)
+	m.AddFieldMappingsAt("modified", bleve.NewDateTimeFieldMapping())
 
-	return mapping
+	return m
 }
 
 func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
@@ -201,9 +197,6 @@ func buildMediaMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *
 
 	mapping.AddFieldMappingsAt("kind", keywordMapping)
 	mapping.AddFieldMappingsAt("title", textFieldMapping)
-	//mapping.AddSubDocumentMapping("artists", artists)
-	//mapping.AddSubDocumentMapping("genres", genres)
-	//mapping.AddFieldMappingsAt("language", keywordMapping)
 	created := bleve.NewDateTimeFieldMapping()
 	added := bleve.NewDateTimeFieldMapping()
 	modified := bleve.NewDateTimeFieldMapping()
@@ -219,9 +212,6 @@ func buildUsersMapping(textFieldMapping *mapping.FieldMapping) (res *mapping.Doc
 	mapping.StructTagKey = "members"
 
 	mapping.AddFieldMappingsAt("webfinger", textFieldMapping)
-	//mapping.AddFieldMappingsAt("instance", textFieldMapping)
-	//localAccounts := bleve.NewBooleanFieldMapping()
-	//mapping.AddFieldMappingsAt("local", localAccounts)
 
 	mapping.AddFieldMappingsAt("display_name", textFieldMapping)
 	mapping.AddFieldMappingsAt("bio", textFieldMapping)
@@ -234,30 +224,11 @@ func buildArtistsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping)
 
 	mapping.AddFieldMappingsAt("name", textFieldMapping)
 	mapping.AddFieldMappingsAt("nicknames", keywordMapping)
-	//mapping.AddFieldMappingsAt("roles", keywordMapping)
-	//mapping.AddFieldMappingsAt("country", keywordMapping)
 	mapping.AddFieldMappingsAt("bio", textFieldMapping)
 	added := bleve.NewDateTimeFieldMapping()
 	mapping.AddFieldMappingsAt("added", added)
 	modified := bleve.NewDateTimeFieldMapping()
 	mapping.AddFieldMappingsAt("modified", modified)
-	//active := bleve.NewBooleanFieldMapping()
-	//mapping.AddFieldMappingsAt("active", active)
 
 	return mapping
-}
-
-// TODO: implement when posts are added
-func buildPostsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
-	return nil
-}
-
-// TODO: implement when tags are added
-func buildTagsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
-	return nil
-}
-
-// TODO: implement when groups are added
-func buildGroupsMapping(textFieldMapping, keywordMapping *mapping.FieldMapping) *mapping.DocumentMapping {
-	return nil
 }

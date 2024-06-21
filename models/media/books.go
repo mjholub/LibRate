@@ -84,7 +84,7 @@ func (ms *Storage) AddBook(
 			return err
 		}
 
-		tx, err := ms.dbOld.BeginTx(ctx, pgx.TxOptions{
+		tx, err := ms.db.BeginTx(ctx, pgx.TxOptions{
 			IsoLevel: pgx.Serializable,
 		})
 		if err != nil {

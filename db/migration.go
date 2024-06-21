@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,10 +21,8 @@ import (
 // Otherwise the arguments to path should only include the containing
 // directory name for each migration, e.g.
 // "000001-fix-missing-timestamps"
-func Migrate(log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
+func Migrate(ctx context.Context, log *zerolog.Logger, conf *cfg.Config, paths ...string) error {
 	dsn := CreateDsn(&conf.DBConfig)
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
 	conn, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)

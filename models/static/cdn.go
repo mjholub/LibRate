@@ -10,7 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
+	scn "github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/samber/mo"
@@ -116,14 +118,7 @@ func (s *Storage) GetImageSource(ctx context.Context, id int64) (source string, 
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		stmt, err := s.db.PreparexContext(ctx, `SELECT source FROM cdn.images WHERE id = $1`)
-		if err != nil {
-			return "", fmt.Errorf("error retrieving image source: %w", err)
-		}
-		defer stmt.Close()
-
-		err = stmt.GetContext(ctx, &source, id)
-		if err != nil {
+		if err := scn.Get(ctx, s.db, &source, `SELECT source FROM cdn.images WHERE id = $1`); err != nil {
 			return "", fmt.Errorf("error retrieving image source: %w", err)
 		}
 		return source, nil
@@ -135,15 +130,23 @@ func (s *Storage) AddImage(ctx context.Context, props *MediaProps) (dest string,
 	case <-ctx.Done():
 		return "", 0, ctx.Err()
 	default:
+		tx, err := s.db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
+		if err != nil {
+			return "", 0, fmt.Errorf("error adding file: %w", err)
+		}
+		// nolint:errcheck
+		defer tx.Rollback(ctx)
+
 		query := `INSERT INTO cdn.images (source, uploader) VALUES ($1, $2) RETURNING id`
 		if props.Hash != "" {
 			query = `INSERT INTO cdn.images (source, uploader, sha256sum) VALUES ($1, $2, $3) RETURNING id`
 		}
-		stmt, err := s.db.PreparexContext(ctx, query)
+		stmt, err := tx.Prepare(ctx, "add-image", query)
 		if err != nil {
 			return "", 0, fmt.Errorf("error adding file: error preparing statement: %w", err)
 		}
-		defer stmt.Close()
 
 		uploader := db.Sanitize([]string{props.Uploader})[0]
 
@@ -162,9 +165,9 @@ func (s *Storage) AddImage(ctx context.Context, props *MediaProps) (dest string,
 			return "", 0, fmt.Errorf("unknown image type %s", props.ImageType)
 		}
 		if props.Hash != "" {
-			err = stmt.GetContext(ctx, &id, dest, uploader, props.Hash)
+			err = tx.QueryRow(ctx, stmt.Name, dest, uploader, props.Hash).Scan(&id)
 		} else {
-			err = stmt.GetContext(ctx, &id, dest, uploader)
+			err = tx.QueryRow(ctx, stmt.Name, dest, uploader).Scan(&id)
 		}
 		if err != nil {
 			return "", 0, fmt.Errorf("error executing statement: %w", err)
@@ -179,8 +182,7 @@ func (s *Storage) GetOwner(ctx context.Context, imageID int64) (owner string, er
 		return "", ctx.Err()
 	default:
 		// not using prepared statements because the query parameter is numeric
-		err = s.db.GetContext(ctx, &owner, `SELECT uploader FROM cdn.images WHERE id = $1`, imageID)
-		if err != nil {
+		if err = scn.Get(ctx, s.db, &owner, `SELECT uploader FROM cdn.images WHERE id = $1`, imageID); err != nil {
 			return "", fmt.Errorf("error retrieving image owner: %w", err)
 		}
 		return owner, nil
@@ -194,20 +196,21 @@ func (s *Storage) DeleteImage(ctx context.Context, imageID int64) (path string, 
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
-		tx, err := s.db.BeginTx(ctx, nil)
+		tx, err := s.db.BeginTx(ctx, pgx.TxOptions{
+			IsoLevel: pgx.Serializable,
+		})
 		if err != nil {
 			return "", fmt.Errorf("error deleting image: %w", err)
 		}
-		defer tx.Rollback()
-		err = s.db.GetContext(ctx, &path, `SELECT source FROM cdn.images WHERE id = $1`, imageID)
-		if err != nil {
+		// nolint:errcheck
+		defer tx.Rollback(ctx)
+		if err = scn.Select(ctx, s.db, &path, `SELECT source FROM cdn.images WHERE id = $1`, imageID); err != nil {
 			return "", fmt.Errorf("error retrieving image path for deletion: %w", err)
 		}
-		err = s.db.GetContext(ctx, &path, `DELETE FROM cdn.images WHERE id = $1`, imageID)
-		if err != nil {
+		if _, err = tx.Exec(ctx, `DELETE FROM cdn.images WHERE id = $1`, imageID); err != nil {
 			return "", fmt.Errorf("error deleting image: %w", err)
 		}
-		err = tx.Commit()
+		err = tx.Commit(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error deleting image: %w", err)
 		}
@@ -220,8 +223,7 @@ func (s *Storage) LookupHash(ctx context.Context, hash, uploader string) (id int
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	default:
-		err = s.db.GetContext(ctx, &id, `SELECT id FROM cdn.images WHERE sha256sum = $1 AND uploader = $2`, hash, uploader)
-		if err != nil {
+		if err = scn.Get(ctx, s.db, &id, `SELECT id FROM cdn.images WHERE sha256sum = $1 AND uploader = $2`, hash, uploader); err != nil {
 			return 0, err
 		}
 		return id, nil

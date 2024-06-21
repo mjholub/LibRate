@@ -2,11 +2,13 @@ package media
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/samber/lo"
+
+	scn "github.com/georgysavva/scany/v2/pgxscan"
 )
 
 func (p *PeopleStorage) GetPersonNames(ctx context.Context, id int32) (Person, error) {
@@ -15,7 +17,7 @@ func (p *PeopleStorage) GetPersonNames(ctx context.Context, id int32) (Person, e
 	case <-ctx.Done():
 		return Person{}, ctx.Err()
 	default:
-		err := p.dbConn.Get(&person, "SELECT first_name, last_name, other_names, nick_names FROM person WHERE id = $1", id)
+		err := scn.Get(ctx, p.dbConn, &person, "SELECT first_name, last_name, other_names, nick_names FROM person WHERE id = $1", id)
 		if err != nil {
 			return Person{}, err
 		}
@@ -29,7 +31,7 @@ func (p *PeopleStorage) GetPerson(ctx context.Context, id int64) (Person, error)
 	case <-ctx.Done():
 		return Person{}, ctx.Err()
 	default:
-		err := p.dbConn.Get(&person, "SELECT * FROM person WHERE id = $1", id)
+		err := scn.Get(ctx, p.dbConn, &person, "SELECT * FROM person WHERE id = $1", id)
 		if err != nil {
 			return Person{}, err
 		}
@@ -43,7 +45,7 @@ func (p *PeopleStorage) GetGroup(ctx context.Context, id int32) (Group, error) {
 	case <-ctx.Done():
 		return Group{}, ctx.Err()
 	default:
-		err := p.dbConn.Get(&group, "SELECT * FROM group WHERE id = $1", id)
+		err := scn.Get(ctx, p.dbConn, &group, "SELECT * FROM group WHERE id = $1", id)
 		if err != nil {
 			return Group{}, err
 		}
@@ -56,48 +58,17 @@ func (p *PeopleStorage) GetArtistsByName(ctx context.Context, name string) (pers
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
 	default:
-		rows, err := p.newDBConn.Query(ctx, `SELECT *
+		var person *Person
+
+		if err := scn.Select(ctx, p.newDBConn, &person, `SELECT *
 FROM person
-WHERE (first_name LIKE $1 OR last_name LIKE $1) OR $1 LIKE ANY(nick_names)`, name)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, nil, err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var person Person
-			if err := rows.Scan(&person.ID, &person.FirstName, &person.OtherNames, &person.LastName,
-				&person.NickNames, &person.Roles, &person.Works, &person.Birth, &person.Death,
-				&person.Website, &person.Bio, &person.Photos, &person.Hometown, &person.Residence,
-				&person.Added, &person.Modified); err != nil {
-				return nil, nil, err
-			}
-			persons = append(persons, person)
-		}
-
-		if err = rows.Err(); err != nil {
+WHERE (first_name LIKE $1 OR last_name LIKE $1) OR $1 LIKE ANY(nick_names)`, name); err != nil {
 			return nil, nil, err
 		}
 
 		// Query for groups
-		rows, err = p.newDBConn.Query(ctx, "SELECT * FROM group WHERE name LIKE $1", name)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var group Group
-			if err := rows.Scan(&group.ID, &group.Locations, &group.Name, &group.Active,
-				&group.Formed, &group.Disbanded, &group.Website, &group.Photos, &group.Works,
-				&group.Members, &group.PrimaryGenre, &group.SecondaryGenres, &group.Kind,
-				&group.Added, &group.Modified, &group.Wikipedia, &group.Bandcamp, &group.Soundcloud, &group.Bio); err != nil {
-				return nil, nil, err
-			}
-			groups = append(groups, group)
-		}
-
-		if err := rows.Err(); err != nil {
+		var groups []Group
+		if err = scn.Select(ctx, p.newDBConn, &groups, "SELECT * FROM group WHERE name LIKE $1", name); err != nil {
 			return nil, nil, err
 		}
 
@@ -111,7 +82,7 @@ func (p *PeopleStorage) GetStudio(ctx context.Context, id int32) (*Studio, error
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		err := p.dbConn.Get(&studio, "SELECT * FROM studio WHERE id = $1", id)
+		err := scn.Get(ctx, p.dbConn, &studio, "SELECT * FROM studio WHERE id = $1", id)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +96,7 @@ func (p *PeopleStorage) GetGroupName(ctx context.Context, id int32) (Group, erro
 	case <-ctx.Done():
 		return Group{}, ctx.Err()
 	default:
-		err := p.dbConn.Get(&group, "SELECT name FROM group WHERE id = $1", id)
+		err := scn.Get(ctx, p.dbConn, &group, "SELECT name FROM group WHERE id = $1", id)
 		if err != nil {
 			return Group{}, err
 		}
@@ -149,40 +120,40 @@ func (g *Group) Validate() error {
 	return fmt.Errorf("invalid group kind: %s, must be one of %s", g.Kind, strings.Join(GroupKinds, ", "))
 }
 
-func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (id int32, err error) {
+func (p *PeopleStorage) GetID(ctx context.Context, name, kind string) (id uuid.UUID, err error) {
 	select {
 	case <-ctx.Done():
-		return 0, ctx.Err()
+		return uuid.Nil, ctx.Err()
 	default:
 		switch kind {
 		case "group":
-			err := p.dbConn.GetContext(ctx, &id,
+			err := scn.Get(ctx, p.newDBConn, &id,
 				"SELECT id FROM group WHERE name = $1 AND kind = $2 LIMIT 1",
 				name, kind)
 			if err != nil {
-				return 0, err
+				return uuid.Nil, err
 			}
 			return id, nil
 		case "person":
 			firstName := strings.Split(name, " ")[0]
 			lastName := strings.Split(name, " ")[1]
-			err := p.dbConn.GetContext(ctx, &id,
+			err := scn.Get(ctx, p.newDBConn, &id,
 				"SELECT id FROM person WHERE first_name = $1 AND last_name = $2 LIMIT 1",
 				firstName, lastName)
 			if err != nil {
-				return 0, err
+				return uuid.Nil, err
 			}
 			return id, nil
 		case "studio":
-			err := p.dbConn.GetContext(ctx, &id,
+			err := scn.Get(ctx, p.newDBConn, &id,
 				"SELECT id FROM studio WHERE name = $1 LIMIT 1",
 				name)
 			if err != nil {
-				return 0, err
+				return uuid.Nil, err
 			}
 			return id, nil
 		default:
-			return 0, fmt.Errorf("invalid kind: %s", kind)
+			return uuid.Nil, fmt.Errorf("invalid kind: %s", kind)
 		}
 	}
 }

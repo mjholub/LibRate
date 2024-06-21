@@ -15,7 +15,6 @@ var (
 	// Loading it should always be accompanied by a warning.
 	DefaultConfig = Config{
 		DBConfig: DBConfig{
-			Engine:         "postgres",
 			Host:           "localhost",
 			Port:           uint16(5432),
 			Database:       "librate",
@@ -36,7 +35,6 @@ var (
 	// TestConfig is a convenience config for testing, so that the test functions are terser, avoiding unnecessary repetition.
 	TestConfig = Config{
 		DBConfig: DBConfig{
-			Engine:             "postgres",
 			Host:               "0.0.0.0",
 			Port:               uint16(5432),
 			Database:           "librate_test",

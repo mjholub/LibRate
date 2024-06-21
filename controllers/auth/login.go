@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -46,6 +47,7 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	a.log.Debug().Msgf("Parsed input: %+v", input)
 
 	err = a.validatePassword(
+		c.Context(),
 		input.Email,
 		input.MemberName,
 		input.Password,
@@ -69,8 +71,8 @@ func (a *Service) Login(c *fiber.Ctx) error {
 	return a.createSession(c, input.SessionTime, &memberData)
 }
 
-func (a *Service) validatePassword(email, login, password string) error {
-	passhash, err := a.ms.GetPassHash(email, login)
+func (a *Service) validatePassword(ctx context.Context, email, login, password string) error {
+	passhash, err := a.ms.GetPassHash(ctx, email, login)
 	if err != nil {
 		return err
 	}

@@ -199,7 +199,7 @@ func (mc *Controller) lookupSpotifyArtists(c *fiber.Ctx, artists []spotify.Simpl
 		}
 
 		for j := range individual {
-			fullName := fmt.Sprintf("%s \"%+v\" %s", individual[i].FirstName, individual[i].NickNames, individual[i].LastName)
+			fullName := individual[j].Name
 			individualArtistEntry := media.AlbumArtist{
 				ID:         individual[j].ID,
 				Name:       fullName,

@@ -19,7 +19,6 @@ func TestLoadConfig(t *testing.T) {
 	// as defined in the example_config.yml file.
 	defaultConfig := cfg.Config{
 		DBConfig: cfg.DBConfig{
-			Engine:   "postgres",
 			Host:     "localhost",
 			Port:     uint16(5432),
 			Database: "librate",

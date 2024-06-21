@@ -19,7 +19,6 @@ type testCase struct {
 func TestLoadFromFile(t *testing.T) {
 	ExampleConfig := Config{
 		DBConfig: DBConfig{
-			Engine:             "postgres",
 			Host:               "localhost",
 			Port:               5432,
 			Database:           "librate",
@@ -78,6 +77,6 @@ func TestParseRaw(t *testing.T) {
 
 		conf, err := parseRaw(tc.Inputs.(string))
 		assert.Nil(t, err)
-		assert.Equal(t, conf.DBConfig.Engine, "postgres")
+		assert.NotNil(t, conf)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	scn "github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
@@ -106,25 +107,21 @@ func addTrack(ctx context.Context, db *pgxpool.Pool, track *Track) error {
 	return nil
 }
 
-func (ms *Storage) getAlbum(ctx context.Context, id uuid.UUID) (Album, error) {
-	stmt, err := ms.dbOld.PrepareContext(ctx, `SELECT media_id, album_name, release_date, duration
-		FROM media.albums 
-		WHERE media_id = $1`)
-	if err != nil {
-		return Album{}, fmt.Errorf("error preparing statement: %w", err)
-	}
-	defer stmt.Close()
-
-	row := stmt.QueryRowContext(ctx, id)
+// PERF: look for areas where concurrency can be added safely here
+func (ms *Storage) getAlbum(ctx context.Context, id uuid.UUID) (*Album, error) {
 	var album Album
-	err = row.Scan(&album.MediaID, &album.Name, &album.ReleaseDate, &album.Duration)
-	if err != nil {
-		return Album{}, fmt.Errorf("error scanning row: %w", err)
+
+	if err := scn.Get(ctx, ms.db, &album, `SELECT media_id, album_name, release_date, duration
+		FROM media.albums 
+		WHERE media_id = $1`); err != nil {
+		return nil, fmt.Errorf("error getting basic album metadata: %w", err)
 	}
+
 	// join to get the name of the artist based on the artist ID, by looking up the person and group tables
 	// In person table, we need to select first_name, last_name and nick_names columns
 	// then format that using Sprintf
-	rows, err := ms.dbOld.QueryContext(ctx, `
+	var albumArtists []AlbumArtist
+	if err := scn.Get(ctx, ms.db, &albumArtists, `
 SELECT 
     p.first_name, 
     p.last_name, 
@@ -139,106 +136,62 @@ JOIN
 		group AS g ON a.artist = g.id
 WHERE 
     a.album = $1
-`, id)
-	if err != nil {
-		return Album{}, fmt.Errorf("error querying album artists: %w", err)
-	}
-	defer rows.Close()
-
-	var albumArtists []AlbumArtist
-	for rows.Next() {
-		var albumArtist AlbumArtist
-		err = rows.Scan(&albumArtist.ID, &albumArtist.ArtistType, &albumArtist.Name)
-		if err != nil {
-			return Album{}, fmt.Errorf("error scanning row: %w", err)
-		}
-		albumArtists = append(albumArtists, albumArtist)
+`, id); err != nil {
+		return nil, fmt.Errorf("error querying album artists: %w", err)
 	}
 
 	album.AlbumArtists = albumArtists
 
-	rows, err = ms.dbOld.QueryContext(ctx, `SELECT genre FROM media.album_genres WHERE album = $1`, id)
-	if err != nil {
-		return Album{}, fmt.Errorf("error querying album genres: %w", err)
-	}
-	defer rows.Close()
 	var genres []Genre
-	for rows.Next() {
-		var genre Genre
-		err = rows.Scan(&genre.ID)
-		if err != nil {
-			return Album{}, fmt.Errorf("error scanning row: %w", err)
-		}
-		genres = append(genres, genre)
+	if err := scn.Get(ctx, ms.db, &genres, `SELECT genre FROM media.album_genres WHERE album = $1`, id); err != nil {
+		return nil, fmt.Errorf("error querying album genres: %w", err)
 	}
-
 	album.Genres = genres
 
-	rows, err = ms.dbOld.QueryContext(ctx, `SELECT keyword_id FROM media.album_keywords WHERE album = $1`, id)
-	if err != nil {
-		return Album{}, fmt.Errorf("error querying album keywords: %w", err)
+	// PERF: find a way to have only one allocation here
+	var keywords, keywordsFull []Keyword
+
+	if err := scn.Get(ctx, ms.db, &keywords, `SELECT keyword_id FROM media.album_keywords WHERE album = $1`, id); err != nil {
+		return nil, fmt.Errorf("error querying album keywords: %w", err)
 	}
-	defer rows.Close()
-	var keywords []Keyword
-	var keyword Keyword
-	for rows.Next() {
-		var keywordID int32
-		err = rows.Scan(&keywordID)
+	for i := range keywords {
+		keyword, err := ms.ks.GetKeywordByID(ctx, keywords[i].ID)
 		if err != nil {
-			return Album{}, fmt.Errorf("error scanning row: %w", err)
-		}
-		keyword, err = ms.ks.GetKeywordByID(ctx, keywordID)
-		if err != nil {
-			return Album{}, fmt.Errorf("error getting keyword by id: %w", err)
+			return nil, fmt.Errorf("error getting keyword by id: %w", err)
 		}
 
-		keywords = append(keywords, keyword)
+		keywordsFull = append(keywordsFull, keyword)
 	}
 
-	album.Keywords = keywords
+	album.Keywords = keywordsFull
 
-	rows, err = ms.dbOld.QueryContext(ctx, `SELECT media_id, name, duration, lyrics
-		FROM media.tracks
-		WHERE album = $1`, id)
-	if err != nil {
-		return Album{}, fmt.Errorf("error querying album tracks: %w", err)
-	}
-	defer rows.Close()
 	var tracks []Track
-	for rows.Next() {
-		var track Track
-		err = rows.Scan(&track.MediaID, &track.Name, &track.Duration, &track.Lyrics)
-		if err != nil {
-			return Album{}, fmt.Errorf("error scanning row: %w", err)
-		}
-		tracks = append(tracks, track)
+
+	if err := scn.Get(ctx, ms.db, &tracks, `SELECT media_id, name, duration, lyrics
+		FROM media.tracks
+		WHERE album = $1`, id); err != nil {
+		return nil, fmt.Errorf("error querying album tracks: %w", err)
 	}
 
 	album.Tracks = tracks
 
-	return album, nil
+	return &album, nil
 }
 
-func (ms *Storage) getTrack(ctx context.Context, id uuid.UUID) (Track, error) {
-	stmt, err := ms.dbOld.PreparexContext(ctx, `SELECT * 
+func (ms *Storage) getTrack(ctx context.Context, id uuid.UUID) (*Track, error) {
+	var t *Track
+	if err := scn.Select(ctx, ms.db, &t, `SELECT * 
 		FROM media.tracks 
-		WHERE media_id = $1`)
-	if err != nil {
-		return Track{}, fmt.Errorf("error preparing statement: %w", err)
-	}
-	defer stmt.Close()
-
-	row := stmt.QueryRowxContext(ctx, id)
-	var track Track
-	if err := row.StructScan(&track); err != nil {
-		return Track{}, fmt.Errorf("error scanning row: %w", err)
+		WHERE media_id = $1`); err != nil {
+		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	return track, nil
+	return t, nil
 }
 
 // GetAlbumTracks retrieves the full metadata of given album's tracks based on the album ID
 func (ms *Storage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Track, error) {
+	var tracks []Track
 	// Query to fetch tracks and their metadata using a JOIN operation
 	query := `
 		SELECT t.* FROM media.tracks AS t
@@ -247,44 +200,20 @@ func (ms *Storage) GetAlbumTracks(ctx context.Context, albumID uuid.UUID) ([]Tra
 		ORDER BY at.track_number
 	`
 
-	rows, err := ms.dbOld.QueryxContext(ctx, query, albumID)
-	if err != nil {
+	if err := scn.Get(ctx, ms.db, &tracks, query, albumID); err != nil {
 		return nil, fmt.Errorf("error querying album tracks: %w", err)
 	}
-	defer rows.Close()
-
-	var tracks []Track
-	for rows.Next() {
-		var track Track
-		if err := rows.StructScan(&track); err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
-		}
-		tracks = append(tracks, track)
-	}
-
 	return tracks, nil
 }
 
-func (ms *Storage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) ([]uuid.UUID, error) {
+func (ms *Storage) GetAlbumTrackIDs(ctx context.Context, albumID uuid.UUID) (dest []*uuid.UUID, err error) {
 	query := `
 		SELECT track FROM media.album_tracks
 		WHERE album = $1
 		ORDER BY track_number
 	`
-
-	rows, err := ms.dbOld.QueryContext(ctx, query, albumID)
-	if err != nil {
+	if err := scn.Select(ctx, ms.db, dest, query, albumID); err != nil {
 		return nil, fmt.Errorf("error querying album tracks: %w", err)
 	}
-	defer rows.Close()
-
-	var trackIDs []uuid.UUID
-	for rows.Next() {
-		var trackID uuid.UUID
-		if err := rows.Scan(&trackID); err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
-		}
-		trackIDs = append(trackIDs, trackID)
-	}
-	return trackIDs, nil
+	return dest, nil
 }

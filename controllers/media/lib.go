@@ -165,7 +165,7 @@ func (mc *Controller) GetGenres(c *fiber.Ctx) error {
 			return handleInternalError(mc.storage.Log, c, "Failed to get genre names", err)
 		}
 		if asLinks {
-			genreLinks := h.LinksFromArray(fmt.Sprintf("%s/genres/%s", c.Path(), genreKind), genreNames)
+			genreLinks := h.LinksFromArray(fmt.Sprintf("%s/genres/%s", c.Path()), genreNames[0])
 			return c.JSON(genreLinks)
 		}
 		return c.JSON(genreNames)

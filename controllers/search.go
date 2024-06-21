@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	scn "github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -137,9 +138,10 @@ func (sc *SearchController) WSHandler(c *websocket.Conn) {
 }
 
 // performSearch performs a full text search on the database
-func performSearch(ctx context.Context, db *pgxpool.Pool, searchTerm string) (res []SearchResult, err error) {
+func performSearch(ctx context.Context, db *pgxpool.Pool, searchTerm string) (res []*SearchResult, err error) {
+	var results []*SearchResult
 	// Define the SQL query
-	stmt, err := db.PreparexContext(ctx, `
+	if err := scn.Select(ctx, db, &results, `
 		SELECT 'person' AS type, id::text, first_name AS name
 		FROM people.person
 		WHERE to_tsvector('english', first_name || ' ' || last_name) @@ plainto_tsquery('english', $1)
@@ -167,31 +169,9 @@ func performSearch(ctx context.Context, db *pgxpool.Pool, searchTerm string) (re
 		SELECT 'media' AS type, id::text, title AS name
 		FROM media.media
 		WHERE to_tsvector('english', title) @@ plainto_tsquery('english', $1)
-	`)
-	if err != nil {
+	`); err != nil {
 		return nil, fmt.Errorf("failed to prepare search query: %w", err)
 	}
 
-	// Perform the database query
-	rows, err := stmt.QueryxContext(ctx, searchTerm)
-	if err != nil {
-		return nil, fmt.Errorf("failed to perform search: %w", err)
-	}
-	defer rows.Close()
-
-	// Parse the results
-	for rows.Next() {
-		var r SearchResult
-		if err := rows.StructScan(&r); err != nil {
-			return nil, err
-		}
-		res = append(res, r)
-	}
-
-	// Check for errors from iterating over rows.
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate over search results: %w", err)
-	}
-
-	return res, nil
+	return results, nil
 }

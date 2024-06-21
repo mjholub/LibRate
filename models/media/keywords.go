@@ -8,6 +8,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
+
+	scn "github.com/georgysavva/scany/v2/pgxscan"
 )
 
 type (
@@ -72,11 +74,10 @@ func (ks *KeywordStorage) GetKeywords(ctx context.Context, mediaID uuid.UUID) (k
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		err := ks.db.SelectContext(ctx, &keywords, `
+		if err := scn.Select(ctx, ks.db, &keywords, `
 SELECT keyword, total_stars::float / vote_count AS avg_score
 FROM media.keywords WHERE media_id = $1
-ORDER BY avg_score DESC`, mediaID)
-		if err != nil {
+ORDER BY avg_score DESC`, mediaID); err != nil {
 			return nil, fmt.Errorf("error getting keywords: %w", err)
 		}
 		return keywords, nil
@@ -88,7 +89,7 @@ func (ks *KeywordStorage) GetAll(ctx context.Context) (keywords []Keyword, err e
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		err := ks.db.SelectContext(ctx, &keywords, `
+		err := scn.Select(ctx, ks.db, &keywords, `
 			SELECT id, keyword FROM media.keywords`)
 		if err != nil {
 			return nil, fmt.Errorf("error getting keywords: %w", err)
@@ -102,7 +103,7 @@ func (ks *KeywordStorage) GetKeyword(ctx context.Context, keyword string, mediaI
 	case <-ctx.Done():
 		return k, ctx.Err()
 	default:
-		err := ks.db.GetContext(ctx, &k, `
+		err := scn.Select(ctx, ks.db, &k, `
 SELECT id, keyword, total_stars::float / vote_count AS avg_score
 FROM media.keywords WHERE keyword = $1 AND media_id = $2`, keyword, mediaID)
 		if err != nil {
@@ -117,7 +118,7 @@ func (ks *KeywordStorage) GetKeywordByID(ctx context.Context, id int32) (k Keywo
 	case <-ctx.Done():
 		return k, ctx.Err()
 	default:
-		err := ks.db.GetContext(ctx, &k, `
+		err := scn.Select(ctx, ks.db, &k, `
 SELECT id, keyword,
 CASE WHEN vote_count = 0 THEN NULL
 	ELSE	total_stars::float / NULLIF(vote_count, 0) 
@@ -136,7 +137,7 @@ func (ks *KeywordStorage) AddKeyword(ctx context.Context, keyword string, mediaI
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		err := ks.db.GetContext(ctx, &k, `
+		err := scn.Select(ctx, ks.db, &k, `
 		INSERT INTO media.keywords (keyword, media_id) VALUES ($1, $2) RETURNING id`, keyword, mediaID)
 		if err != nil {
 			return err
