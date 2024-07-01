@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/app/data/.cache \
   go run main.go
 
 # Build final image
-FROM alpine:3.19 AS app
+FROM alpine:3 AS app
 RUN apk update && apk add 'ca-certificates' \
   && apk cache purge \
   && addgroup -S librate \ 
